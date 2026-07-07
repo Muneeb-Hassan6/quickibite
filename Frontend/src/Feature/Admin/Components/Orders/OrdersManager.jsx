@@ -1,0 +1,148 @@
+import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
+import "./styles/index.css";
+
+// Components Import
+import OrderFilterBar from "./Components/OrderFilterBar";
+import OrdersTable from "./Components/OrdersTable";
+import UpdateStatusModal from "./Components/UpdateStatusModal";
+import OrderReceiptModal from "./Components/OrderReceiptModal";
+
+const OrdersManager = () => {
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [selectedOrderToEdit, setSelectedOrderToEdit] = useState(null);
+  const [selectedOrderToView, setSelectedOrderToView] = useState(null);
+
+  const [orders, setOrders] = useState([]);
+
+  // 🔥 2. FETCH LIVE ORDERS FROM DATABASE (Updated)
+  const fetchLiveOrders = async () => {
+    try {
+      // 🔥 FIX 1: URL mein '?type=all' add kar diya taake saare orders ayein
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=all`,
+      );
+      const data = await response.json();
+
+      if (Array.isArray(data)) {
+        const formattedOrders = data.map((dbOrder) => ({
+          id: `#${dbOrder.id}`,
+          rawId: dbOrder.id,
+          customerName: dbOrder.customer_name || "N/A",
+          type: dbOrder.order_type
+            ? dbOrder.order_type.replace("_", " ").toUpperCase()
+            : "DELIVERY",
+
+          // 🔥 FIX 2: 'cart' ki jagah 'items' kar diya hy
+          items: (() => {
+            let itemsArray = [];
+            if (dbOrder.items) {
+              if (typeof dbOrder.items === "string") {
+                try {
+                  itemsArray = JSON.parse(dbOrder.items);
+                } catch (e) {}
+              } else if (Array.isArray(dbOrder.items)) {
+                itemsArray = dbOrder.items;
+              }
+            }
+            return Array.isArray(itemsArray)
+              ? itemsArray.map((i) => ({
+                  name: i ? (i.name || i.title || "") : "",
+                  qty: i ? parseInt(i.qty || 0) : 0,
+                  price: i ? parseFloat(i.price || 0) : 0,
+                }))
+              : [];
+          })(),
+
+          total: parseFloat(dbOrder.total || 0),
+          status: (dbOrder.status || "").toLowerCase(),
+          time: dbOrder.time,
+          date: dbOrder.date,
+        }));
+
+        setOrders(formattedOrders);
+      }
+    } catch (error) {
+      console.error("Failed to fetch admin orders", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveOrders();
+    const interval = setInterval(fetchLiveOrders, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const filteredOrders = orders.filter((order) => {
+    if (filterStatus === "all") return true;
+    return order.status === filterStatus;
+  });
+
+  const handleSaveStatus = async (orderId, newStatus) => {
+    const numericId = orderId.toString().replace("#", "");
+    const backendStatus =
+      newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)),
+    );
+    setSelectedOrderToEdit(null);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE}/update_order_status.php`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: numericId, status: backendStatus }),
+        },
+      );
+
+      if (response.ok) {
+        toast.success(`Order ${orderId} Status Updated!`, {
+          style: { background: "#333", color: "#fff" },
+        });
+      } else {
+        toast.error("Failed to update status in Database!");
+        fetchLiveOrders();
+      }
+    } catch (error) {
+      console.error("Status Update Error:", error);
+      fetchLiveOrders();
+    }
+  };
+
+  return (
+    <div
+      className="recent-orders-section"
+      style={{ border: "none", background: "transparent", padding: 0 }}
+    >
+      <div className="section-header">Orders Management</div>
+
+      <OrderFilterBar
+        filterStatus={filterStatus}
+        setFilterStatus={setFilterStatus}
+      />
+
+      <OrdersTable
+        orders={filteredOrders}
+        onEditClick={(order) => setSelectedOrderToEdit(order)}
+        onViewClick={(order) => setSelectedOrderToView(order)}
+      />
+
+      <UpdateStatusModal
+        order={selectedOrderToEdit}
+        onClose={() => setSelectedOrderToEdit(null)}
+        onSave={handleSaveStatus}
+      />
+
+      <OrderReceiptModal
+        isOpen={selectedOrderToView !== null}
+        order={selectedOrderToView}
+        onClose={() => setSelectedOrderToView(null)}
+      />
+    </div>
+  );
+};
+
+export default OrdersManager;

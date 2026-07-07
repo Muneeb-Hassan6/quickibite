@@ -1,0 +1,28 @@
+/* =========================================
+   CATEGORY ITEM PAGE
+   ========================================= */
+.page-title {
+    color: var(--text-main, #ffffff);
+    text-transform: uppercase;
+    margin-bottom: 25px;
+    border-left: 6px solid var(--brand-red, #ef4444);
+    padding-left: 15px;
+    font-weight: 800;
+    font-size: 32px;
+    letter-spacing: 1px;
+    font-family: "Oswald", sans-serif;
+}
+
+@media screen and (max-width: 480px) {
+    .page-title {
+        font-size: 24px;
+        margin-bottom: 15px;
+        border-left-width: 4px;
+        padding-left: 12px;
+    }
+
+    .container-fluid {
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+    }
+}

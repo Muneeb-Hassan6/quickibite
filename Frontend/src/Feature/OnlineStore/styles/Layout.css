@@ -1,0 +1,105 @@
+/* =========================================
+   ONLINE STORE GLOBALS & FOOTER
+   ========================================= */
+
+
+.online-store-wrapper {
+    background-color: var(--web-bg);
+    min-height: 100vh;
+    color: var(--text-main);
+    display: flex;
+    flex-direction: column;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.online-main-content {
+    flex: 1;
+}
+
+/* --- PAGES COMMON WRAPPERS --- */
+.store-page-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.store-page-title {
+    font-family: "Oswald", sans-serif;
+    font-size: 32px;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    border-left: 6px solid var(--brand-red);
+    padding-left: 15px;
+    color: var(--text-main);
+}
+
+.cart-layout,
+.checkout-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    align-items: start;
+}
+
+.cart-items-section,
+.checkout-form-section {
+    background: var(--web-panel);
+    border: 1px solid var(--web-border);
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* --- FOOTER STYLES --- */
+.online-footer {
+    background: var(--panel-bg, #141414);
+    text-align: center;
+    padding: 30px 20px 10px;
+    border-top: 1px solid var(--border-color, #222);
+    margin-top: 50px;
+}
+
+.footer-logo-text {
+    color: var(--text-main, #fff);
+    font-family: "Oswald", sans-serif;
+    margin: 0 0 10px;
+}
+
+.footer-tagline {
+    color: var(--text-muted, #aaa);
+}
+
+.staff-login-container {
+    margin-top: 20px;
+}
+
+.staff-login-btn {
+    background: transparent;
+    color: var(--text-muted, #666);
+    border: none;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 13px;
+    transition: 0.3s;
+}
+
+.staff-login-btn:hover {
+    color: var(--brand-red, #ef4444);
+}
+
+.footer-bottom {
+    margin-top: 20px;
+    border-top: 1px solid var(--border-color, #222);
+    padding-top: 10px;
+    color: var(--text-muted, #555);
+    font-size: 12px;
+}
+
+/* Mobile Responsive For Common Layout */
+@media (max-width: 900px) {
+
+    .cart-layout,
+    .checkout-layout {
+        grid-template-columns: 1fr;
+    }
+}

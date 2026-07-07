@@ -1,0 +1,67 @@
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './style/index.css'
+import App from './App.jsx'
+import { ThemeProvider } from './Context/ThemeContext.jsx'
+
+// --- GLOBAL FETCH INTERCEPTOR FOR JWT AUTHENTICATION ---
+const originalFetch = window.fetch;
+window.fetch = async function (resource, options) {
+  const token = sessionStorage.getItem("auth_token");
+  if (token) {
+    let url = "";
+    if (typeof resource === "string") {
+      url = resource;
+    } else if (resource instanceof Request) {
+      url = resource.url;
+    }
+
+    // Intercept only calls destined for our BB backend
+    const isBackendCall =
+      url.includes("localhost/BB%20backend") ||
+      url.includes("localhost/BB backend") ||
+      url.includes("/BB%20backend/api/") ||
+      url.includes("/BB backend/api/");
+
+    if (isBackendCall) {
+      if (resource instanceof Request) {
+        if (!resource.headers.has("Authorization")) {
+          const newHeaders = new Headers(resource.headers);
+          newHeaders.set("Authorization", `Bearer ${token}`);
+          resource = new Request(resource, { headers: newHeaders });
+        }
+      } else {
+        options = options || {};
+        options.headers = options.headers || {};
+        if (options.headers instanceof Headers) {
+          if (!options.headers.has("Authorization")) {
+            options.headers.set("Authorization", `Bearer ${token}`);
+          }
+        } else if (Array.isArray(options.headers)) {
+          const hasAuth = options.headers.some(
+            ([key]) => key.toLowerCase() === "authorization"
+          );
+          if (!hasAuth) {
+            options.headers.push(["Authorization", `Bearer ${token}`]);
+          }
+        } else {
+          const hasAuth = Object.keys(options.headers).some(
+            (k) => k.toLowerCase() === "authorization"
+          );
+          if (!hasAuth) {
+            options.headers["Authorization"] = `Bearer ${token}`;
+          }
+        }
+      }
+    }
+  }
+  return originalFetch(resource, options);
+};
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  </StrictMode>,
+)

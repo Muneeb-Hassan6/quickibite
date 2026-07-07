@@ -1,0 +1,42 @@
+.assignment-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(20, 20, 20, 0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--admin-border);
+    padding: 15px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+}
+
+.assign-text {
+    font-size: 16px;
+}
+
+.assign-text strong {
+    color: var(--brand-red);
+}
+
+.btn-assign {
+    background: var(--brand-red);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.3s;
+}
+
+.btn-assign:hover {
+    background: #dc2626;
+    transform: scale(1.05);
+}
