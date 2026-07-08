@@ -27,17 +27,19 @@ window.fetch = async function (resource, options) {
 
     if (isBackendCall) {
       if (resource instanceof Request) {
-        if (!resource.headers.has("Authorization")) {
+        if (!resource.headers.has("Authorization") && !resource.headers.has("X-Auth-Token")) {
           const newHeaders = new Headers(resource.headers);
           newHeaders.set("Authorization", `Bearer ${token}`);
+          newHeaders.set("X-Auth-Token", token);
           resource = new Request(resource, { headers: newHeaders });
         }
       } else {
         options = options || {};
         options.headers = options.headers || {};
         if (options.headers instanceof Headers) {
-          if (!options.headers.has("Authorization")) {
+          if (!options.headers.has("Authorization") && !options.headers.has("X-Auth-Token")) {
             options.headers.set("Authorization", `Bearer ${token}`);
+            options.headers.set("X-Auth-Token", token);
           }
         } else if (Array.isArray(options.headers)) {
           const hasAuth = options.headers.some(
@@ -45,6 +47,7 @@ window.fetch = async function (resource, options) {
           );
           if (!hasAuth) {
             options.headers.push(["Authorization", `Bearer ${token}`]);
+            options.headers.push(["X-Auth-Token", token]);
           }
         } else {
           const hasAuth = Object.keys(options.headers).some(
@@ -52,6 +55,7 @@ window.fetch = async function (resource, options) {
           );
           if (!hasAuth) {
             options.headers["Authorization"] = `Bearer ${token}`;
+            options.headers["X-Auth-Token"] = token;
           }
         }
       }

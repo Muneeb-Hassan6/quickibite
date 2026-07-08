@@ -30,6 +30,11 @@ if (!$authHeader && isset($_SERVER['HTTP_AUTHORIZATION'])) {
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
 }
 
+// 🚀 FIX FOR INFINITYFREE: Check custom header if Authorization is stripped
+if (!$authHeader && isset($_SERVER['HTTP_X_AUTH_TOKEN'])) {
+    $authHeader = 'Bearer ' . $_SERVER['HTTP_X_AUTH_TOKEN'];
+}
+
 if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
     http_response_code(401);
     echo json_encode([
