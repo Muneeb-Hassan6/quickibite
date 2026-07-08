@@ -21,7 +21,9 @@ window.fetch = async function (resource, options) {
       url.includes("localhost/BB%20backend") ||
       url.includes("localhost/BB backend") ||
       url.includes("/BB%20backend/api/") ||
-      url.includes("/BB backend/api/");
+      url.includes("/BB backend/api/") ||
+      url.includes("/backend/api") ||
+      url.includes("infinityfreeapp.com");
 
     if (isBackendCall) {
       if (resource instanceof Request) {
