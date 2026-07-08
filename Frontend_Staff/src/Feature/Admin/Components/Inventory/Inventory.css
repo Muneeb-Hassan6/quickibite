@@ -1,0 +1,1013 @@
+/* =========================================
+   1. GLOBAL LAYOUT (Permanent Dark)
+   ========================================= */
+.inventory-container {
+  /* Using standard dark values for the whole component */
+  --k-bg: #121212; /* Deep Neutral Black */
+  --k-panel: #1e1e1e; /* Graphite Dark for Cards */
+  --k-border: #2d2d2d; /* Neutral Gray Border */
+  --k-text-primary: #f5f5f5; /* Soft White */
+  --k-text-secondary: #9e9e9e; /* Muted Gray Text */
+
+  --k-primary: #ef4444; /* Brand Red */
+  --k-success: #10b981; /* Green */
+  --k-warning: #f59e0b; /* Yellow */
+}
+
+/* =========================================
+   📦 INVENTORY MODULE STYLES
+   ========================================= */
+
+/* --- CONTROLS & SEARCH --- */
+.inventory-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  gap: 15px;
+  background: var(--admin-panel);
+  padding: 12px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--admin-border);
+  flex-wrap: wrap;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.inv-tabs {
+  display: flex;
+  gap: 5px;
+  background: var(--admin-bg);
+  padding: 5px;
+  border-radius: 10px;
+  border: 1px solid var(--admin-border);
+}
+.inv-tab-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--admin-muted);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+.inv-tab-btn:hover {
+  color: var(--admin-text);
+}
+.inv-tab-btn.active {
+  background: var(--admin-orange);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+}
+
+.inv-search-box {
+  position: relative;
+  width: 280px;
+}
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--admin-muted);
+}
+.inv-search-box input {
+  width: 100%;
+  padding: 10px 10px 10px 40px;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  outline: none;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  font-size: 14px;
+  transition: 0.3s;
+}
+.inv-search-box input:focus {
+  border-color: var(--admin-orange);
+}
+
+/* --- PRODUCT GRID & CARDS --- */
+.inventory-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 25px;
+  padding-bottom: 30px;
+}
+
+.inv-product-card {
+  background: var(--admin-panel);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.inv-product-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--admin-orange);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.inv-card-img-box {
+  height: 180px;
+  width: 100%;
+  background: var(--admin-bg);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--admin-border);
+}
+.inv-card-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: 0.5s;
+}
+.inv-product-card:hover .inv-card-img-box img {
+  transform: scale(1.05);
+}
+
+.stock-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  z-index: 2;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.bg-green {
+  background: #10b981;
+}
+.bg-orange {
+  background: #f59e0b;
+}
+.bg-red {
+  background: #ef4444;
+}
+
+.inv-card-details {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+.inv-prod-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--admin-text);
+  margin: 0 0 5px 0;
+}
+.inv-prod-cat {
+  font-size: 12px;
+  color: var(--admin-text);
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.inv-stats-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-top: 15px;
+  border-top: 1px dashed var(--admin-border);
+}
+.inv-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.inv-stat-row .label {
+  font-size: 13px;
+  color: var(--admin-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.inv-stat-row .value {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--admin-text);
+}
+.inv-stat-row .value.price {
+  color: var(--admin-orange);
+}
+
+.inv-card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+}
+.btn-icon-inv {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: 0.2s;
+  border: 1px solid transparent;
+}
+.btn-icon-inv.edit {
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  border-color: var(--admin-border);
+}
+.btn-icon-inv.edit:hover {
+  border-color: var(--admin-text);
+}
+.btn-icon-inv.delete {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+.btn-icon-inv.delete:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .inventory-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .inv-search-box {
+    width: 100%;
+  }
+}
+
+.inventory-page {
+  padding: 20px;
+  font-family: "Inter", sans-serif;
+  min-height: 100vh;
+  /* Dark background by default */
+  background-color: var(--k-bg);
+  color: var(--k-text-primary);
+}
+
+.page-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+.page-title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--k-text-primary);
+}
+.page-subtitle {
+  font-size: 14px;
+  color: var(--k-text-secondary);
+  margin-top: 5px;
+}
+
+/* =========================================
+   2. STATS CARDS
+   ========================================= */
+.inventory-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-bottom: 35px;
+}
+
+.inventory-card {
+  background: var(--k-panel);
+  padding: 24px;
+  border-radius: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--k-border);
+  transition:
+    transform 0.2s,
+    border-color 0.3s;
+}
+.inventory-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--k-primary);
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--k-text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.card-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--k-text-primary);
+  margin: 0;
+}
+.card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+/* Dark mode optimized icon colors */
+.inventory-card.primary .card-icon {
+  background: rgba(59, 130, 246, 0.1);
+  color: #60a5fa;
+}
+.inventory-card.success .card-icon {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+}
+.inventory-card.warning .card-icon {
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+}
+
+/* =========================================
+   3. CONTROLS
+   ========================================= */
+.inventory-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  gap: 15px;
+  background: var(--k-panel);
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--k-border);
+  flex-wrap: wrap;
+}
+
+.inv-tabs {
+  display: flex;
+  gap: 5px;
+  background: var(--k-bg);
+  padding: 5px;
+  border-radius: 8px;
+}
+.inv-tab-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--k-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.inv-tab-btn.active {
+  background: var(--k-primary);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.inv-search-box {
+  position: relative;
+  width: 250px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--k-text-secondary);
+}
+
+.inv-search-box input {
+  width: 100%;
+  padding: 10px 10px 10px 40px;
+  border: 1px solid var(--k-border);
+  border-radius: 8px;
+  outline: none;
+  background: var(--k-bg);
+  color: var(--k-text-primary);
+}
+
+.inv-search-box input:focus {
+  border-color: var(--k-primary);
+}
+
+.btn-add-new {
+  background: var(--k-primary);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.3s;
+}
+
+.btn-add-new:hover {
+  background: #dc2626; /* Darker red on hover */
+}
+
+/* =========================================
+   4. PRODUCT GRID
+   ========================================= */
+.inventory-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 24px;
+}
+
+.inv-product-card {
+  background: var(--k-panel);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--k-border);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.inv-product-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--k-text-secondary);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+}
+
+.inv-card-img-box {
+  height: 180px;
+  width: 100%;
+  background: var(--k-bg);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.inv-card-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stock-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  z-index: 2;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+.bg-green {
+  background: #10b981;
+}
+.bg-orange {
+  background: #f59e0b;
+}
+.bg-red {
+  background: #ef4444;
+}
+
+.inv-card-details {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+.inv-prod-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--k-text-primary);
+  margin: 0 0 5px 0;
+}
+.inv-prod-cat {
+  font-size: 12px;
+  color: var(--k-text-secondary);
+  background: var(--k-bg);
+  padding: 4px 8px;
+  border-radius: 6px;
+  align-self: flex-start;
+  border: 1px solid var(--k-border);
+}
+
+.inv-stats-row {
+  margin-top: auto;
+  margin-bottom: 15px;
+  padding: 12px 0;
+  border-top: 1px solid var(--k-border);
+  border-bottom: 1px solid var(--k-border);
+}
+
+.inv-stat-price {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  border-bottom: 1px solid var(--k-border);
+  padding-bottom: 5px;
+}
+.inv-stat-price .label,
+.inv-stat-qty .label {
+  font-size: 13px;
+  color: var(--k-text-secondary);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.inv-stat-price .value,
+.inv-stat-qty .value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--k-text-primary);
+}
+
+.inv-stat-qty {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inv-card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-icon-inv {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: 0.2s;
+}
+
+.btn-icon-inv.edit {
+  background: var(--k-bg);
+  color: var(--k-text-primary);
+  border-color: var(--k-border);
+}
+.btn-icon-inv.edit:hover {
+  background: var(--k-border);
+}
+
+.btn-icon-inv.delete {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  flex: 0.4;
+}
+.btn-icon-inv.delete:hover {
+  background: #ef4444;
+  color: white;
+}
+
+/* =========================================
+   5. MODAL & UPLOAD
+   ========================================= */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8); /* Darker overlay */
+  backdrop-filter: blur(5px);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content-modern {
+  background: var(--k-panel);
+  width: 750px;
+  max-width: 95%;
+  height: 500px;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  border: 1px solid var(--k-border);
+}
+
+.modal-left-panel {
+  width: 40%;
+  background: var(--k-bg); /* Dark bg for image area */
+  border-right: 1px solid var(--k-border);
+  padding: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-right-panel {
+  width: 60%;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+/* UPLOAD BOX STYLE (Dark Mode Optimized) */
+.image-upload-wrapper {
+  width: 100%;
+  height: 250px;
+  border: 2px dashed var(--k-text-secondary);
+  border-radius: 16px;
+  background: var(--k-panel);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+.image-upload-wrapper:hover {
+  border-color: var(--k-primary);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--k-text-secondary);
+  gap: 10px;
+}
+.icon-circle {
+  width: 50px;
+  height: 50px;
+  background: var(--k-bg);
+  border: 1px solid var(--k-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--k-text-primary);
+}
+.uploaded-img-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.upload-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.image-upload-wrapper:hover .upload-overlay {
+  opacity: 1;
+}
+/* ====================================================
+   🔥 INVENTORY MODAL STYLES & FIXES
+==================================================== */
+
+.inventory-modal-box {
+  max-width: 500px !important;
+  width: 90%;
+}
+
+/* Flex Row for Input Fields */
+.modal-form-row {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+  width: 100%;
+}
+
+.input-col {
+  flex: 1;
+  min-width: 0; /* Prevents overflow */
+}
+
+/* 🔥 The Fix for the Buttons Layout */
+.modal-footer-actions {
+  margin-top: 30px;
+  border-top: 1px solid #333; /* Use var(--admin-border) if defined */
+  padding-top: 20px;
+  display: flex;
+  justify-content: flex-end; /* Buttons ko right side par rakhega */
+  align-items: center;
+  gap: 15px; /* Dono buttons ke beech ka fasla */
+  width: 100%;
+}
+
+.btn-cancel-modal-clean {
+  background: transparent;
+  color: white;
+  border: 1px solid #333;
+  padding: 12px 25px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.btn-cancel-modal-clean:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-save-modal-clean {
+  background: var(--brand-red);
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+  transition: 0.2s;
+}
+
+.btn-save-modal-clean:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+}
+/* Form Fields */
+.modal-header-simple {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+.modal-header-simple h3 {
+  color: var(--k-text-primary);
+  margin: 0;
+}
+.btn-close-simple {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--k-text-secondary);
+  cursor: pointer;
+}
+.btn-close-simple:hover {
+  color: var(--k-text-primary);
+}
+
+.modal-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.floating-label-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--k-text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  display: block;
+}
+.floating-label-group input,
+.floating-label-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--k-border);
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  background: var(--k-bg);
+  color: var(--k-text-primary);
+}
+.floating-label-group input:focus,
+.floating-label-group select:focus {
+  border-color: var(--k-primary);
+}
+
+.modal-footer-simple {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.btn-save-simple {
+  background: var(--k-primary);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-cancel-simple {
+  background: var(--k-bg);
+  color: var(--k-text-secondary);
+  border: 1px solid var(--k-border);
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.btn-cancel-simple:hover {
+  color: var(--k-text-primary);
+  border-color: var(--k-text-primary);
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+  .modal-content-modern {
+    flex-direction: column;
+    height: auto;
+    max-height: 90vh;
+    overflow-y: scroll;
+  }
+  .modal-left-panel,
+  .modal-right-panel {
+    width: 100%;
+    padding: 20px;
+  }
+}
+
+/* =========================================
+   📊 INVENTORY TABLE (TABULAR DESIGN)
+   ========================================= */
+.inventory-table-container {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--k-panel);
+  border-radius: 12px;
+  border: 1px solid var(--k-border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.inventory-table th {
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--k-text-secondary);
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--k-border);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.inventory-table th:hover {
+  color: var(--k-text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.inventory-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--k-border);
+  color: var(--k-text-primary);
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.inventory-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.inventory-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+/* Table Sorting Headers */
+.sortable-header {
+  cursor: pointer;
+}
+
+/* Inactive Sort Icon Opacity */
+.sort-icon-inactive {
+  opacity: 0.3;
+}
+
+/* Align Actions Header */
+.actions-header {
+  text-align: right;
+}
+
+/* Empty Table State Styling */
+.empty-state-cell {
+  text-align: center;
+  padding: 40px;
+  color: var(--admin-muted);
+}
+/* Table Specific Elements */
+.product-cell {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.product-cell img {
+  width: 45px;
+  height: 45px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--k-bg);
+  border: 1px solid var(--k-border);
+}
+
+.product-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.text-muted {
+  color: var(--k-text-secondary);
+  font-size: 13px;
+}
+
+.product-price {
+  font-weight: 700;
+  color: var(--k-text-primary);
+}
+
+.product-stock {
+  font-weight: 700;
+}
+
+.table-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+/* Table Actions (Buttons) */
+.table-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-table-icon {
+  width: 35px;
+  height: 35px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.btn-table-icon.edit {
+  background: var(--k-bg);
+  color: var(--k-text-primary);
+  border-color: var(--k-border);
+}
+
+.btn-table-icon.edit:hover {
+  border-color: var(--k-text-primary);
+}
+
+.btn-table-icon.delete {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.btn-table-icon.delete:hover {
+  background: #ef4444;
+  color: white;
+}

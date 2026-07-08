@@ -1,0 +1,187 @@
+/* =========================================
+   HOME HERO & SEARCH BAR
+   ========================================= */
+.hero-section {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 28 / 9;
+    max-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background-color: #000;
+    border-bottom: 1px solid var(--border-color);
+    margin-top: 0 !important;
+}
+
+.hero-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+}
+
+/* Swiper Pagination Dots Customization */
+.swiper-pagination-bullet {
+    background: rgba(255, 255, 255, 0.5) !important;
+    width: 12px !important;
+    height: 12px !important;
+    opacity: 1 !important;
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important; /* Bouncy Elastic Effect */
+    transform: scale(0.8);
+}
+
+.swiper-pagination-bullet-active {
+    background: var(--brand-red, #ef4444) !important;
+    width: 40px !important;
+    border-radius: 6px !important;
+    transform: scale(1.1) !important;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.6) !important; /* Glow effect */
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: white;
+    padding: 0 20px;
+}
+
+.hero-content h1 {
+    font-family: "Oswald", sans-serif;
+    font-size: 60px;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    text-shadow: 2px 4px 10px rgba(0, 0, 0, 0.8), 0px 0px 20px rgba(0, 0, 0, 0.5);
+}
+
+.hero-content h1 span {
+    color: var(--brand-red);
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+}
+
+.hero-content p {
+    font-size: 20px;
+    color: #fff;
+    margin-bottom: 35px;
+    font-weight: 500;
+    text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);
+}
+
+/* Glassmorphism Search Bar */
+.search-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 650px;
+    margin: 0 auto;
+    background: var(--panel-bg, rgba(20, 20, 20, 0.7));
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    padding: 6px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.search-wrapper:focus-within {
+    border-color: var(--brand-red, #ef4444);
+    transform: translateY(-3px);
+    background: var(--bg-body, rgba(15, 15, 15, 0.9));
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6), 0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+.search-icon-inside {
+    position: absolute;
+    left: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--brand-red);
+    font-size: 18px;
+    z-index: 2;
+}
+
+.search-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 16px;
+    color: var(--text-main, #ffffff);
+    padding: 12px 15px 12px 55px;
+}
+
+.search-input::placeholder {
+    color: #888;
+}
+
+.search-btn {
+    background: linear-gradient(135deg, var(--brand-red), var(--brand-red-dark));
+    color: #fff;
+    border: none;
+    border-radius: 40px;
+    padding: 14px 40px;
+    font-family: "Oswald", sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    transition: 0.3s ease;
+}
+
+.search-btn:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-glow);
+}
+
+/* Mobile Fixes */
+@media screen and (max-width: 768px) {
+
+    .hero-container,
+    .hero-section {
+        aspect-ratio: 28 / 9 !important;
+        height: auto !important;
+        min-height: unset;
+    }
+
+    .swiper-pagination-bullet {
+        width: 8px !important;
+        height: 8px !important;
+    }
+
+    .swiper-pagination-bullet-active {
+        width: 20px !important;
+    }
+
+    .hero-content h1 {
+        font-size: 42px;
+        line-height: 1.1;
+    }
+
+    .hero-content p {
+        font-size: 15px;
+        margin-bottom: 25px;
+    }
+
+    .search-wrapper {
+        padding: 5px;
+    }
+
+    .search-input {
+        font-size: 14px;
+        padding-left: 45px;
+    }
+
+    .search-btn {
+        padding: 12px 25px;
+        font-size: 14px;
+    }
+}

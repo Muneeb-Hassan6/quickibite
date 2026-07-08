@@ -1,0 +1,90 @@
+/* =========================================
+   CASHIER - ORDER HISTORY
+   ========================================= */
+.history-container {
+    padding: 30px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.pos-history-table-wrapper {
+    background: var(--admin-panel);
+    border: 1px solid var(--admin-border);
+    border-radius: 16px;
+    padding: 20px;
+}
+
+.pos-glass-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.pos-glass-table th {
+    padding: 15px;
+    color: var(--admin-muted);
+    font-size: 13px;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--admin-border);
+    font-weight: 800;
+}
+
+.pos-glass-table td {
+    padding: 15px;
+    border-bottom: 1px solid var(--admin-border);
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.btn-pos-view {
+    background: transparent;
+    border: 1px solid var(--admin-border);
+    color: var(--admin-muted);
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    transition: 0.2s;
+}
+
+.btn-pos-view:hover {
+    border-color: var(--brand-red);
+    color: var(--brand-red);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+@media screen and (max-width: 900px) {
+    .pos-glass-table thead {
+        display: none;
+    }
+
+    .pos-glass-table tr {
+        display: block;
+        background: var(--admin-panel);
+        margin-bottom: 15px;
+        border-radius: 12px;
+        padding: 15px;
+        border: 1px solid var(--admin-border);
+    }
+
+    .pos-glass-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px dashed var(--admin-border);
+        padding: 10px 0;
+        text-align: right;
+    }
+
+    .pos-glass-table td::before {
+        content: attr(data-label);
+        color: var(--admin-muted);
+        font-weight: 800;
+        font-size: 11px;
+        text-transform: uppercase;
+    }
+}

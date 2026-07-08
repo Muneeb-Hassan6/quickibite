@@ -1,0 +1,101 @@
+.action-box {
+    background: var(--admin-panel);
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    border: 1px solid var(--admin-border);
+}
+
+.action-box.arrived {
+    border-color: var(--rider-success);
+}
+
+.eta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.eta-box {
+    background: rgba(239, 68, 68, 0.05);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(239, 68, 68, 0.1);
+    text-align: center;
+}
+
+.eta-label {
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-transform: uppercase;
+    color: var(--admin-muted);
+}
+
+.eta-value {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--admin-text);
+    margin-top: 5px;
+    font-family: "Oswald", sans-serif;
+}
+
+.aerial-distance {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--admin-muted);
+    text-align: center;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.btn-drive {
+    width: 100%;
+    padding: 16px;
+    background: var(--admin-panel);
+    color: var(--admin-text);
+    border: 1px solid var(--admin-border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 16px;
+    font-family: "Oswald", sans-serif;
+    text-transform: uppercase;
+}
+
+.btn-camera {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(90deg, #ef4444, #b71c1c);
+    color: white;
+    text-align: center;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 16px;
+    font-family: "Oswald", sans-serif;
+    text-transform: uppercase;
+    border: none;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.photo-proof-container {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.proof-img {
+    width: 100px;
+    height: 100px;
+    border-radius: 12px;
+    object-fit: cover;
+    margin-bottom: 20px;
+    border: 2px solid var(--admin-border);
+    padding: 4px;
+    background: var(--admin-panel);
+}

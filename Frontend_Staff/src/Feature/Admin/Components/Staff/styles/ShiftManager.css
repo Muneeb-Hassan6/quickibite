@@ -1,0 +1,60 @@
+.shift-legend {
+    display: flex;
+    gap: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--admin-muted);
+}
+
+.legend-morning {
+    color: #f59e0b;
+    margin-right: 15px;
+}
+
+.legend-evening {
+    color: #3b82f6;
+    margin-right: 15px;
+}
+
+.legend-night {
+    color: #8b5cf6;
+}
+
+.shift-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+.shift-time-cell {
+    font-size: 15px;
+    font-weight: bold;
+    color: var(--admin-text);
+}
+
+.shift-select-wrapper {
+    position: relative;
+    width: 140px;
+}
+
+.shift-select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--admin-border);
+    background: var(--admin-bg);
+    color: var(--admin-text);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    width: 130px;
+}
+
+.shift-select:focus {
+    border-color: var(--admin-orange);
+}

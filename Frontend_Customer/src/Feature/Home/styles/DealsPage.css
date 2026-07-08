@@ -1,0 +1,83 @@
+/* =======================================
+   DEALS PAGE & HOME SLIDER CSS (CLEANED)
+   ======================================= */
+
+/* --- 1. Home Deals Slider Container --- */
+.home-deals-wrapper {
+    padding: 30px 20px;
+    background: #0a0a0a;
+}
+
+.deals-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 20px;
+}
+
+.deals-section-title {
+    color: #fff;
+    font-size: 24px;
+    font-weight: 900;
+    margin: 0;
+    font-family: "Oswald", sans-serif;
+    letter-spacing: 1px;
+}
+
+.deals-section-title span {
+    color: var(--brand-red, #ef4444);
+}
+
+.deals-view-all-btn {
+    color: var(--brand-red, #ef4444);
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.deals-view-all-btn:hover {
+    color: #fff;
+}
+
+/* Horizontal Scroll for Home Slider */
+.deals-slider-track {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding-bottom: 15px;
+    scroll-snap-type: x mandatory;
+}
+
+.deals-slider-track::-webkit-scrollbar {
+    height: 6px;
+}
+
+.deals-slider-track::-webkit-scrollbar-track {
+    background: #111;
+    border-radius: 10px;
+}
+
+.deals-slider-track::-webkit-scrollbar-thumb {
+    background: var(--brand-red, #ef4444);
+    border-radius: 10px;
+}
+
+/* --- 2. Dedicated Deals Page Header --- */
+.deals-page-wrapper {
+    padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: 80vh;
+}
+
+.deals-page-title {
+    color: #fff;
+    font-size: 32px;
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 40px;
+    font-family: "Oswald", sans-serif;
+}

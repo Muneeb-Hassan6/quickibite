@@ -1,0 +1,292 @@
+/* =======================================
+   DEAL MAKER PREMIUM DARK UI
+   ======================================= */
+
+.deal-maker-wrapper {
+  width: 100%;
+  animation: slideUp 0.4s ease;
+}
+
+.deal-header-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--text-main, #fff);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.deal-grid-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+}
+
+.deal-column-left,
+.deal-column-right {
+  flex: 1;
+  min-width: 320px;
+}
+
+/* --- Input Groups & Labels --- */
+.dm-input-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dm-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+/* 🔥 Fixed: Dark Inputs */
+.dm-input,
+.dm-select {
+  width: 100%;
+  background-color: var(--bg-body, #141414);
+  color: var(--text-main, #ffffff);
+  border: 1px solid var(--border-color, #333);
+  padding: 12px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.dm-input:focus,
+.dm-select:focus {
+  border-color: var(--brand-red, #ef4444);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+}
+
+/* Browser default icon color fix for time input */
+.dm-input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+/* --- Upload Area --- */
+.dm-upload-box {
+  width: 100%;
+  height: 180px;
+  background-color: var(--bg-body, #141414);
+  border: 2px dashed var(--border-color, #444);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  color: var(--text-muted, #777);
+}
+
+.dm-upload-box:hover {
+  border-color: var(--brand-red, #ef4444);
+  background-color: rgba(239, 68, 68, 0.05);
+  color: var(--brand-red, #ef4444);
+}
+
+.dm-upload-img-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* --- Time & Permanent Toggle Area --- */
+.dm-time-section {
+  background: var(--panel-bg, #111);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #2a2a2a);
+}
+
+.dm-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  color: var(--text-main, #fff);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.dm-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--brand-red, #ef4444);
+  cursor: pointer;
+}
+
+.dm-time-row {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+/* --- Right Side Panel --- */
+.dm-items-panel {
+  background-color: var(--panel-bg, #111);
+  padding: 25px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color, #2a2a2a);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.dm-panel-title {
+  color: var(--text-main, #fff);
+  font-size: 16px;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.dm-add-item-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.dm-add-btn {
+  background-color: var(--brand-red, #ef4444);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  width: 45px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.dm-add-btn:hover {
+  background-color: #dc2626;
+  transform: scale(1.05);
+}
+
+/* Added Items List */
+.dm-items-list-container {
+  flex-grow: 1;
+  background: var(--bg-body, #0a0a0a);
+  border-radius: 10px;
+  padding: 15px;
+  min-height: 200px;
+  border: 1px inset var(--border-color, #222);
+  overflow-y: auto;
+}
+
+.dm-empty-state {
+  color: var(--text-muted, #555);
+  text-align: center;
+  margin-top: 60px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dm-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--panel-bg, #1a1a1a);
+  padding: 12px 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-color, #333);
+}
+
+.dm-item-name {
+  color: var(--text-main, #fff);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dm-item-qty {
+  color: var(--brand-red, #ef4444);
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.dm-item-delete {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.2s;
+}
+
+.dm-item-delete:hover {
+  color: #dc2626;
+  transform: scale(1.2);
+}
+
+/* Save Button */
+.dm-save-btn {
+  margin-top: 25px;
+  background: var(--brand-red, #ef4444);
+  color: #fff;
+  border: none;
+  padding: 16px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  transition: 0.3s;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
+}
+
+.dm-save-btn:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.dm-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+/* =======================================
+   IMAGE UPLOAD HOVER EFFECT
+   ======================================= */
+.dm-upload-box {
+    position: relative; /* Overlay ko is dabbe ke andar qaid rakhne ke liye */
+}
+
+/* Jab picture lag jaye toh overlay ki default halat (Chupa hua) */
+.dm-image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75); /* Halka dark background */
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0; /* By default gayab rahega */
+    transition: opacity 0.3s ease;
+    border-radius: 10px; /* Dabbay ki gulayi ke hisaab se */
+    backdrop-filter: blur(2px); /* Picture ko thora blur kar dega */
+}
+
+/* 🔥 Jadoo Yahan Hai: Hover par show karein */
+.dm-upload-box:hover .dm-image-overlay {
+    opacity: 1; /* Hover par zahir ho jayega */
+}

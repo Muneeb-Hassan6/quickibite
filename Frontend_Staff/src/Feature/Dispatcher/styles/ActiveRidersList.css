@@ -1,0 +1,118 @@
+.dispatch-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(100%);
+}
+
+.rider-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rider-info {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.flex-center-gap {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.rider-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--brand-red);
+    color: white;
+    font-weight: 800;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.rider-name {
+    margin: 0 0 2px 0;
+    font-size: 15px;
+}
+
+.rider-phone {
+    font-size: 12px;
+    color: var(--admin-muted);
+}
+
+.vehicle-tag {
+    font-size: 10px;
+    background: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--admin-text);
+}
+
+.rating-badge {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--admin-orange);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.rider-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.rider-stat-item {
+    font-size: 11px;
+    color: var(--admin-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+}
+
+.current-order-badge {
+    margin-top: 8px;
+    background: rgba(239, 68, 68, 0.05);
+    border: 1px dashed var(--brand-red);
+    padding: 6px 10px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.current-order-text {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--brand-red);
+    font-family: "Oswald", sans-serif;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.bg-green {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--rider-success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.bg-orange {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--admin-orange);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
