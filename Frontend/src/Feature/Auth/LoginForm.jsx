@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUserShield, FaLock, FaUser, FaArrowLeft, FaEye, FaEyeSlash } from "react-icons/fa";
 import Swal from "sweetalert2";
-import "./LoginForm.css";
+import "./loginForm.css";
 
 const LoginForm = () => {
   const navigate = useNavigate();
