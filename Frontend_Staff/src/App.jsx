@@ -145,7 +145,7 @@ function App() {
   return (
     <CartProvider>
       <OrderProvider>
-        <Router basename="/coffee">
+        <Router>
           <MainContent />
         </Router>
       </OrderProvider>
