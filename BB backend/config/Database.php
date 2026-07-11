@@ -1,10 +1,17 @@
 <?php
 class Database {
-    private $host = "127.0.0.1";
-    private $port = "3306"; 
-    private $db_name = "restaurant_db";
-    private $username = "root";
-    private $password = "";
+# hosting credentials
+    private $host = "ftp-quickbite.alwaysdata.net";
+    private $port = ""; 
+    private $db_name = "quickbite_db";
+    private $username = "quickbite";
+    private $password = "QuickBite123;";
+
+    #private $host = "127.0.0.1";
+    #private $port = "3306"; 
+    #private $db_name = "restaurant_db";
+    #private $username = "root";
+    #private $password = "";
     public $conn;
 
     public function getConnection() {
