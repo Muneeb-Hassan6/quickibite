@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { FaFire, FaShoppingCart, FaMapMarkerAlt, FaSun, FaMoon, FaSearch, FaBars, FaTimes } from "react-icons/fa";
 import { useCart } from "../../../Context/CartContext";
 import { useTheme } from "../../../Context/ThemeContext";
+import { optimizeCloudinaryImage } from "../../../utils/imageOptimizer";
 import "../../../Components/Layout/header.css";
 
 const OnlineNavbar = () => {
@@ -99,7 +100,7 @@ const OnlineNavbar = () => {
           {/* 🔥 Dynamic Logo Logic */}
           {storeLogo ? (
             <img
-              src={storeLogo}
+              src={optimizeCloudinaryImage(storeLogo, 300)}
               alt="Restaurant Logo"
               className="online-nav-logo"
             />
@@ -144,7 +145,7 @@ const OnlineNavbar = () => {
                         navigate(`/menu?search=${encodeURIComponent(item.name)}`);
                       }}
                     >
-                      <img src={item.img} alt={item.name} />
+                      <img src={optimizeCloudinaryImage(item.img, 100)} alt={item.name} />
                       <div className="item-details">
                         <span className="item-name">{item.name}</span>
                         <span className="item-price">Rs {Number(item.price).toFixed(2)}</span>

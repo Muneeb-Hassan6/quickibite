@@ -1,5 +1,6 @@
 import React from "react";
 import { FaSearch, FaTimes, FaFilter } from "react-icons/fa";
+import { optimizeCloudinaryImage } from "../../../utils/imageOptimizer";
 import "../styles/SearchBar.css";
 
 const SearchBar = ({ searchTerm, setSearchTerm, searchResults, showDropdown, setShowDropdown, searchBoxRef, onFilterOpen }) => {
@@ -28,7 +29,7 @@ const SearchBar = ({ searchTerm, setSearchTerm, searchResults, showDropdown, set
                     <div className="search-dropdown-menu animate-slide-up">
                         {searchResults.slice(0, 5).map((item) => (
                             <div key={item.id} className="search-dropdown-item" onClick={() => { setSearchTerm(item.name); setShowDropdown(false); }}>
-                                <img src={item.img || "https://placehold.co/100x100"} alt={item.name} />
+                                <img src={optimizeCloudinaryImage(item.img || "https://placehold.co/100x100", 100)} alt={item.name} />
                                 <div className="sd-info"><span className="sd-name">{item.name}</span><span className="sd-price">Rs {item.price}</span></div>
                             </div>
                         ))}

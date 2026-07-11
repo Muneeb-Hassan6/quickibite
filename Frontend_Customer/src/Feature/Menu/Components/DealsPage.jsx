@@ -3,6 +3,7 @@ import { FaCartPlus, FaFire } from "react-icons/fa";
 import Swal from "sweetalert2";
 import { useCart } from "../../../Context/CartContext";
 import OnlineNavbar from "../components/OnlineNavbar"; // Apne path k hisaab se theek karein
+import { optimizeCloudinaryImage } from "../../../utils/imageOptimizer";
 // import "./CustomerDeals.css"; // 🔥 CSS Import
 
 const DealsPage = () => {
@@ -76,7 +77,7 @@ const DealsPage = () => {
               <div key={deal.id} className="deal-card animate-slide-up">
                 <div className="deal-card-img-box">
                   <img
-                    src={deal.img || "https://placehold.co/400x300"}
+                    src={optimizeCloudinaryImage(deal.img || "https://placehold.co/400x300", 600)}
                     alt={deal.title}
                     className="deal-card-img"
                   />

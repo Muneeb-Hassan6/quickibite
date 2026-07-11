@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaCartPlus } from "react-icons/fa";
 import Swal from "sweetalert2";
 import { useCart } from "../../../Context/CartContext"; // Apne path k hisaab se adjust krein
+import { optimizeCloudinaryImage } from "../../../utils/imageOptimizer";
 // import "./CustomerDeals.css"; // 🔥 CSS Import
 
 const HomeDealsSlider = () => {
@@ -69,7 +70,7 @@ const HomeDealsSlider = () => {
           <div key={deal.id} className="deal-card">
             <div className="deal-card-img-box">
               <img
-                src={deal.img || "https://placehold.co/400x300"}
+                src={optimizeCloudinaryImage(deal.img || "https://placehold.co/400x300", 500)}
                 alt={deal.title}
                 className="deal-card-img"
               />

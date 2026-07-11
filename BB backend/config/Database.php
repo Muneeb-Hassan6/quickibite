@@ -16,7 +16,8 @@ class Database {
             
             
         } catch(PDOException $exception) {
-        
+            echo json_encode(["success" => false, "message" => "Database connection error: " . $exception->getMessage()]);
+            exit();
         }
         return $this->conn;
     }

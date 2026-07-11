@@ -8,6 +8,7 @@ import {
   FaCheckSquare,
 } from "react-icons/fa";
 import "./PopupCard.css";
+import { optimizeCloudinaryImage } from "../../utils/imageOptimizer";
 
 const PopupCard = ({ image, title, description, price, item, closePopup }) => {
   const { addToCart } = useCart();
@@ -162,7 +163,7 @@ const PopupCard = ({ image, title, description, price, item, closePopup }) => {
 
         <div className="modal-img-container">
           <img
-            src={image || "https://placehold.co/600x400?text=No+Image"}
+            src={optimizeCloudinaryImage(image || "https://placehold.co/600x400?text=No+Image", 600)}
             alt={title}
             className="modal-img"
           />
