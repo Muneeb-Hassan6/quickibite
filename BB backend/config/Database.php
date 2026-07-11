@@ -1,8 +1,8 @@
 <?php
 class Database {
 # hosting credentials
-    private $host = "ftp-quickbite.alwaysdata.net";
-    private $port = ""; 
+    private $host = "mysql-quickbite.alwaysdata.net";
+    private $port = "3306"; 
     private $db_name = "quickbite_db";
     private $username = "quickbite";
     private $password = "QuickBite123;";
