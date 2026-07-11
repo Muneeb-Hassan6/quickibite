@@ -23,6 +23,7 @@ window.fetch = async function (resource, options) {
       url.includes("/BB%20backend/api/") ||
       url.includes("/BB backend/api/") ||
       url.includes("/backend/api") ||
+      url.includes("alwaysdata.net") ||
       url.includes("infinityfreeapp.com");
 
     if (isBackendCall) {
