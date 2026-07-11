@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
-import { FaTrash, FaPlus, FaSave, FaImage, FaListUl, FaEdit } from 'react-icons/fa';
+import { FaTrash, FaPlus, FaSave, FaImage, FaListUl, FaEdit, FaCog } from 'react-icons/fa';
+import FooterSettings from '../Settings/Components/FooterSettings';
 
 const HomepageBuilder = () => {
   const [sections, setSections] = useState([]);
   const [heroSlides, setHeroSlides] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Global Settings for Homepage
+  const [globalSettings, setGlobalSettings] = useState({
+    hero_section_sort_order: '0',
+    empty_homepage_message: ''
+  });
+  const [isSavingGlobal, setIsSavingGlobal] = useState(false);
 
   // States for new section modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,11 +51,39 @@ const HomepageBuilder = () => {
       if (result.success && result.data) {
         setHeroSlides(result.data.hero_sliders || []);
         setSections(result.data.sections || []);
+        if (result.data.settings) {
+          setGlobalSettings({
+            hero_section_sort_order: result.data.settings.hero_section_sort_order || '0',
+            empty_homepage_message: result.data.settings.empty_homepage_message || ''
+          });
+        }
       }
     } catch (error) {
       console.error("Error fetching homepage data", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSaveGlobalSettings = async () => {
+    setIsSavingGlobal(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/update_settings.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(globalSettings)
+      });
+      const result = await response.json();
+      if (result.success) {
+        Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Homepage Settings Saved!", showConfirmButton: false, timer: 1500 });
+      } else {
+        Swal.fire("Error", result.message, "error");
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Error", "Could not connect to server.", "error");
+    } finally {
+      setIsSavingGlobal(false);
     }
   };
 
@@ -398,6 +434,29 @@ const HomepageBuilder = () => {
 
       {/* Changed layout to Flex Column to prevent width mismatch and scrollbars */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', marginTop: '20px' }}>
+        
+        {/* GLOBAL HOMEPAGE SETTINGS */}
+        <div style={{ background: 'var(--admin-panel)', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: '1px solid var(--admin-border)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h3><FaCog /> Global Homepage Settings</h3>
+            <button onClick={handleSaveGlobalSettings} disabled={isSavingGlobal} style={{ padding: '8px 12px', fontSize: '12px', background: 'var(--brand-red)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <FaSave /> {isSavingGlobal ? 'Saving...' : 'Save Settings'}
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px', color: 'var(--admin-muted)' }}>Empty Homepage Message</label>
+              <input 
+                type="text" 
+                value={globalSettings.empty_homepage_message} 
+                onChange={e => setGlobalSettings({...globalSettings, empty_homepage_message: e.target.value})}
+                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
+              />
+              <small style={{ color: 'var(--admin-muted)', display: 'block', marginTop: '4px' }}>Text to show if no sections are added.</small>
+            </div>
+          </div>
+        </div>
+
         {/* HERO SLIDERS */}
         <div style={{ background: 'var(--admin-panel)', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: '1px solid var(--admin-border)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
@@ -441,7 +500,31 @@ const HomepageBuilder = () => {
               <div style={{ flex: 1 }}>
                 <strong style={{ display: 'block', fontSize: '16px' }}>{sec.title || sec.section_type.toUpperCase()}</strong>
                 <span style={{ fontSize: '12px', background: 'var(--admin-panel)', padding: '2px 8px', borderRadius: '12px', color: 'var(--admin-muted)', border: '1px solid var(--admin-border)' }}>
-                  {sec.section_type} {sec.content_data ? `(${sec.content_data})` : ''} {sec.section_type === 'product_slider' ? `[${sec.slider_type || 'regular'}]` : ''}
+                  {sec.section_type} 
+                  {(() => {
+                    if (sec.section_type === 'banner' && sec.content_data && sec.content_data.startsWith('[')) {
+                      try {
+                        return ` (${JSON.parse(sec.content_data).length} Slides)`;
+                      } catch(e) {
+                        return ' (Dynamic Banner)';
+                      }
+                    }
+                    if (sec.content_data && sec.section_type === 'product_slider') {
+                      if (sec.content_data.startsWith('custom:')) {
+                        return ' (Custom Products)';
+                      }
+                      if (sec.content_data.startsWith('category:')) {
+                        return ` (${sec.content_data.split(':')[1]})`;
+                      }
+                      if (sec.content_data === 'filter:best_sellers') return ' (Best Sellers)';
+                      if (sec.content_data === 'filter:top_deals') return ' (Top Deals)';
+                      
+                      const dataStr = sec.content_data.length > 30 ? sec.content_data.substring(0, 30) + '...' : sec.content_data;
+                      return ` (${dataStr})`;
+                    }
+                    return sec.content_data ? ` (${sec.content_data})` : '';
+                  })()}
+                  {sec.section_type === 'product_slider' ? ` [${sec.slider_type || 'regular'}]` : ''}
                 </span>
               </div>
               <div style={{ display: 'flex', gap: '5px' }}>
@@ -454,6 +537,11 @@ const HomepageBuilder = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* FOOTER SETTINGS INTEGRATION */}
+        <div style={{ background: 'var(--admin-panel)', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: '1px solid var(--admin-border)' }}>
+          <FooterSettings />
         </div>
       </div>
 
@@ -475,12 +563,13 @@ const HomepageBuilder = () => {
                     <option value="product_slider">Product Slider</option>
                     <option value="banner">Promotional Banner</option>
                     <option value="explore_menu">Explore Menu (Categories bubbles)</option>
+                    <option value="hero">Hero Slider Component</option>
                   </select>
                 </div>
               )}
 
               <div>
-                <label>Section Title (Internal)</label>
+                <label>Section Title (Heading on Website)</label>
                 <input 
                   type="text" 
                   value={formData.title} 
@@ -490,6 +579,19 @@ const HomepageBuilder = () => {
                   required
                 />
               </div>
+
+              {modalType === 'section' && formData.section_type !== 'banner' && (
+                <div>
+                  <label>Button Text / Subtitle (e.g. "VIEW ALL")</label>
+                  <input 
+                    type="text" 
+                    value={formData.subtitle} 
+                    onChange={e => setFormData({...formData, subtitle: e.target.value})} 
+                    placeholder="e.g. Explore All Deals"
+                    style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '5px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
+                  />
+                </div>
+              )}
 
               {/* Only show these fields if it's Hero Slide */}
               {modalType === 'hero' && (
@@ -652,11 +754,28 @@ const HomepageBuilder = () => {
                 <label>Sort Order</label>
                 <input 
                   type="number" 
+                  min="1"
+                  max={modalType === 'hero' ? Math.max(heroSlides.length + (editId ? 0 : 1), 1) : Math.max(sections.length + (editId ? 0 : 1), 1)}
                   value={formData.sort_order} 
-                  onChange={e => setFormData({...formData, sort_order: e.target.value})} 
+                  onChange={e => {
+                    let val = parseInt(e.target.value);
+                    if (isNaN(val)) val = 1;
+                    if (val < 1) val = 1;
+                    
+                    const maxAllowed = modalType === 'hero' 
+                      ? Math.max(heroSlides.length + (editId ? 0 : 1), 1) 
+                      : Math.max(sections.length + (editId ? 0 : 1), 1);
+                      
+                    if (val > maxAllowed) val = maxAllowed;
+                    
+                    setFormData({...formData, sort_order: val});
+                  }} 
                   style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '5px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
                   required
                 />
+                <small style={{ color: 'var(--admin-muted)', display: 'block', marginTop: '4px' }}>
+                  Position order (1 to {modalType === 'hero' ? Math.max(heroSlides.length + (editId ? 0 : 1), 1) : Math.max(sections.length + (editId ? 0 : 1), 1)})
+                </small>
               </div>
 
               <div className="modal-actions" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>

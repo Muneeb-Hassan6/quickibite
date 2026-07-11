@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube, FaPhoneAlt, FaEnvelope } from "react-icons/fa";
+import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube, FaPhoneAlt, FaEnvelope, FaChevronDown } from "react-icons/fa";
 import "../styles/Footer.css"; 
 
 const Footer = ({ style }) => {
@@ -14,6 +14,15 @@ const Footer = ({ style }) => {
     footer_phone: "+1 234 567 8900",
     footer_email: "support@bigbite.com"
   });
+
+  // Mobile Accordion State
+  const [expandedSection, setExpandedSection] = useState(null);
+
+  const toggleSection = (section) => {
+    if (window.innerWidth <= 576) {
+      setExpandedSection(expandedSection === section ? null : section);
+    }
+  };
 
   useEffect(() => {
     const fetchFooterSettings = async () => {
@@ -58,9 +67,11 @@ const Footer = ({ style }) => {
             </div>
 
             {/* Column 2: Information */}
-            <div className="footer-col">
-              <h4 className="footer-col-title">Information</h4>
-              <ul className="footer-links">
+            <div className={`footer-col ${expandedSection === 'info' ? 'expanded' : ''}`}>
+              <h4 className="footer-col-title" onClick={() => toggleSection('info')}>
+                Information <FaChevronDown className="accordion-icon" />
+              </h4>
+              <ul className="footer-links accordion-content">
                 <li><a onClick={() => navigate("/about")} style={{cursor: "pointer"}}>About Us</a></li>
                 <li><a onClick={() => navigate("/privacy")} style={{cursor: "pointer"}}>Privacy Policy</a></li>
                 <li><a onClick={() => navigate("/terms")} style={{cursor: "pointer"}}>Terms & Conditions</a></li>
@@ -68,9 +79,11 @@ const Footer = ({ style }) => {
             </div>
 
             {/* Column 3: Food */}
-            <div className="footer-col">
-              <h4 className="footer-col-title">Food</h4>
-              <ul className="footer-links">
+            <div className={`footer-col ${expandedSection === 'food' ? 'expanded' : ''}`}>
+              <h4 className="footer-col-title" onClick={() => toggleSection('food')}>
+                Food <FaChevronDown className="accordion-icon" />
+              </h4>
+              <ul className="footer-links accordion-content">
                 <li><a onClick={() => navigate("/menu")} style={{cursor: "pointer"}}>Explore Menu</a></li>
                 <li><a onClick={() => navigate("/deals")} style={{cursor: "pointer"}}>Top Deals</a></li>
                 <li><a onClick={() => navigate("/menu")} style={{cursor: "pointer"}}>Best Sellers</a></li>
@@ -79,9 +92,11 @@ const Footer = ({ style }) => {
             </div>
 
             {/* Column 4: Contact Us */}
-            <div className="footer-col">
-              <h4 className="footer-col-title">Contact Us</h4>
-              <ul className="footer-contact-info">
+            <div className={`footer-col ${expandedSection === 'contact' ? 'expanded' : ''}`}>
+              <h4 className="footer-col-title" onClick={() => toggleSection('contact')}>
+                Contact Us <FaChevronDown className="accordion-icon" />
+              </h4>
+              <ul className="footer-contact-info accordion-content">
                 <li>
                   <FaPhoneAlt className="contact-icon" />
                   <span>{footerData.footer_phone}</span>

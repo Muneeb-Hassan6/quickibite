@@ -3,6 +3,7 @@ import HomeHero from "./Components/HomeHero";
 import HomeProductSlider from "./Components/HomeProductSlider";
 import ExploreMenu from "../Menu/Components/ExploreMenu";
 import HomeBanners from "./Components/HomeBanners"; // 🔥 Imported Banners
+import { optimizeCloudinaryImage } from "../../utils/imageOptimizer";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation } from "swiper/modules";
@@ -12,7 +13,7 @@ import "swiper/css/navigation";
 
 import "./styles/index.css";
 import { useNavigate } from "react-router-dom"; // 🔥 Yeh add karein
-import { FaArrowRight } from "react-icons/fa"; // 🔥 Yeh icon add karein
+import { FaArrowRight, FaBoxOpen } from "react-icons/fa"; // 🔥 Yeh icon add karein
 import ReactDOM from "react-dom";
 import PopupCard from "../../Components/UI/PopupCard";
 
@@ -113,12 +114,8 @@ const HomePage = () => {
 
   return (
     <div className="home-container home-page-wrapper">
-      {/* 1. Hero Banner */}
-      <HomeHero slides={homepageData.hero_sliders || []} onBannerClick={handleBannerClick} />
-
-      {/* 2. Dynamic Homepage Sections */}
-      <div className="container-fluid px-3 px-md-5 py-4">
-        {isLoading ? (
+      {isLoading ? (
+        <div className="container-fluid px-3 px-md-5 py-4">
           <div style={{ display: "flex", justifyContent: "center", padding: "50px 0" }}>
             <div className="dot-loader">
               <div className="dot" style={{ width: "12px", height: "12px" }}></div>
@@ -126,11 +123,22 @@ const HomePage = () => {
               <div className="dot" style={{ width: "12px", height: "12px" }}></div>
             </div>
           </div>
-        ) : (
-          <>
-            {homepageData.sections.map((section, index) => {
+        </div>
+      ) : (
+        <>
+          {(() => {
+            const elements = [];
+
+            // Render Sections in Order
+            homepageData.sections.forEach((section, index) => {
+              let sectionComponent = null;
+
+              if (section.section_type === 'hero') {
+                sectionComponent = <HomeHero slides={homepageData.hero_sliders || []} onBannerClick={handleBannerClick} />;
+              }
+
               if (section.section_type === 'explore_menu') {
-                return <ExploreMenu key={section.id} />;
+                sectionComponent = <ExploreMenu key={`exp-${section.id}`} title={section.title || "EXPLORE MENU"} subtitle={section.subtitle || "VIEW ALL"} />;
               }
 
               if (section.section_type === 'product_slider') {
@@ -151,15 +159,13 @@ const HomePage = () => {
                   }
                 }
 
-                if (items.length === 0) return null;
-
-                return (
-                  <div key={section.id} style={{ position: "relative", paddingBottom: "20px" }}>
+                sectionComponent = (
+                  <div key={`prod-${section.id}`} style={{ position: "relative", paddingBottom: "20px" }}>
                     <HomeProductSlider title={section.title} items={items} sliderType={section.slider_type || 'regular'} />
                     {section.content_data === 'filter:top_deals' && (
                       <div style={{ textAlign: "center", marginTop: "15px" }}>
                         <button onClick={() => navigate("/deals")} className="btn-view-all-deals">
-                          Explore All Deals <FaArrowRight style={{ marginLeft: "8px" }} />
+                          {section.subtitle || "Explore All Deals"} <FaArrowRight style={{ marginLeft: "8px" }} />
                         </button>
                       </div>
                     )}
@@ -183,8 +189,8 @@ const HomePage = () => {
                 }
 
                 if (isSlider) {
-                  return (
-                    <div className="home-banners-container" key={section.id} style={{ margin: '30px 0' }}>
+                  sectionComponent = (
+                    <div className="home-banners-container" key={`ban-${section.id}`} style={{ margin: '30px 0' }}>
                       <Swiper
                         modules={[Autoplay, Pagination, Navigation]}
                         spaceBetween={0}
@@ -197,7 +203,7 @@ const HomePage = () => {
                       >
                         {slideUrls.map((slide, idx) => {
                           const isObject = typeof slide === 'object' && slide !== null;
-                          const bgImage = isObject ? slide.image_url : slide;
+                          const bgImage = optimizeCloudinaryImage(isObject ? slide.image_url : slide, 1200);
                           const title = isObject ? (slide.title || section.title) : section.title;
                           const subtitle = isObject ? (slide.subtitle || section.subtitle) : section.subtitle;
                           const linkUrl = isObject ? (slide.link_url || section.link_url) : section.link_url;
@@ -208,18 +214,6 @@ const HomePage = () => {
                                 className="promo-banner-card"
                                 style={{ backgroundImage: `url(${bgImage})`, cursor: linkUrl ? 'pointer' : 'default', height: '100%', margin: 0 }}
                               >
-                                {/* User requested to hide content and overlay so they can use text embedded in the image */}
-                                {/* <div className="banner-overlay">
-                                  <div className="banner-content">
-                                    <h2 className="banner-title">{title}</h2>
-                                    <p className="banner-subtitle">{subtitle}</p>
-                                    {linkUrl && (
-                                      <button className="banner-action-btn">
-                                        Explore
-                                      </button>
-                                    )}
-                                  </div>
-                                </div> */}
                               </div>
                             </SwiperSlide>
                           );
@@ -227,44 +221,75 @@ const HomePage = () => {
                       </Swiper>
                     </div>
                   );
-                }
-
-                // Default static banner
-                return (
-                  <div className="home-banners-container" key={section.id} style={{ margin: '30px 0' }}>
-                    <div 
-                      className="promo-banner-card"
-                      style={{ backgroundImage: `url(${section.image_url})`, cursor: section.link_url ? 'pointer' : 'default' }}
-                      onClick={() => section.link_url && handleBannerClick(section.link_url)}
-                    >
-                      {/* User requested to hide content and overlay so they can use text embedded in the image */}
-                      {/* <div className="banner-overlay">
-                        <div className="banner-content">
-                          <h2 className="banner-title">{section.title}</h2>
-                          <p className="banner-subtitle">{section.subtitle}</p>
-                          {section.link_url && (
-                            <button className="banner-action-btn">
-                              Explore
-                            </button>
-                          )}
-                        </div>
-                      </div> */}
+                } else {
+                  // Default static banner
+                  sectionComponent = (
+                    <div className="home-banners-container" key={`ban-${section.id}`} style={{ margin: '30px 0' }}>
+                      <div 
+                        className="promo-banner-card"
+                        style={{ backgroundImage: `url(${optimizeCloudinaryImage(section.image_url, 1200)})`, cursor: section.link_url ? 'pointer' : 'default' }}
+                        onClick={() => section.link_url && handleBannerClick(section.link_url)}
+                      >
+                      </div>
                     </div>
-                  </div>
-                );
+                  );
+                }
               }
 
-              return null;
-            })}
+              // Push section
+              if (sectionComponent) {
+                if (section.section_type === 'hero') {
+                  elements.push(
+                    <div key={`wrapper-${section.id}`} className="w-100 mb-2 mt-2">
+                      {sectionComponent}
+                    </div>
+                  );
+                } else {
+                  elements.push(
+                    <div key={`wrapper-${section.id}`} className="container-fluid px-3 px-md-5 pt-3 pb-2">
+                      {sectionComponent}
+                    </div>
+                  );
+                }
+              }
+            });
 
-            {homepageData.sections.length === 0 && (
-              <p style={{ textAlign: "center", color: "#64748b", marginTop: "20px" }}>
-                Homepage is currently empty. Add sections from the Admin Panel.
-              </p>
-            )}
-          </>
-        )}
-      </div>
+            // Empty state message
+            if (elements.length === 0) {
+              elements.push(
+                <div key="empty" className="container-fluid px-3 px-md-5 py-5" style={{ minHeight: "50vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ textAlign: "center", animation: "fadeIn 1s ease-out" }}>
+                    <div style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "80px",
+                      height: "80px",
+                      borderRadius: "50%",
+                      background: "rgba(239, 68, 68, 0.1)",
+                      color: "#ef4444",
+                      marginBottom: "20px",
+                      animation: "bounceIcon 2s infinite ease-in-out"
+                    }}>
+                      <FaBoxOpen size={40} />
+                    </div>
+                    <h3 style={{ color: "#fff", marginBottom: "10px", fontWeight: "600", letterSpacing: "1px" }}>Nothing Here Yet!</h3>
+                    <p style={{ color: "#94a3b8", maxWidth: "400px", margin: "0 auto", lineHeight: "1.6" }}>
+                      {homepageData.settings?.empty_homepage_message || "We are currently updating our menu and offers. Please check back soon!"}
+                    </p>
+                  </div>
+                  <style>{`
+                    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                    @keyframes bounceIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+                  `}</style>
+                </div>
+              );
+            }
+
+            return elements;
+          })()}
+        </>
+      )}
     </div>
   );
 };

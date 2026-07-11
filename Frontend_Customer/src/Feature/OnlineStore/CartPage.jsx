@@ -8,6 +8,7 @@ import {
   FaShoppingBag,
 } from "react-icons/fa";
 import { useCart } from "../../Context/CartContext";
+import { optimizeCloudinaryImage } from "../../utils/imageOptimizer";
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ const CartPage = () => {
           {cartItems.map((item) => (
             <div key={item.id} className="web-cart-item">
               <img
-                src={item.img || "https://via.placeholder.com/150"}
+                src={optimizeCloudinaryImage(item.img || "https://via.placeholder.com/150", 150)}
                 alt={item.title}
                 className="wci-img"
               />

@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import { useCart } from "../../Context/CartContext";
 import { FaPlus } from "react-icons/fa";
 import PopupCard from "./PopupCard";
+import { optimizeCloudinaryImage } from "../../utils/imageOptimizer";
 import "./ProductCard.css"; // 🔥 Separate CSS link
 
 const ProductCard = ({
@@ -23,8 +24,9 @@ const ProductCard = ({
     item?.desc ||
     "Spicy, crunchy, and freshly prepared for you.";
   const finalPrice = price || item?.price || 0;
-  const finalImage =
+  const finalImageRaw =
     image || item?.img || "https://placehold.co/600x400?text=No+Image";
+  const finalImage = optimizeCloudinaryImage(finalImageRaw, 500);
 
   const openPopup = () => {
     setIsOpen(true);

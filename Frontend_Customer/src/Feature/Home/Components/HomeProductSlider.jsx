@@ -9,6 +9,7 @@ import "swiper/css/effect-coverflow";
 import "swiper/css/effect-fade";
 import "swiper/css/pagination";
 import { EffectCards, EffectCoverflow, EffectFade, Pagination } from "swiper/modules";
+import { optimizeCloudinaryImage } from "../../../utils/imageOptimizer";
 import "./Slider.css";
 
 const HomeProductSlider = ({ title, items, sliderType = "regular" }) => {
@@ -102,7 +103,7 @@ const HomeProductSlider = ({ title, items, sliderType = "regular" }) => {
             {activeDeal && (
               <>
                 {/* Glowing background behind the card */}
-                <div className="showcase-bg-glow" style={{ backgroundImage: `url(${activeDeal.img})` }}></div>
+                <div className="showcase-bg-glow" style={{ backgroundImage: `url(${optimizeCloudinaryImage(activeDeal.img, 800)})` }}></div>
                 <div className="showcase-hero-card-wrapper">
                   <ProductCard
                     item={activeDeal}
@@ -176,7 +177,7 @@ const HomeProductSlider = ({ title, items, sliderType = "regular" }) => {
         <div className="dynamic-bento-container">
           {items.slice(0, 5).map((item, index) => (
             <div key={item.id} className={`bento-card bento-card-${index + 1}`}>
-              <div className="bento-bg" style={{ backgroundImage: `url(${item.img})` }}></div>
+              <div className="bento-bg" style={{ backgroundImage: `url(${optimizeCloudinaryImage(item.img, 400)})` }}></div>
               <div className="bento-content-wrapper">
                 <ProductCard
                   item={item}
@@ -217,7 +218,7 @@ const HomeProductSlider = ({ title, items, sliderType = "regular" }) => {
                 }}
               >
                 <div className="parallax-card-inner">
-                  <div className="parallax-bg" style={{ backgroundImage: `url(${item.img})` }}></div>
+                  <div className="parallax-bg" style={{ backgroundImage: `url(${optimizeCloudinaryImage(item.img, 600)})` }}></div>
                   <div className="parallax-content">
                     <ProductCard item={item} image={item.img} title={item.name} description={item.description} price={item.price} isTopDeal={item.isTopDeal} isBestSeller={item.isBestSeller} />
                   </div>
@@ -275,7 +276,7 @@ const HomeProductSlider = ({ title, items, sliderType = "regular" }) => {
                   <ProductCard item={item} image={item.img} title={item.name} description={item.description} price={item.price} isTopDeal={item.isTopDeal} isBestSeller={item.isBestSeller} />
                 </div>
                 <div className="split-right">
-                  <img src={item.img} alt={item.name} className="split-hero-img" />
+                  <img src={optimizeCloudinaryImage(item.img, 600)} alt={item.name} className="split-hero-img" />
                 </div>
               </SwiperSlide>
             ))}
@@ -295,7 +296,7 @@ const HomeProductSlider = ({ title, items, sliderType = "regular" }) => {
         <div className="bubbles-slider-container">
           <div className="bubbles-space">
             {items.slice(0, 7).map((item, index) => (
-              <div key={item.id} className={`bubble-item bubble-${index + 1}`} style={{ backgroundImage: `url(${item.img})` }}>
+              <div key={item.id} className={`bubble-item bubble-${index + 1}`} style={{ backgroundImage: `url(${optimizeCloudinaryImage(item.img, 400)})` }}>
                 <div className="bubble-card-wrapper">
                   <ProductCard item={item} image={item.img} title={item.name} description={item.description} price={item.price} isTopDeal={item.isTopDeal} isBestSeller={item.isBestSeller} />
                 </div>
@@ -307,7 +308,7 @@ const HomeProductSlider = ({ title, items, sliderType = "regular" }) => {
         <div className="skewed-slider-container">
           <div className="skewed-grid">
             {items.slice(0, 4).map((item) => (
-              <div key={item.id} className="skewed-card-wrapper" style={{ backgroundImage: `url(${item.img})` }}>
+              <div key={item.id} className="skewed-card-wrapper" style={{ backgroundImage: `url(${optimizeCloudinaryImage(item.img, 600)})` }}>
                 <div className="skewed-content">
                    <ProductCard item={item} image={item.img} title={item.name} description={item.description} price={item.price} isTopDeal={item.isTopDeal} isBestSeller={item.isBestSeller} />
                 </div>
@@ -320,7 +321,7 @@ const HomeProductSlider = ({ title, items, sliderType = "regular" }) => {
           <div className="inventory-grid">
             {items.slice(0, 8).map((item) => (
               <div key={item.id} className="inventory-slot">
-                <img src={item.img} alt={item.name} className="inventory-icon" />
+                <img src={optimizeCloudinaryImage(item.img, 200)} alt={item.name} className="inventory-icon" />
                 <div className="inventory-hologram">
                    <ProductCard item={item} image={item.img} title={item.name} description={item.description} price={item.price} isTopDeal={item.isTopDeal} isBestSeller={item.isBestSeller} />
                 </div>
@@ -331,7 +332,7 @@ const HomeProductSlider = ({ title, items, sliderType = "regular" }) => {
       ) : sliderType === "vertical-accordion" ? (
         <div className="vertical-accordion-container">
           {items.slice(0, 5).map((item) => (
-            <div key={item.id} className="v-accordion-strip" style={{ backgroundImage: `url(${item.img})` }}>
+            <div key={item.id} className="v-accordion-strip" style={{ backgroundImage: `url(${optimizeCloudinaryImage(item.img, 400)})` }}>
               <div className="v-accordion-title-bar">
                 <h3>{item.name}</h3>
                 <span className="v-price">Rs. {item.price}</span>

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { optimizeCloudinaryImage } from "../../../utils/imageOptimizer";
 
-const ExploreMenu = () => {
+const ExploreMenu = ({ title = "EXPLORE MENU", subtitle = "VIEW ALL" }) => {
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,9 +60,9 @@ const ExploreMenu = () => {
   return (
     <div className="explore-menu-container">
       <div className="category-header">
-        <h3 className="menu-heading">EXPLORE MENU</h3>
+        <h3 className="menu-heading">{title}</h3>
         <button className="view-all-btn" onClick={() => navigate("/menu")}>
-          VIEW ALL
+          {subtitle}
         </button>
       </div>
 
@@ -117,7 +118,7 @@ const ExploreMenu = () => {
                 <div className="circle-img-wrapper">
                   <img
                     className="circle-cat-img"
-                    src={cat.img}
+                    src={optimizeCloudinaryImage(cat.img, 300)}
                     alt={cat.name}
                     onError={(e) => {
                       e.target.src =

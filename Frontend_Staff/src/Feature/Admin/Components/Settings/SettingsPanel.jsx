@@ -16,7 +16,6 @@ import OperationalSettings from "./Components/OperationalSettings";
 import FinancialSettings from "./Components/FinancialSettings";
 import NotificationSettings from "./Components/NotificationSettings";
 import SecuritySettings from "./Components/SecuritySettings";
-import FooterSettings from "./Components/FooterSettings";
 
 const SettingsPanel = () => {
   const [activeTab, setActiveTab] = useState("general");
@@ -52,7 +51,6 @@ const SettingsPanel = () => {
     { id: "operations", label: "Operations", icon: <FaMotorcycle /> },
     { id: "finance", label: "Financial", icon: <FaDollarSign /> },
     { id: "notifications", label: "Notifications", icon: <FaBell /> },
-    { id: "footer", label: "Footer", icon: <FaStore /> }, // using FaStore for footer as a generic layout icon, or maybe we can import FaLayerGroup if available. We will just use FaSave or something else if needed, but for now we'll stick to FaStore or omit
     { id: "security", label: "Security", icon: <FaLock /> },
   ];
 
@@ -106,7 +104,6 @@ const SettingsPanel = () => {
               handleToggle={handleToggle}
             />
           )}
-          {activeTab === "footer" && <FooterSettings />}
           {activeTab === "security" && <SecuritySettings />}
         </div>
       </div>

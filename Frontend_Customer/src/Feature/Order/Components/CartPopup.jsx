@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../../Context/CartContext";
+import { optimizeCloudinaryImage } from "../../../utils/imageOptimizer";
 import "../styles/index.css";
 import {
   FaTimes,
@@ -78,7 +79,7 @@ const CartPopup = () => {
               >
                 <div className="cart-img-box">
                   <img
-                    src={item.img || item.image}
+                    src={optimizeCloudinaryImage(item.img || item.image, 200)}
                     alt={item.title}
                     className="cart-item-img"
                   />

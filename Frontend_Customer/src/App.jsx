@@ -20,6 +20,7 @@ import DealsPage from "./Feature/Home/Components/DealsPage";
 import AboutUs from "./Feature/OnlineStore/AboutUs";
 import PrivacyPolicy from "./Feature/OnlineStore/PrivacyPolicy";
 import TermsAndConditions from "./Feature/OnlineStore/TermsAndConditions";
+import NotFoundPage from "./Feature/OnlineStore/NotFoundPage";
 
 // 👨‍💼 STAFF PANELS IMPORTS
 import LoginForm from "./Feature/Auth/LoginForm";
@@ -108,6 +109,7 @@ const MainContent = () => {
           <Route path="/about" element={<AboutUs />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsAndConditions />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         {/* 🔓 LOGIN ROUTE (Open for all) */}

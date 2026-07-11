@@ -184,10 +184,17 @@
   }
 }
 
+/* Base state for accordion icons (hidden on desktop) */
+.accordion-icon {
+  display: none;
+  font-size: 14px;
+  transition: transform 0.3s ease;
+}
+
 @media screen and (max-width: 576px) {
   .footer-grid {
     grid-template-columns: 1fr;
-    gap: 30px;
+    gap: 15px; /* Reduced gap since columns are collapsable now */
   }
   
   .footer-top {
@@ -201,5 +208,47 @@
   
   .footer-brand-desc {
     max-width: 100%;
+    margin-bottom: 15px;
+  }
+
+  .footer-socials {
+    margin-bottom: 20px;
+  }
+
+  /* Accordion Styles */
+  .footer-col-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+  }
+
+  .accordion-icon {
+    display: block; /* Show icon on mobile */
+  }
+
+  .accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out, padding 0.4s ease-out;
+    padding-top: 0;
+  }
+
+  .footer-col.expanded .accordion-content {
+    max-height: 300px; /* Large enough to fit content */
+    padding-top: 15px;
+    padding-bottom: 15px;
+  }
+
+  .footer-col.expanded .accordion-icon {
+    transform: rotate(180deg);
+  }
+
+  .brand-col .footer-col-title {
+    border-bottom: none;
+    cursor: default;
   }
 }

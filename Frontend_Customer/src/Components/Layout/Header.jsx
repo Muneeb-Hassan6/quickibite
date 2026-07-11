@@ -6,6 +6,7 @@ import { useCart } from "../../Context/CartContext";
 
 // 🔥 Bolt ki jagah FaFire import kiya
 import { FaBox, FaSearch, FaFire } from "react-icons/fa";
+import { optimizeCloudinaryImage } from "../../utils/imageOptimizer";
 
 const Header = () => {
   const [showOrders, setShowOrders] = useState(false);
@@ -124,7 +125,7 @@ const Header = () => {
                           navigate(`/menu?search=${encodeURIComponent(item.name)}`);
                         }}
                       >
-                        <img src={item.img} alt={item.name} />
+                        <img src={optimizeCloudinaryImage(item.img, 100)} alt={item.name} />
                         <div className="item-details">
                           <span className="item-name">{item.name}</span>
                           <span className="item-price">Rs {Number(item.price).toFixed(2)}</span>
