@@ -30,23 +30,24 @@ const MenuTable = ({
 
   return (
     <div className="animate-slide-up">
-      <div className="table-controls-bar">
+      <div className="flex justify-between items-center mb-[0.938rem] gap-[0.938rem] bg-[var(--admin-panel,#141414)] p-[0.75rem_1.25rem] rounded-[0.75rem] border border-[var(--admin-border,#222)]">
         <select
-          className="category-filter-select"
+          className="bg-[rgba(255,255,255,0.05)] text-white border border-[#333] p-[0.625rem_0.938rem] rounded-[0.5rem] text-[0.875rem] font-semibold cursor-pointer outline-none min-w-[11.25rem] transition-all duration-300 focus:border-[var(--brand-red,#ef4444)] focus:bg-black"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
         >
-          <option value="All">All Categories</option>
+          <option className="bg-[#1a1a1a] text-white" value="All">All Categories</option>
           {categories.map((cat) => (
-            <option key={cat.id} value={cat.name}>
+            <option className="bg-[#1a1a1a] text-white" key={cat.id} value={cat.name}>
               {cat.name}
             </option>
           ))}
         </select>
 
-        <div className="search-box">
-          <FaSearch className="menu-search-icon" />
+        <div className="flex items-center bg-[rgba(255,255,255,0.03)] border border-[#333] px-[0.938rem] rounded-[0.5rem] transition-all duration-300 w-[18.75rem] focus-within:border-[var(--brand-red,#ef4444)] focus-within:bg-black">
+          <FaSearch className="text-[#888] text-[1rem] mr-[0.625rem] block" />
           <input
+            className="bg-transparent border-none text-white py-[0.625rem] text-[0.875rem] outline-none w-full"
             type="text"
             placeholder="Search products..."
             value={searchQuery}
@@ -55,76 +56,78 @@ const MenuTable = ({
         </div>
       </div>
 
-      <div className="table-container">
+      <div className="bg-[var(--admin-panel,#141414)] border border-[var(--admin-border,#222)] rounded-[0.75rem] overflow-x-auto mt-[0.625rem]">
         {filteredMenuItems.length > 0 ? (
-          <table className="admin-table">
+          <table className="w-full border-collapse text-left text-white">
             <thead>
               <tr>
-                <th>PRODUCT</th>
-                <th>CATEGORY</th>
-                <th>PRICE</th>
-                <th>STATUS</th>
-                <th style={{ textAlign: "right" }}>ACTIONS</th>
+                <th className="p-[1rem_1.25rem] text-[0.813rem] uppercase text-[#888] border-b border-[#222] font-extrabold tracking-[0.5px]">PRODUCT</th>
+                <th className="p-[1rem_1.25rem] text-[0.813rem] uppercase text-[#888] border-b border-[#222] font-extrabold tracking-[0.5px]">CATEGORY</th>
+                <th className="p-[1rem_1.25rem] text-[0.813rem] uppercase text-[#888] border-b border-[#222] font-extrabold tracking-[0.5px]">PRICE</th>
+                <th className="p-[1rem_1.25rem] text-[0.813rem] uppercase text-[#888] border-b border-[#222] font-extrabold tracking-[0.5px]">STATUS</th>
+                <th className="p-[1rem_1.25rem] text-[0.813rem] uppercase text-[#888] border-b border-[#222] font-extrabold tracking-[0.5px] text-right">ACTIONS</th>
               </tr>
             </thead>
             <tbody>
               {filteredMenuItems.map((item) => (
-                <tr key={item.id}>
-                  <td className="product-cell">
-                    <img
-                      src={
-                        item.img || "https://via.placeholder.com/40?text=No+Img"
-                      }
-                      alt={item.name}
-                      className="product-img-small"
-                    />
-                    <span className="product-name">{item.name}</span>
+                <tr key={item.id} className="hover:bg-[rgba(255,255,255,0.03)] transition-colors duration-200">
+                  <td className="p-[1rem_1.25rem] align-middle border-b border-[#222] text-[0.938rem] font-bold">
+                    <div className="flex items-center gap-[0.938rem]">
+                      <img
+                        src={
+                          item.img || "https://via.placeholder.com/40?text=No+Img"
+                        }
+                        alt={item.name}
+                        className="w-[2.813rem] h-[2.813rem] rounded-[0.5rem] object-cover bg-[#222] border border-[#333]"
+                      />
+                      <span className="font-extrabold text-[0.938rem] text-white">{item.name}</span>
+                    </div>
                   </td>
-                  <td>{item.category || "Uncategorized"}</td>
-                  <td>Rs {item.price}</td>
-                  <td>
+                  <td className="p-[1rem_1.25rem] align-middle border-b border-[#222] text-[0.938rem] font-bold">{item.category || "Uncategorized"}</td>
+                  <td className="p-[1rem_1.25rem] align-middle border-b border-[#222] text-[0.938rem] font-bold">Rs {item.price}</td>
+                  <td className="p-[1rem_1.25rem] align-middle border-b border-[#222] text-[0.938rem] font-bold">
                     <span
-                      className={`status-badge ${item.isAvailable ? "in-stock" : "out-of-stock"}`}
+                      className={`py-[0.313rem] px-[0.625rem] rounded-[1.25rem] text-[0.688rem] font-extrabold uppercase tracking-[0.5px] inline-block ${item.isAvailable ? "bg-[#10b981] text-white" : "bg-[#ef4444] text-white"}`}
                     >
                       {item.isAvailable ? "IN STOCK" : "OUT OF STOCK"}
                     </span>
                   </td>
-                  <td className="actions-cell">
-                    {/* 🔥 1. Add-ons Button (Paise walay add-ons ke liye) */}
-                    <button
-                      className="action-btn addon-btn"
-                      title="Add-ons / Instructions"
-                      onClick={() => onAddOns(item)}
-                      style={{ color: "#3b82f6" }}
-                    >
-                      <FaPlusCircle />
-                    </button>
+                  <td className="p-[1rem_1.25rem] align-middle border-b border-[#222] text-[0.938rem] font-bold">
+                    <div className="flex justify-end gap-[0.75rem]">
+                      {/* 🔥 1. Add-ons Button (Paise walay add-ons ke liye) */}
+                      <button
+                        className="w-[2.25rem] h-[2.25rem] rounded-[0.5rem] border border-[#333] flex justify-center items-center cursor-pointer transition-all duration-200 bg-[rgba(255,255,255,0.05)] text-[0.938rem] text-[#3b82f6] hover:bg-[rgba(59,130,246,0.15)] hover:border-[#3b82f6] hover:text-[#60a5fa] hover:scale-110"
+                        title="Add-ons / Instructions"
+                        onClick={() => onAddOns(item)}
+                      >
+                        <FaPlusCircle />
+                      </button>
 
-                    {/* 🔥 2. Recipe Button */}
-                    <button
-                      className="action-btn recipe-btn"
-                      title="Set Recipe"
-                      onClick={() => onSetRecipe(item)}
-                      style={{ color: "#10b981" }}
-                    >
-                      <FaBookOpen />
-                    </button>
+                      {/* 🔥 2. Recipe Button */}
+                      <button
+                        className="w-[2.25rem] h-[2.25rem] rounded-[0.5rem] border border-[#333] flex justify-center items-center cursor-pointer transition-all duration-200 bg-[rgba(255,255,255,0.05)] text-[0.938rem] text-[#10b981] hover:bg-[rgba(16,185,129,0.15)] hover:border-[#10b981] hover:text-[#34d399] hover:scale-110"
+                        title="Set Recipe"
+                        onClick={() => onSetRecipe(item)}
+                      >
+                        <FaBookOpen />
+                      </button>
 
-                    {/* 3. Edit Button */}
-                    <button
-                      className="action-btn edit-btn"
-                      onClick={() => onEdit(item)}
-                    >
-                      <FaEdit />
-                    </button>
+                      {/* 3. Edit Button */}
+                      <button
+                        className="w-[2.25rem] h-[2.25rem] rounded-[0.5rem] border border-[#333] flex justify-center items-center cursor-pointer transition-all duration-200 bg-[rgba(255,255,255,0.05)] text-[0.938rem] text-[#9ca3af] hover:bg-[rgba(255,255,255,0.15)] hover:border-[#555] hover:text-white hover:scale-110"
+                        onClick={() => onEdit(item)}
+                      >
+                        <FaEdit />
+                      </button>
 
-                    {/* 4. Delete Button */}
-                    <button
-                      className="action-btn delete-btn"
-                      onClick={() => onDelete(item.id)}
-                    >
-                      <FaTrash />
-                    </button>
+                      {/* 4. Delete Button */}
+                      <button
+                        className="w-[2.25rem] h-[2.25rem] rounded-[0.5rem] border border-[#333] flex justify-center items-center cursor-pointer transition-all duration-200 bg-[rgba(255,255,255,0.05)] text-[0.938rem] text-[#ef4444] hover:bg-[rgba(239,68,68,0.15)] hover:border-[#ef4444] hover:text-[#f87171] hover:scale-110"
+                        onClick={() => onDelete(item.id)}
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

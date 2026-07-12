@@ -2,8 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; // 🔥 Navigate import kiya
 import Swal from "sweetalert2"; // 🔥 Premium Alerts ke liye Swal import kiya
-import "./styles/index.css";
-
 // Components Import
 import AdminSidebar from "./Components/SharedComponents/AdminSidebar";
 import AdminHeader from "./Components/SharedComponents/AdminHeader";
@@ -100,7 +98,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="admin-container">
+    <div className="flex flex-col md:flex-row h-screen bg-[var(--admin-bg)] text-[var(--admin-text)] font-['Oswald','Inter',sans-serif] overflow-auto md:overflow-hidden transition-colors duration-300">
       {/* Sidebar Component */}
       <AdminSidebar
         activeTab={activeTab}
@@ -110,7 +108,7 @@ const AdminDashboard = () => {
         handleLogout={handleLogout}
       />
 
-      <div className="admin-main">
+      <div className="flex-1 overflow-y-auto p-[1.563rem]">
         {/* Header Component */}
         <AdminHeader
           activeTab={activeTab}

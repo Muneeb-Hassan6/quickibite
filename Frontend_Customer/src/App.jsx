@@ -1,6 +1,4 @@
 import React, { useEffect } from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "./style/App.css";
 import { Toaster } from "react-hot-toast";
 
 // 🛒 COMPONENTS & POPUPS (Order Folder se)

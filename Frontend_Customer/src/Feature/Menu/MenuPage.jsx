@@ -4,7 +4,7 @@ import Sidebar from "./Components/Sidebar";
 import SearchBar from "./Components/SearchBar";
 import MenuContent from "./Components/MenuContent";
 import Footer from "../OnlineStore/Components/Footer";
-import "./styles/index.css";
+// import "./styles/index.css"; // Removing CSS import as we migrate to Tailwind
 
 const MenuPage = () => {
   const [activeCategory, setActiveCategory] = useState("");
@@ -53,7 +53,7 @@ const MenuPage = () => {
       const containerRect = container.getBoundingClientRect();
       const elRect = el.getBoundingClientRect();
       const relativeTop = elRect.top - containerRect.top;
-      const targetScroll = container.scrollTop + relativeTop - 70; // 70px offset for sticky search bar inside main content container
+      const targetScroll = container.scrollTop + relativeTop - 70; // 4.375rem offset for sticky search bar inside main content container
       container.scrollTo({
         top: targetScroll,
         behavior: "smooth"
@@ -122,11 +122,11 @@ const MenuPage = () => {
     i.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (isLoading) return <div className="menu-loader-container"><span>Loading Delicious Food...</span></div>;
+  if (isLoading) return <div className="flex justify-center items-center h-[60vh] text-[#ef4444] gap-[0.937rem] font-bold text-[1.125rem] tracking-[1px]"><span>Loading Delicious Food...</span></div>;
 
   return (
-    <div className="menu-page-container">
-      {isSidebarOpen && <div className="mobile-sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>}
+    <div className="bg-[var(--home-bg,#0a0a0c)] min-h-[100vh] pb-[3.125rem] text-[var(--text-main,#fff)] font-['Segoe_UI',Tahoma,Geneva,Verdana,sans-serif] lg:h-[calc(100vh-4.75rem)] lg:overflow-hidden lg:flex lg:flex-col">
+      {isSidebarOpen && <div className="fixed inset-0 bg-black/80 backdrop-blur-[0.313rem] z-[10000] animate-[fadeIn_0.3s_ease]" onClick={() => setIsSidebarOpen(false)}></div>}
 
       <Sidebar
         isOpen={isSidebarOpen}
@@ -139,8 +139,8 @@ const MenuPage = () => {
         onProductClick={scrollToProduct}
       />
 
-      <div className="menu-master-layout">
-        <aside className="desktop-sidebar-wrapper d-none d-lg-block">
+      <div className="max-w-[84.375rem] mx-auto flex gap-[2.188rem] p-[0.937rem] lg:p-[1.874rem_1.25rem] items-start lg:h-full lg:overflow-hidden w-full box-border">
+        <aside className="hidden lg:block">
           <Sidebar
             isDesktop={true}
             categories={categories}
@@ -152,7 +152,7 @@ const MenuPage = () => {
           />
         </aside>
 
-        <main className="menu-main-content" ref={contentRef}>
+        <main className="flex-1 w-full lg:h-full lg:overflow-y-auto lg:pr-[0.938rem]" ref={contentRef}>
           <SearchBar
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
@@ -171,7 +171,9 @@ const MenuPage = () => {
           />
 
           {/* 4. Footer */}
-          <Footer style={{ marginTop: "40px" }} />
+        <div className="mt-10">
+          <Footer />
+        </div>
         </main>
       </div>
     </div>

@@ -1,9 +1,0 @@
-/* =========================================
-   MENU MODULE - MASTER CSS
-   ========================================= */
-@import './MenuManager.css';
-@import './MenuTable.css';
-@import './MenuModal.css';
-@import './CategoryModal.css';
-@import './RecipeModal.css';
-@import './AddonModal.css';

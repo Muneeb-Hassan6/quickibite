@@ -99,17 +99,16 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
   };
 
   return (
-    <div className="admin-modal-overlay override-zindex" onClick={onClose}>
+    <div className="fixed top-0 left-0 right-0 bottom-0 bg-[rgba(0,0,0,0.6)] backdrop-blur-[6px] flex justify-center items-center z-[99999]" onClick={onClose}>
       <div
-        className="admin-modal-box staff-modal-box animate-slide-up"
+        className="w-[90%] max-w-[37.5rem] bg-[var(--admin-bg,#141414)] border border-[var(--admin-border,#222)] rounded-[1rem] p-[1.563rem] shadow-[0_10px_30px_rgba(0,0,0,0.5)] relative animate-slide-up max-h-[90vh] overflow-y-auto custom-scrollbar"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxHeight: "90vh", overflowY: "auto" }} // 🔥 YEH LINE ADD KARNI HY
       >
-        <div className="modal-header-flex">
-          <h3 className="modal-title">Add New Employee</h3>
+        <div className="flex justify-between items-center mb-[1.25rem] w-full">
+          <h3 className="uppercase flex items-center gap-[0.625rem] text-white m-0 text-[1.25rem] font-black">Add New Employee</h3>
           <button
             type="button"
-            className="btn-close-modal-clean"
+            className="bg-transparent border-none text-[#949191] text-[1.25rem] cursor-pointer transition-colors duration-300 hover:text-white static !m-0"
             onClick={onClose}
           >
             <FaTimes />
@@ -117,53 +116,53 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="admin-input-group">
-            <label>Full Name</label>
+          <div className="mb-[0.938rem]">
+            <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Full Name</label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
               required
-              className="admin-input-field custom-admin-input"
+              className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
               placeholder="e.g. Ali Khan"
             />
           </div>
 
-          <div className="modal-form-row">
-            <div className="admin-input-group input-col">
-              <label>Role</label>
+          <div className="flex gap-[0.938rem] mt-[0.938rem] w-full flex-col md:flex-row">
+            <div className="mb-[0.938rem] flex-1 min-w-0">
+              <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Role</label>
               <select
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className="admin-input-field custom-admin-input"
+                className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
               >
-                <option value="Admin">Admin</option>
-                <option value="Cashier">Cashier</option>
-                <option value="Chef">Chef</option>
-                <option value="Manager">Manager</option>
-                <option value="Rider">Rider</option>
-                <option value="Waiter">Waiter</option>
-                <option value="Dispatcher">Dispatcher</option>
+                <option className="bg-[#111] text-white" value="Admin">Admin</option>
+                <option className="bg-[#111] text-white" value="Cashier">Cashier</option>
+                <option className="bg-[#111] text-white" value="Chef">Chef</option>
+                <option className="bg-[#111] text-white" value="Manager">Manager</option>
+                <option className="bg-[#111] text-white" value="Rider">Rider</option>
+                <option className="bg-[#111] text-white" value="Waiter">Waiter</option>
+                <option className="bg-[#111] text-white" value="Dispatcher">Dispatcher</option>
               </select>
             </div>
-            <div className="admin-input-group input-col">
-              <label>Monthly Salary (Rs)</label>
+            <div className="mb-[0.938rem] flex-1 min-w-0">
+              <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Monthly Salary (Rs)</label>
               <input
                 type="number"
                 name="salary"
                 value={formData.salary}
                 onChange={handleChange}
                 required
-                className="admin-input-field custom-admin-input"
+                className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
                 placeholder="e.g. 30000"
               />
             </div>
           </div>
 
-          <div className="admin-input-group">
-            <label>Phone Number</label>
+          <div className="mb-[0.938rem]">
+            <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Phone Number</label>
             <input
               type="tel"
               name="phone"
@@ -182,86 +181,61 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
                 }
               }}
               required
-              className={`admin-input-field custom-admin-input ${phoneError ? "border-red-500" : ""}`}
-              style={phoneError ? { borderColor: "#ef4444" } : {}}
+              className={`w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black ${phoneError ? "!border-red-500" : ""}`}
               placeholder="e.g. 03001234567"
             />
             {phoneError && (
-              <span style={{ color: "#ef4444", fontSize: "12px", marginTop: "5px", display: "inline-block" }}>
+              <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">
                 {phoneError}
               </span>
             )}
           </div>
 
-          <hr
-            style={{
-              border: "1px solid var(--admin-border)",
-              margin: "20px 0",
-            }}
-          />
+          <hr className="border border-[var(--admin-border,#222)] my-[1.25rem]" />
 
-          <p
-            style={{
-              color: "var(--brand-red, #ef4444)",
-              fontSize: "12px",
-              marginTop: 0,
-              fontWeight: "bold",
-            }}
-          >
+          <p className="text-[var(--brand-red,#ef4444)] text-[0.75rem] mt-0 font-bold">
             System Access Credentials (Required)
           </p>
           {/* 🔥 CONDITIONAL RENDERING: Sirf tab dikhega jab role 'Rider' hoga */}
           {formData.role === "Rider" && (
             <>
-              <hr
-                style={{
-                  border: "1px solid var(--admin-border)",
-                  margin: "20px 0",
-                }}
-              />
-              <p
-                style={{
-                  color: "var(--brand-yellow, #eab308)",
-                  fontSize: "12px",
-                  marginTop: 0,
-                  fontWeight: "bold",
-                }}
-              >
+              <hr className="border border-[var(--admin-border,#222)] my-[1.25rem]" />
+              <p className="text-[var(--brand-yellow,#eab308)] text-[0.75rem] mt-0 font-bold">
                 Rider Details (Required)
               </p>
 
-              <div className="modal-form-row animate-slide-up">
-                <div className="admin-input-group input-col">
-                  <label>Bike Number</label>
+              <div className="flex gap-[0.938rem] mt-[0.938rem] w-full flex-col md:flex-row animate-slide-up">
+                <div className="mb-[0.938rem] flex-1 min-w-0">
+                  <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Bike Number</label>
                   <input
                     type="text"
                     name="bike_number"
                     value={formData.bike_number}
                     onChange={handleChange}
                     required={formData.role === "Rider"} // Rider ke liye lazmi
-                    className="admin-input-field custom-admin-input"
+                    className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
                     placeholder="e.g. LEB-1234"
                   />
                 </div>
-                <div className="admin-input-group input-col">
-                  <label>License Number</label>
+                <div className="mb-[0.938rem] flex-1 min-w-0">
+                  <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">License Number</label>
                   <input
                     type="text"
                     name="license_number"
                     value={formData.license_number}
                     onChange={handleChange}
                     required={formData.role === "Rider"} // Rider ke liye lazmi
-                    className="admin-input-field custom-admin-input"
+                    className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
                     placeholder="e.g. DL-9876543"
                   />
                 </div>
               </div>
             </>
           )}
-          <div className="modal-form-row">
-            <div className="admin-input-group input-col">
-              <label>
-                <FaUserLock style={{ marginRight: "5px" }} /> Username
+          <div className="flex gap-[0.938rem] mt-[0.938rem] w-full flex-col md:flex-row">
+            <div className="mb-[0.938rem] flex-1 min-w-0">
+              <label className="flex items-center text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">
+                <FaUserLock className="mr-[0.313rem]" /> Username
               </label>
               <input
                 type="text"
@@ -269,13 +243,13 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
                 value={formData.username}
                 onChange={handleChange}
                 required
-                className="admin-input-field custom-admin-input"
+                className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
                 placeholder="e.g. ali_cashier"
               />
             </div>
-            <div className="admin-input-group input-col">
-              <label>
-                <FaKey style={{ marginRight: "5px" }} /> Password
+            <div className="mb-[0.938rem] flex-1 min-w-0">
+              <label className="flex items-center text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">
+                <FaKey className="mr-[0.313rem]" /> Password
               </label>
               <input
                 type="text"
@@ -283,16 +257,16 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="admin-input-field custom-admin-input"
+                className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
                 placeholder="Enter password"
               />
             </div>
           </div>
 
-          <div className="modal-footer-actions">
+          <div className="mt-[1.875rem] border-t border-[#333] pt-[1.25rem] flex justify-end gap-[0.938rem] w-full">
             <button
               type="button"
-              className="btn-cancel-modal-clean"
+              className="bg-transparent text-white border border-[#333] p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -300,10 +274,10 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
             </button>
             <button
               type="submit"
-              className="btn-save-modal-clean"
+              className="bg-[var(--brand-red,#ef4444)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[0_4px_15px_rgba(239,68,68,0.4)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.6)] flex items-center justify-center disabled:opacity-50"
               disabled={isSubmitting}
             >
-              <FaSave style={{ marginRight: "5px" }} />{" "}
+              <FaSave className="mr-[0.313rem]" />{" "}
               {isSubmitting ? "Saving..." : "Hire Staff"}
             </button>
           </div>

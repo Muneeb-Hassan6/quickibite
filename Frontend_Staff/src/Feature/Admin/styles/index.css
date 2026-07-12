@@ -1,8 +1,4 @@
 /* =========================================
    ADMIN PORTAL - MASTER CSS
    ========================================= */
-@import './AdminLayout.css';
-@import './DashboardHome.css';
-@import '../styles/AdminSidebar.css';
-@import '../styles/AdminHeader.css';
 @import '../styles/LogoutModal.css';

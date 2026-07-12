@@ -11,7 +11,7 @@ import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 
-import "./styles/index.css";
+
 import { useNavigate } from "react-router-dom"; // 🔥 Yeh add karein
 import { FaArrowRight, FaBoxOpen } from "react-icons/fa"; // 🔥 Yeh icon add karein
 import ReactDOM from "react-dom";
@@ -113,14 +113,14 @@ const HomePage = () => {
   const allTopDeals = [...comboDeals, ...menuTopDeals];
 
   return (
-    <div className="home-container home-page-wrapper">
+    <div className="bg-[var(--home-bg,#0a0a0c)] min-h-[100vh] text-[var(--text-main,#fff)] pb-[10vh] md:pb-[3.125rem] font-['Segoe_UI',Tahoma,Geneva,Verdana,sans-serif] m-0 pt-0">
       {isLoading ? (
-        <div className="container-fluid px-3 px-md-5 py-4">
-          <div style={{ display: "flex", justifyContent: "center", padding: "50px 0" }}>
+        <div className="w-full px-4 md:px-12 py-6">
+          <div className="flex justify-center py-[3.125rem]">
             <div className="dot-loader">
-              <div className="dot" style={{ width: "12px", height: "12px" }}></div>
-              <div className="dot" style={{ width: "12px", height: "12px" }}></div>
-              <div className="dot" style={{ width: "12px", height: "12px" }}></div>
+              <div className="dot w-3 h-3"></div>
+              <div className="dot w-3 h-3"></div>
+              <div className="dot w-3 h-3"></div>
             </div>
           </div>
         </div>
@@ -160,12 +160,12 @@ const HomePage = () => {
                 }
 
                 sectionComponent = (
-                  <div key={`prod-${section.id}`} style={{ position: "relative", paddingBottom: "20px" }}>
+                  <div key={`prod-${section.id}`} className="relative pb-5">
                     <HomeProductSlider title={section.title} items={items} sliderType={section.slider_type || 'regular'} />
                     {section.content_data === 'filter:top_deals' && (
-                      <div style={{ textAlign: "center", marginTop: "15px" }}>
-                        <button onClick={() => navigate("/deals")} className="btn-view-all-deals">
-                          {section.subtitle || "Explore All Deals"} <FaArrowRight style={{ marginLeft: "8px" }} />
+                      <div className="text-center mt-[0.938rem]">
+                        <button onClick={() => navigate("/deals")} className="bg-transparent border-2 border-red-500 text-red-500 px-6 py-2 rounded-full font-['Oswald',sans-serif] font-bold tracking-wider hover:bg-red-500 hover:text-white transition-all duration-300 inline-flex items-center justify-center">
+                          {section.subtitle || "Explore All Deals"} <FaArrowRight className="ml-2" />
                         </button>
                       </div>
                     )}
@@ -190,7 +190,7 @@ const HomePage = () => {
 
                 if (isSlider) {
                   sectionComponent = (
-                    <div className="home-banners-container" key={`ban-${section.id}`} style={{ margin: '30px 0' }}>
+                    <div className="home-banners-container my-[1.875rem]" key={`ban-${section.id}`}>
                       <Swiper
                         modules={[Autoplay, Pagination, Navigation]}
                         spaceBetween={0}
@@ -211,8 +211,8 @@ const HomePage = () => {
                           return (
                             <SwiperSlide key={idx} onClick={() => linkUrl && handleBannerClick(linkUrl)}>
                               <div 
-                                className="promo-banner-card"
-                                style={{ backgroundImage: `url(${bgImage})`, cursor: linkUrl ? 'pointer' : 'default', height: '100%', margin: 0 }}
+                                className="w-full h-[11.25rem] md:h-[18.75rem] bg-cover bg-center bg-no-repeat rounded-[0.937rem] transition-transform duration-300 hover:scale-[1.02]"
+                                style={{ backgroundImage: `url(${bgImage})`, cursor: linkUrl ? 'pointer' : 'default', margin: 0 }}
                               >
                               </div>
                             </SwiperSlide>
@@ -224,9 +224,9 @@ const HomePage = () => {
                 } else {
                   // Default static banner
                   sectionComponent = (
-                    <div className="home-banners-container" key={`ban-${section.id}`} style={{ margin: '30px 0' }}>
+                    <div className="home-banners-container my-[1.875rem]" key={`ban-${section.id}`}>
                       <div 
-                        className="promo-banner-card"
+                        className="w-full h-[11.25rem] md:h-[18.75rem] bg-cover bg-center bg-no-repeat rounded-[0.937rem] shadow-lg transition-transform duration-300 hover:scale-[1.02]"
                         style={{ backgroundImage: `url(${optimizeCloudinaryImage(section.image_url, 1200)})`, cursor: section.link_url ? 'pointer' : 'default' }}
                         onClick={() => section.link_url && handleBannerClick(section.link_url)}
                       >
@@ -240,13 +240,13 @@ const HomePage = () => {
               if (sectionComponent) {
                 if (section.section_type === 'hero') {
                   elements.push(
-                    <div key={`wrapper-${section.id}`} className="w-100 mb-2 mt-2">
+                    <div key={`wrapper-${section.id}`} className="w-full mb-2 mt-2">
                       {sectionComponent}
                     </div>
                   );
                 } else {
                   elements.push(
-                    <div key={`wrapper-${section.id}`} className="container-fluid px-3 px-md-5 pt-3 pb-2">
+                    <div key={`wrapper-${section.id}`} className="w-full px-4 md:px-12 pt-4 pb-2">
                       {sectionComponent}
                     </div>
                   );
@@ -257,8 +257,8 @@ const HomePage = () => {
             // Empty state message
             if (elements.length === 0) {
               elements.push(
-                <div key="empty" className="container-fluid px-3 px-md-5 py-5" style={{ minHeight: "50vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ textAlign: "center", animation: "fadeIn 1s ease-out" }}>
+                <div key="empty" className="w-full px-4 md:px-12 py-12 min-h-[50vh] flex items-center justify-center">
+                  <div className="text-center animate-pulse">
                     <div style={{
                       display: "inline-flex",
                       alignItems: "center",
@@ -273,8 +273,8 @@ const HomePage = () => {
                     }}>
                       <FaBoxOpen size={40} />
                     </div>
-                    <h3 style={{ color: "#fff", marginBottom: "10px", fontWeight: "600", letterSpacing: "1px" }}>Nothing Here Yet!</h3>
-                    <p style={{ color: "#94a3b8", maxWidth: "400px", margin: "0 auto", lineHeight: "1.6" }}>
+                    <h3 className="text-white mb-2.5 font-semibold tracking-wide">Nothing Here Yet!</h3>
+                    <p className="text-slate-400 max-w-[25rem] mx-auto leading-relaxed">
                       {homepageData.settings?.empty_homepage_message || "We are currently updating our menu and offers. Please check back soon!"}
                     </p>
                   </div>

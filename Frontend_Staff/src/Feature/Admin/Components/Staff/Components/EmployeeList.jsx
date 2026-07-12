@@ -122,7 +122,6 @@ const EmployeeList = () => {
     }
   };
 
-  // 🔥 CLEAN LOGIC: Returns pure CSS class name based on role
   const getRoleClass = (roleName) => {
     const role = (roleName || "").toLowerCase();
     const knownRoles = [
@@ -135,74 +134,89 @@ const EmployeeList = () => {
     ];
 
     if (knownRoles.includes(role)) {
-      return `role-${role}`;
+      switch (role) {
+        case "manager":
+          return "bg-[rgba(108,92,231,0.15)] text-[#a29bfe] border border-[rgba(108,92,231,0.3)]";
+        case "chef":
+          return "bg-[rgba(245,158,11,0.15)] text-[#fbbf24] border border-[rgba(245,158,11,0.3)]";
+        case "rider":
+          return "bg-[rgba(16,185,129,0.15)] text-[#34d399] border border-[rgba(16,185,129,0.3)]";
+        case "waiter":
+          return "bg-[rgba(239,68,68,0.15)] text-[#f87171] border border-[rgba(239,68,68,0.3)]";
+        case "cashier":
+          return "bg-[rgba(59,130,246,0.15)] text-[#60a5fa] border border-[rgba(59,130,246,0.3)]";
+        case "dispatcher":
+          return "bg-[rgba(236,72,153,0.15)] text-[#f472b6] border border-[rgba(236,72,153,0.3)]";
+        default:
+          return "bg-[rgba(156,163,175,0.15)] text-[#9ca3af] border border-[rgba(156,163,175,0.3)]";
+      }
     }
     // Agar koi naya role hy toh default VIP gray class milegi
-    return "role-default";
+    return "bg-[rgba(156,163,175,0.15)] text-[#9ca3af] border border-[rgba(156,163,175,0.3)]";
   };
 
   if (isLoading)
-    return <div className="loading-state-text">Loading Staff Data...</div>;
+    return <div className="text-center p-[3.125rem] text-white">Loading Staff Data...</div>;
 
   return (
     <>
-      <div className="premium-table-wrapper animate-slide-up">
-        <table className="admin-table">
+      <div className="bg-[var(--admin-bg,#141414)] rounded-[0.75rem] border border-[var(--admin-border,#222)] overflow-x-auto shadow-[0_4px_15px_rgba(0,0,0,0.2)] animate-slide-up custom-scrollbar">
+        <table className="w-full border-collapse min-w-[37.5rem] text-[0.875rem]">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Role</th>
-              <th>Phone</th>
-              <th>Salary</th>
-              <th>Status</th>
-              <th>Actions</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Name</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Role</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Phone</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Salary</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Status</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Actions</th>
             </tr>
           </thead>
           <tbody>
             {employees.length > 0 ? (
               employees.map((emp) => (
-                <tr key={emp.id}>
-                  <td>
-                    <div className="item-profile">
-                      <div className="staff-avatar">
+                <tr key={emp.id} className="border-b border-[var(--admin-border,#333)] transition-colors duration-200 hover:bg-[rgba(255,255,255,0.02)]">
+                  <td className="p-[1.25rem] align-middle">
+                    <div className="flex items-center gap-[0.75rem]">
+                      <div className="w-[2.5rem] h-[2.5rem] rounded-full bg-[rgba(255,255,255,0.05)] flex items-center justify-center font-bold text-[1rem] text-[var(--admin-orange,#f59e0b)] border border-[var(--admin-border,#333)]">
                         {(emp.name || "U").charAt(0).toUpperCase()}
                       </div>
-                      <div className="item-info">
-                        <span className="item-name">{emp.name}</span>
-                        <span className="item-id">ID: #{emp.id}</span>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-[var(--admin-text,#fff)] block">{emp.name}</span>
+                        <span className="text-[0.75rem] text-[var(--admin-muted,#888)]">ID: #{emp.id}</span>
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td className="p-[1.25rem] align-middle">
                     {/* 🔥 Pure CSS class based on dynamic role */}
-                    <span className={`role-badge ${getRoleClass(emp.role)}`}>
+                    <span className={`px-[0.75rem] py-[0.313rem] rounded-[0.375rem] text-[0.688rem] font-extrabold uppercase tracking-[0.5px] inline-block ${getRoleClass(emp.role)}`}>
                       {emp.role || "Unassigned"}
                     </span>
                   </td>
-                  <td>
-                    <div className="phone-cell">
-                      <FaPhone className="phone-icon" /> {emp.phone}
+                  <td className="p-[1.25rem] align-middle">
+                    <div className="flex items-center gap-[0.5rem] text-[var(--admin-muted,#888)] text-[0.813rem]">
+                      <FaPhone className="text-[0.625rem]" /> {emp.phone}
                     </div>
                   </td>
-                  <td className="salary-cell">
+                  <td className="p-[1.25rem] align-middle font-bold text-[var(--admin-text,#fff)]">
                     Rs. {Number(emp.salary || 0).toLocaleString()}
                   </td>
-                  <td>
+                  <td className="p-[1.25rem] align-middle">
                     <span
-                      className={`status-badge ${emp.status === "Active" ? "delivered" : "pending"}`}
+                      className={`px-[0.625rem] py-[0.25rem] rounded-[0.25rem] text-[0.75rem] font-bold uppercase tracking-[0.5px] ${emp.status === "Active" ? "bg-[rgba(16,185,129,0.15)] text-[#34d399] border border-[rgba(16,185,129,0.3)]" : "bg-[rgba(245,158,11,0.15)] text-[#f59e0b] border border-[rgba(245,158,11,0.3)]"}`}
                     >
                       {emp.status}
                     </span>
                   </td>
-                  <td>
+                  <td className="p-[1.25rem] align-middle">
                     <button
-                      className="btn-action-pill edit-btn"
+                      className="bg-[rgba(255,255,255,0.05)] border border-[#333] text-white p-[0.375rem_0.75rem] rounded-[0.375rem] cursor-pointer text-[0.75rem] font-bold flex items-center justify-center gap-[0.313rem] transition-all duration-200 mr-[0.313rem] inline-flex hover:bg-[rgba(59,130,246,0.1)] hover:border-[#3b82f6] hover:text-[#3b82f6] hover:-translate-y-[2px]"
                       onClick={() => handleEditClick(emp)}
                     >
                       <FaEdit /> Edit
                     </button>
                     <button
-                      className="btn-action-pill delete-btn"
+                      className="bg-[rgba(255,255,255,0.05)] border border-[#333] text-white p-[0.375rem_0.75rem] rounded-[0.375rem] cursor-pointer text-[0.75rem] font-bold flex items-center justify-center gap-[0.313rem] transition-all duration-200 inline-flex hover:bg-[rgba(239,68,68,0.1)] hover:border-[#ef4444] hover:text-[#ef4444] hover:-translate-y-[2px]"
                       onClick={() => handleDelete(emp.id)}
                     >
                       <FaTrash />
@@ -212,7 +226,7 @@ const EmployeeList = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="empty-state-cell">
+                <td colSpan="6" className="text-center p-[2.5rem] text-[gray]">
                   No employees found in the database.
                 </td>
               </tr>
@@ -223,12 +237,12 @@ const EmployeeList = () => {
 
       {/* EDIT MODAL */}
       {isEditModalOpen && editingEmp && (
-        <div className="admin-modal-overlay override-zindex">
-          <div className="admin-modal-box animate-slide-up">
-            <div className="modal-header-flex">
-              <h3 className="modal-title">EDIT EMPLOYEE</h3>
+        <div className="fixed top-0 left-0 right-0 bottom-0 bg-[rgba(0,0,0,0.6)] backdrop-blur-[6px] flex justify-center items-center z-[99999]">
+          <div className="w-[90%] max-w-[37.5rem] bg-[var(--admin-bg,#141414)] border border-[var(--admin-border,#222)] rounded-[1rem] p-[1.563rem] shadow-[0_10px_30px_rgba(0,0,0,0.5)] relative animate-slide-up">
+            <div className="flex justify-between items-center mb-[1.25rem] w-full">
+              <h3 className="uppercase flex items-center gap-[0.625rem] text-white m-0 text-[1.25rem] font-black">EDIT EMPLOYEE</h3>
               <button
-                className="btn-close-modal-clean"
+                className="bg-transparent border-none text-[#949191] text-[1.25rem] cursor-pointer transition-colors duration-300 hover:text-white static !m-0"
                 onClick={() => setIsEditModalOpen(false)}
               >
                 <FaTimes />
@@ -236,59 +250,58 @@ const EmployeeList = () => {
             </div>
 
             <form onSubmit={handleSave}>
-              <div className="admin-input-group">
-                <label>Full Name</label>
+              <div className="mb-[0.938rem]">
+                <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Full Name</label>
                 <input
                   type="text"
                   name="name"
-                  className="admin-input-field custom-admin-input"
+                  className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
                   value={editingEmp.name}
                   onChange={handleChange}
                   required
                 />
               </div>
 
-              <div className="modal-form-row">
-                <div className="admin-input-group input-col">
-                  <label>Role</label>
+              <div className="flex gap-[0.938rem] mt-[0.938rem] w-full flex-col md:flex-row">
+                <div className="mb-[0.938rem] flex-1 min-w-0">
+                  <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Role</label>
                   <select
                     name="role"
-                    className="admin-input-field custom-admin-input"
+                    className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
                     value={editingEmp.role}
                     onChange={handleChange}
                     required
                   >
-                    <option value="Manager">Manager</option>
-                    <option value="Chef">Chef</option>
-                    <option value="Cashier">Cashier</option>
-                    <option value="Waiter">Waiter</option>
-                    <option value="Rider">Rider</option>
-                    <option value="Dispatcher">Dispatcher</option>
+                    <option className="bg-[#111] text-white" value="Manager">Manager</option>
+                    <option className="bg-[#111] text-white" value="Chef">Chef</option>
+                    <option className="bg-[#111] text-white" value="Cashier">Cashier</option>
+                    <option className="bg-[#111] text-white" value="Waiter">Waiter</option>
+                    <option className="bg-[#111] text-white" value="Rider">Rider</option>
+                    <option className="bg-[#111] text-white" value="Dispatcher">Dispatcher</option>
                   </select>
                 </div>
-                <div className="admin-input-group input-col">
-                  <label>Status</label>
+                <div className="mb-[0.938rem] flex-1 min-w-0">
+                  <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Status</label>
                   <select
                     name="status"
-                    className="admin-input-field custom-admin-input"
+                    className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
                     value={editingEmp.status}
                     onChange={handleChange}
                   >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
+                    <option className="bg-[#111] text-white" value="Active">Active</option>
+                    <option className="bg-[#111] text-white" value="Inactive">Inactive</option>
                   </select>
                 </div>
               </div>
 
-              <div className="modal-form-row">
-                <div className="admin-input-group input-col">
-                  <label>Phone Number</label>
+              <div className="flex gap-[0.938rem] mt-[0.938rem] w-full flex-col md:flex-row">
+                <div className="mb-[0.938rem] flex-1 min-w-0">
+                  <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Phone Number</label>
                   <input
                     type="tel"
                     name="phone"
                     maxLength="11"
-                    className={`admin-input-field custom-admin-input ${phoneError ? "border-red-500" : ""}`}
-                    style={phoneError ? { borderColor: "#ef4444" } : {}}
+                    className={`w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black ${phoneError ? "!border-red-500" : ""}`}
                     value={editingEmp.phone}
                     onChange={(e) => {
                       const val = e.target.value.replace(/[^0-9]/g, "");
@@ -305,17 +318,17 @@ const EmployeeList = () => {
                     required
                   />
                   {phoneError && (
-                    <span style={{ color: "#ef4444", fontSize: "12px", marginTop: "5px", display: "inline-block" }}>
+                    <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">
                       {phoneError}
                     </span>
                   )}
                 </div>
-                <div className="admin-input-group input-col">
-                  <label>Salary (Rs.)</label>
+                <div className="mb-[0.938rem] flex-1 min-w-0">
+                  <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Salary (Rs.)</label>
                   <input
                     type="number"
                     name="salary"
-                    className="admin-input-field custom-admin-input"
+                    className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
                     value={editingEmp.salary}
                     onChange={handleChange}
                     required
@@ -323,15 +336,15 @@ const EmployeeList = () => {
                 </div>
               </div>
 
-              <div className="modal-footer-actions">
+              <div className="mt-[1.875rem] border-t border-[#333] pt-[1.25rem] flex justify-end gap-[0.938rem] w-full">
                 <button
                   type="button"
-                  className="btn-cancel-modal-clean"
+                  className="bg-transparent text-white border border-[#333] p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]"
                   onClick={() => setIsEditModalOpen(false)}
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn-save-modal-clean">
+                <button type="submit" className="bg-[var(--brand-red,#ef4444)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[0_4px_15px_rgba(239,68,68,0.4)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.6)] flex items-center justify-center">
                   Save Changes
                 </button>
               </div>

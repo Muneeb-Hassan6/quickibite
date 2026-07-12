@@ -10,7 +10,7 @@ import "swiper/css/effect-fade";
 import "swiper/css/pagination";
 import { EffectCards, EffectCoverflow, EffectFade, Pagination } from "swiper/modules";
 import { optimizeCloudinaryImage } from "../../../utils/imageOptimizer";
-import "./Slider.css";
+import { sliderStyles } from "./SliderStyles";
 
 const HomeProductSlider = ({ title, items, sliderType = "regular" }) => {
   const sliderRef = useRef(null);
@@ -67,9 +67,11 @@ const HomeProductSlider = ({ title, items, sliderType = "regular" }) => {
   };
 
   return (
-    <div className="product-slider-section">
-      <div className="slider-header-row">
-        <h3 className="section-title-modern">{title}</h3>
+    <>
+      <style>{sliderStyles}</style>
+      <div className="w-full overflow-hidden mb-10">
+      <div className="flex justify-between items-center mb-5 px-2.5">
+        <h3 className="text-[var(--text-main,#fff)] font-['Oswald',sans-serif] text-[1.375rem] md:text-[1.75rem] font-extrabold uppercase border-l-[0.313rem] border-red-500 pl-[0.937rem] m-0 tracking-[1px]">{title}</h3>
       </div>
 
       {/* 🔥 ARROWS AB YAHAN CARDS KE SATH HAIN */}
@@ -344,19 +346,19 @@ const HomeProductSlider = ({ title, items, sliderType = "regular" }) => {
           ))}
         </div>
       ) : (
-        <div className="slider-track-wrapper">
+        <div className="relative w-full flex items-center">
           {showArrows && canScrollLeft && (
             <button
-              className="arrow-btn arrow-left"
+              className="absolute top-[40%] -translate-y-1/2 z-10 bg-[var(--panel-bg,rgba(20,20,20,0.9))] text-white border border-[var(--border-color,#222)] w-[2.188rem] h-[2.188rem] md:w-[2.813rem] md:h-[2.813rem] rounded-full flex items-center justify-center text-[0.875rem] md:text-[1.126rem] cursor-pointer transition-all duration-300 shadow-[0_4px_10px_rgba(0,0,0,0.6)] left-[0.313rem] hover:bg-red-500 hover:border-red-500 hover:shadow-[0_6px_15px_rgba(239,68,68,0.5)] hover:scale-110 active:scale-90"
               onClick={() => scroll("left")}
             >
               <FaChevronLeft />
             </button>
           )}
 
-          <div className="custom-slider-container" ref={sliderRef}>
+          <div className="flex gap-5 overflow-x-auto px-2.5 pt-4 pb-8 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" ref={sliderRef}>
             {items.map((item) => (
-              <div className="slider-item" key={item.id}>
+              <div className="min-w-[11.25rem] max-w-[11.875rem] md:min-w-[13.751rem] md:max-w-[15rem] flex-none transition-transform duration-300 hover:-translate-y-2" key={item.id}>
                 <ProductCard
                   item={item}
                   image={item.img}
@@ -372,7 +374,7 @@ const HomeProductSlider = ({ title, items, sliderType = "regular" }) => {
 
           {showArrows && canScrollRight && (
             <button
-              className="arrow-btn arrow-right"
+              className="absolute top-[40%] -translate-y-1/2 z-10 bg-[var(--panel-bg,rgba(20,20,20,0.9))] text-white border border-[var(--border-color,#222)] w-[2.188rem] h-[2.188rem] md:w-[2.813rem] md:h-[2.813rem] rounded-full flex items-center justify-center text-[0.875rem] md:text-[1.126rem] cursor-pointer transition-all duration-300 shadow-[0_4px_10px_rgba(0,0,0,0.6)] right-[0.313rem] hover:bg-red-500 hover:border-red-500 hover:shadow-[0_6px_15px_rgba(239,68,68,0.5)] hover:scale-110 active:scale-90"
               onClick={() => scroll("right")}
             >
               <FaChevronRight />
@@ -380,7 +382,8 @@ const HomeProductSlider = ({ title, items, sliderType = "regular" }) => {
           )}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
