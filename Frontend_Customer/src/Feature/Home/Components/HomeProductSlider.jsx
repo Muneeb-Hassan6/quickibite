@@ -12,7 +12,7 @@ import { EffectCards, EffectCoverflow, EffectFade, Pagination } from "swiper/mod
 import { optimizeCloudinaryImage } from "../../../utils/imageOptimizer";
 import { sliderStyles } from "./SliderStyles";
 
-const HomeProductSlider = ({ title, items, sliderType = "regular", actionButton = null }) => {
+const HomeProductSlider = ({ title, items, sliderType = "regular" }) => {
   const sliderRef = useRef(null);
   const [showArrows, setShowArrows] = useState(false); // 🔥 Smart logic state
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -69,10 +69,9 @@ const HomeProductSlider = ({ title, items, sliderType = "regular", actionButton 
   return (
     <>
       <style>{sliderStyles}</style>
-      <div className="w-full overflow-hidden mb-4">
+      <div className="w-full overflow-hidden mb-10">
       <div className="flex justify-between items-center mb-5 px-2.5">
         <h3 className="text-[var(--text-main,#fff)] font-['Oswald',sans-serif] text-[1.375rem] md:text-[1.75rem] font-extrabold uppercase border-l-[0.313rem] border-red-500 pl-[0.937rem] m-0 tracking-[1px]">{title}</h3>
-        {actionButton && <div className="ml-auto">{actionButton}</div>}
       </div>
 
       {/* 🔥 ARROWS AB YAHAN CARDS KE SATH HAIN */}

@@ -159,15 +159,16 @@ const HomePage = () => {
                   }
                 }
 
-                const viewAllBtn = section.content_data === 'filter:top_deals' ? (
-                  <button onClick={() => navigate("/deals")} className="bg-transparent border-2 border-red-500 text-red-500 px-4 py-1 rounded-full font-['Oswald',sans-serif] font-bold tracking-wider hover:bg-red-500 hover:text-white transition-all duration-300 inline-flex items-center justify-center text-xs">
-                    {section.subtitle || "Explore All Deals"} <FaArrowRight className="ml-1" />
-                  </button>
-                ) : null;
-
                 sectionComponent = (
-                  <div key={`prod-${section.id}`} className="relative pb-1">
-                    <HomeProductSlider title={section.title} items={items} sliderType={section.slider_type || 'regular'} actionButton={viewAllBtn} />
+                  <div key={`prod-${section.id}`} className="relative pb-5">
+                    <HomeProductSlider title={section.title} items={items} sliderType={section.slider_type || 'regular'} />
+                    {section.content_data === 'filter:top_deals' && (
+                      <div className="text-center mt-[0.938rem]">
+                        <button onClick={() => navigate("/deals")} className="bg-transparent border-2 border-red-500 text-red-500 px-6 py-2 rounded-full font-['Oswald',sans-serif] font-bold tracking-wider hover:bg-red-500 hover:text-white transition-all duration-300 inline-flex items-center justify-center">
+                          {section.subtitle || "Explore All Deals"} <FaArrowRight className="ml-2" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               }
@@ -189,7 +190,7 @@ const HomePage = () => {
 
                 if (isSlider) {
                   sectionComponent = (
-                    <div className="home-banners-container my-4" key={`ban-${section.id}`}>
+                    <div className="home-banners-container my-[1.875rem]" key={`ban-${section.id}`}>
                       <Swiper
                         modules={[Autoplay, Pagination, Navigation]}
                         spaceBetween={0}
@@ -223,7 +224,7 @@ const HomePage = () => {
                 } else {
                   // Default static banner
                   sectionComponent = (
-                    <div className="home-banners-container my-4" key={`ban-${section.id}`}>
+                    <div className="home-banners-container my-[1.875rem]" key={`ban-${section.id}`}>
                       <div 
                         className="w-full h-[11.25rem] md:h-[18.75rem] bg-cover bg-center bg-no-repeat rounded-[0.937rem] shadow-lg transition-transform duration-300 hover:scale-[1.02]"
                         style={{ backgroundImage: `url(${optimizeCloudinaryImage(section.image_url, 1200)})`, cursor: section.link_url ? 'pointer' : 'default' }}
@@ -245,7 +246,7 @@ const HomePage = () => {
                   );
                 } else {
                   elements.push(
-                    <div key={`wrapper-${section.id}`} className="w-full px-4 md:px-12 py-2">
+                    <div key={`wrapper-${section.id}`} className="w-full px-4 md:px-12 pt-4 pb-2">
                       {sectionComponent}
                     </div>
                   );
