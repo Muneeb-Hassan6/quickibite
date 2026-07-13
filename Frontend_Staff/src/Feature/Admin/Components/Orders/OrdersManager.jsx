@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import "./styles/index.css";
 
 // Components Import
 import OrderFilterBar from "./Components/OrderFilterBar";
@@ -113,11 +112,8 @@ const OrdersManager = () => {
   };
 
   return (
-    <div
-      className="recent-orders-section"
-      style={{ border: "none", background: "transparent", padding: 0 }}
-    >
-      <div className="section-header">Orders Management</div>
+    <div className="bg-transparent p-0 border-none w-full animate-slide-up">
+      <div className="text-[1.25rem] font-bold mb-[0.938rem] border-l-4 border-red-500 pl-[0.625rem] text-[var(--admin-text)]">Orders Management</div>
 
       <OrderFilterBar
         filterStatus={filterStatus}

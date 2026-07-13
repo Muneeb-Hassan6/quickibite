@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-// 🔥 Local static data (foodMenu) ko remove kar diya hai
 import PopupCard from "../../../Components/UI/PopupCard";
 
 const CategoryItemGrid = () => {
@@ -46,41 +45,26 @@ const CategoryItemGrid = () => {
         );
 
   return (
-    <div className="container-fluid px-3 px-md-5 py-4">
-      <h2 className="page-title">
+    <div className="w-full px-[0.937rem] md:px-12 py-6">
+      <h2 className="text-[var(--text-main,#fff)] uppercase font-[800] tracking-[1px] font-['Oswald',sans-serif] text-[1.5rem] mb-[0.937rem] border-l-[0.25rem] pl-[0.75rem] md:text-[2rem] md:mb-[1.562rem] md:border-l-[0.376rem] md:pl-[0.938rem] border-[var(--brand-red,#ef4444)]">
         {decodedCat === "All" ? "Full Menu" : decodedCat}
       </h2>
 
       {/* 🔥 LOADING STATE */}
       {isLoading ? (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            padding: "50px 0",
-          }}
-        >
-          <div className="dot-loader">
-            <div
-              className="dot"
-              style={{ width: "12px", height: "12px" }}
-            ></div>
-            <div
-              className="dot"
-              style={{ width: "12px", height: "12px" }}
-            ></div>
-            <div
-              className="dot"
-              style={{ width: "12px", height: "12px" }}
-            ></div>
+        <div className="flex justify-center py-[3.125rem]">
+          <div className="flex items-center gap-2">
+            <div className="w-[0.75rem] h-[0.75rem] bg-red-500 rounded-full animate-bounce"></div>
+            <div className="w-[0.75rem] h-[0.75rem] bg-red-500 rounded-full animate-bounce" style={{animationDelay: "0.2s"}}></div>
+            <div className="w-[0.75rem] h-[0.75rem] bg-red-500 rounded-full animate-bounce" style={{animationDelay: "0.4s"}}></div>
           </div>
         </div>
       ) : (
         /* Grid Row */
-        <div className="row g-2 g-md-3 g-lg-4 justify-content-center">
+        <div className="flex flex-wrap -mx-[0.625rem] justify-center">
           {filteredItems.length > 0 ? (
             filteredItems.map((item) => (
-              <div key={item.id} className="col-6 col-md-4 col-lg-3">
+              <div key={item.id} className="w-1/2 md:w-1/3 lg:w-1/4 px-[0.625rem] mb-4">
                 <PopupCard
                   item={item}
                   image={item.img}
@@ -91,8 +75,8 @@ const CategoryItemGrid = () => {
               </div>
             ))
           ) : (
-            <div className="col-12 text-center mt-5">
-              <p className="text-white fs-4">
+            <div className="w-full text-center mt-12">
+              <p className="text-white text-2xl">
                 No items found for "{decodedCat}".
               </p>
             </div>

@@ -9,7 +9,7 @@
  */
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With, X-Auth-Token");
 
 // central CORS preflight handling for authenticated routes
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {

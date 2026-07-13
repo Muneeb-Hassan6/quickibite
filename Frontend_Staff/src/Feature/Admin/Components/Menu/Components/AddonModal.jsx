@@ -86,25 +86,25 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="pos-modal-overlay">
-      <div className="pos-modal-box addon-modal-container">
-        <div className="pos-modal-header">
-          <h3 className="pos-modal-title">Add-ons for {menuItem.name}</h3>
-          <button className="btn-close-modal" onClick={onClose}>
+    <div className="fixed top-0 left-0 right-0 bottom-0 bg-[rgba(0,0,0,0.6)] backdrop-blur-[6px] flex justify-center items-center z-[9999]">
+      <div className="w-[90%] max-w-[46.875rem] bg-[var(--admin-bg,#141414)] border border-[var(--admin-border,#222)] rounded-[1rem] p-[1.563rem] shadow-[0_10px_30px_rgba(0,0,0,0.5)] relative animate-slide-up">
+        <div className="flex justify-between items-center mb-[1.563rem] w-full">
+          <h3 className="uppercase flex items-center gap-[0.625rem] text-white m-0 text-[1.25rem] font-black">Add-ons for {menuItem.name}</h3>
+          <button className="bg-transparent border-none text-[#949191] text-[1.25rem] cursor-pointer transition-colors duration-300 hover:text-white static !m-0" onClick={onClose}>
             <FaTimes />
           </button>
         </div>
 
-        <div className="pos-modal-section">
+        <div>
           {loading ? (
             <p>Loading...</p>
           ) : (
             addons.map((addon, index) => (
-              <div key={index} className="addon-row">
+              <div key={index} className="flex gap-[0.75rem] mb-[0.75rem] items-center">
                 <input
                   type="text"
                   placeholder="Name (e.g. Extra Cheese)"
-                  className="pos-custom-note-input addon-name-input"
+                  className="flex-[2] h-[3rem] w-full bg-[#111] border border-[#333] text-white px-[0.938rem] rounded-[0.5rem] outline-none focus:border-[#ef4444]"
                   value={addon.addon_name}
                   onChange={(e) =>
                     handleFieldChange(index, "addon_name", e.target.value)
@@ -113,22 +113,22 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
                 <input
                   type="number"
                   placeholder="Price"
-                  className="pos-custom-note-input addon-price-input"
+                  className="flex-1 h-[3rem] w-full bg-[#111] border border-[#333] text-white px-[0.938rem] rounded-[0.5rem] outline-none focus:border-[#ef4444]"
                   value={addon.addon_price}
                   onChange={(e) =>
                     handleFieldChange(index, "addon_price", e.target.value)
                   }
                 />
                 <select
-                  className="pos-category-dropdown addon-inv-select"
+                  className="flex-[2] h-[3rem] w-full bg-[#111] border border-[#333] text-white px-[0.938rem] rounded-[0.5rem] outline-none cursor-pointer focus:border-[#ef4444]"
                   value={addon.inventory_id}
                   onChange={(e) =>
                     handleFieldChange(index, "inventory_id", e.target.value)
                   }
                 >
-                  <option value="">Link Inventory</option>
+                  <option className="bg-[#111] text-white" value="">Link Inventory</option>
                   {inventoryItems.map((inv) => (
-                    <option key={inv.id} value={inv.id}>
+                    <option className="bg-[#111] text-white" key={inv.id} value={inv.id}>
                       {inv.name}
                     </option>
                   ))}
@@ -136,7 +136,7 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
                 <input
                   type="number"
                   placeholder="Qty"
-                  className="pos-custom-note-input addon-qty-input"
+                  className="flex-[0.8] h-[3rem] w-full bg-[#111] border border-[#333] text-white px-[0.938rem] rounded-[0.5rem] outline-none focus:border-[#ef4444]"
                   value={addon.qty}
                   onChange={(e) =>
                     handleFieldChange(index, "qty", e.target.value)
@@ -146,7 +146,7 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
                   onClick={() =>
                     setAddons(addons.filter((_, i) => i !== index))
                   }
-                  className="btn-cart-remove"
+                  className="bg-transparent border-none text-[#888] text-[1.125rem] cursor-pointer transition-all duration-200 flex items-center justify-center px-[0.625rem] h-[3rem] hover:text-[#ef4444] hover:scale-125"
                 >
                   <FaTrash />
                 </button>
@@ -154,26 +154,20 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
             ))
           )}
 
-          <button className="btn-add-row" onClick={handleAddRow}>
+          <button className="bg-[rgba(255,255,255,0.05)] text-white border border-dashed border-[#555] px-[1.25rem] py-[0.75rem] rounded-[0.5rem] text-[0.875rem] font-semibold inline-flex items-center gap-[0.5rem] transition-all duration-300 mt-[0.938rem] cursor-pointer hover:bg-[rgba(239,68,68,0.1)] hover:border-[#ef4444] hover:text-[#ef4444] hover:-translate-y-[2px]" onClick={handleAddRow}>
             <FaPlus /> Add Option
           </button>
         </div>
 
         {/* 🔥 4. Save Button UI Logic */}
         <button
-          className="btn-confirm-add addon-save-btn"
+          className="mt-[1.563rem] w-full bg-[var(--brand-red,#ef4444)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[0_4px_15px_rgba(239,68,68,0.4)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.6)] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-[0.625rem]"
           onClick={handleSave}
           disabled={isSaving} // Jab save ho raha ho toh button click hona band ho jaye
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: "10px",
-          }}
         >
           {isSaving ? (
             <>
-              <FaSpinner className="spin-animation" /> Saving...
+              <FaSpinner className="animate-spin" /> Saving...
             </>
           ) : (
             "Save Settings"

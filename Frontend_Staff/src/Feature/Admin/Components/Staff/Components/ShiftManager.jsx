@@ -149,40 +149,34 @@ const ShiftManager = () => {
   };
 
   if (isLoading)
-    return <div className="loading-state-text">Loading Shift Data...</div>;
+    return <div className="text-center p-[3.125rem] text-white">Loading Shift Data...</div>;
 
   return (
-    <div className="premium-table-wrapper animate-slide-up no-padding-wrapper">
+    <div className="bg-[var(--admin-bg,#141414)] rounded-[0.75rem] border border-[var(--admin-border,#222)] overflow-hidden shadow-[0_4px_15px_rgba(0,0,0,0.2)] animate-slide-up custom-scrollbar">
       <div
-        className="module-controls-header"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
+        className="flex justify-between items-center p-[0.938rem_1.25rem] border-b border-[var(--admin-border,#333)] flex-wrap gap-[0.938rem]"
       >
         <div>
-          <h4 className="module-title">Shift Roster</h4>
-          <p className="module-subtitle">Assign daily shifts to staff.</p>
+          <h4 className="m-0 text-[var(--admin-text,#fff)] text-[1.125rem] font-bold">Shift Roster</h4>
+          <p className="text-[0.75rem] text-[var(--admin-muted,#888)] m-0 mt-[0.313rem]">Assign daily shifts to staff.</p>
         </div>
 
-        <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
-          <div className="shift-legend" style={{ margin: 0 }}>
-            <span className="legend-morning">
+        <div className="flex gap-[0.938rem] items-center">
+          <div className="flex gap-[0.938rem] text-[0.75rem] font-semibold text-[var(--admin-muted,#888)] m-0">
+            <span className="text-[#f59e0b] mr-[0.938rem] flex items-center gap-[0.313rem]">
               <FaCoffee /> Morning
             </span>
-            <span className="legend-evening">
+            <span className="text-[#3b82f6] mr-[0.938rem] flex items-center gap-[0.313rem]">
               <FaSun /> Evening
             </span>
-            <span className="legend-night">
+            <span className="text-[#8b5cf6] flex items-center gap-[0.313rem]">
               <FaMoon /> Night
             </span>
           </div>
 
           {/* 🔥 ADMIN BUTTON TO SET TIMINGS */}
           <button
-            className="btn-action-pill"
-            style={{ background: "#333", color: "#fff", padding: "8px 15px" }}
+            className="bg-[#333] text-white p-[0.5rem_0.938rem] rounded-[0.5rem] cursor-pointer font-bold flex items-center gap-[0.313rem] transition-colors duration-200 hover:bg-[#444]"
             onClick={handleSetTimings}
           >
             <FaCog /> Setup Timings
@@ -190,68 +184,70 @@ const ShiftManager = () => {
         </div>
       </div>
 
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th className="pad-left-20">Staff Member</th>
-            <th>Current Shift Status</th>
-            <th>Shift Timings</th>
-            <th>Change Shift</th>
-          </tr>
-        </thead>
-        <tbody>
-          {employees.length > 0 ? (
-            employees.map((emp) => {
-              const shiftInfo = getShiftDetails(emp.shift);
-              return (
-                <tr key={emp.id}>
-                  <td className="pad-left-20">
-                    <div className="item-profile">
-                      <div className="staff-avatar">
-                        {emp.name.charAt(0).toUpperCase()}
-                      </div>
-                      <span className="item-name">{emp.name}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div
-                      className="shift-badge"
-                      style={{
-                        color: shiftInfo.color,
-                        background: shiftInfo.bg,
-                      }}
-                    >
-                      {shiftInfo.icon} {emp.shift || "Morning"}
-                    </div>
-                  </td>
-                  <td className="shift-time-cell">{shiftInfo.time}</td>
-                  <td>
-                    <div className="shift-select-wrapper">
-                      <select
-                        className="shift-select"
-                        value={emp.shift || "Morning"}
-                        onChange={(e) =>
-                          handleShiftChange(emp.id, e.target.value)
-                        }
-                      >
-                        <option value="Morning">Morning</option>
-                        <option value="Evening">Evening</option>
-                        <option value="Night">Night</option>
-                      </select>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })
-          ) : (
+      <div className="overflow-x-auto w-full">
+        <table className="w-full border-collapse min-w-[37.5rem] text-[0.875rem]">
+          <thead>
             <tr>
-              <td colSpan="4" className="empty-state-cell">
-                No active staff found.
-              </td>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px] pl-[1.25rem]">Staff Member</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Current Shift Status</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Shift Timings</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Change Shift</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {employees.length > 0 ? (
+              employees.map((emp) => {
+                const shiftInfo = getShiftDetails(emp.shift);
+                return (
+                  <tr key={emp.id} className="border-b border-[var(--admin-border,#333)] transition-colors duration-200 hover:bg-[rgba(255,255,255,0.02)]">
+                    <td className="p-[1.25rem] align-middle pl-[1.25rem]">
+                      <div className="flex items-center gap-[0.75rem]">
+                        <div className="w-[2.5rem] h-[2.5rem] rounded-full bg-[rgba(255,255,255,0.05)] flex items-center justify-center font-bold text-[1rem] text-[var(--admin-orange,#f59e0b)] border border-[var(--admin-border,#333)]">
+                          {emp.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="font-bold text-[var(--admin-text,#fff)] block">{emp.name}</span>
+                      </div>
+                    </td>
+                    <td className="p-[1.25rem] align-middle">
+                      <div
+                        className="inline-flex items-center gap-[0.5rem] p-[0.375rem_0.75rem] rounded-[0.5rem] font-bold text-[0.813rem] uppercase"
+                        style={{
+                          color: shiftInfo.color,
+                          background: shiftInfo.bg,
+                        }}
+                      >
+                        {shiftInfo.icon} {emp.shift || "Morning"}
+                      </div>
+                    </td>
+                    <td className="p-[1.25rem] align-middle text-[0.938rem] font-bold text-[var(--admin-text,#fff)]">{shiftInfo.time}</td>
+                    <td className="p-[1.25rem] align-middle">
+                      <div className="relative w-[8.75rem]">
+                        <select
+                          className="p-[0.5rem_0.75rem] rounded-[0.5rem] border border-[var(--admin-border,#333)] bg-[var(--admin-bg,#000)] text-[var(--admin-text,#fff)] text-[0.813rem] font-semibold cursor-pointer outline-none w-[8.125rem] focus:border-[var(--admin-orange,#f59e0b)]"
+                          value={emp.shift || "Morning"}
+                          onChange={(e) =>
+                            handleShiftChange(emp.id, e.target.value)
+                          }
+                        >
+                          <option value="Morning">Morning</option>
+                          <option value="Evening">Evening</option>
+                          <option value="Night">Night</option>
+                        </select>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan="4" className="text-center p-[2.5rem] text-[gray]">
+                  No active staff found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

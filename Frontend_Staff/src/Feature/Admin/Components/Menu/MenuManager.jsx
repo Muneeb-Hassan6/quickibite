@@ -9,7 +9,6 @@ import {
   FaExclamationCircle,
 } from "react-icons/fa";
 import imageCompression from "browser-image-compression";
-import "./styles/index.css";
 
 import MenuModal from "./Components/MenuModal";
 import CategoryModal from "./Components/CategoryModal";
@@ -407,18 +406,18 @@ const MenuManager = () => {
         </div>
       )}
 
-      <div className="menu-manager-header">
+      <div className="flex justify-between items-end mb-[1.563rem] border-b border-[var(--admin-border)] pb-[0.938rem]">
         <div>
-          <h2 className="section-header menu-manager-title">Menu Management</h2>
-          <div className="tab-group">
+          <h2 className="text-[1.25rem] font-bold mb-[0.938rem] border-l-4 border-red-500 pl-[0.625rem] text-[var(--admin-text)]">Menu Management</h2>
+          <div className="inline-flex bg-[rgba(255,255,255,0.05)] rounded-[2.5rem] p-[0.375rem] gap-[0.313rem] border border-[var(--admin-border)]">
             <button
-              className={`tab-btn ${activeTab === "items" ? "active" : ""}`}
+              className={`bg-transparent text-[var(--admin-muted)] border-none py-[0.625rem] px-[1.5rem] rounded-[1.875rem] cursor-pointer flex items-center gap-[0.5rem] font-bold transition-all duration-300 text-[0.875rem] hover:text-white ${activeTab === "items" ? "bg-[var(--brand-red,#ef4444)] text-white shadow-[0_4px_12px_rgba(239,68,68,0.4)]" : ""}`}
               onClick={() => setActiveTab("items")}
             >
               <FaHamburger /> Menu Items
             </button>
             <button
-              className={`tab-btn ${activeTab === "categories" ? "active" : ""}`}
+              className={`bg-transparent text-[var(--admin-muted)] border-none py-[0.625rem] px-[1.5rem] rounded-[1.875rem] cursor-pointer flex items-center gap-[0.5rem] font-bold transition-all duration-300 text-[0.875rem] hover:text-white ${activeTab === "categories" ? "bg-[var(--brand-red,#ef4444)] text-white shadow-[0_4px_12px_rgba(239,68,68,0.4)]" : ""}`}
               onClick={() => setActiveTab("categories")}
             >
               <FaList /> Explore Categories
@@ -427,7 +426,7 @@ const MenuManager = () => {
         </div>
         {activeTab === "items" && (
           <button
-            className="add-new-btn"
+            className="bg-[var(--admin-orange)] text-white border-none py-[0.625rem] px-[1.375rem] rounded-[1.875rem] text-[0.875rem] font-semibold flex items-center gap-[0.5rem] cursor-pointer transition-all duration-300 hover:opacity-90"
             onClick={() => {
               setEditingItem(null);
               setMenuForm(defaultMenuForm);
@@ -452,9 +451,9 @@ const MenuManager = () => {
           }}
         />
       ) : (
-        <div className="categories-grid animate-slide-up">
+        <div className="flex flex-wrap gap-[1.563rem] pt-[0.938rem] animate-slide-up">
           <div
-            className="category-card add-new-cat"
+            className="w-[10rem] h-[10rem] rounded-[1.25rem] flex flex-col items-center justify-center cursor-pointer transition-all duration-300 border-2 border-dashed border-[var(--admin-muted)] bg-transparent text-[var(--admin-muted)] shadow-none hover:border-[var(--brand-red,#ef4444)] hover:text-[var(--brand-red,#ef4444)] hover:bg-[rgba(239,68,68,0.05)] hover:shadow-none"
             onClick={() => {
               setEditingCategory(null);
               setCategoryForm(defaultCategoryForm);
@@ -463,26 +462,26 @@ const MenuManager = () => {
           >
             <FaPlus size={30} />
             <p
-              className="upload-placeholder"
-              style={{ margin: "10px 0 0 0", fontWeight: "600" }}
+              className="mt-[0.625rem] font-semibold"
             >
               Add Category
             </p>
           </div>
           {categories.map((cat) => (
-            <div key={cat.id} className="category-card hover-actions-container">
+            <div key={cat.id} className="w-[10rem] h-[10rem] bg-black border-2 border-[var(--admin-border)] rounded-[1.25rem] flex items-center justify-center cursor-pointer overflow-hidden relative transition-all duration-300 shadow-[0_4px_10px_rgba(0,0,0,0.1)] hover:border-[var(--brand-red,#ef4444)] hover:-translate-y-[0.313rem] hover:shadow-[0_10px_20px_rgba(239,68,68,0.25)] group">
               <img
                 src={cat.img}
                 alt={cat.name}
+                className="absolute top-0 left-0 w-full h-full object-cover z-[1] opacity-60 transition-all duration-500 group-hover:scale-110 group-hover:opacity-30"
                 onError={(e) =>
                   (e.target.src =
                     "https://via.placeholder.com/150?text=No+Image")
                 }
               />
-              <div className="cat-name">{cat.name}</div>
-              <div className="category-hover-overlay">
+              <div className="relative z-[2] font-black text-[1.125rem] text-white uppercase tracking-[1.5px] text-center px-[0.625rem] transition-opacity duration-300 group-hover:opacity-0 group-hover:invisible" style={{textShadow: "0 4px 15px rgba(0, 0, 0, 1), 0 1px 3px rgba(0, 0, 0, 1)"}}>{cat.name}</div>
+              <div className="absolute top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.7)] flex justify-center items-center gap-[0.938rem] opacity-0 transition-opacity duration-300 z-10 group-hover:opacity-100">
                 <button
-                  className="btn-edit-icon"
+                  className="bg-transparent border-none p-[0.313rem] cursor-pointer text-[1.25rem] transition-all duration-200 text-blue-500 hover:scale-125 hover:text-blue-400"
                   onClick={(e) => {
                     e.stopPropagation();
                     setEditingCategory(cat);
@@ -493,7 +492,7 @@ const MenuManager = () => {
                   <FaEdit />
                 </button>
                 <button
-                  className="btn-delete-icon"
+                  className="bg-transparent border-none p-[0.313rem] cursor-pointer text-[1.25rem] transition-all duration-200 text-red-500 hover:scale-125 hover:text-red-400"
                   onClick={(e) => {
                     e.stopPropagation();
                     triggerDeleteCategory(cat.id);

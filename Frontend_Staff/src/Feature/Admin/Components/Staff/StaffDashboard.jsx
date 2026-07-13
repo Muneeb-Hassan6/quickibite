@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "./styles/index.css";
+
 import {
   FaUsers,
   FaCalendarCheck,
@@ -94,81 +94,81 @@ const StaffDashboard = () => {
     setRefreshKey((prev) => prev + 1);
   };
   return (
-    <div className="staff-dashboard-container">
+    <div className="pb-[3.125rem]">
       {/* HEADER */}
-      <div className="staff-header-wrapper">
-        <div className="staff-header-text">
-          <h2 className="section-header">Staff & HR Management</h2>
-          <p className="section-subtitle">Manage HR, Payroll & Attendance.</p>
+      <div className="flex justify-between items-center mb-[1.563rem]">
+        <div>
+          <h2 className="text-white m-0 mb-[0.313rem] text-[1.5rem] font-bold tracking-[0.5px] uppercase">Staff & HR Management</h2>
+          <p className="text-[var(--admin-muted,#888)] text-[0.875rem] m-0">Manage HR, Payroll & Attendance.</p>
         </div>
 
         {activeTab === "employees" && (
           <button
-            className="btn-save btn-add-staff"
+            className="bg-[var(--brand-red,#ef4444)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[0_4px_15px_rgba(239,68,68,0.4)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.6)] flex-none w-auto m-0 flex items-center gap-[0.5rem]"
             onClick={() => setIsModalOpen(true)}
           >
-            <FaUserPlus className="btn-add-icon" /> Add New Staff
+            <FaUserPlus /> Add New Staff
           </button>
         )}
       </div>
 
       {/* PREMIUM STATS CARDS */}
-      <div className="stats-grid">
-        <div className="stat-card-premium">
-          <div className="stat-icon-box stat-blue">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[1.25rem] mb-[1.875rem]">
+        <div className="bg-[var(--admin-card-bg,#1e1e24)] border border-[var(--admin-border,#333)] rounded-[1rem] p-[1.563rem] flex items-center relative overflow-hidden transition-all duration-300 hover:-translate-y-[5px] hover:shadow-[0_10px_20px_rgba(0,0,0,0.3)] hover:border-[#444] group">
+          <div className="w-[3.75rem] h-[3.75rem] rounded-[0.75rem] flex justify-center items-center text-[1.5rem] mr-[1.25rem] relative z-[2] text-[#3b82f6] bg-[rgba(59,130,246,0.1)]">
             <FaUsers />
           </div>
           <div>
-            <h3>{stats.total}</h3>
-            <p>Total Staff</p>
+            <h3 className="m-0 text-[1.5rem] font-black text-white relative z-[2]">{stats.total}</h3>
+            <p className="m-0 text-[0.813rem] font-bold text-[#888] uppercase tracking-[1px] relative z-[2]">Total Staff</p>
           </div>
-          <div className="bg-icon-overlay">
+          <div className="absolute -right-[0.625rem] -bottom-[0.625rem] text-[5rem] text-[rgba(255,255,255,0.02)] z-[1] transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-[10deg]">
             <FaUsers />
           </div>
         </div>
 
-        <div className="stat-card-premium">
-          <div className="stat-icon-box stat-green">
+        <div className="bg-[var(--admin-card-bg,#1e1e24)] border border-[var(--admin-border,#333)] rounded-[1rem] p-[1.563rem] flex items-center relative overflow-hidden transition-all duration-300 hover:-translate-y-[5px] hover:shadow-[0_10px_20px_rgba(0,0,0,0.3)] hover:border-[#444] group">
+          <div className="w-[3.75rem] h-[3.75rem] rounded-[0.75rem] flex justify-center items-center text-[1.5rem] mr-[1.25rem] relative z-[2] text-[#10b981] bg-[rgba(16,185,129,0.1)]">
             <FaCalendarCheck />
           </div>
           <div>
-            <h3>{stats.active}</h3>
-            <p>Active Now</p>
+            <h3 className="m-0 text-[1.5rem] font-black text-white relative z-[2]">{stats.active}</h3>
+            <p className="m-0 text-[0.813rem] font-bold text-[#888] uppercase tracking-[1px] relative z-[2]">Active Now</p>
           </div>
-          <div className="bg-icon-overlay">
+          <div className="absolute -right-[0.625rem] -bottom-[0.625rem] text-[5rem] text-[rgba(255,255,255,0.02)] z-[1] transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-[10deg]">
             <FaCalendarCheck />
           </div>
         </div>
       </div>
 
       {/* TABS NAVIGATION */}
-      <div className="staff-tabs-container">
+      <div className="flex gap-[0.938rem] mb-[1.563rem] border-b border-[var(--admin-border,#222)] pb-[0.125rem] overflow-x-auto custom-scrollbar">
         <button
-          className={`staff-tab-btn ${activeTab === "employees" ? "active" : ""}`}
+          className={`bg-transparent border-none p-[0.75rem_1.25rem] text-[0.875rem] font-semibold text-[var(--admin-muted,#888)] cursor-pointer flex items-center gap-[0.5rem] border-b-[3px] border-transparent transition-all duration-300 whitespace-nowrap hover:text-[var(--admin-text,#fff)] hover:bg-[rgba(255,255,255,0.02)] hover:rounded-t-[0.5rem] ${activeTab === "employees" ? "!text-[var(--admin-orange,#f59e0b)] !border-b-[var(--admin-orange,#f59e0b)]" : ""}`}
           onClick={() => setActiveTab("employees")}
         >
           <FaUsers /> Employee List
         </button>
         <button
-          className={`staff-tab-btn ${activeTab === "attendance" ? "active" : ""}`}
+          className={`bg-transparent border-none p-[0.75rem_1.25rem] text-[0.875rem] font-semibold text-[var(--admin-muted,#888)] cursor-pointer flex items-center gap-[0.5rem] border-b-[3px] border-transparent transition-all duration-300 whitespace-nowrap hover:text-[var(--admin-text,#fff)] hover:bg-[rgba(255,255,255,0.02)] hover:rounded-t-[0.5rem] ${activeTab === "attendance" ? "!text-[var(--admin-orange,#f59e0b)] !border-b-[var(--admin-orange,#f59e0b)]" : ""}`}
           onClick={() => setActiveTab("attendance")}
         >
           <FaCalendarCheck /> Daily Attendance
         </button>
         <button
-          className={`staff-tab-btn ${activeTab === "payroll" ? "active" : ""}`}
+          className={`bg-transparent border-none p-[0.75rem_1.25rem] text-[0.875rem] font-semibold text-[var(--admin-muted,#888)] cursor-pointer flex items-center gap-[0.5rem] border-b-[3px] border-transparent transition-all duration-300 whitespace-nowrap hover:text-[var(--admin-text,#fff)] hover:bg-[rgba(255,255,255,0.02)] hover:rounded-t-[0.5rem] ${activeTab === "payroll" ? "!text-[var(--admin-orange,#f59e0b)] !border-b-[var(--admin-orange,#f59e0b)]" : ""}`}
           onClick={() => setActiveTab("payroll")}
         >
           <FaMoneyBillWave /> Payroll
         </button>
         <button
-          className={`staff-tab-btn ${activeTab === "shifts" ? "active" : ""}`}
+          className={`bg-transparent border-none p-[0.75rem_1.25rem] text-[0.875rem] font-semibold text-[var(--admin-muted,#888)] cursor-pointer flex items-center gap-[0.5rem] border-b-[3px] border-transparent transition-all duration-300 whitespace-nowrap hover:text-[var(--admin-text,#fff)] hover:bg-[rgba(255,255,255,0.02)] hover:rounded-t-[0.5rem] ${activeTab === "shifts" ? "!text-[var(--admin-orange,#f59e0b)] !border-b-[var(--admin-orange,#f59e0b)]" : ""}`}
           onClick={() => setActiveTab("shifts")}
         >
           <FaClock /> Shift Roster
         </button>
         <button
-          className={`staff-tab-btn ${activeTab === "history" ? "active" : ""}`}
+          className={`bg-transparent border-none p-[0.75rem_1.25rem] text-[0.875rem] font-semibold text-[var(--admin-muted,#888)] cursor-pointer flex items-center gap-[0.5rem] border-b-[3px] border-transparent transition-all duration-300 whitespace-nowrap hover:text-[var(--admin-text,#fff)] hover:bg-[rgba(255,255,255,0.02)] hover:rounded-t-[0.5rem] ${activeTab === "history" ? "!text-[var(--admin-orange,#f59e0b)] !border-b-[var(--admin-orange,#f59e0b)]" : ""}`}
           onClick={() => setActiveTab("history")}
         >
           <FaHistory /> History
@@ -176,7 +176,7 @@ const StaffDashboard = () => {
       </div>
 
       {/* DYNAMIC CONTENT (Child components ab khud data handle karte hain, inhein props nahi chahiye) */}
-      <div className="staff-content-area">
+      <div>
         {activeTab === "employees" && (
           <EmployeeList key={`emp-${refreshKey}`} />
         )}

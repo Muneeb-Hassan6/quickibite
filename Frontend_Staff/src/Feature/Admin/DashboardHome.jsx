@@ -166,19 +166,19 @@ const DashboardHome = ({ setActiveTab }) => {
 
   return (
     <>
-      <div className="dashboard-banner">
-        <div className="welcome-text">
-          <h2>{getGreeting()}, Admin! 👋</h2>
-          <p>Here's what's happening in your restaurant today.</p>
+      <div className="bg-gradient-to-r from-red-500 to-[#b71c1c] border border-[var(--admin-border)] p-[1.563rem] rounded-[1rem] flex flex-col md:flex-row justify-between items-start md:items-center mb-[1.875rem] relative overflow-hidden gap-[0.938rem] md:gap-0 before:content-[''] before:absolute before:left-0 before:top-0 before:w-[0.375rem] before:h-full before:bg-[var(--admin-yellow)]">
+        <div className="pl-[0.375rem]">
+          <h2 className="text-white m-0 text-[1.625rem]">{getGreeting()}, Admin! 👋</h2>
+          <p className="text-[#e0e0e0] mt-[0.313rem] mb-0">Here's what's happening in your restaurant today.</p>
         </div>
-        <div className="live-clock">
-          <span className="time-display">
+        <div className="text-left md:text-right">
+          <span className="text-[var(--admin-yellow)] font-bold text-[1.25rem] block">
             {currentTime.toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             })}
           </span>
-          <span className="date-display">
+          <span className="text-white block">
             {currentTime.toLocaleDateString(undefined, {
               weekday: "long",
               day: "numeric",
@@ -188,75 +188,64 @@ const DashboardHome = ({ setActiveTab }) => {
         </div>
       </div>
 
-      <div className="stats-grid animate-slide-up">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[1.25rem] mb-[1.875rem] animate-slide-up">
         {statsData.map((stat, index) => (
           <div
             key={index}
-            className={`stat-card-premium ${stat.colorClass}`}
+            className="bg-[var(--admin-panel)] border border-[var(--admin-border)] p-[1.25rem] rounded-[1rem] flex items-center gap-[1.25rem] transition-all duration-300 relative overflow-hidden shadow-[var(--shadow-glow)] hover:-translate-y-[5px] hover:border-[var(--admin-orange)] hover:shadow-[0_10px_25px_rgba(239,68,68,0.15)] group cursor-pointer"
             onClick={() => setActiveTab(stat.tabName)} // 🔥 Yahan activeTab update ho raha hai
-            style={{ cursor: "pointer" }}
           >
-            <div className="stat-icon-box">{stat.icon}</div>
-            <div>
-              <h3>{stat.value}</h3>
-              <p style={{ color: "#888", margin: 0 }}>{stat.title}</p>
-              <small>{stat.change}</small>
+            <div className="w-[3.75rem] h-[3.75rem] bg-[rgba(239,68,68,0.1)] text-[var(--admin-orange)] rounded-[0.75rem] flex items-center justify-center text-[1.75rem] z-[2] shrink-0">{stat.icon}</div>
+            <div className="z-[2] relative">
+              <h3 className="m-0 mb-[0.313rem] text-[1.625rem] font-extrabold text-[var(--admin-text)] relative">{stat.value}</h3>
+              <p className="m-0 text-[#888] text-[0.875rem] font-semibold uppercase relative">{stat.title}</p>
+              <small className="text-[var(--admin-muted)] text-[0.75rem]">{stat.change}</small>
             </div>
-            <div className="bg-icon-overlay">{stat.iconClass}</div>
+            <div className="absolute -right-[1.25rem] -bottom-[1.25rem] text-[6.25rem] opacity-5 text-[var(--admin-text)] -rotate-12 pointer-events-none z-[1]">{stat.iconClass}</div>
           </div>
         ))}
       </div>
 
-      <div className="recent-orders-section animate-slide-up">
-        <div className="section-header">Recent Live Orders (Last 10)</div>
-        <div className="admin-table-wrapper">
-          <table className="admin-table">
+      <div className="animate-slide-up">
+        <div className="text-[1.25rem] font-bold mb-[0.938rem] border-l-4 border-red-500 pl-[0.625rem] text-[var(--admin-text)]">Recent Live Orders (Last 10)</div>
+        <div className="bg-[var(--admin-panel)] border border-[var(--admin-border)] rounded-[1rem] p-[1.25rem] overflow-x-auto shadow-[var(--shadow-glow)]">
+          <table className="w-full border-collapse min-w-[37.5rem] text-left">
             <thead>
-              <tr>
-                <th>ID</th>
-                <th>Customer</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Action</th>
+              <tr className="bg-[rgba(255,255,255,0.05)] text-[var(--admin-text)] border-b border-[var(--admin-border)] uppercase text-[0.875rem] tracking-[1px]">
+                <th className="p-[0.938rem]">ID</th>
+                <th className="p-[0.938rem]">Customer</th>
+                <th className="p-[0.938rem]">Items</th>
+                <th className="p-[0.938rem]">Total</th>
+                <th className="p-[0.938rem]">Status</th>
+                <th className="p-[0.938rem]">Action</th>
               </tr>
             </thead>
             <tbody>
               {recentOrders.length > 0 ? (
                 recentOrders.map((order) => (
-                  <tr key={order.id}>
-                    <td data-label="ID">
-                      <b>{order.id}</b>
+                  <tr key={order.id} className="border-b border-[var(--admin-border)] transition-colors duration-300 hover:bg-[rgba(255,255,255,0.02)]">
+                    <td className="p-[0.938rem]">
+                      <b className="text-[var(--admin-text)]">{order.id}</b>
                     </td>
-                    <td data-label="Customer">{order.customerName}</td>
+                    <td className="p-[0.938rem] text-[var(--admin-text)]">{order.customerName}</td>
                     <td
-                      data-label="Items"
-                      style={{
-                        maxWidth: "200px",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
+                      className="p-[0.938rem] text-[var(--admin-muted)] max-w-[12.5rem] whitespace-nowrap overflow-hidden text-ellipsis"
                     >
                       {order.items.map((i) => `${i.qty}x ${i.name}`).join(", ")}
                     </td>
                     <td
-                      data-label="Total"
-                      style={{
-                        color: "var(--admin-orange)",
-                        fontWeight: "bold",
-                      }}
+                      className="p-[0.938rem] text-[var(--admin-orange)] font-bold"
                     >
                       Rs. {order.total}
                     </td>
-                    <td data-label="Status">
-                      <span className={`status-badge ${order.status}`}>
+                    <td className="p-[0.938rem]">
+                      <span className={`inline-block px-[0.625rem] py-[0.25rem] rounded-[1.25rem] text-[0.75rem] font-bold uppercase tracking-[1px] ${order.status === 'completed' ? 'bg-[rgba(34,197,94,0.15)] text-green-500' : order.status === 'pending' ? 'bg-[rgba(234,179,8,0.15)] text-yellow-500' : 'bg-[rgba(59,130,246,0.15)] text-blue-500'}`}>
                         {order.status}
                       </span>
                     </td>
-                    <td data-label="Action">
+                    <td className="p-[0.938rem]">
                       <button
-                        className="btn-view"
+                        className="bg-transparent text-[var(--admin-text)] border border-[var(--admin-border)] px-[0.938rem] py-[0.375rem] rounded-[0.313rem] cursor-pointer transition-all duration-300 flex items-center gap-[0.313rem] text-[0.875rem] hover:bg-white hover:text-black"
                         onClick={() => {
                           setSelectedOrderToView(order);
                           setIsReceiptModalOpen(true);
@@ -271,11 +260,7 @@ const DashboardHome = ({ setActiveTab }) => {
                 <tr>
                   <td
                     colSpan="6"
-                    style={{
-                      textAlign: "center",
-                      padding: "20px",
-                      color: "#888",
-                    }}
+                    className="text-center p-[1.25rem] text-[#888]"
                   >
                     No orders found.
                   </td>
