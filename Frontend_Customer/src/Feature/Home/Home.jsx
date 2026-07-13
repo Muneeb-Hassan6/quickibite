@@ -159,16 +159,15 @@ const HomePage = () => {
                   }
                 }
 
+                const viewAllBtn = section.content_data === 'filter:top_deals' ? (
+                  <button onClick={() => navigate("/deals")} className="btn-view-all-deals" style={{ padding: '4px 14px', fontSize: '12px' }}>
+                    {section.subtitle || "Explore All Deals"} <FaArrowRight style={{ marginLeft: "6px" }} />
+                  </button>
+                ) : null;
+
                 sectionComponent = (
-                  <div key={`prod-${section.id}`} style={{ position: "relative", paddingBottom: "20px" }}>
-                    <HomeProductSlider title={section.title} items={items} sliderType={section.slider_type || 'regular'} />
-                    {section.content_data === 'filter:top_deals' && (
-                      <div style={{ textAlign: "center", marginTop: "15px" }}>
-                        <button onClick={() => navigate("/deals")} className="btn-view-all-deals">
-                          {section.subtitle || "Explore All Deals"} <FaArrowRight style={{ marginLeft: "8px" }} />
-                        </button>
-                      </div>
-                    )}
+                  <div key={`prod-${section.id}`} style={{ position: "relative", paddingBottom: "5px" }}>
+                    <HomeProductSlider title={section.title} items={items} sliderType={section.slider_type || 'regular'} actionButton={viewAllBtn} />
                   </div>
                 );
               }
@@ -190,7 +189,7 @@ const HomePage = () => {
 
                 if (isSlider) {
                   sectionComponent = (
-                    <div className="home-banners-container" key={`ban-${section.id}`} style={{ margin: '30px 0' }}>
+                    <div className="home-banners-container" key={`ban-${section.id}`} style={{ margin: '15px 0' }}>
                       <Swiper
                         modules={[Autoplay, Pagination, Navigation]}
                         spaceBetween={0}
@@ -224,7 +223,7 @@ const HomePage = () => {
                 } else {
                   // Default static banner
                   sectionComponent = (
-                    <div className="home-banners-container" key={`ban-${section.id}`} style={{ margin: '30px 0' }}>
+                    <div className="home-banners-container" key={`ban-${section.id}`} style={{ margin: '15px 0' }}>
                       <div 
                         className="promo-banner-card"
                         style={{ backgroundImage: `url(${optimizeCloudinaryImage(section.image_url, 1200)})`, cursor: section.link_url ? 'pointer' : 'default' }}
@@ -246,7 +245,7 @@ const HomePage = () => {
                   );
                 } else {
                   elements.push(
-                    <div key={`wrapper-${section.id}`} className="container-fluid px-3 px-md-5 pt-3 pb-2">
+                    <div key={`wrapper-${section.id}`} className="container-fluid px-3 px-md-5 py-2">
                       {sectionComponent}
                     </div>
                   );
