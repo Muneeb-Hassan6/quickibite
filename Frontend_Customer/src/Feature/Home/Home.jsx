@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import HomeHero from "./Components/HomeHero";
 import HomeProductSlider from "./Components/HomeProductSlider";
 import ExploreMenu from "../Menu/Components/ExploreMenu";
@@ -20,62 +21,50 @@ import PopupCard from "../../Components/UI/PopupCard";
 const HomePage = () => {
   // --- STATES ---
   const navigate = useNavigate();
-  const [menuItems, setMenuItems] = useState([]);
-  const [comboDeals, setComboDeals] = useState([]);
-  const [homepageData, setHomepageData] = useState({ hero: [], sections: [] });
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedPopupItem, setSelectedPopupItem] = useState(null);
+  // --- FETCH DATA FROM API USING REACT QUERY ---
+  const { data: menuItems = [], isLoading: isMenuLoading } = useQuery({
+    queryKey: ['menu'],
+    queryFn: async () => {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    }
+  });
 
-  // --- FETCH DATA FROM API ---
-  useEffect(() => {
-    const fetchHomeData = async () => {
-      try {
-        // 🔥 Promise.all use kia hy taa k dono APIs ek sath hit hon (Speed fast rahay)
-        const [menuResponse, dealsResponse, homepageResponse] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`),
-          fetch(`${import.meta.env.VITE_API_BASE}/get_active_deals.php`),
-          fetch(`${import.meta.env.VITE_API_BASE}/get_homepage_data.php`),
-        ]);
-
-        const menuData = await menuResponse.json();
-        const dealsData = await dealsResponse.json();
-        const homeData = await homepageResponse.json();
-
-        // 1. Homepage Dynamic Data
-        if (homeData.success) {
-          setHomepageData(homeData.data);
-        }
-
-        // 2. Menu Data Set
-        if (Array.isArray(menuData)) {
-          setMenuItems(menuData);
-        }
-
-        // 2. Deals Data Set (Format kr rahy hain taa k Slider isy easily show kr saky)
-        if (dealsData.success && dealsData.data) {
-          const formattedDeals = dealsData.data.map((deal) => ({
-            id: deal.id,
-            name: deal.title,
-            title: deal.title,
-            price: parseFloat(deal.price),
-            image: deal.img,
-            img: deal.img,
-            items_description: deal.items_description, // 🔥 Yeh add karna hai
-            isAvailable: true,
-            is_deal: true,
-            size: "Combo",
-          }));
-          setComboDeals(formattedDeals);
-        }
-      } catch (error) {
-        console.error("Error fetching homepage data:", error);
-      } finally {
-        setIsLoading(false);
+  const { data: comboDeals = [], isLoading: isDealsLoading } = useQuery({
+    queryKey: ['active_deals'],
+    queryFn: async () => {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_active_deals.php`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        return data.data.map((deal) => ({
+          id: deal.id,
+          name: deal.title,
+          title: deal.title,
+          price: parseFloat(deal.price),
+          image: deal.img,
+          img: deal.img,
+          items_description: deal.items_description,
+          isAvailable: true,
+          is_deal: true,
+          size: "Combo",
+        }));
       }
-    };
+      return [];
+    }
+  });
 
-    fetchHomeData();
-  }, []);
+  const { data: homepageData = { hero: [], sections: [] }, isLoading: isHomeLoading } = useQuery({
+    queryKey: ['homepage_data'],
+    queryFn: async () => {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_homepage_data.php`);
+      const data = await res.json();
+      return data.success ? data.data : { hero: [], sections: [] };
+    }
+  });
+
+  const isLoading = isMenuLoading || isDealsLoading || isHomeLoading;
 
   const handleBannerClick = (linkUrl) => {
     if (!linkUrl) return;

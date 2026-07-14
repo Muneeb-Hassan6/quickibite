@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { optimizeCloudinaryImage } from "../../../utils/imageOptimizer";
 
 const ExploreMenu = ({ title = "EXPLORE MENU", subtitle = "VIEW ALL" }) => {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Arrow Scroll State
   const scrollRef = useRef(null);
@@ -21,6 +20,15 @@ const ExploreMenu = ({ title = "EXPLORE MENU", subtitle = "VIEW ALL" }) => {
       setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth);
     }
   };
+
+  const { data: categories = [], isLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_categories.php`);
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    }
+  });
 
   useEffect(() => {
     checkForScrollPosition();
@@ -40,22 +48,6 @@ const ExploreMenu = ({ title = "EXPLORE MENU", subtitle = "VIEW ALL" }) => {
     }
   };
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_categories.php`,
-        );
-        const data = await response.json();
-        if (Array.isArray(data)) setCategories(data);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchCategories();
-  }, []);
 
   return (
     <div className="pt-[1.875rem] bg-[var(--home-bg,#0c0c0e)]">

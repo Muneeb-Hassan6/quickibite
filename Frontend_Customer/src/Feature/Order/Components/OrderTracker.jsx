@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   FaBoxOpen,
   FaClock,
@@ -12,39 +13,15 @@ import toast from "react-hot-toast";
 
 const OrderTracker = () => {
   const [searchId, setSearchId] = useState("");
-  const [liveOrders, setLiveOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchLiveOrders = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/track_public_orders.php`,
-      );
+  const { data: liveOrders = [], isLoading, refetch: fetchLiveOrders, isRefetching } = useQuery({
+    queryKey: ['public_orders'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/track_public_orders.php`);
       const data = await response.json();
-
-      if (Array.isArray(data)) {
-        setLiveOrders(data);
-      } else {
-        setLiveOrders([]);
-      }
-    } catch (error) {
-      console.error("Failed to fetch tracking details:", error);
-      toast.error("Failed to connect to the server.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchLiveOrders();
-
-    const interval = setInterval(() => {
-      fetchLiveOrders();
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, []);
+      return Array.isArray(data) ? data : [];
+    },
+    refetchInterval: 10000,
+  });
 
   // Get my locally placed orders
   const mySavedOrders = JSON.parse(localStorage.getItem("myOrders") || "[]");

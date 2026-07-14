@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Sidebar from "./Components/Sidebar";
 import SearchBar from "./Components/SearchBar";
 import MenuContent from "./Components/MenuContent";
@@ -9,9 +10,6 @@ import Footer from "../OnlineStore/Components/Footer";
 const MenuPage = () => {
   const [activeCategory, setActiveCategory] = useState("");
   const [expandedCategory, setExpandedCategory] = useState("");
-  const [menuItems, setMenuItems] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -21,28 +19,33 @@ const MenuPage = () => {
   const searchBoxRef = useRef(null);
   const contentRef = useRef(null);
 
-  // --- API FETCHING ---
+  // --- API FETCHING USING REACT QUERY ---
+  const { data: categories = [], isLoading: isCatLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_categories.php`);
+      const data = await res.json();
+      return Array.isArray(data) ? data.map((c) => c.name) : [];
+    }
+  });
+
+  const { data: menuItems = [], isLoading: isMenuLoading } = useQuery({
+    queryKey: ['menu'],
+    queryFn: async () => {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
+      const data = await res.json();
+      return Array.isArray(data) ? data.filter(i => i.isAvailable) : [];
+    }
+  });
+
+  const isLoading = isCatLoading || isMenuLoading;
+
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const catRes = await fetch(`${import.meta.env.VITE_API_BASE}/get_categories.php`);
-        const catData = await catRes.json();
-        const catNames = Array.isArray(catData) ? catData.map((c) => c.name) : [];
-        setCategories(catNames);
-
-        const menuRes = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
-        const menuData = await menuRes.json();
-        setMenuItems(Array.isArray(menuData) ? menuData.filter(i => i.isAvailable) : []);
-
-        if (catNames.length > 0) {
-          setActiveCategory(catNames[0]);
-          setExpandedCategory(catNames[0]);
-        }
-      } catch (error) { console.error(error); } finally { setIsLoading(false); }
-    };
-    fetchData();
-  }, []);
+    if (categories.length > 0 && !activeCategory) {
+      setActiveCategory(categories[0]);
+      setExpandedCategory(categories[0]);
+    }
+  }, [categories, activeCategory]);
 
   // --- HELPER SCROLL FUNCTION ---
   const performScroll = (el, offset = 160) => {

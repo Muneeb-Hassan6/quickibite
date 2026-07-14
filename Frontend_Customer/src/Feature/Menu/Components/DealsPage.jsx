@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { FaCartPlus, FaFire } from "react-icons/fa";
 import Swal from "sweetalert2";
 import { useCart } from "../../../Context/CartContext";
@@ -7,30 +8,19 @@ import { optimizeCloudinaryImage } from "../../../utils/imageOptimizer";
 // import "./CustomerDeals.css"; // 🔥 CSS Import
 
 const DealsPage = () => {
-  const [deals, setDeals] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const { addToCart } = useCart();
+  const { data: deals = [], isLoading } = useQuery({
+    queryKey: ['active_deals'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_active_deals.php`);
+      const data = await response.json();
+      return data.success ? data.data : [];
+    }
+  });
 
   useEffect(() => {
     // Scroll to top jab page khulay
     window.scrollTo(0, 0);
-
-    const fetchActiveDeals = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_active_deals.php`,
-        );
-        const data = await response.json();
-        if (data.success) {
-          setDeals(data.data);
-        }
-      } catch (error) {
-        console.error("Failed to load deals", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchActiveDeals();
   }, []);
 
   const handleAddDealToCart = (deal) => {

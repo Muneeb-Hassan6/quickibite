@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import OrderTracking from "../../Feature/Order/Components/OrderTracker";
 import { useCart } from "../../Context/CartContext";
 
@@ -16,7 +17,6 @@ const Header = () => {
   const { orders } = useCart();
   const searchRef = useRef(null);
 
-  const [menuItems, setMenuItems] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const isMenuPage = location.pathname.toLowerCase().includes("menu");
@@ -37,21 +37,15 @@ const Header = () => {
     }
   }, [location.search, isMenuPage]);
 
-  // Fetch Menu for Dynamic Search
-  useEffect(() => {
-    const fetchMenu = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
-        const result = await response.json();
-        if (result.success && result.data) {
-          setMenuItems(result.data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch menu for search", err);
-      }
-    };
-    fetchMenu();
-  }, []);
+  // Fetch Menu for Dynamic Search using React Query
+  const { data: menuItems = [] } = useQuery({
+    queryKey: ['menu'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
+      const result = await response.json();
+      return (result.success && result.data) ? result.data : (Array.isArray(result) ? result : []);
+    }
+  });
 
   // Handle outside click for search dropdown
   useEffect(() => {

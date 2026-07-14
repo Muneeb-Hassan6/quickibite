@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaFire, FaShoppingCart, FaMapMarkerAlt, FaSun, FaMoon, FaSearch, FaBars, FaTimes } from "react-icons/fa";
@@ -13,52 +14,32 @@ const OnlineNavbar = () => {
   const location = useLocation();
   const isMenuPage = location.pathname.toLowerCase() === "/menu";
 
-  // 🔥 Logo State
-  const [storeLogo, setStoreLogo] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  // Search States
   const [searchTerm, setSearchTerm] = useState("");
-  const [menuItems, setMenuItems] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchRef = React.useRef(null);
 
-  // 🔥 Database se Logo Fetch karna
-  useEffect(() => {
-    const fetchLogo = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_settings.php`,
-        );
-        const result = await response.json();
+  // 🔥 Database se Logo Fetch karna via React Query
+  const { data: storeLogo = "" } = useQuery({
+    queryKey: ['store_settings_logo'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
+      const result = await response.json();
+      return (result.success && result.data.store_logo) ? result.data.store_logo : "";
+    }
+  });
 
-        if (result.success && result.data.store_logo) {
-          setStoreLogo(result.data.store_logo);
-        }
-      } catch (error) {
-        console.error("Online Navbar: Failed to load logo", error);
-      }
-    };
-    fetchLogo();
-  }, []);
-
-  // Fetch Menu for Dynamic Search
-  useEffect(() => {
-    const fetchMenu = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
-        const result = await response.json();
-        if (Array.isArray(result)) {
-          setMenuItems(result);
-        } else if (result.success && result.data) {
-          setMenuItems(result.data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch menu for search", err);
-      }
-    };
-    fetchMenu();
-  }, []);
+  // Fetch Menu for Dynamic Search via React Query
+  const { data: menuItems = [] } = useQuery({
+    queryKey: ['menu'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
+      const result = await response.json();
+      if (Array.isArray(result)) return result;
+      if (result.success && result.data) return result.data;
+      return [];
+    }
+  });
 
   // Handle outside click for search dropdown
   useEffect(() => {

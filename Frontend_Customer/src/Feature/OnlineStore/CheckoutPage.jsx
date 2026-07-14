@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   FaMapMarkerAlt,
@@ -40,30 +41,27 @@ const CheckoutPage = () => {
 
   const [copied, setCopied] = useState(false);
 
-  const [availableTables, setAvailableTables] = useState([]);
+  const { data: availableTables = [] } = useQuery({
+    queryKey: ['active_tables'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`);
+      const result = await response.json();
+      if (result.success) {
+        return result.data.filter(t => t.status == 1);
+      }
+      return [];
+    }
+  });
 
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, []);
 
-    const fetchTables = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`);
-        const result = await response.json();
-        if (result.success) {
-          // Filter only active tables
-          const activeTables = result.data.filter(t => t.status == 1);
-          setAvailableTables(activeTables);
-          // If no session table and tables exist, default to first active table
-          if (!sessionTable && activeTables.length > 0 && orderType === "dine_in") {
-            setTableNumber(activeTables[0].table_name);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load tables", error);
-      }
-    };
-    fetchTables();
-  }, [sessionTable, orderType]);
+  useEffect(() => {
+    if (!sessionTable && availableTables.length > 0 && orderType === "dine_in" && !tableNumber) {
+      setTableNumber(availableTables[0].table_name);
+    }
+  }, [availableTables, sessionTable, orderType, tableNumber]);
 
   const receiptRef = useRef(null);
 

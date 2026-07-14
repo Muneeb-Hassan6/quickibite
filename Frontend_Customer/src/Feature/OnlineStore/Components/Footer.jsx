@@ -1,20 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube, FaPhoneAlt, FaEnvelope, FaChevronDown } from "react-icons/fa";
 
 const Footer = ({ style }) => {
   const navigate = useNavigate();
-  const [footerData, setFooterData] = useState({
-    footer_tagline: "Fresh Food, Delivered Hot & Fast. Experience the best taste in town with our premium quality ingredients.",
-    footer_facebook: "#",
-    footer_twitter: "#",
-    footer_instagram: "#",
-    footer_youtube: "#",
-    footer_phone: "+1 234 567 8900",
-    footer_email: "support@bigbite.com"
-  });
-
-  // Mobile Accordion State
   const [expandedSection, setExpandedSection] = useState(null);
 
   const toggleSection = (section) => {
@@ -23,28 +13,34 @@ const Footer = ({ style }) => {
     }
   };
 
-  useEffect(() => {
-    const fetchFooterSettings = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
-        const result = await response.json();
-        if (result.success) {
-          setFooterData(prev => ({
-            footer_tagline: result.data.footer_tagline || prev.footer_tagline,
-            footer_facebook: result.data.footer_facebook || prev.footer_facebook,
-            footer_twitter: result.data.footer_twitter || prev.footer_twitter,
-            footer_instagram: result.data.footer_instagram || prev.footer_instagram,
-            footer_youtube: result.data.footer_youtube || prev.footer_youtube,
-            footer_phone: result.data.footer_phone || prev.footer_phone,
-            footer_email: result.data.footer_email || prev.footer_email,
-          }));
-        }
-      } catch (error) {
-        console.error("Failed to load footer settings:", error);
+  // Fetch Footer Settings via React Query
+  const { data: footerData } = useQuery({
+    queryKey: ['store_settings_footer'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
+      const result = await response.json();
+      if (result.success) {
+        return {
+          footer_tagline: result.data.footer_tagline || "Fresh Food, Delivered Hot & Fast. Experience the best taste in town with our premium quality ingredients.",
+          footer_facebook: result.data.footer_facebook || "#",
+          footer_twitter: result.data.footer_twitter || "#",
+          footer_instagram: result.data.footer_instagram || "#",
+          footer_youtube: result.data.footer_youtube || "#",
+          footer_phone: result.data.footer_phone || "+1 234 567 8900",
+          footer_email: result.data.footer_email || "support@bigbite.com"
+        };
       }
-    };
-    fetchFooterSettings();
-  }, []);
+      return {
+        footer_tagline: "Fresh Food, Delivered Hot & Fast. Experience the best taste in town with our premium quality ingredients.",
+        footer_facebook: "#",
+        footer_twitter: "#",
+        footer_instagram: "#",
+        footer_youtube: "#",
+        footer_phone: "+1 234 567 8900",
+        footer_email: "support@bigbite.com"
+      };
+    }
+  });
 
   return (
     <footer className="bg-[var(--panel-bg)] text-[var(--text-main)] font-['Open_Sans',sans-serif] border-t-2 border-[var(--brand-red)]" style={style}>
@@ -55,13 +51,13 @@ const Footer = ({ style }) => {
             <div className="brand-col flex flex-col">
               <h2 className="font-['Oswald',sans-serif] text-[2rem] font-[800] text-[var(--brand-red)] m-[0_0_0.937rem_0] tracking-[1px]">BIG BITE</h2>
               <p className="text-[0.875rem] text-[var(--text-muted)] leading-[1.6] mb-[0.937rem] min-[36.062rem]:mb-[1.563rem] w-full min-[36.062rem]:max-w-[18.75rem]">
-                {footerData.footer_tagline}
+                {footerData?.footer_tagline}
               </p>
               <div className="flex gap-[0.937rem] mb-[1.25rem] min-[36.062rem]:mb-0">
-                <a href={footerData.footer_facebook} target="_blank" rel="noreferrer" className="flex items-center justify-center w-[2.5rem] h-[2.5rem] bg-[var(--home-bg)] text-[var(--text-main)] rounded-full text-[1.125rem] transition-all duration-300 no-underline hover:bg-[var(--brand-red)] hover:text-white hover:-translate-y-[0.188rem]"><FaFacebookF /></a>
-                <a href={footerData.footer_twitter} target="_blank" rel="noreferrer" className="flex items-center justify-center w-[2.5rem] h-[2.5rem] bg-[var(--home-bg)] text-[var(--text-main)] rounded-full text-[1.125rem] transition-all duration-300 no-underline hover:bg-[var(--brand-red)] hover:text-white hover:-translate-y-[0.188rem]"><FaTwitter /></a>
-                <a href={footerData.footer_instagram} target="_blank" rel="noreferrer" className="flex items-center justify-center w-[2.5rem] h-[2.5rem] bg-[var(--home-bg)] text-[var(--text-main)] rounded-full text-[1.125rem] transition-all duration-300 no-underline hover:bg-[var(--brand-red)] hover:text-white hover:-translate-y-[0.188rem]"><FaInstagram /></a>
-                <a href={footerData.footer_youtube} target="_blank" rel="noreferrer" className="flex items-center justify-center w-[2.5rem] h-[2.5rem] bg-[var(--home-bg)] text-[var(--text-main)] rounded-full text-[1.125rem] transition-all duration-300 no-underline hover:bg-[var(--brand-red)] hover:text-white hover:-translate-y-[0.188rem]"><FaYoutube /></a>
+                <a href={footerData?.footer_facebook} target="_blank" rel="noreferrer" className="flex items-center justify-center w-[2.5rem] h-[2.5rem] bg-[var(--home-bg)] text-[var(--text-main)] rounded-full text-[1.125rem] transition-all duration-300 no-underline hover:bg-[var(--brand-red)] hover:text-white hover:-translate-y-[0.188rem]"><FaFacebookF /></a>
+                <a href={footerData?.footer_twitter} target="_blank" rel="noreferrer" className="flex items-center justify-center w-[2.5rem] h-[2.5rem] bg-[var(--home-bg)] text-[var(--text-main)] rounded-full text-[1.125rem] transition-all duration-300 no-underline hover:bg-[var(--brand-red)] hover:text-white hover:-translate-y-[0.188rem]"><FaTwitter /></a>
+                <a href={footerData?.footer_instagram} target="_blank" rel="noreferrer" className="flex items-center justify-center w-[2.5rem] h-[2.5rem] bg-[var(--home-bg)] text-[var(--text-main)] rounded-full text-[1.125rem] transition-all duration-300 no-underline hover:bg-[var(--brand-red)] hover:text-white hover:-translate-y-[0.188rem]"><FaInstagram /></a>
+                <a href={footerData?.footer_youtube} target="_blank" rel="noreferrer" className="flex items-center justify-center w-[2.5rem] h-[2.5rem] bg-[var(--home-bg)] text-[var(--text-main)] rounded-full text-[1.125rem] transition-all duration-300 no-underline hover:bg-[var(--brand-red)] hover:text-white hover:-translate-y-[0.188rem]"><FaYoutube /></a>
               </div>
             </div>
 
@@ -98,11 +94,11 @@ const Footer = ({ style }) => {
               <ul className={`list-none p-0 min-[36.062rem]:m-[0_0_1.563rem_0] max-h-0 min-[36.062rem]:max-h-none overflow-hidden min-[36.062rem]:overflow-visible transition-all duration-400 ease-out pt-0 min-[36.062rem]:pt-0 ${expandedSection === 'contact' ? 'max-[36rem]:max-h-[18.75rem] max-[36rem]:pt-[0.937rem] max-[36rem]:pb-[0.937rem]' : ''}`}>
                 <li className="flex items-center gap-[0.625rem] mb-[0.937rem] text-[var(--text-muted)] text-[0.875rem]">
                   <FaPhoneAlt className="text-[var(--brand-red)] text-[1rem]" />
-                  <span>{footerData.footer_phone}</span>
+                  <span>{footerData?.footer_phone}</span>
                 </li>
-                <li className="flex items-center gap-[0.625rem] mb-[0.937rem] text-[var(--text-muted)] text-[0.875rem]">
+                <li className="flex items-center gap-[0.625rem] text-[var(--text-muted)] text-[0.875rem]">
                   <FaEnvelope className="text-[var(--brand-red)] text-[1rem]" />
-                  <span>{footerData.footer_email}</span>
+                  <span>{footerData?.footer_email}</span>
                 </li>
               </ul>
             </div>

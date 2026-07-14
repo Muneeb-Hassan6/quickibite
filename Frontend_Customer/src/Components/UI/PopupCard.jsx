@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useCart } from "../../Context/CartContext";
 import {
   FaShoppingCart,
@@ -14,12 +15,9 @@ const PopupCard = ({ image, title, description, price, item, closePopup }) => {
   const [quantity, setQuantity] = useState(1);
   const [specialNote, setSpecialNote] = useState("");
   const [selectedVariant, setSelectedVariant] = useState(null);
-
-  const [optionalIngredients, setOptionalIngredients] = useState([]);
   const [excludedIds, setExcludedIds] = useState([]);
-  const [addonsList, setAddonsList] = useState([]);
+
   const [selectedAddons, setSelectedAddons] = useState([]);
-  const [isFetchingExtras, setIsFetchingExtras] = useState(false);
 
   useEffect(() => {
     if (item?.variants && item.variants.length > 0) {
@@ -30,48 +28,35 @@ const PopupCard = ({ image, title, description, price, item, closePopup }) => {
     }
   }, [item]);
 
-  useEffect(() => {
-    if (item && selectedVariant) {
-      const fetchExtras = async () => {
-        setIsFetchingExtras(true);
-        try {
-          const recipeRes = await fetch(
-            `${import.meta.env.VITE_API_BASE}/get_recipe.php?menu_item_id=${item.id}&variant_name=${selectedVariant.size}`,
-          );
-          const recipeData = await recipeRes.json();
-          if (recipeRes.ok && recipeData.status === "success") {
-            const removables = recipeData.ingredients.filter(
-              (ing) => ing.is_removable == 1,
-            );
-            setOptionalIngredients(removables);
-          } else {
-            setOptionalIngredients([]);
-          }
+  const { data: optionalIngredients = [], isLoading: isRecipeLoading } = useQuery({
+    queryKey: ['recipe', item?.id, selectedVariant?.size],
+    queryFn: async () => {
+      if (!item || !selectedVariant) return [];
+      const recipeRes = await fetch(`${import.meta.env.VITE_API_BASE}/get_recipe.php?menu_item_id=${item.id}&variant_name=${selectedVariant.size}`);
+      const recipeData = await recipeRes.json();
+      if (recipeRes.ok && recipeData.status === "success") {
+        return recipeData.ingredients.filter((ing) => ing.is_removable == 1);
+      }
+      return [];
+    },
+    enabled: Boolean(item?.id && selectedVariant?.size),
+  });
 
-          const addonsRes = await fetch(
-            `${import.meta.env.VITE_API_BASE}/get_addons.php?menu_item_id=${item.id}`,
-          );
-          const addonsData = await addonsRes.json();
-          if (
-            addonsRes.ok &&
-            addonsData.status === "success" &&
-            addonsData.addons
-          ) {
-            setAddonsList(addonsData.addons);
-          } else {
-            setAddonsList([]);
-          }
-        } catch (error) {
-          console.error("Error fetching details:", error);
-          setOptionalIngredients([]);
-          setAddonsList([]);
-        } finally {
-          setIsFetchingExtras(false);
-        }
-      };
-      fetchExtras();
-    }
-  }, [item, selectedVariant]);
+  const { data: addonsList = [], isLoading: isAddonsLoading } = useQuery({
+    queryKey: ['addons', item?.id],
+    queryFn: async () => {
+      if (!item) return [];
+      const addonsRes = await fetch(`${import.meta.env.VITE_API_BASE}/get_addons.php?menu_item_id=${item.id}`);
+      const addonsData = await addonsRes.json();
+      if (addonsRes.ok && addonsData.status === "success" && addonsData.addons) {
+        return addonsData.addons;
+      }
+      return [];
+    },
+    enabled: Boolean(item?.id),
+  });
+
+  const isFetchingExtras = isRecipeLoading || isAddonsLoading;
 
   const toggleRemovable = (invId) =>
     setExcludedIds((prev) =>

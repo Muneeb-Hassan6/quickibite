@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { FaCartPlus, FaFire, FaPercentage } from "react-icons/fa";
 import Swal from "sweetalert2";
 import { useCart } from "../../../Context/CartContext";
@@ -7,57 +8,54 @@ import { useCart } from "../../../Context/CartContext";
 
 
 const DealsPage = () => {
-  const [deals, setDeals] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const { addToCart } = useCart();
 
   // ==========================================
-  // ⚙️ BACKEND API & LOGIC (100% UNTOUCHED)
+  // ⚙️ BACKEND API & LOGIC VIA REACT QUERY
   // ==========================================
+  const { data: menuData = [], isLoading: isMenuLoading } = useQuery({
+    queryKey: ['menu'],
+    queryFn: async () => {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    }
+  });
+
+  const { data: combosData = [], isLoading: isCombosLoading } = useQuery({
+    queryKey: ['active_deals'],
+    queryFn: async () => {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_active_deals.php`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        return data.data.map((deal) => ({
+          id: deal.id,
+          title: deal.title,
+          price: deal.price,
+          img: deal.img,
+          is_deal: true,
+          items_description: deal.items_description,
+          is_permanent: deal.is_permanent,
+        }));
+      }
+      return [];
+    }
+  });
+
+  const isLoading = isMenuLoading || isCombosLoading;
+
+  const deals = React.useMemo(() => {
+    let combinedDeals = [];
+    const menuTopDeals = menuData.filter(
+      (item) => item.isTopDeal === true && item.isAvailable === true,
+    );
+    combinedDeals = [...combinedDeals, ...menuTopDeals];
+    combinedDeals = [...combinedDeals, ...combosData];
+    return combinedDeals;
+  }, [menuData, combosData]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
-
-    const fetchAllDeals = async () => {
-      try {
-        const [menuRes, combosRes] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`),
-          fetch(`${import.meta.env.VITE_API_BASE}/get_active_deals.php`),
-        ]);
-
-        const menuData = await menuRes.json();
-        const combosData = await combosRes.json();
-
-        let combinedDeals = [];
-
-        if (Array.isArray(menuData)) {
-          const menuTopDeals = menuData.filter(
-            (item) => item.isTopDeal === true && item.isAvailable === true,
-          );
-          combinedDeals = [...combinedDeals, ...menuTopDeals];
-        }
-
-        if (combosData.success && combosData.data) {
-          const formattedCombos = combosData.data.map((deal) => ({
-            id: deal.id,
-            title: deal.title,
-            price: deal.price,
-            img: deal.img,
-            is_deal: true,
-            items_description: deal.items_description,
-            is_permanent: deal.is_permanent,
-          }));
-          combinedDeals = [...combinedDeals, ...formattedCombos];
-        }
-
-        setDeals(combinedDeals);
-      } catch (error) {
-        console.error("Deals Page: Fetch error", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAllDeals();
   }, []);
 
   const handleAddDealToCart = (deal) => {
