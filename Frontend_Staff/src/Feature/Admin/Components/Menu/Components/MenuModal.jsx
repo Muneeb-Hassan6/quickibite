@@ -54,7 +54,7 @@ const MenuModal = ({
             <span className="inline-block w-[0.25rem] h-[1.25rem] bg-[#f59e0b] mr-[0.625rem]"></span>
             {editingItem ? "EDIT MENU ITEM" : "ADD MENU ITEM"}
           </h3>
-          <button className="bg-transparent border-none text-[var(--admin-muted)] text-[1.25rem] cursor-pointer transition-colors duration-200 hover:text-[var(--brand-red)]" onClick={onClose}>
+          <button className="bg-transparent border-none text-[var(--admin-muted)] text-[1.25rem] cursor-pointer transition-colors duration-200 hover:text-[var(--admin-orange)]" onClick={onClose}>
             <FaTimes />
           </button>
         </div>
@@ -113,7 +113,7 @@ const MenuModal = ({
                   onChange={(e) =>
                     setMenuForm({ ...menuForm, isAvailable: e.target.checked })
                   }
-                  className="w-[1rem] h-[1rem] cursor-pointer accent-[var(--brand-red,#ef4444)]"
+                  className="w-[1rem] h-[1rem] cursor-pointer accent-[var(--admin-orange)]"
                 />
                 Available (In Stock)
               </label>
@@ -127,7 +127,7 @@ const MenuModal = ({
                   onChange={(e) =>
                     setMenuForm({ ...menuForm, isTopDeal: e.target.checked })
                   }
-                  className="w-[1rem] h-[1rem] cursor-pointer accent-[var(--brand-red,#ef4444)]"
+                  className="w-[1rem] h-[1rem] cursor-pointer accent-[var(--admin-orange)]"
                 />
                 Mark as Top Deal
               </label>
@@ -141,14 +141,14 @@ const MenuModal = ({
                   onChange={(e) =>
                     setMenuForm({ ...menuForm, isBestSeller: e.target.checked })
                   }
-                  className="w-[1rem] h-[1rem] cursor-pointer accent-[var(--brand-red,#ef4444)]"
+                  className="w-[1rem] h-[1rem] cursor-pointer accent-[var(--admin-orange)]"
                 />
                 Mark as Best Seller
               </label>
 
               {customSliders.length > 0 && (
                 <>
-                  <div className="my-[0.938rem] border-b border-[#333]"></div>
+                  <div className="my-[0.938rem] border-b border-[var(--admin-border)]"></div>
                   <h4 className="m-0 mb-[0.313rem] text-[0.75rem] text-[#888] font-bold">Custom Sliders</h4>
                   {customSliders.map(slider => {
                     const isChecked = menuForm.slider_placements?.includes(slider.id);
@@ -168,7 +168,7 @@ const MenuModal = ({
                               setMenuForm({ ...menuForm, slider_placements: currentPlacements.filter(id => id !== slider.id) });
                             }
                           }}
-                          className="w-[1rem] h-[1rem] cursor-pointer accent-[var(--brand-red,#ef4444)]"
+                          className="w-[1rem] h-[1rem] cursor-pointer accent-[var(--admin-orange)]"
                         />
                         Add to "{slider.title}" Slider
                       </label>
@@ -180,12 +180,12 @@ const MenuModal = ({
           </div>
 
           {/* RIGHT SIDE: Inputs & Variants */}
-          <div className="flex-[2] flex flex-col pr-[0.625rem] max-h-[25rem] md:max-h-none overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--brand-red)] scrollbar-track-[#141414]">
+          <div className="flex-[2] flex flex-col pr-[0.625rem] max-h-[25rem] md:max-h-none overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--admin-orange)] scrollbar-track-[#141414]">
             <div className="mb-[0.938rem]">
               <label className="text-[0.75rem] font-bold text-[var(--admin-muted)] uppercase mb-[0.375rem] block">Item Name</label>
               <input
                 type="text"
-                className="w-full p-[0.75rem] bg-[rgba(255,255,255,0.05)] border border-[#333] text-white rounded-[0.5rem] focus:outline-none focus:border-[var(--brand-red)]"
+                className="w-full p-[0.75rem] bg-[rgba(255,255,255,0.05)] border border-[var(--admin-border)] text-white rounded-[0.5rem] focus:outline-none focus:border-[var(--admin-orange)]"
                 value={menuForm.name}
                 onChange={(e) =>
                   setMenuForm({ ...menuForm, name: e.target.value })
@@ -197,17 +197,17 @@ const MenuModal = ({
             <div className="mb-[0.938rem]">
               <label className="text-[0.75rem] font-bold text-[var(--admin-muted)] uppercase mb-[0.375rem] block">Category</label>
               <select
-                className="w-full p-[0.75rem] bg-[rgba(255,255,255,0.05)] border border-[#333] text-white rounded-[0.5rem] focus:outline-none focus:border-[var(--brand-red)]"
+                className="w-full p-[0.75rem] bg-[rgba(255,255,255,0.05)] border border-[var(--admin-border)] text-white rounded-[0.5rem] focus:outline-none focus:border-[var(--admin-orange)]"
                 value={menuForm.category}
                 onChange={(e) =>
                   setMenuForm({ ...menuForm, category: e.target.value })
                 }
               >
-                <option className="bg-[#1a1a1a]" value="" disabled>
+                <option className="bg-[var(--admin-bg)]" value="" disabled>
                   Select Category
                 </option>
                 {categories.map((cat) => (
-                  <option className="bg-[#1a1a1a]" key={cat.id} value={cat.name}>
+                  <option className="bg-[var(--admin-bg)]" key={cat.id} value={cat.name}>
                     {cat.name}
                   </option>
                 ))}
@@ -219,7 +219,7 @@ const MenuModal = ({
             </div>
 
             {/* VARIANTS SECTION */}
-            <div className="bg-[rgba(0,0,0,0.3)] p-[0.938rem] rounded-[0.5rem] border border-[#333]">
+            <div className="bg-[rgba(0,0,0,0.3)] p-[0.938rem] rounded-[0.5rem] border border-[var(--admin-border)]">
               <label className="text-[0.75rem] font-bold text-[var(--admin-muted)] uppercase mb-[0.625rem] block">Sizes & Prices</label>
 
               {menuForm.variants &&
@@ -227,7 +227,7 @@ const MenuModal = ({
                   <div key={index} className="flex gap-[0.625rem] mb-[0.625rem] items-center w-full">
                     <input
                       type="text"
-                      className="flex-[2] min-w-0 p-[0.75rem] bg-[rgba(255,255,255,0.05)] border border-[#333] text-white rounded-[0.5rem] focus:outline-none focus:border-[var(--brand-red)]"
+                      className="flex-[2] min-w-0 p-[0.75rem] bg-[rgba(255,255,255,0.05)] border border-[var(--admin-border)] text-white rounded-[0.5rem] focus:outline-none focus:border-[var(--admin-orange)]"
                       placeholder="Size (e.g. Regular)"
                       value={variant.size}
                       onChange={(e) =>
@@ -236,7 +236,7 @@ const MenuModal = ({
                     />
                     <input
                       type="number"
-                      className="flex-1 min-w-0 p-[0.75rem] bg-[rgba(255,255,255,0.05)] border border-[#333] text-white rounded-[0.5rem] focus:outline-none focus:border-[var(--brand-red)]"
+                      className="flex-1 min-w-0 p-[0.75rem] bg-[rgba(255,255,255,0.05)] border border-[var(--admin-border)] text-white rounded-[0.5rem] focus:outline-none focus:border-[var(--admin-orange)]"
                       placeholder="Price (Rs)"
                       value={variant.price}
                       onChange={(e) =>
@@ -258,7 +258,7 @@ const MenuModal = ({
 
                     {menuForm.variants.length > 1 && (
                       <button
-                        className="bg-[rgba(239,68,68,0.1)] text-[var(--brand-red)] border-none p-[0.5rem_0.75rem] h-auto rounded-[0.5rem] cursor-pointer shrink-0 flex items-center justify-center transition-colors duration-200 hover:bg-[rgba(239,68,68,0.2)]"
+                        className="bg-[rgba(239,68,68,0.1)] text-[var(--admin-orange)] border-none p-[0.5rem_0.75rem] h-auto rounded-[0.5rem] cursor-pointer shrink-0 flex items-center justify-center transition-colors duration-200 hover:bg-[rgba(239,68,68,0.2)]"
                         onClick={() => removeVariant(index)}
                       >
                         <FaTrash />
@@ -268,7 +268,7 @@ const MenuModal = ({
                 ))}
 
               <button
-                className="w-full p-[0.75rem] bg-transparent text-[var(--brand-red)] border border-dashed border-[var(--brand-red)] rounded-[0.5rem] cursor-pointer font-bold flex justify-center items-center gap-[0.5rem] mt-[0.625rem] transition-colors duration-200 hover:bg-[rgba(239,68,68,0.1)]"
+                className="w-full p-[0.75rem] bg-transparent text-[var(--admin-orange)] border border-dashed border-[var(--admin-orange)] rounded-[0.5rem] cursor-pointer font-bold flex justify-center items-center gap-[0.5rem] mt-[0.625rem] transition-colors duration-200 hover:bg-[rgba(239,68,68,0.1)]"
                 onClick={addVariantRow}
               >
                 <FaPlus /> Add Another Size
@@ -278,14 +278,14 @@ const MenuModal = ({
         </div>
 
         {/* FOOTER ACTIONS */}
-        <div className="flex justify-end gap-[0.938rem] mt-[1.25rem] border-t border-[#333] pt-[1.25rem]">
+        <div className="flex justify-end gap-[0.938rem] mt-[1.25rem] border-t border-[var(--admin-border)] pt-[1.25rem]">
           <button
-            className="bg-transparent text-white border border-[#333] p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]"
+            className="bg-transparent text-white border border-[var(--admin-border)] p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]"
             onClick={onClose}
           >
             Cancel
           </button>
-          <button className="bg-[var(--brand-red)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[0_4px_15px_rgba(239,68,68,0.4)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.6)]" onClick={onSave}>
+          <button className="bg-[var(--admin-orange)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[var(--shadow-glow)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[var(--shadow-glow)]" onClick={onSave}>
             {editingItem ? "Update Item" : "Save Item"}
           </button>
         </div>

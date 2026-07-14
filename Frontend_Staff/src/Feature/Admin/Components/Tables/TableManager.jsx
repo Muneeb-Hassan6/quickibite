@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { FaPlus, FaTrash, FaQrcode, FaPrint, FaPowerOff, FaSave, FaLink } from "react-icons/fa";
 import { QRCodeCanvas } from "qrcode.react";
@@ -6,10 +7,7 @@ import "../../styles/index.css"; // Ensure admin styling
 import "./styles/index.css"; // Table Manager specific styles
 
 const TableManager = () => {
-  const [tables, setTables] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // State for new table modal
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTableName, setNewTableName] = useState("");
 
@@ -18,29 +16,23 @@ const TableManager = () => {
 
   const qrRefs = useRef({}); // To store references to QR canvases for downloading
 
-  useEffect(() => {
-    fetchTables();
-  }, []);
-
-  const fetchTables = async () => {
-    setIsLoading(true);
-    try {
+  const { data = {}, isLoading } = useQuery({
+    queryKey: ['tables'],
+    queryFn: async () => {
       const response = await fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`);
       const result = await response.json();
-      if (result.success) {
-        setTables(result.data);
-        if (result.qr_base_url !== undefined) {
-          setQrBaseUrl(result.qr_base_url);
-          setBaseUrlInput(result.qr_base_url);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to load tables", error);
-    } finally {
-      setIsLoading(false);
+      return result.success ? { tables: result.data, qrBaseUrl: result.qr_base_url } : { tables: [], qrBaseUrl: "" };
     }
-  };
+  });
 
+  const tables = data.tables || [];
+
+  useEffect(() => {
+    if (data.qrBaseUrl !== undefined && !qrBaseUrl && !baseUrlInput) {
+      setQrBaseUrl(data.qrBaseUrl);
+      setBaseUrlInput(data.qrBaseUrl);
+    }
+  }, [data.qrBaseUrl]);
   const handleSaveBaseUrl = async () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`, {
@@ -84,7 +76,7 @@ const TableManager = () => {
         });
         setNewTableName("");
         setIsModalOpen(false);
-        fetchTables();
+        queryClient.invalidateQueries({ queryKey: ['tables'] });
       } else {
         Swal.fire("Error", result.message, "error");
       }
@@ -102,7 +94,7 @@ const TableManager = () => {
       });
       const result = await response.json();
       if (result.success) {
-        fetchTables(); // Refresh list
+        queryClient.invalidateQueries({ queryKey: ['tables'] }); // Refresh list
       }
     } catch (error) {
       console.error("Error toggling status", error);
@@ -129,7 +121,7 @@ const TableManager = () => {
           const res = await response.json();
           if (res.success) {
             Swal.fire("Deleted!", "The table has been deleted.", "success");
-            fetchTables();
+            queryClient.invalidateQueries({ queryKey: ['tables'] });
           } else {
             Swal.fire("Error", res.message, "error");
           }

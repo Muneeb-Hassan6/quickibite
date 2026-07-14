@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import {
   FaTrash,
@@ -9,30 +10,15 @@ import {
 } from "react-icons/fa";
 
 const DealList = ({ onEdit }) => {
-  // 🔥 onEdit prop receive kia hy
-  const [deals, setDeals] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Database se saari deals lana
-  const fetchAdminDeals = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_admin_deals.php`,
-      );
+  const queryClient = useQueryClient();
+  const { data: deals = [], isLoading } = useQuery({
+    queryKey: ['admin_deals'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_admin_deals.php`);
       const data = await response.json();
-      if (data.success) {
-        setDeals(data.data);
-      }
-    } catch (error) {
-      console.error("Error fetching deals:", error);
-    } finally {
-      setIsLoading(false);
+      return data.success ? data.data : [];
     }
-  };
-
-  useEffect(() => {
-    fetchAdminDeals();
-  }, []);
+  });
 
   // Deal ko On/Off (Active/Inactive) karna
   const handleToggleStatus = async (id, currentStatus) => {
@@ -49,11 +35,7 @@ const DealList = ({ onEdit }) => {
       const data = await response.json();
 
       if (data.success) {
-        setDeals(
-          deals.map((deal) =>
-            deal.id === id ? { ...deal, is_active: newStatus } : deal,
-          ),
-        );
+        queryClient.invalidateQueries({ queryKey: ['admin_deals'] });
         Swal.fire({
           toast: true,
           position: "top-end",
@@ -95,14 +77,10 @@ const DealList = ({ onEdit }) => {
           );
           const data = await response.json();
           if (data.success) {
-            setDeals(deals.filter((deal) => deal.id !== id));
-            Swal.fire({
-              title: "Deleted!",
-              text: "Deal has been removed.",
-              icon: "success",
-              background: "#141414",
-              color: "#fff",
-            });
+            Swal.fire("Deleted!", "Your deal has been deleted.", "success");
+            queryClient.invalidateQueries({ queryKey: ['admin_deals'] });
+          } else {
+            Swal.fire("Error", "Could not delete deal", "error");
           }
         } catch (error) {
           Swal.fire("Error", "Could not delete deal", "error");
@@ -113,7 +91,7 @@ const DealList = ({ onEdit }) => {
 
   if (isLoading)
     return (
-      <div style={{ color: "#fff", textAlign: "center", padding: "40px" }}>
+      <div style={{ color: "var(--admin-muted)", textAlign: "center", padding: "40px" }}>
         Loading deals...
       </div>
     );
@@ -122,9 +100,8 @@ const DealList = ({ onEdit }) => {
     <div className="animate-slide-up" style={{ marginTop: "20px" }}>
       <div
         style={{
-          background: "#111",
+          background: "var(--admin-panel)",
           borderRadius: "12px",
-          border: "1px solid #2a2a2a",
           overflow: "hidden",
         }}
       >
@@ -132,12 +109,12 @@ const DealList = ({ onEdit }) => {
           style={{
             width: "100%",
             borderCollapse: "collapse",
-            color: "#fff",
+            color: "var(--admin-text)",
             textAlign: "left",
           }}
         >
           <thead
-            style={{ background: "#1a1a1a", borderBottom: "2px solid #333" }}
+            style={{ background: "var(--admin-bg)", borderBottom: "2px solid var(--admin-border)" }}
           >
             <tr>
               <th style={{ padding: "15px" }}>Image</th>
@@ -166,7 +143,7 @@ const DealList = ({ onEdit }) => {
                 <tr
                   key={deal.id}
                   style={{
-                    borderBottom: "1px solid #222",
+                    borderBottom: "1px solid var(--admin-border)",
                     opacity: deal.is_active ? 1 : 0.5,
                     transition: "0.3s",
                   }}
@@ -202,105 +179,49 @@ const DealList = ({ onEdit }) => {
                   </td>
 
                   {/* 3. Type (Permanent / Time-based) */}
-                  <td style={{ padding: "15px" }}>
+                  <td className="p-[0.938rem] text-[var(--admin-text)]">
                     {deal.is_permanent ? (
-                      <span
-                        style={{
-                          background: "rgba(34, 197, 94, 0.1)",
-                          color: "#22c55e",
-                          padding: "5px 10px",
-                          borderRadius: "20px",
-                          fontSize: "12px",
-                          fontWeight: "bold",
-                        }}
-                      >
+                      <span className="inline-flex items-center gap-[0.313rem] bg-[rgba(34,197,94,0.1)] text-[#22c55e] px-[0.625rem] py-[0.313rem] rounded-[1.25rem] text-[0.75rem] font-bold">
                         <FaCheckCircle /> Permanent
                       </span>
                     ) : (
-                      <span
-                        style={{
-                          background: "rgba(245, 158, 11, 0.1)",
-                          color: "#f59e0b",
-                          padding: "5px 10px",
-                          borderRadius: "20px",
-                          fontSize: "12px",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        <FaClock /> {deal.start_time?.slice(0, 5)} -{" "}
-                        {deal.end_time?.slice(0, 5)}
+                      <span className="inline-flex items-center gap-[0.313rem] bg-[rgba(245,158,11,0.1)] text-[#f59e0b] px-[0.625rem] py-[0.313rem] rounded-[1.25rem] text-[0.75rem] font-bold">
+                        <FaClock /> {deal.start_time?.slice(0, 5)} - {deal.end_time?.slice(0, 5)}
                       </span>
                     )}
                   </td>
 
                   {/* 4. Status (Active / Inactive Toggle) */}
-                  <td style={{ padding: "15px", textAlign: "center" }}>
+                  <td className="p-[0.938rem] text-center">
                     <button
-                      onClick={() =>
-                        handleToggleStatus(deal.id, deal.is_active)
-                      }
-                      style={{
-                        background: deal.is_active
-                          ? "rgba(34, 197, 94, 0.2)"
-                          : "rgba(239, 68, 68, 0.2)",
-                        color: deal.is_active ? "#22c55e" : "#ef4444",
-                        border: "none",
-                        padding: "8px 15px",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        fontWeight: "bold",
-                        width: "100px",
-                        transition: "0.3s",
-                      }}
+                      onClick={() => handleToggleStatus(deal.id, deal.is_active)}
+                      className={`inline-flex items-center justify-center gap-[0.313rem] border-none px-[0.938rem] py-[0.5rem] rounded-[0.5rem] cursor-pointer font-bold w-[6.25rem] transition-all duration-300 ${deal.is_active ? "bg-[rgba(34,197,94,0.2)] text-[#22c55e]" : "bg-[rgba(239,68,68,0.2)] text-[#ef4444]"}`}
                     >
-                      <FaPowerOff style={{ marginRight: "5px" }} />{" "}
-                      {deal.is_active ? "Active" : "Inactive"}
+                      <FaPowerOff /> {deal.is_active ? "Active" : "Inactive"}
                     </button>
                   </td>
 
                   {/* 5. Actions (Edit & Delete) */}
-                  <td
-                    style={{
-                      padding: "15px",
-                      textAlign: "center",
-                      display: "flex",
-                      justifyContent: "center",
-                      gap: "15px",
-                      alignItems: "center",
-                      height: "100%",
-                    }}
-                  >
-                    {/* 🔥 VIP Edit Button */}
-                    <button
-                      onClick={() => onEdit(deal)}
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        color: "#3b82f6",
-                        fontSize: "18px",
-                        cursor: "pointer",
-                        transition: "0.2s",
-                      }}
-                      title="Edit Deal"
-                    >
-                      <FaEdit />
-                    </button>
+                  <td className="p-[0.938rem]">
+                    <div className="flex justify-center items-center gap-[0.938rem] h-full">
+                      {/* 🔥 VIP Edit Button */}
+                      <button
+                        onClick={() => onEdit(deal)}
+                        className="bg-transparent border-none text-[#3b82f6] text-[1.125rem] cursor-pointer transition-all duration-200 hover:-translate-y-[1px]"
+                        title="Edit Deal"
+                      >
+                        <FaEdit />
+                      </button>
 
-                    {/* Delete Button */}
-                    <button
-                      onClick={() => handleDelete(deal.id)}
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        color: "#ef4444",
-                        fontSize: "18px",
-                        cursor: "pointer",
-                        transition: "0.2s",
-                      }}
-                      title="Delete Deal"
-                    >
-                      <FaTrash />
-                    </button>
+                      {/* Delete Button */}
+                      <button
+                        onClick={() => handleDelete(deal.id)}
+                        className="bg-transparent border-none text-[#ef4444] text-[1.125rem] cursor-pointer transition-all duration-200 hover:-translate-y-[1px]"
+                        title="Delete Deal"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

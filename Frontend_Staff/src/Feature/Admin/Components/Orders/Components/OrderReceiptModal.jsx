@@ -97,7 +97,7 @@ const OrderReceiptModal = ({ isOpen, onClose, order }) => {
             <FaTimes />
           </button>
 
-          <div className="w-[4.063rem] h-[4.063rem] bg-[rgba(239,68,68,0.1)] text-[var(--admin-orange)] rounded-full flex justify-center items-center text-[1.75rem] mx-auto mb-[0.938rem] shadow-[0_0_25px_rgba(239,68,68,0.2)] border border-[rgba(239,68,68,0.2)]">
+          <div className="w-[4.063rem] h-[4.063rem] bg-[rgba(239,68,68,0.1)] text-[var(--admin-orange)] rounded-full flex justify-center items-center text-[1.75rem] mx-auto mb-[0.938rem] shadow-[var(--shadow-glow)] border border-[rgba(239,68,68,0.2)]">
             <FaPrint />
           </div>
           <h3 className="m-0 text-[1.375rem] font-black text-[var(--admin-text)]">
@@ -171,14 +171,14 @@ const OrderReceiptModal = ({ isOpen, onClose, order }) => {
         <div className="p-[0.938rem_1.563rem] bg-[rgba(0,0,0,0.1)] border-t border-[var(--admin-border)] flex gap-[0.75rem]">
           <button
             onClick={onClose}
-            className="flex-1 p-[0.875rem] bg-transparent border border-[var(--admin-border)] text-[var(--admin-muted)] rounded-[0.625rem] font-bold cursor-pointer transition-colors duration-200 hover:text-white hover:border-white"
+            className="flex-1 p-[0.875rem] bg-transparent border border-[var(--admin-border)] text-[var(--admin-muted)] rounded-[0.625rem] font-bold cursor-pointer transition-colors duration-200 hover:text-[var(--admin-text)] hover:border-[var(--admin-text)]"
           >
             Cancel
           </button>
 
           <button
             onClick={executePrint}
-            className="flex-[2] p-[0.875rem] bg-[var(--admin-orange)] border-none text-white rounded-[0.625rem] font-black text-[0.938rem] flex justify-center items-center gap-[0.5rem] cursor-pointer shadow-[0_4px_15px_rgba(239,68,68,0.3)] transition-transform duration-200 hover:-translate-y-[2px]"
+            className="flex-[2] p-[0.875rem] bg-[var(--admin-orange)] border-none text-white rounded-[0.625rem] font-black text-[0.938rem] flex justify-center items-center gap-[0.5rem] cursor-pointer shadow-[var(--shadow-glow)] transition-transform duration-200 hover:-translate-y-[2px]"
           >
             <FaPrint /> Print Invoice
           </button>

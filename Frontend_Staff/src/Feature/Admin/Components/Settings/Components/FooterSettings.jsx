@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { FaSave } from "react-icons/fa";
 
 const FooterSettings = () => {
+  const queryClient = useQueryClient();
   const [settings, setSettings] = useState({
     footer_tagline: "",
     footer_facebook: "",
@@ -12,35 +14,30 @@ const FooterSettings = () => {
     footer_phone: "",
     footer_email: ""
   });
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState({});
+  const { data: settingsData = {}, isLoading } = useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
+      const result = await response.json();
+      return result.success ? result.data : {};
+    }
+  });
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
-        const result = await response.json();
-
-        if (result.success) {
-          setSettings({
-            footer_tagline: result.data.footer_tagline || "",
-            footer_facebook: result.data.footer_facebook || "",
-            footer_twitter: result.data.footer_twitter || "",
-            footer_instagram: result.data.footer_instagram || "",
-            footer_youtube: result.data.footer_youtube || "",
-            footer_phone: result.data.footer_phone || "",
-            footer_email: result.data.footer_email || ""
-          });
-        }
-      } catch (error) {
-        console.error("Failed to load footer settings:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchSettings();
-  }, []);
+    if (settingsData && Object.keys(settingsData).length > 0) {
+      setSettings({
+        footer_tagline: settingsData.footer_tagline || "",
+        footer_facebook: settingsData.footer_facebook || "",
+        footer_twitter: settingsData.footer_twitter || "",
+        footer_instagram: settingsData.footer_instagram || "",
+        footer_youtube: settingsData.footer_youtube || "",
+        footer_phone: settingsData.footer_phone || "",
+        footer_email: settingsData.footer_email || ""
+      });
+    }
+  }, [settingsData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -106,6 +103,7 @@ const FooterSettings = () => {
           showConfirmButton: false,
           timer: 1500,
         });
+        queryClient.invalidateQueries({ queryKey: ['settings'] });
       } else {
         Swal.fire("Error", result.message, "error");
       }
@@ -122,27 +120,27 @@ const FooterSettings = () => {
   }
 
   return (
-    <div className="settings-card fade-in">
-      <div className="settings-header-flex">
-        <div className="settings-title-left">
+    <div className="bg-[var(--admin-panel)] rounded-[1rem] p-[1.875rem] shadow-[0_4px_10px_rgba(0,0,0,0.1)] animate-slide-up">
+      <div className="flex justify-between items-center mb-[1.563rem] pb-[0.938rem] border-b border-[var(--admin-border)]">
+        <div className="flex items-center gap-[0.75rem] text-[1.125rem] font-bold text-[var(--admin-text)]">
           Footer Settings
         </div>
 
         <button 
-          className="btn-save-modal-clean btn-auto-width" 
+          className="bg-[var(--admin-orange)] text-white border-none p-[0.75rem_1.25rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[var(--shadow-glow)] transition-all duration-200 hover:-translate-y-[2px] flex items-center w-auto m-0"
           onClick={handleSave}
           disabled={isSaving}
         >
-          <FaSave className="btn-save-icon" />
+          <FaSave className="mr-[0.5rem]" />
           {isSaving ? "Saving..." : "Save Changes"}
         </button>
       </div>
 
-      <div className="settings-form-grid">
-        <div className="settings-input-group" style={{ gridColumn: "1 / -1" }}>
-          <label className="settings-label">Footer Tagline</label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-[1.25rem]">
+        <div className="sm:col-span-2">
+          <label className="block text-[0.75rem] font-bold mb-[0.5rem] text-[var(--admin-muted)] uppercase tracking-[0.5px]">Footer Tagline</label>
           <textarea
-            className="settings-input"
+            className="w-full p-[0.875rem_0.938rem] bg-[var(--admin-bg)] rounded-[0.625rem] text-[var(--admin-text)] text-[0.875rem] font-medium outline-none transition-all duration-300 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)]"
             name="footer_tagline"
             value={settings.footer_tagline}
             onChange={handleChange}
@@ -152,12 +150,11 @@ const FooterSettings = () => {
           ></textarea>
         </div>
 
-        <div className="settings-input-group">
-          <label className="settings-label">Contact Phone</label>
+        <div>
+          <label className="block text-[0.75rem] font-bold mb-[0.5rem] text-[var(--admin-muted)] uppercase tracking-[0.5px]">Contact Phone</label>
           <input
             type="text"
-            className={`settings-input ${errors.footer_phone ? "border-red-500" : ""}`}
-            style={errors.footer_phone ? { borderColor: "#ef4444" } : {}}
+            className={`w-full p-[0.875rem_0.938rem] bg-[var(--admin-bg)] rounded-[0.625rem] text-[var(--admin-text)] text-[0.875rem] font-medium outline-none transition-all duration-300 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)] ${errors.footer_phone ? "border border-red-500" : ""}`}
             name="footer_phone"
             value={settings.footer_phone}
             onChange={(e) => {
@@ -166,77 +163,72 @@ const FooterSettings = () => {
             }}
             placeholder="+1 234 567 8900"
           />
-          {errors.footer_phone && <span style={{ color: "#ef4444", fontSize: "12px", marginTop: "5px", display: "inline-block" }}>{errors.footer_phone}</span>}
+          {errors.footer_phone && <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">{errors.footer_phone}</span>}
         </div>
 
-        <div className="settings-input-group">
-          <label className="settings-label">Contact Email</label>
+        <div>
+          <label className="block text-[0.75rem] font-bold mb-[0.5rem] text-[var(--admin-muted)] uppercase tracking-[0.5px]">Contact Email</label>
           <input
             type="email"
-            className={`settings-input ${errors.footer_email ? "border-red-500" : ""}`}
-            style={errors.footer_email ? { borderColor: "#ef4444" } : {}}
+            className={`w-full p-[0.875rem_0.938rem] bg-[var(--admin-bg)] rounded-[0.625rem] text-[var(--admin-text)] text-[0.875rem] font-medium outline-none transition-all duration-300 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)] ${errors.footer_email ? "border border-red-500" : ""}`}
             name="footer_email"
             value={settings.footer_email}
             onChange={handleChange}
             placeholder="support@bigbite.com"
           />
-          {errors.footer_email && <span style={{ color: "#ef4444", fontSize: "12px", marginTop: "5px", display: "inline-block" }}>{errors.footer_email}</span>}
+          {errors.footer_email && <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">{errors.footer_email}</span>}
         </div>
 
-        <div className="settings-input-group">
-          <label className="settings-label">Facebook URL</label>
+        <div>
+          <label className="block text-[0.75rem] font-bold mb-[0.5rem] text-[var(--admin-muted)] uppercase tracking-[0.5px]">Facebook URL</label>
           <input
             type="text"
-            className={`settings-input ${errors.footer_facebook ? "border-red-500" : ""}`}
-            style={errors.footer_facebook ? { borderColor: "#ef4444" } : {}}
+            className={`w-full p-[0.875rem_0.938rem] bg-[var(--admin-bg)] rounded-[0.625rem] text-[var(--admin-text)] text-[0.875rem] font-medium outline-none transition-all duration-300 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)] ${errors.footer_facebook ? "border border-red-500" : ""}`}
             name="footer_facebook"
             value={settings.footer_facebook}
             onChange={handleChange}
             placeholder="https://facebook.com/..."
           />
-          {errors.footer_facebook && <span style={{ color: "#ef4444", fontSize: "12px", marginTop: "5px", display: "inline-block" }}>{errors.footer_facebook}</span>}
+          {errors.footer_facebook && <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">{errors.footer_facebook}</span>}
         </div>
 
-        <div className="settings-input-group">
-          <label className="settings-label">Twitter URL</label>
+        <div>
+          <label className="block text-[0.75rem] font-bold mb-[0.5rem] text-[var(--admin-muted)] uppercase tracking-[0.5px]">Twitter URL</label>
           <input
             type="text"
-            className={`settings-input ${errors.footer_twitter ? "border-red-500" : ""}`}
-            style={errors.footer_twitter ? { borderColor: "#ef4444" } : {}}
+            className={`w-full p-[0.875rem_0.938rem] bg-[var(--admin-bg)] rounded-[0.625rem] text-[var(--admin-text)] text-[0.875rem] font-medium outline-none transition-all duration-300 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)] ${errors.footer_twitter ? "border border-red-500" : ""}`}
             name="footer_twitter"
             value={settings.footer_twitter}
             onChange={handleChange}
             placeholder="https://twitter.com/..."
           />
-          {errors.footer_twitter && <span style={{ color: "#ef4444", fontSize: "12px", marginTop: "5px", display: "inline-block" }}>{errors.footer_twitter}</span>}
+          {errors.footer_twitter && <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">{errors.footer_twitter}</span>}
         </div>
 
-        <div className="settings-input-group">
-          <label className="settings-label">Instagram URL</label>
+        <div>
+          <label className="block text-[0.75rem] font-bold mb-[0.5rem] text-[var(--admin-muted)] uppercase tracking-[0.5px]">Instagram URL</label>
           <input
             type="text"
-            className={`settings-input ${errors.footer_instagram ? "border-red-500" : ""}`}
-            style={errors.footer_instagram ? { borderColor: "#ef4444" } : {}}
+            className={`w-full p-[0.875rem_0.938rem] bg-[var(--admin-bg)] rounded-[0.625rem] text-[var(--admin-text)] text-[0.875rem] font-medium outline-none transition-all duration-300 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)] ${errors.footer_instagram ? "border border-red-500" : ""}`}
             name="footer_instagram"
             value={settings.footer_instagram}
             onChange={handleChange}
             placeholder="https://instagram.com/..."
           />
-          {errors.footer_instagram && <span style={{ color: "#ef4444", fontSize: "12px", marginTop: "5px", display: "inline-block" }}>{errors.footer_instagram}</span>}
+          {errors.footer_instagram && <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">{errors.footer_instagram}</span>}
         </div>
 
-        <div className="settings-input-group">
-          <label className="settings-label">YouTube URL</label>
+        <div>
+          <label className="block text-[0.75rem] font-bold mb-[0.5rem] text-[var(--admin-muted)] uppercase tracking-[0.5px]">YouTube URL</label>
           <input
             type="text"
-            className={`settings-input ${errors.footer_youtube ? "border-red-500" : ""}`}
-            style={errors.footer_youtube ? { borderColor: "#ef4444" } : {}}
+            className={`w-full p-[0.875rem_0.938rem] bg-[var(--admin-bg)] rounded-[0.625rem] text-[var(--admin-text)] text-[0.875rem] font-medium outline-none transition-all duration-300 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)] ${errors.footer_youtube ? "border border-red-500" : ""}`}
             name="footer_youtube"
             value={settings.footer_youtube}
             onChange={handleChange}
             placeholder="https://youtube.com/..."
           />
-          {errors.footer_youtube && <span style={{ color: "#ef4444", fontSize: "12px", marginTop: "5px", display: "inline-block" }}>{errors.footer_youtube}</span>}
+          {errors.footer_youtube && <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">{errors.footer_youtube}</span>}
         </div>
       </div>
     </div>

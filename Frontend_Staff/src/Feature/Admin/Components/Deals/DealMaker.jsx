@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import imageCompression from "browser-image-compression";
 import {
@@ -14,7 +15,6 @@ import "./DealMaker.css";
 
 const DealMaker = ({ editDeal, onSuccess }) => {
   // 🔥 Props receive kiye
-  const [menuItems, setMenuItems] = useState([]);
   const [dealForm, setDealForm] = useState({ title: "", price: "" });
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(""); // 🔥 Image preview alag kar dia
@@ -31,22 +31,16 @@ const DealMaker = ({ editDeal, onSuccess }) => {
   const CLOUD_NAME = "dovuegkwa";
   const UPLOAD_PRESET = "ml_default";
 
-  // Menu fetch karein
-  useEffect(() => {
-    const fetchMenu = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_menu.php`,
-        );
-        const data = await response.json();
-        if (Array.isArray(data))
-          setMenuItems(data.filter((item) => item.isAvailable));
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchMenu();
-  }, []);
+  const { data: menuData = [] } = useQuery({
+    queryKey: ['menu'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    }
+  });
+
+  const menuItems = menuData.filter((item) => item.isAvailable);
 
   // 🔥 AGAR EDIT MODE HAI TOH FORM PEHLE SE FILL KAREIN
   useEffect(() => {

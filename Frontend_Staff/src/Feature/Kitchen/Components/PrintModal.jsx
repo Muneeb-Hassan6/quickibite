@@ -61,16 +61,16 @@ const PrintModal = ({ printOrder, onClose }) => {
   };
 
   return (
-    <div className="k-modal-overlay" onClick={onClose}>
-      <div className="k-modal-box" onClick={(e) => e.stopPropagation()}>
-        <div className="k-modal-header">
-          <button onClick={onClose} className="k-modal-close"><FaTimes /></button>
-          <div className="k-modal-icon-wrapper"><FaPrint /></div>
-          <h3 className="k-modal-title">Kitchen Ticket (KOT)</h3>
+    <div className="fixed top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.8)] flex items-center justify-center z-[9999] backdrop-blur-[6px]" onClick={onClose}>
+      <div className="w-full max-w-[400px] bg-[var(--k-panel)] border border-[var(--k-border)] rounded-[16px] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] animate-slide-up" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-[rgba(239,68,68,0.05)] p-[25px_20px_15px] text-center border-b border-[var(--k-border)] relative">
+          <button onClick={onClose} className="absolute top-[15px] right-[15px] bg-transparent border-none text-[var(--k-muted)] text-[18px] cursor-pointer transition-colors duration-200 hover:text-[var(--text-main,#ffffff)]"><FaTimes /></button>
+          <div className="w-[60px] h-[60px] bg-[rgba(239,68,68,0.1)] text-[var(--brand-red)] rounded-full flex justify-center items-center text-[26px] mx-auto mb-[10px] border border-[rgba(239,68,68,0.3)]"><FaPrint /></div>
+          <h3 className="m-0 text-[22px] font-oswald text-[var(--text-main,#ffffff)] uppercase tracking-[1px]">Kitchen Ticket (KOT)</h3>
         </div>
 
-        <div className="k-modal-body">
-          <div className="k-receipt-preview">
+        <div className="p-[20px]">
+          <div className="bg-[var(--bg-body,#0a0a0a)] border border-dashed border-[var(--border-color,#333)] rounded-[8px] p-[15px] font-mono text-[var(--text-main,#ffffff)]">
             <div style={{ textAlign: "center", marginBottom: "15px", borderBottom: "1px dashed #333", paddingBottom: "10px" }}>
               <h4 style={{ margin: 0, color: "var(--brand-red)", fontSize: "18px" }}>BIG BITE</h4>
               <span style={{ fontSize: "12px", color: "#888" }}>Order #{printOrder.id}</span>
@@ -93,10 +93,10 @@ const PrintModal = ({ printOrder, onClose }) => {
           </div>
         </div>
 
-        <div className="k-modal-footer">
-          <button onClick={onClose} className="k-btn-cancel">Cancel</button>
-          <button onClick={executePrint} className="k-btn-print">
-            <FaPrint /> Print Ticket
+        <div className="p-[15px_20px] bg-[rgba(0,0,0,0.2)] flex gap-[10px] border-t border-[var(--k-border)]">
+          <button onClick={onClose} className="flex-1 rounded p-[12px] bg-transparent border border-[var(--k-border)] text-[var(--text-main,#ffffff)]  font-bold cursor-pointer transition-colors duration-200 hover:bg-[rgba(255,255,255,0.05)]">Cancel</button>
+          <button onClick={executePrint} className="flex-[2] rounded p-[12px] bg-[var(--brand-yellow)] border-none text-[var(--text-main,#ffffff)]  font-black font-oswald text-[15px] uppercase tracking-[1px] cursor-pointer flex justify-center items-center gap-[8px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-[var(--shadow-glow)]">
+            <FaPrint /> Print
           </button>
         </div>
       </div>

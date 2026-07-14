@@ -30,7 +30,7 @@ const AttendanceHistory = () => {
 
   return (
     <div className="bg-[var(--admin-bg,#141414)] rounded-[0.75rem] border border-[var(--admin-border,#222)] overflow-hidden shadow-[0_4px_15px_rgba(0,0,0,0.2)] animate-slide-up custom-scrollbar">
-      <div className="flex justify-between items-center p-[0.938rem_1.25rem] border-b border-[var(--admin-border,#333)] flex-wrap gap-[0.938rem]">
+      <div className="flex justify-between items-center p-[0.938rem_1.25rem]  flex-wrap gap-[0.938rem]">
         <h4 className="m-0 text-[var(--admin-text,#fff)] text-[1.125rem] font-bold">Monthly Report (Current Month)</h4>
         <button className="bg-transparent text-white border border-[#333] p-[0.5rem_0.938rem] rounded-[0.5rem] cursor-pointer font-bold transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)] flex items-center gap-[0.313rem] text-[0.813rem]">
           <FaFileExcel className="text-[#10b981] mr-[0.313rem]" /> Export CSV
@@ -41,12 +41,12 @@ const AttendanceHistory = () => {
         <table className="w-full border-collapse min-w-[37.5rem] text-[0.875rem]">
           <thead>
             <tr>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px] pl-[1.25rem]">Employee</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Total Days</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Present</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Absent</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Late</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Performance</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px] pl-[1.25rem]">Employee</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Total Days</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Present</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Absent</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Late</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Performance</th>
             </tr>
           </thead>
           <tbody>
@@ -71,7 +71,7 @@ const AttendanceHistory = () => {
                       : "#ef4444";
 
                 return (
-                  <tr key={emp.id} className="border-b border-[var(--admin-border,#333)] transition-colors duration-200 hover:bg-[rgba(255,255,255,0.02)]">
+                  <tr key={emp.id} className=" transition-colors duration-200 hover:bg-[rgba(255,255,255,0.02)]">
                     <td className="p-[1.25rem] align-middle font-bold text-[var(--admin-text,#fff)] pl-[1.25rem]">{emp.name}</td>
                     <td className="p-[1.25rem] align-middle text-[var(--admin-muted,#888)]">{workingDays} Days</td>
                     <td className="p-[1.25rem] align-middle text-[#10b981] font-bold">{present}</td>

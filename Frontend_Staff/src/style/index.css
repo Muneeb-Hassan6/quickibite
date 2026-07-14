@@ -1,50 +1,57 @@
+@import "tailwindcss";
+
 /* =======================================================
    🍽️ GLOBAL THEME VARIABLES (Big Bite Color Scheme)
    ======================================================= */
 :root {
   /* --- Brand Colors (Bold Fast Food Theme) --- */
-  --brand-red: #E60000; /* Spicy Red: High energy, appetizing */
+  --brand-red: #E60000;
+  /* Spicy Red: High energy, appetizing */
   --brand-red-dark: #B30000;
-  --brand-yellow: #FFC107; /* Crispy Yellow: Hover effects, Badges */
+  --brand-yellow: #FFC107;
+  /* Crispy Yellow: Hover effects, Badges */
   --brand-yellow-dark: #e0a800;
-  
+
   /* --- Dark Theme Default Colors --- */
   /* Midnight Dark (#0A0A0C) for background, Dark Onyx (#141417) for panels */
-  --home-bg: #0A0A0C; 
+  --home-bg: #0A0A0C;
   --web-bg: #0A0A0C;
   --admin-bg: #0A0A0C;
   --bg-body: #0A0A0C;
-  
-  --panel-bg: #141417; /* Dark Onyx for panels */
+
+  --panel-bg: #141417;
+  /* Dark Onyx for panels */
   --web-panel: #141417;
   --admin-panel: #141417;
-  
+
   --border-color: #2A2A30;
   --web-border: #2A2A30;
   --admin-border: #2A2A30;
-  
-  --text-main: #FFFFFF; /* High contrast bright white */
+
+  --text-main: #FFFFFF;
+  /* High contrast bright white */
   --admin-text: #FFFFFF;
-  --text-muted: #A0A0A5; /* Sleek cool grey for muted text */
+  --text-muted: #A0A0A5;
+  /* Sleek cool grey for muted text */
   --admin-muted: #A0A0A5;
-  
+
   --admin-orange: #E60000;
   --admin-yellow: #FFC107;
   --btn-main: #E60000;
   --btn-text: #ffffff;
-  
+
   --badge-bg: rgba(255, 193, 7, 0.1);
   --badge-text: #FFC107;
   --badge-border: rgba(255, 193, 7, 0.2);
-  
+
   --overlay-gradient: linear-gradient(to top, #0A0A0C 5%, rgba(10, 10, 12, 0.6) 60%, rgba(10, 10, 12, 0.9) 100%);
   --shadow-glow: 0 8px 30px rgba(230, 0, 0, 0.25);
-  
+
   /* --- Cashier / POS Variables --- */
   --pos-bg: #0A0A0C;
   --pos-panel: #141417;
   --pos-border: #2A2A30;
-  
+
   /* --- Kitchen Variables --- */
   --k-bg: #0A0A0C;
   --k-panel: #141417;
@@ -52,54 +59,59 @@
   --k-text: #FFFFFF;
   --k-muted: #A0A0A5;
   --status-yellow: #FFC107;
-  --status-green: #00C853; /* Vibrant green for fast food readiness */
-  
+  --status-green: #00C853;
+  /* Vibrant green for fast food readiness */
+
   /* --- Rider/Dispatch Variables --- */
   --rider-success: #00C853;
 }
 
 /* --- Light Theme Override --- */
 [data-theme="light"] {
-  /* Slate & White Theme (SaaS Modern Look) */
-  --home-bg: #F8FAFC; /* Slate-50 */
+  /* Slate & White Theme (SaaS Modern Look) - Improved Contrast */
+  --home-bg: #F8FAFC;
   --web-bg: #F8FAFC;
-  --admin-bg: #F1F5F9; /* Slate-100 for more contrast with panels */
+  --admin-bg: #F1F5F9;
   --bg-body: #F8FAFC;
-  
-  --panel-bg: #FFFFFF; /* Pure white panels */
+
+  --panel-bg: #FFFFFF;
   --web-panel: #FFFFFF;
   --admin-panel: #FFFFFF;
-  
-  --border-color: #E2E8F0; /* Slate-200 */
+
+  --border-color: #E2E8F0;
   --web-border: #E2E8F0;
   --admin-border: #E2E8F0;
-  
-  --text-main: #0F172A; /* Slate-900 (High readable contrast but not pure black) */
+
+  --text-main: #0F172A;
+  /* Slate-900 (High readable contrast but not pure black) */
   --admin-text: #0F172A;
-  --text-muted: #64748B; /* Slate-500 */
+  --text-muted: #64748B;
+  /* Slate-500 */
   --admin-muted: #64748B;
-  
-  --brand-red: #EF4444; /* Bright energetic red */
+
+  --brand-red: #EF4444;
+  /* Bright energetic red */
   --brand-red-dark: #DC2626;
-  --brand-yellow: #F59E0B; /* Amber-500 */
+  --brand-yellow: #F59E0B;
+  /* Amber-500 */
   --brand-yellow-dark: #D97706;
-  
+
   --admin-orange: #EF4444;
   --admin-yellow: #F59E0B;
   --btn-main: #EF4444;
-  
-  --badge-bg: #FEF3C7; /* Amber-100 */
-  --badge-text: #B45309; /* Amber-700 */
-  --badge-border: #FDE68A; /* Amber-200 */
-  
+
+  --badge-bg: #FEF3C7;
+  --badge-text: #B45309;
+  --badge-border: #FDE68A;
+
   --overlay-gradient: linear-gradient(to top, #F8FAFC 5%, rgba(248, 250, 252, 0.7) 50%, rgba(248, 250, 252, 0.9) 100%);
-  --shadow-glow: 0 4px 20px rgba(0, 0, 0, 0.04);
-  
+  --shadow-glow: 0 4px 15px rgba(0, 0, 0, 0.06);
+
   /* --- Cashier / POS Variables --- */
   --pos-bg: #F1F5F9;
   --pos-panel: #FFFFFF;
   --pos-border: #E2E8F0;
-  
+
   /* --- Kitchen Variables --- */
   --k-bg: #F1F5F9;
   --k-panel: #FFFFFF;
@@ -107,16 +119,19 @@
   --k-text: #0F172A;
   --k-muted: #64748B;
   --status-yellow: #F59E0B;
-  --status-green: #10B981; /* Emerald-500 */
+  --status-green: #10B981;
+  /* Emerald-500 */
 }
 
 /* SWEETALERT PREMIUM CUSTOMIZATION */
 .swal2-container {
-  z-index: 999999 !important; /* Modal ke upar laane ke liye */
+  z-index: 999999 !important;
+  /* Modal ke upar laane ke liye */
 }
 
 .swal2-popup {
-  background-color: #161619 !important; /* Premium charcoal background */
+  background-color: #161619 !important;
+  /* Premium charcoal background */
   border: 1px solid #2a2a30 !important;
   color: #f5f5f7 !important;
   border-radius: 16px !important;
@@ -153,6 +168,7 @@
 .swal2-icon.swal2-success [class^='swal2-success-line'] {
   background-color: #22c55e !important;
 }
+
 .swal2-icon.swal2-success .swal2-success-ring {
   border-color: rgba(34, 197, 94, 0.3) !important;
 }
@@ -197,3 +213,41 @@
   transform: scale(1.08);
 }
 
+/* Hide arrows (spinners) from number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* =======================================================
+   CUSTOM SCROLLBAR STYLES (Global)
+   ======================================================= */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.4);
+}

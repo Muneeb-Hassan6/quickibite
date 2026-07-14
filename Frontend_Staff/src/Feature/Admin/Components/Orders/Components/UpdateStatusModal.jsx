@@ -42,7 +42,7 @@ const UpdateStatusModal = ({ order, onClose, onSave }) => {
           <button className="absolute top-[0.938rem] right-[0.938rem] bg-transparent border-none text-[var(--admin-muted)] text-[1rem] cursor-pointer transition-colors duration-200 hover:text-[var(--admin-text)]" onClick={onClose}>
             <FaTimes />
           </button>
-          <div className="w-[4.063rem] h-[4.063rem] bg-[rgba(239,68,68,0.1)] text-[var(--admin-orange)] rounded-full flex justify-center items-center text-[1.625rem] mx-auto mb-[0.938rem] shadow-[0_0_25px_rgba(239,68,68,0.2)] border border-[rgba(239,68,68,0.2)]">
+          <div className="w-[4.063rem] h-[4.063rem] bg-[rgba(239,68,68,0.1)] text-[var(--admin-orange)] rounded-full flex justify-center items-center text-[1.625rem] mx-auto mb-[0.938rem] shadow-[var(--shadow-glow)] border border-[rgba(239,68,68,0.2)]">
             <FaSyncAlt />
           </div>
           <h3 className="m-0 text-[1.375rem] font-black text-[var(--admin-text)]">Update Order Status</h3>
@@ -89,11 +89,11 @@ const UpdateStatusModal = ({ order, onClose, onSave }) => {
 
         {/* --- FOOTER BUTTONS --- */}
         <div className="p-[0.938rem_1.563rem] bg-[rgba(0,0,0,0.1)] border-t border-[var(--admin-border)] flex gap-[0.75rem]">
-          <button className="flex-1 p-[0.875rem] bg-transparent border border-[var(--admin-border)] text-[var(--admin-muted)] rounded-[0.625rem] font-bold cursor-pointer transition-colors duration-200 hover:text-white hover:border-white" onClick={onClose}>
+          <button className="flex-1 p-[0.875rem] bg-transparent border border-[var(--admin-border)] text-[var(--admin-muted)] rounded-[0.625rem] font-bold cursor-pointer transition-colors duration-200 hover:text-[var(--admin-text)] hover:border-[var(--admin-text)]" onClick={onClose}>
             Cancel
           </button>
           <button
-            className="flex-[2] p-[0.875rem] bg-[var(--admin-orange)] border-none text-white rounded-[0.625rem] font-black text-[0.938rem] flex justify-center items-center gap-[0.5rem] cursor-pointer shadow-[0_4px_15px_rgba(239,68,68,0.3)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.4)]"
+            className="flex-[2] p-[0.875rem] bg-[var(--admin-orange)] border-none text-white rounded-[0.625rem] font-black text-[0.938rem] flex justify-center items-center gap-[0.5rem] cursor-pointer shadow-[var(--shadow-glow)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[var(--shadow-glow)]"
             onClick={() => onSave(order.id, newStatus)}
           >
             <FaCheckCircle /> Save Changes

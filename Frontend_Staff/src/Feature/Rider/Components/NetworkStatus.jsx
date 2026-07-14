@@ -14,7 +14,7 @@ const NetworkStatus = () => {
 
     if (isOnline) return null;
     return (
-        <div className="network-status-banner">
+        <div className="bg-[var(--admin-orange)] text-white text-center p-[10px] absolute top-0 left-0 w-full z-[9999] font-bold text-[13px] flex justify-center items-center gap-[8px]">
             <FaWifi /> No Internet Connection. App is offline!
         </div>
     );

@@ -164,7 +164,7 @@ const AttendanceSheet = () => {
 
   return (
     <div className="bg-[var(--admin-bg,#141414)] rounded-[0.75rem] border border-[var(--admin-border,#222)] overflow-hidden shadow-[0_4px_15px_rgba(0,0,0,0.2)] animate-slide-up custom-scrollbar">
-      <div className="flex justify-between items-center p-[0.938rem_1.25rem] border-b border-[var(--admin-border,#333)] flex-wrap gap-[0.938rem]">
+      <div className="flex justify-between items-center p-[0.938rem_1.25rem]  flex-wrap gap-[0.938rem]">
         <div className="flex items-center gap-[0.625rem] font-semibold text-[var(--admin-muted,#888)]">
           <FaCalendarAlt /> Select Date:
           <input
@@ -179,7 +179,7 @@ const AttendanceSheet = () => {
             <FaCheckDouble /> Mark All Present
           </button>
           <button
-            className="bg-[var(--brand-red,#ef4444)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[0_4px_15px_rgba(239,68,68,0.4)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.6)] flex items-center gap-[0.5rem] disabled:opacity-50 !w-auto !m-0"
+            className="bg-[var(--admin-orange)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[0_4px_15px_rgba(239,68,68,0.4)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.6)] flex items-center gap-[0.5rem] disabled:opacity-50 !w-auto !m-0"
             onClick={handleSave}
             disabled={isSubmitting}
           >
@@ -188,7 +188,7 @@ const AttendanceSheet = () => {
         </div>
       </div>
 
-      <div className="flex gap-[1.25rem] p-[0.938rem_1.25rem] bg-[var(--admin-bg,#000)] border-b border-[var(--admin-border,#333)] overflow-x-auto">
+      <div className="flex gap-[1.25rem] p-[0.938rem_1.25rem] bg-[var(--admin-bg,#000)]  overflow-x-auto">
         <div className="flex items-center gap-[0.5rem] text-[0.813rem] font-semibold p-[0.5rem_0.938rem] rounded-[0.5rem] bg-[var(--admin-panel,#141414)] border text-[#10b981] border-[rgba(16,185,129,0.3)]">
           <FaUserCheck /> Present: <strong className="text-[1rem] ml-[0.313rem]">{stats.present}</strong>
         </div>
@@ -204,11 +204,11 @@ const AttendanceSheet = () => {
         <table className="w-full border-collapse min-w-[37.5rem] text-[0.875rem]">
           <thead>
             <tr>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px] pl-[1.25rem]">Employee Name</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Role</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Mark Status</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Check-In Time</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Remarks</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px] pl-[1.25rem]">Employee Name</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Role</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Mark Status</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Check-In Time</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Remarks</th>
             </tr>
           </thead>
           <tbody>
@@ -217,7 +217,7 @@ const AttendanceSheet = () => {
                 const currentStatus = attendanceData[emp.id]?.status || "Present";
                 const isAbsent = currentStatus === "Absent";
                 return (
-                  <tr key={emp.id} className={`border-b border-[var(--admin-border,#333)] transition-colors duration-200 hover:bg-[rgba(255,255,255,0.02)] ${isAbsent ? "!bg-[rgba(239,68,68,0.05)]" : ""}`}>
+                  <tr key={emp.id} className={` transition-colors duration-200 hover:bg-[rgba(255,255,255,0.02)] ${isAbsent ? "!bg-[rgba(239,68,68,0.05)]" : ""}`}>
                     <td className="p-[1.25rem] align-middle pl-[1.25rem]">
                       <div className="flex items-center gap-[0.75rem]">
                         <div className="w-[2.5rem] h-[2.5rem] rounded-full bg-[rgba(255,255,255,0.05)] flex items-center justify-center font-bold text-[1rem] text-[var(--admin-orange,#f59e0b)] border border-[var(--admin-border,#333)]">

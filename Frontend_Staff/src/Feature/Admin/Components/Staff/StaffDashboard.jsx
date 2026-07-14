@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   FaUsers,
@@ -19,38 +20,25 @@ import AttendanceHistory from "./Components/AttendanceHistory";
 import AddEmployeeModal from "./Components/AddEmployeeModal";
 
 const StaffDashboard = () => {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("employees");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 🔥 API Data States
-  const [stats, setStats] = useState({ total: 0, active: 0 });
-  const [refreshKey, setRefreshKey] = useState(0); // For auto-refreshing child components
+  const { data: staffData = [] } = useQuery({
+    queryKey: ['staff'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_staff.php`);
+      const result = await response.json();
+      return result.success ? result.data : [];
+    }
+  });
 
-  // ==========================================
-  // ⚙️ FETCH STATS FOR TOP CARDS
-  // ==========================================
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_staff.php`,
-        );
-        const result = await response.json();
-
-        if (result.success) {
-          const totalStaff = result.data.length;
-          const activeStaff = result.data.filter(
-            (emp) => emp.status === "Active",
-          ).length;
-          setStats({ total: totalStaff, active: activeStaff });
-        }
-      } catch (error) {
-        console.error("Error fetching stats:", error);
-      }
+  const stats = useMemo(() => {
+    return {
+      total: staffData.length,
+      active: staffData.filter((emp) => emp.status === "Active").length
     };
-
-    fetchStats();
-  }, [refreshKey, activeTab]); // Jab bhi tab change ho ya naya staff add ho, stats refresh hon
+  }, [staffData]);
 
   // ==========================================
   // ⚙️ ADD NEW EMPLOYEE (API POST)
@@ -91,20 +79,20 @@ const StaffDashboard = () => {
   // };
   const handleEmployeeAdded = () => {
     setIsModalOpen(false);
-    setRefreshKey((prev) => prev + 1);
+    queryClient.invalidateQueries({ queryKey: ['staff'] });
   };
   return (
     <div className="pb-[3.125rem]">
       {/* HEADER */}
       <div className="flex justify-between items-center mb-[1.563rem]">
         <div>
-          <h2 className="text-white m-0 mb-[0.313rem] text-[1.5rem] font-bold tracking-[0.5px] uppercase">Staff & HR Management</h2>
+          <h2 className="text-[var(--admin-text)] m-0 mb-[0.313rem] text-[1.5rem] font-bold tracking-[0.5px] uppercase">Staff & HR Management</h2>
           <p className="text-[var(--admin-muted,#888)] text-[0.875rem] m-0">Manage HR, Payroll & Attendance.</p>
         </div>
 
         {activeTab === "employees" && (
           <button
-            className="bg-[var(--brand-red,#ef4444)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[0_4px_15px_rgba(239,68,68,0.4)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.6)] flex-none w-auto m-0 flex items-center gap-[0.5rem]"
+            className="bg-[var(--admin-orange)] text-white border-none p-[0.75rem_1.563rem] rounded cursor-pointer font-bold shadow-[var(--shadow-glow)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[var(--shadow-glow)] flex-none w-auto m-0 flex items-center gap-[0.5rem]"
             onClick={() => setIsModalOpen(true)}
           >
             <FaUserPlus /> Add New Staff
@@ -114,26 +102,26 @@ const StaffDashboard = () => {
 
       {/* PREMIUM STATS CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[1.25rem] mb-[1.875rem]">
-        <div className="bg-[var(--admin-card-bg,#1e1e24)] border border-[var(--admin-border,#333)] rounded-[1rem] p-[1.563rem] flex items-center relative overflow-hidden transition-all duration-300 hover:-translate-y-[5px] hover:shadow-[0_10px_20px_rgba(0,0,0,0.3)] hover:border-[#444] group">
+        <div className="bg-[var(--admin-panel)] rounded-[1rem] p-[1.563rem] flex items-center relative overflow-hidden transition-all duration-300 hover:-translate-y-[5px] hover:shadow-[0_10px_20px_rgba(0,0,0,0.1)] group">
           <div className="w-[3.75rem] h-[3.75rem] rounded-[0.75rem] flex justify-center items-center text-[1.5rem] mr-[1.25rem] relative z-[2] text-[#3b82f6] bg-[rgba(59,130,246,0.1)]">
             <FaUsers />
           </div>
           <div>
-            <h3 className="m-0 text-[1.5rem] font-black text-white relative z-[2]">{stats.total}</h3>
-            <p className="m-0 text-[0.813rem] font-bold text-[#888] uppercase tracking-[1px] relative z-[2]">Total Staff</p>
+            <h3 className="m-0 text-[1.5rem] font-black text-[var(--admin-text)] relative z-[2]">{stats.total}</h3>
+            <p className="m-0 text-[0.813rem] font-bold text-[var(--admin-muted)] uppercase tracking-[1px] relative z-[2]">Total Staff</p>
           </div>
           <div className="absolute -right-[0.625rem] -bottom-[0.625rem] text-[5rem] text-[rgba(255,255,255,0.02)] z-[1] transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-[10deg]">
             <FaUsers />
           </div>
         </div>
 
-        <div className="bg-[var(--admin-card-bg,#1e1e24)] border border-[var(--admin-border,#333)] rounded-[1rem] p-[1.563rem] flex items-center relative overflow-hidden transition-all duration-300 hover:-translate-y-[5px] hover:shadow-[0_10px_20px_rgba(0,0,0,0.3)] hover:border-[#444] group">
+        <div className="bg-[var(--admin-panel)] rounded-[1rem] p-[1.563rem] flex items-center relative overflow-hidden transition-all duration-300 hover:-translate-y-[5px] hover:shadow-[0_10px_20px_rgba(0,0,0,0.1)] group">
           <div className="w-[3.75rem] h-[3.75rem] rounded-[0.75rem] flex justify-center items-center text-[1.5rem] mr-[1.25rem] relative z-[2] text-[#10b981] bg-[rgba(16,185,129,0.1)]">
             <FaCalendarCheck />
           </div>
           <div>
-            <h3 className="m-0 text-[1.5rem] font-black text-white relative z-[2]">{stats.active}</h3>
-            <p className="m-0 text-[0.813rem] font-bold text-[#888] uppercase tracking-[1px] relative z-[2]">Active Now</p>
+            <h3 className="m-0 text-[1.5rem] font-black text-[var(--admin-text)] relative z-[2]">{stats.active}</h3>
+            <p className="m-0 text-[0.813rem] font-bold text-[var(--admin-muted)] uppercase tracking-[1px] relative z-[2]">Active Now</p>
           </div>
           <div className="absolute -right-[0.625rem] -bottom-[0.625rem] text-[5rem] text-[rgba(255,255,255,0.02)] z-[1] transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-[10deg]">
             <FaCalendarCheck />
@@ -178,15 +166,15 @@ const StaffDashboard = () => {
       {/* DYNAMIC CONTENT (Child components ab khud data handle karte hain, inhein props nahi chahiye) */}
       <div>
         {activeTab === "employees" && (
-          <EmployeeList key={`emp-${refreshKey}`} />
+          <EmployeeList />
         )}
         {activeTab === "attendance" && (
-          <AttendanceSheet key={`att-${refreshKey}`} />
+          <AttendanceSheet />
         )}
-        {activeTab === "payroll" && <Payroll key={`pay-${refreshKey}`} />}
-        {activeTab === "shifts" && <ShiftManager key={`shift-${refreshKey}`} />}
+        {activeTab === "payroll" && <Payroll />}
+        {activeTab === "shifts" && <ShiftManager />}
         {activeTab === "history" && (
-          <AttendanceHistory key={`hist-${refreshKey}`} />
+          <AttendanceHistory />
         )}
       </div>
 

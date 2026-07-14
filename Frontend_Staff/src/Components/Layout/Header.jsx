@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import "./header.css";
 import OrderTracking from "../../Feature/Order/Components/OrderTracker";
 import { useCart } from "../../Context/CartContext";
 
@@ -80,76 +79,77 @@ const Header = () => {
 
   return (
     <>
-      <header className="main-header-wrapper">
-        <div className="header-container">
-          <div className="top-nav">
+      <header className="sticky top-0 z-[1100] bg-[var(--bg-body,#0a0a0a)]">
+        <div className="bg-[var(--bg-body,#0a0a0a)] shadow-[0_4px_10px_rgba(0,0,0,0.3)]">
+          <div className="h-[3.75rem] md:h-[4.375rem] flex items-center justify-between px-5">
             {/* 1. LEFT SECTION (Logo with Fire Icon) */}
-            <div className="left-section-wrapper">
-              <div className="logo-section" onClick={() => navigate("/")}>
-                <div className="logo-icon animated-logo">
+            <div className="flex items-center">
+              <div className="flex items-center gap-[0.625rem] cursor-pointer" onClick={() => navigate("/")}>
+                <div className="bg-[#ef4444] text-white p-2 rounded-lg">
                   <FaFire /> {/* 🔥 Yahan Fire Icon laga diya */}
                 </div>
-                <div className="logo-text">
-                  <h1>
-                    Big<span>Bite</span>
+                <div>
+                  <h1 className="font-['Oswald',sans-serif] text-[1.5rem] text-[var(--text-main,#ffffff)] m-0 tracking-[1px]">
+                    Big<span className="text-[#ef4444]">Bite</span>
                   </h1>
                 </div>
               </div>
             </div>
 
             {/* 2. MIDDLE SECTION (Dynamic Search) */}
-            <div className="header-search-box desktop-only" ref={searchRef}>
-              <form onSubmit={handleSearchSubmit} className={`dynamic-search-form ${isSearchFocused ? 'active' : 'dull'}`}>
-                <FaSearch className="search-icon" />
+            <div className="relative hidden md:block" ref={searchRef}>
+              <form onSubmit={handleSearchSubmit} className="relative flex items-center transition-all duration-300">
+                <FaSearch className={`absolute left-3 text-[0.875rem] z-[2] pointer-events-none transition-all duration-300 ${isSearchFocused ? 'text-[#ef4444]' : 'text-[#888]'}`} />
                 <input
                   type="text"
                   placeholder="Search your favorite food..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onFocus={() => setIsSearchFocused(true)}
+                  className={`w-[21.875rem] bg-[var(--panel-bg,#1a1a1a)] rounded-[1.25rem] py-2 pr-[0.937rem] pl-[2.187rem] text-[var(--text-main,#fff)] outline-none transition-all duration-300 ${isSearchFocused ? 'opacity-100 border border-[#ef4444]' : 'opacity-70 border border-transparent bg-[rgba(255,255,255,0.05)]'}`}
                 />
               </form>
 
               {/* Dynamic Search Dropdown */}
               {isSearchFocused && searchTerm.trim() !== "" && (
-                <div className="dynamic-search-dropdown">
+                <div className="absolute top-[2.812rem] left-0 w-full bg-[#111] border border-[#333] rounded-xl max-h-[21.875rem] overflow-y-auto shadow-[0_8px_20px_rgba(0,0,0,0.8)] z-[1000] animate-[slideDown_0.2s_ease-out] [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:bg-[#444] [&::-webkit-scrollbar-thumb]:rounded-[6px]">
                   {filteredItems.length > 0 ? (
                     filteredItems.map(item => (
                       <div 
                         key={item.id} 
-                        className="search-dropdown-item"
+                        className="flex items-center p-[0.625rem_0.937rem] border-b border-[#222] cursor-pointer transition-colors duration-200 hover:bg-[#222] last:border-b-0"
                         onClick={() => {
                           setSearchTerm("");
                           setIsSearchFocused(false);
                           navigate(`/menu?search=${encodeURIComponent(item.name)}`);
                         }}
                       >
-                        <img src={item.img} alt={item.name} />
-                        <div className="item-details">
-                          <span className="item-name">{item.name}</span>
-                          <span className="item-price">Rs {Number(item.price).toFixed(2)}</span>
+                        <img className="w-[2.812rem] h-[2.812rem] rounded-[0.375rem] object-cover mr-[0.937rem]" src={item.img} alt={item.name} />
+                        <div className="flex flex-col">
+                          <span className="text-white text-[0.875rem] font-medium mb-[0.188rem]">{item.name}</span>
+                          <span className="text-[#ef4444] text-[0.812rem] font-bold">Rs {Number(item.price).toFixed(2)}</span>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="search-dropdown-empty">No products found...</div>
+                    <div className="p-[0.937rem] text-center text-[#888] text-[0.875rem]">No products found...</div>
                   )}
                 </div>
               )}
             </div>
 
             {/* 3. RIGHT SECTION */}
-            <div className="right-section-wrapper">
-              <div className="right-actions">
+            <div className="flex items-center">
+              <div className="flex items-center gap-[0.937rem]">
                 {!shouldHideIcon && (
                   <div
-                    className="header-icon"
+                    className="relative text-[1.25rem] text-[var(--text-main,#fff)] cursor-pointer transition-colors duration-200 hover:text-[#ef4444]"
                     onClick={() => setShowOrders(true)}
                     title="Live Tracking"
                   >
                     <FaBox />
                     {orders?.length > 0 && (
-                      <span className="order-badge">{orders.length}</span>
+                      <span className="absolute -top-[0.375rem] -right-[0.5rem] bg-[#ef4444] text-white text-[0.625rem] w-[1.125rem] h-[1.125rem] rounded-full flex items-center justify-center border-2 border-[#0a0a0a] font-bold">{orders.length}</span>
                     )}
                   </div>
                 )}
@@ -159,14 +159,15 @@ const Header = () => {
 
           {/* 4. MOBILE SEARCH ROW */}
           {isMenuPage && (
-            <div className="mobile-search-row">
-              <form onSubmit={handleSearchSubmit}>
-                <FaSearch className="search-icon-inside" />
+            <div className="block md:hidden px-[0.937rem] pb-[0.937rem] bg-[var(--bg-body,#0a0a0a)]">
+              <form onSubmit={handleSearchSubmit} className="relative w-full">
+                <FaSearch className="absolute left-[0.937rem] top-1/2 -translate-y-1/2 text-[#ef4444]" />
                 <input
                   type="text"
                   placeholder="Search item or category..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-[var(--panel-bg,#1a1a1a)] border border-[var(--border-color,#333)] rounded-xl py-3 pr-[0.937rem] pl-[2.812rem] text-[var(--text-main,#fff)] outline-none text-[0.875rem] transition-all duration-300 focus:border-[#ef4444]"
                 />
               </form>
             </div>
@@ -180,3 +181,4 @@ const Header = () => {
 };
 
 export default Header;
+

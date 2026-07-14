@@ -1,5 +1,5 @@
 import React from "react";
-import { FaUtensils, FaPrint, FaArrowRight, FaCheck } from "react-icons/fa";
+import { FaUtensils, FaArrowRight, FaCheck } from "react-icons/fa";
 
 const KitchenCard = ({
   order,
@@ -7,7 +7,6 @@ const KitchenCard = ({
   btnClass,
   onNext,
   isReady,
-  onPrint,
 }) => {
   // 🔥 ULTRA SAFE PARSER (Yeh har qism ke data format ko pakar lega)
   let parsedItems = [];
@@ -50,61 +49,42 @@ const KitchenCard = ({
 
   return (
     <div
-      className={`k-card ${
-        order.status === "pending"
-          ? "new"
+      className={`bg-[var(--k-panel)] rounded-[10px] flex flex-col shrink-0 overflow-hidden transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(0,0,0,0.12)] ${order.status === "pending"
+          ? "border-l-[4px] border-l-[var(--status-yellow)]"
           : order.status === "preparing"
-            ? "prep"
-            : "ready"
-      }`}
+            ? "border-l-[4px] border-l-[var(--brand-red)]"
+            : "border-l-[4px] border-l-[var(--status-green)]"
+        }`}
     >
-      <div className="k-card-top">
-        <div className="table-pill">
-          <FaUtensils style={{ marginRight: "5px" }} />{" "}
+      <div className="p-[12px_15px] bg-[var(--k-bg)] flex justify-between items-center">
+        <div className="bg-[var(--k-panel)] text-[var(--k-text)] p-[4px_10px] rounded-[6px] font-extrabold text-[12px] flex items-center shadow-sm">
+          <FaUtensils className="mr-[5px]" />
           {order.table || order.table_number || "Takeaway"}
         </div>
-        <div className="timer-pill">{order.time}</div>
+        <div className="text-[var(--k-muted)] font-bold text-[13px] font-mono">{order.time}</div>
       </div>
 
-      <div className="k-card-content">
-        <div className="order-meta">
+      <div className="p-[15px]">
+        <div className="flex justify-between text-[12px] text-[var(--k-muted)] font-bold mb-[15px] pb-[10px] border-b border-dashed border-[var(--k-muted)]/20">
           <span>#{order.id}</span>
           <span>{order.type || "Dine-In"}</span>
         </div>
 
-        <div className="items-container" style={{ marginTop: "15px" }}>
+        <div className="mt-[15px]">
           {parsedItems.length > 0 ? (
             parsedItems.map((item, idx) => (
               <div
                 key={idx}
-                className="k-item-wrapper"
-                style={{
-                  marginBottom: "12px",
-                  borderBottom: "1px dashed #eee",
-                  paddingBottom: "8px",
-                }}
+                className="mb-[12px] border-b border-dashed border-[var(--k-muted)]/15 pb-[8px]"
               >
-                <div
-                  className="k-item-row"
-                  style={{ display: "flex", alignItems: "center" }}
-                >
-                  <span
-                    className="qty-badge"
-                    style={{ minWidth: "30px", textAlign: "center" }}
-                  >
+                <div className="flex items-center gap-[12px] text-[15px] font-bold text-[var(--k-text)] mb-[10px]">
+                  <span className="bg-[var(--k-bg)] text-[var(--k-text)] font-black text-[14px] w-[28px] h-[28px] flex justify-center items-center rounded-[6px] shrink-0 min-w-[30px] text-center">
                     {item.qty || item.quantity || 1}x
                   </span>
-                  <span style={{ fontWeight: "600", marginLeft: "10px" }}>
+                  <span className="font-[600] ml-[10px]">
                     {item.name || item.title || item.item_name}
                     {item.size && (
-                      <span
-                        style={{
-                          color: "#ef4444",
-                          fontSize: "12px",
-                          marginLeft: "6px",
-                          fontWeight: "bold",
-                        }}
-                      >
+                      <span className="text-[var(--brand-red)] text-[12px] ml-[6px] font-bold">
                         [{item.size}]
                       </span>
                     )}
@@ -112,41 +92,15 @@ const KitchenCard = ({
                 </div>
 
                 {(item.description || item.note) && (
-                  <div
-                    style={{
-                      paddingLeft: "40px",
-                      marginTop: "4px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "4px",
-                    }}
-                  >
+                  <div className="pl-[40px] mt-[4px] flex flex-col gap-[4px]">
                     {item.description && (
-                      <div
-                        style={{
-                          fontSize: "11px",
-                          color: "#666",
-                          lineHeight: "1.2",
-                        }}
-                      >
+                      <div className="text-[11px] text-[var(--k-muted)] leading-[1.2]">
                         {item.description}
                       </div>
                     )}
 
                     {item.note && (
-                      <div
-                        style={{
-                          fontSize: "11px",
-                          color: "#ef4444",
-                          fontStyle: "italic",
-                          backgroundColor: "#fef2f2",
-                          padding: "4px 8px",
-                          borderRadius: "4px",
-                          borderLeft: "2px solid #ef4444",
-                          display: "inline-block",
-                          width: "fit-content",
-                        }}
-                      >
+                      <div className="text-[11px] text-[var(--brand-red)] italic bg-[rgba(239,68,68,0.06)] p-[4px_8px] rounded-[4px] border-l-[2px] border-l-[var(--brand-red)] inline-block w-fit">
                         * Note: {item.note}
                       </div>
                     )}
@@ -155,27 +109,15 @@ const KitchenCard = ({
               </div>
             ))
           ) : (
-            <div
-              style={{ color: "#999", fontSize: "12px", fontStyle: "italic" }}
-            >
-              No items details found. Check console (F12).
+            <div className="text-[var(--k-muted)] text-[12px] italic">
+              No items details found.
             </div>
           )}
         </div>
       </div>
-
-      <div className="k-card-actions">
-        <button
-          className="btn-k btn-outline"
-          onClick={() => onPrint(order)}
-          title="Print Ticket"
-        >
-          <FaPrint />
-        </button>
-        <button className={`btn-k btn-fill ${btnClass}`} onClick={onNext}>
-          {btnText} {isReady ? <FaCheck /> : <FaArrowRight />}
-        </button>
-      </div>
+      <button className={`w-full p-[12px] border-none font-oswald font-extrabold text-[14px] uppercase cursor-pointer flex justify-center items-center gap-[8px] transition-all duration-200 text-white rounded-none hover:brightness-110 ${btnClass === 'yellow' ? 'bg-[var(--status-yellow)] text-[#000]' : btnClass === 'red' ? 'bg-[var(--brand-red)]' : btnClass === 'gray' ? 'bg-[#555] cursor-not-allowed opacity-80' : 'bg-[var(--status-green)]'}`} onClick={onNext} disabled={btnClass === 'gray'}>
+        {btnText} {isReady ? <FaCheck /> : <FaArrowRight />}
+      </button>
     </div>
   );
 };

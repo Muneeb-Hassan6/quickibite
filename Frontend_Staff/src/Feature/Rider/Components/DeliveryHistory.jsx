@@ -10,27 +10,27 @@ const DeliveryHistory = ({ history }) => {
     const displayHistory = showAll ? history : history.slice(0, 5);
 
     return (
-        <div className="dashboard-card">
-            <div className="history-header-row">
-                <h3 className="dashboard-title" style={{ border: 'none', margin: 0, padding: 0 }}>
+        <div className="mt-[25px] bg-[var(--admin-bg)] p-0 rounded-[16px] ">
+            <div className="flex justify-between items-center mb-[15px]">
+                <h3 className="text-[var(--admin-text)] text-[22px] pb-[5px] mb-[15px] mt-0 uppercase tracking-[1px] font-oswald" >
                     {showAll ? "Full Delivery History" : "Recent Deliveries"}
                 </h3>
-                <span className="history-count-badge">Total: {history.length}</span>
+                <span className="text-[12px] text-[var(--admin-muted)] font-semibold">Total: {history.length}</span>
             </div>
 
             {displayHistory.map((item, index) => (
-                <div key={index} className="history-item">
+                <div key={index} className="bg-[var(--admin-panel)] flex justify-between items-center p-[15px] text-[14px]  rounded-[12px] mb-[10px] transition-all duration-300 ">
                     <div>
-                        <span className="history-id">#{item.id}</span> - {item.customer}
-                        <div className="history-time">{item.time}</div>
+                        <span className="text-[var(--admin-text)] font-bold text-[14px] font-oswald tracking-[0.5px]">#{item.id}</span> - {item.customer}
+                        <div className="text-[12px] text-[var(--admin-muted)] mt-[4px]">{item.time}</div>
                     </div>
-                    <div className="history-earning">+Rs {item.earnings}</div>
+                    <div className="text-[var(--admin-text)] font-bold text-[16px] bg-[rgba(255,255,255,0.05)] p-[4px_10px] rounded-[8px] font-oswald">+Rs {item.earnings}</div>
                 </div>
             ))}
 
             {/* Ab ye button toggle ka kaam karega */}
             {history.length > 5 && (
-                <div className="btn-view-all" onClick={() => setShowAll(!showAll)}>
+                <div className="text-center mt-[15px] text-[var(--admin-orange)] text-[13px] cursor-pointer font-bold uppercase tracking-[0.5px]" onClick={() => setShowAll(!showAll)}>
                     {showAll ? "Show Less" : "View All History"}
                 </div>
             )}

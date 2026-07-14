@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FaSearch,
   FaEye,
@@ -10,15 +11,13 @@ import {
 import Swal from "sweetalert2";
 
 const OrderHistory = ({ onViewClick, onPrintClick }) => {
+  const queryClient = useQueryClient();
   const [historySearch, setHistorySearch] = useState("");
-  const [ordersData, setOrdersData] = useState([]);
 
-  // FETCH LIVE ORDERS FROM DATABASE
-  const fetchOrderHistory = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=cashier`,
-      );
+  const { data: ordersData = [] } = useQuery({
+    queryKey: ['cashier_orders'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_orders.php?type=cashier`);
       const data = await response.json();
 
       if (Array.isArray(data)) {
@@ -40,8 +39,7 @@ const OrderHistory = ({ onViewClick, onPrintClick }) => {
             customerName: dbOrder.customer_name || "Walk-in",
             table: dbOrder.table_number || "Takeaway",
             total: parseFloat(dbOrder.total || dbOrder.total_amount || 0),
-            paymentStatus:
-              dbOrder.payment_status || dbOrder.status || "Pending",
+            paymentStatus: dbOrder.payment_status || dbOrder.status || "Pending",
             paymentMethod: dbOrder.payment_method || "Cash",
             time: dbOrder.time,
             items: parsedCart,
@@ -49,18 +47,13 @@ const OrderHistory = ({ onViewClick, onPrintClick }) => {
         });
 
         formattedOrders.sort((a, b) => b.id - a.id);
-        setOrdersData(formattedOrders);
+        return formattedOrders;
       }
-    } catch (error) {
-      console.error("Failed to fetch order history", error);
-    }
-  };
+      return [];
+    },
+    refetchInterval: 5000,
+  });
 
-  useEffect(() => {
-    fetchOrderHistory();
-    const interval = setInterval(fetchOrderHistory, 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   // 🔥 NAYA FUNCTION: Payment Status Change Karne Ke Liye
   // 🔥 UPDATED FUNCTION
@@ -112,12 +105,12 @@ const OrderHistory = ({ onViewClick, onPrintClick }) => {
             showConfirmButton: false,
           });
 
-          setOrdersData((prevData) =>
+          queryClient.setQueryData(['cashier_orders'], (prevData = []) => 
             prevData.map((order) =>
               order.id === orderId
                 ? { ...order, paymentStatus: newStatus }
                 : order,
-            ),
+            )
           );
         } else {
           // Ab popup me masla saaf nazar aayega
@@ -147,29 +140,28 @@ const OrderHistory = ({ onViewClick, onPrintClick }) => {
   });
 
   return (
-    <div className="history-container">
-      <h2 className="page-title" style={{ paddingBottom: "20px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)", marginBottom: "30px" }}>
+    <div className="p-[30px] h-full overflow-y-auto">
+      <h2 className="m-0 font-oswald text-[28px] font-extrabold text-[var(--admin-text)] uppercase tracking-[1px] pb-[20px] border-b border-[rgba(255,255,255,0.1)] mb-[30px]">
         Transaction History
       </h2>
 
-      <div className="pos-controls-bar" style={{ marginBottom: "30px" }}>
+      <div className="flex gap-[15px] mb-[30px] items-center">
         <div
-          className="pos-search-wrapper"
-          style={{ width: "100%", maxWidth: "400px" }}
+          className="flex items-center bg-[var(--pos-panel)] border border-[var(--admin-border)] shadow-sm rounded-[20px] px-[15px] transition-colors duration-300 focus-within:border-[var(--brand-red)] w-full max-w-[400px]"
         >
-          <FaSearch className="pos-search-icon" />
+          <FaSearch className="text-[var(--admin-muted)] mr-[10px]" />
           <input
             type="text"
             placeholder="Search Customer or Order ID..."
             value={historySearch}
             onChange={(e) => setHistorySearch(e.target.value)}
-            className="pos-search-input"
+            className="bg-transparent border-none text-[var(--admin-text)] py-[12px] px-0 w-full outline-none"
           />
         </div>
       </div>
 
-      <div className="pos-history-table-wrapper">
-        <table className="pos-glass-table">
+      <div className="bg-[var(--pos-panel)] border border-[var(--admin-border)] shadow-sm rounded-[24px] p-[20px]">
+        <table className="w-full border-collapse text-left [&_th]:p-[15px] [&_th]:text-[var(--admin-muted)] [&_th]:text-[13px] [&_th]:uppercase [&_th]:border-b-[2px] [&_th]:border-b-[var(--admin-border)] [&_th]:font-extrabold [&_td]:p-[15px] [&_td]:border-b [&_td]:border-b-[var(--admin-border)] [&_td]:text-[14px] [&_td]:transition-all [&_td]:duration-200 max-[900px]:[&_thead]:hidden max-[900px]:[&_tr]:block max-[900px]:[&_tr]:bg-[var(--admin-panel)] max-[900px]:[&_tr]:mb-[15px] max-[900px]:[&_tr]:rounded-[12px] max-[900px]:[&_tr]:p-[15px] max-[900px]:[&_tr]:border max-[900px]:[&_tr]:border-[var(--admin-border)] max-[900px]:[&_td]:flex max-[900px]:[&_td]:justify-between max-[900px]:[&_td]:items-center max-[900px]:[&_td]:border-b-dashed max-[900px]:[&_td]:py-[10px] max-[900px]:[&_td]:text-right max-[900px]:[&_td]:before:content-[attr(data-label)] max-[900px]:[&_td]:before:text-[var(--admin-muted)] max-[900px]:[&_td]:before:font-extrabold max-[900px]:[&_td]:before:text-[11px] max-[900px]:[&_td]:before:uppercase">
           <thead>
             <tr>
               <th>ID</th>
@@ -254,7 +246,7 @@ const OrderHistory = ({ onViewClick, onPrintClick }) => {
                     >
                       {/* 🔥 NAYA PAYMENT TOGGLE BUTTON */}
                       <button
-                        className="btn-pos-view"
+                        className="bg-transparent border-none text-[var(--admin-muted)] px-[15px] py-[8px] rounded-[20px] cursor-pointer flex items-center gap-[6px] text-[13px] font-bold transition-all duration-200 hover:text-[var(--brand-red)] hover:bg-[rgba(239,68,68,0.05)]"
                         onClick={() =>
                           togglePaymentStatus(order.id, order.paymentStatus)
                         }
@@ -263,10 +255,6 @@ const OrderHistory = ({ onViewClick, onPrintClick }) => {
                             order.paymentStatus === "Paid"
                               ? "#ef4444"
                               : "#10b981",
-                          borderColor:
-                            order.paymentStatus === "Paid"
-                              ? "rgba(239, 68, 68, 0.3)"
-                              : "rgba(16, 185, 129, 0.3)",
                           backgroundColor:
                             order.paymentStatus === "Paid"
                               ? "rgba(239, 68, 68, 0.05)"
@@ -286,18 +274,16 @@ const OrderHistory = ({ onViewClick, onPrintClick }) => {
                       </button>
 
                       <button
-                        className="btn-pos-view"
+                        className="bg-[var(--bg-body)] border border-[var(--admin-border)] text-[var(--admin-muted)] px-[15px] py-[8px] rounded-[20px] cursor-pointer flex items-center gap-[6px] text-[13px] font-bold transition-all duration-200 hover:text-[var(--brand-red)] hover:bg-[rgba(239,68,68,0.05)] shadow-sm"
                         onClick={() => onViewClick(order)}
                       >
                         <FaEye style={{ marginRight: "5px" }} /> View
                       </button>
                       <button
-                        className="btn-pos-view"
+                        className="bg-[rgba(59,130,246,0.05)] border-none text-[var(--admin-muted)] px-[15px] py-[8px] rounded-[20px] cursor-pointer flex items-center gap-[6px] text-[13px] font-bold transition-all duration-200 hover:text-[#3b82f6] hover:bg-[rgba(59,130,246,0.1)]"
                         onClick={() => onPrintClick && onPrintClick(order)}
                         style={{
                           color: "#3b82f6",
-                          borderColor: "rgba(59, 130, 246, 0.3)",
-                          backgroundColor: "rgba(59, 130, 246, 0.05)",
                         }}
                       >
                         <FaPrint style={{ marginRight: "5px" }} /> Print

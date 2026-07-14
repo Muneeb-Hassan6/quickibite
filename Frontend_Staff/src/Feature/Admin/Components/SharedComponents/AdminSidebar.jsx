@@ -86,7 +86,7 @@ const AdminSidebar = ({
           {menuItems.map((item) => (
             <li
               key={item.id}
-              className={`flex items-center gap-[0.938rem] p-[0.75rem_0.938rem] rounded-[0.625rem] no-underline text-[1rem] transition-all duration-300 cursor-pointer ${activeTab === item.id ? "bg-red-500 text-white font-bold shadow-[0_4px_15px_rgba(239,68,68,0.3)] hover:translate-x-0" : "text-[var(--admin-muted)] font-medium hover:bg-[rgba(128,128,128,0.1)] hover:text-[var(--admin-text)] hover:translate-x-1"}`}
+              className={`flex items-center gap-[0.938rem] p-[0.75rem_0.938rem] rounded-[0.625rem] no-underline text-[1rem] transition-all duration-300 cursor-pointer ${activeTab === item.id ? "bg-red-500 text-white font-bold shadow-[var(--shadow-glow)] hover:translate-x-0" : "text-[var(--admin-muted)] font-medium hover:bg-[rgba(128,128,128,0.1)] hover:text-[var(--admin-text)] hover:translate-x-1"}`}
               onClick={() => {
                 setActiveTab(item.id);
                 setIsSidebarOpen(false);

@@ -6,7 +6,6 @@ import {
   FaCheckSquare,
   FaRegSquare,
 } from "react-icons/fa";
-import "./PosItemModal.css"; // 🔥 CSS FILE IMPORT
 
 const PosItemModal = ({ isOpen, onClose, menuItem, onAddToCart }) => {
   const [selectedVariant, setSelectedVariant] = useState("");
@@ -110,31 +109,31 @@ const PosItemModal = ({ isOpen, onClose, menuItem, onAddToCart }) => {
   };
 
   return (
-    <div className="admin-modal-overlay" onClick={onClose}>
+    <div className="fixed inset-0 bg-[rgba(0,0,0,0.6)] flex items-center justify-center z-[999999] backdrop-blur-[6px]" onClick={onClose}>
       <div
-        className="admin-modal-box animate-slide-up"
+        className="bg-[var(--admin-panel,#1f2937)] text-white rounded-[12px] w-full max-w-[450px] p-[25px] shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-[#333] max-h-[90vh] overflow-y-auto animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="modal-header-container">
+        <div className="flex justify-between items-start mb-[20px]">
           <div>
-            <h2 className="modal-item-title">{menuItem.name}</h2>
-            <p className="modal-item-price">
+            <h2 className="m-0 text-[22px]">{menuItem.name}</h2>
+            <p className="text-[var(--brand-red,#ef4444)] font-bold m-[5px_0_0_0]">
               Rs{" "}
               {menuItem.variants?.find((v) => v.size === selectedVariant)
                 ?.price || menuItem.price}
             </p>
           </div>
-          <button className="modal-close-btn" onClick={onClose}>
+          <button className="bg-transparent border-none text-gray-500 text-[20px] cursor-pointer hover:text-white transition-colors duration-200" onClick={onClose}>
             <FaTimes />
           </button>
         </div>
 
         {/* Sizes / Variants */}
         {menuItem.variants && menuItem.variants.length > 0 && (
-          <div className="section-container">
-            <p className="section-label">Select Size:</p>
-            <div className="variants-container">
+          <div className="mb-[20px]">
+            <p className="font-bold mb-[8px] text-[13px] text-[var(--admin-muted)] uppercase block">Select Size:</p>
+            <div className="flex gap-[10px] flex-wrap">
               {menuItem.variants.map((variant, index) => {
                 const isOutOfStock =
                   variant.inStock === false ||
@@ -143,11 +142,6 @@ const PosItemModal = ({ isOpen, onClose, menuItem, onAddToCart }) => {
                 const isActive =
                   selectedVariant === variant.size && !isOutOfStock;
 
-                let btnClass = "variant-btn ";
-                if (isOutOfStock) btnClass += "out-of-stock";
-                else if (isActive) btnClass += "active";
-                else btnClass += "inactive";
-
                 return (
                   <button
                     key={index}
@@ -155,7 +149,7 @@ const PosItemModal = ({ isOpen, onClose, menuItem, onAddToCart }) => {
                       if (!isOutOfStock) setSelectedVariant(variant.size);
                     }}
                     disabled={isOutOfStock}
-                    className={btnClass}
+                    className={`p-[10px_18px] rounded-[8px] font-bold transition-all duration-200 border cursor-pointer text-center ${isOutOfStock ? "opacity-50 line-through cursor-not-allowed text-gray-500 bg-[rgba(255,255,255,0.05)] border-[#333]" : isActive ? "border-[var(--brand-red,#ef4444)] bg-[var(--brand-red,#ef4444)] text-[var(--text-main,#ffffff)]" : "border-[#333] bg-[rgba(255,255,255,0.05)] text-[var(--text-main,#ffffff)] hover:bg-[rgba(255,255,255,0.1)]"}`}
                   >
                     {variant.size}
                   </button>
@@ -170,8 +164,8 @@ const PosItemModal = ({ isOpen, onClose, menuItem, onAddToCart }) => {
           <p className="loading-text">Loading options...</p>
         ) : (
           optionalIngredients.length > 0 && (
-            <div className="ingredients-box">
-              <p className="ingredients-label">
+            <div className="mb-[20px] bg-[rgba(255,255,255,0.05)] p-[15px] rounded-[8px]">
+              <p className="font-bold mb-[8px] text-[13px] text-[var(--admin-muted)] uppercase block">
                 Remove Ingredients (Optional):
               </p>
               {optionalIngredients.map((ing, index) => {
@@ -180,10 +174,10 @@ const PosItemModal = ({ isOpen, onClose, menuItem, onAddToCart }) => {
                   <div
                     key={index}
                     onClick={() => toggleIngredient(ing.inventory_id)}
-                    className={`ingredient-item ${isExcluded ? "excluded" : "included"}`}
+                    className={`flex items-center gap-[10px] mb-[8px] cursor-pointer p-[12px] rounded-[8px] border border-[#333] text-[14px] ${isExcluded ? "text-gray-500 line-through bg-[rgba(0,0,0,0.3)]" : "bg-[rgba(255,255,255,0.05)] text-white"}`}
                   >
                     <div
-                      className={`ingredient-icon ${isExcluded ? "excluded" : "included"}`}
+                      className={`${isExcluded ? "text-gray-500" : "text-white"}`}
                     >
                       {isExcluded ? (
                         <FaRegSquare size={20} />
@@ -202,28 +196,28 @@ const PosItemModal = ({ isOpen, onClose, menuItem, onAddToCart }) => {
         )}
 
         {/* Kitchen Note */}
-        <div className="section-container">
-          <p className="section-label">Kitchen Note (Spicy, Extra etc):</p>
+        <div className="mb-[20px]">
+          <p className="font-bold mb-[8px] text-[13px] text-[var(--admin-muted)] uppercase block">Kitchen Note (Spicy, Extra etc):</p>
           <textarea
             value={kitchenNote}
             onChange={(e) => setKitchenNote(e.target.value)}
             placeholder="e.g. Make it extra spicy..."
-            className="kitchen-note-input"
+            className="w-full bg-[rgba(255,255,255,0.05)] border border-[#333] rounded-[8px] text-white p-[14px] resize-none text-[14px] outline-none focus:border-[var(--brand-red)] min-h-[80px]"
           />
         </div>
 
         {/* Quantity and Action Button */}
-        <div className="action-container">
-          <div className="qty-controls">
+        <div className="flex gap-[15px] items-center mt-[20px]">
+          <div className="flex items-center justify-center bg-[var(--admin-panel)] rounded-[6px] border border-[var(--admin-border)] p-[4px]">
             <button
-              className="qty-btn"
+              className="w-[36px] h-[36px] bg-transparent text-[var(--admin-muted)] border-none cursor-pointer flex justify-center items-center hover:text-white"
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             >
               <FaMinus />
             </button>
-            <span className="qty-display">{quantity}</span>
+            <span className="text-[16px] font-bold text-[var(--admin-text)] w-[30px] text-center">{quantity}</span>
             <button
-              className="qty-btn"
+              className="w-[36px] h-[36px] bg-transparent text-[var(--admin-muted)] border-none cursor-pointer flex justify-center items-center hover:text-white"
               onClick={() => setQuantity((q) => q + 1)}
             >
               <FaPlus />
@@ -233,7 +227,7 @@ const PosItemModal = ({ isOpen, onClose, menuItem, onAddToCart }) => {
           <button
             onClick={handleAddToCart}
             disabled={isCurrentSelectionOutOfStock()}
-            className={`add-to-cart-btn ${isCurrentSelectionOutOfStock() ? "disabled" : ""}`}
+            className={`flex-1 bg-[var(--brand-red,#ef4444)] text-white border-none p-[16px] rounded-[8px] text-[16px] font-bold cursor-pointer shadow-[var(--shadow-glow)] ${isCurrentSelectionOutOfStock() ? "opacity-50 cursor-not-allowed shadow-none" : "hover:bg-[#dc2626]"}`}
           >
             {isCurrentSelectionOutOfStock() ? "Sold Out" : "Add to Cart"}
           </button>

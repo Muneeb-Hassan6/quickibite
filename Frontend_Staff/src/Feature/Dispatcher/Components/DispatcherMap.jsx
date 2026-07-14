@@ -12,12 +12,12 @@ const DispatcherMap = ({ riders, MAPBOX_TOKEN, viewState, setViewState }) => {
     };
 
     return (
-        <div className="dispatcher-map-section animate-slide-up">
-            <div className="panel-header" style={{ marginBottom: "15px" }}>
-                <h3 style={{ border: 'none', margin: 0, padding: 0 }}>📍 Real-time Rider Tracking</h3>
+        <div className="bg-[var(--admin-panel)] rounded-[12px] p-[15px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] animate-slide-up">
+            <div className="mb-[15px] border-b border-[var(--admin-border)] pb-[10px]">
+                <h3 className="m-0 border-none p-0 flex items-center gap-[8px] text-[var(--admin-text)] font-oswald uppercase text-[1.17em] font-bold">📍 Real-time Rider Tracking</h3>
             </div>
 
-            <div style={{ height: '350px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #2d2d2d', position: 'relative' }}>
+            <div className="h-[350px] w-full rounded-[8px] overflow-hidden shadow-[inset_0_2px_8px_rgba(0,0,0,0.1)] relative">
                 <Map
                     ref={mapRef}
                     {...viewState}
@@ -28,9 +28,6 @@ const DispatcherMap = ({ riders, MAPBOX_TOKEN, viewState, setViewState }) => {
                     style={{ width: '100%', height: '100%', position: 'absolute' }}
                     onLoad={handleMapLoad}
                 >
-                    // DispatcherMap.jsx mein Marker ka hissa is tarah update karein:
-
-                    {/* DispatcherMap.jsx mein Marker ka block replace karein */}
                     {riders.map(rider => (
                         <Marker
                             key={rider.id}
@@ -38,21 +35,14 @@ const DispatcherMap = ({ riders, MAPBOX_TOKEN, viewState, setViewState }) => {
                             latitude={rider.location.lat}
                             anchor="bottom"
                         >
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}>
+                            <div className="flex flex-col items-center cursor-pointer">
                                 {/* 🔥 Motorbike Icon setup */}
                                 <img
                                     src="https://cdn-icons-png.flaticon.com/512/3198/3198336.png"
-                                    style={{
-                                        width: '45px',
-                                        filter: 'drop-shadow(0px 3px 5px rgba(0,0,0,0.4))',
-                                        backgroundColor: '#fff',
-                                        padding: '5px',
-                                        borderRadius: '50%',
-                                        border: '2px solid #ef4444'
-                                    }}
+                                    className="w-[45px] drop-shadow-[0_3px_5px_rgba(0,0,0,0.4)] bg-white p-[5px] rounded-full border-[2px] border-[#ef4444]"
                                     alt="Delivery Motorbike"
                                 />
-                                <div className="rider-marker-label">
+                                <div className="bg-[var(--bg-body)] text-[var(--text-main,#ffffff)] p-[2px_8px] rounded-[4px] text-[11px] font-bold mt-[-5px] shadow-[0_2px_4px_rgba(0,0,0,0.3)] border border-[var(--admin-border)]">
                                     {rider.name}
                                 </div>
                             </div>

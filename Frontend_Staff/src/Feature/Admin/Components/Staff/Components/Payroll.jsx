@@ -162,7 +162,7 @@ const Payroll = () => {
     >
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div
-        className="flex justify-between items-start p-[0.938rem_1.25rem] border-b border-[var(--admin-border,#333)] flex-wrap gap-[0.75rem]"
+        className="flex justify-between items-start p-[0.938rem_1.25rem]  flex-wrap gap-[0.75rem]"
       >
         <div>
           <h4
@@ -240,13 +240,13 @@ const Payroll = () => {
         <table className="w-full border-collapse min-w-[37.5rem] text-[0.875rem]">
           <thead>
             <tr>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px] pl-[1.25rem]">Employee</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Basic Salary</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Absences</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Deduction</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Net Payable</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Status</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Action</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px] pl-[1.25rem]">Employee</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Basic Salary</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Absences</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Deduction</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Net Payable</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Status</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -264,7 +264,7 @@ const Payroll = () => {
                 const netPay = Math.max(0, salary - totalDeduction);
 
                 return (
-                  <tr key={emp.id} className="border-b border-[var(--admin-border,#333)] transition-colors duration-200 hover:bg-[rgba(255,255,255,0.02)]">
+                  <tr key={emp.id} className=" transition-colors duration-200 hover:bg-[rgba(255,255,255,0.02)]">
                     {/* Employee */}
                     <td className="p-[1.25rem] align-middle pl-[1.25rem]">
                       <div className="flex items-center gap-[0.75rem]">
@@ -364,7 +364,7 @@ const Payroll = () => {
                     <td className="p-[1.25rem] align-middle">
                       {!isPaid ? (
                         <button
-                          className="bg-[var(--brand-red,#ef4444)] text-white border-none p-[0.5rem_0.875rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[0_4px_15px_rgba(239,68,68,0.4)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.6)] flex items-center gap-[0.313rem] text-[0.75rem] !w-auto !m-0"
+                          className="bg-[var(--admin-orange)] text-white border-none p-[0.5rem_0.875rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[0_4px_15px_rgba(239,68,68,0.4)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.6)] flex items-center gap-[0.313rem] text-[0.75rem] !w-auto !m-0"
                           onClick={() =>
                             handlePay(emp, absents, dailyRate, netPay)
                           }

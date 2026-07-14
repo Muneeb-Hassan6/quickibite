@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Swal from 'sweetalert2';
 import { FaTrash, FaPlus, FaSave, FaImage, FaListUl, FaEdit, FaCog } from 'react-icons/fa';
 import FooterSettings from '../Settings/Components/FooterSettings';
 
 const HomepageBuilder = () => {
-  const [sections, setSections] = useState([]);
+  const queryClient = useQueryClient();
   const [heroSlides, setHeroSlides] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Global Settings for Homepage
   const [globalSettings, setGlobalSettings] = useState({
@@ -32,38 +32,28 @@ const HomepageBuilder = () => {
   
   const [bannerSlides, setBannerSlides] = useState([{ title: '', subtitle: '', link_url: '', file: null, image_url: '' }]);
 
-  const [categories, setCategories] = useState([]);
-  const [menuItems, setMenuItems] = useState([]);
-  const [deals, setDeals] = useState([]);
-  const [selectedProductIds, setSelectedProductIds] = useState([]);
-
-  useEffect(() => {
-    fetchData();
-    fetchCategories();
-    fetchMenuItems();
-    fetchDeals();
-  }, []);
-
-  const fetchData = async () => {
-    try {
+  // Use React Query for homepage data
+  const { data: homepageData = {}, isLoading } = useQuery({
+    queryKey: ['homepage_data'],
+    queryFn: async () => {
       const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_homepage_data.php`);
       const result = await response.json();
-      if (result.success && result.data) {
-        setHeroSlides(result.data.hero_sliders || []);
-        setSections(result.data.sections || []);
-        if (result.data.settings) {
-          setGlobalSettings({
-            hero_section_sort_order: result.data.settings.hero_section_sort_order || '0',
-            empty_homepage_message: result.data.settings.empty_homepage_message || ''
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching homepage data", error);
-    } finally {
-      setIsLoading(false);
+      return result.success && result.data ? result.data : {};
     }
-  };
+  });
+
+  const sections = homepageData.sections || [];
+  
+  // Update local states when data changes
+  React.useEffect(() => {
+    if (homepageData.hero_sliders) setHeroSlides(homepageData.hero_sliders);
+    if (homepageData.settings) {
+      setGlobalSettings({
+        hero_section_sort_order: homepageData.settings.hero_section_sort_order || '0',
+        empty_homepage_message: homepageData.settings.empty_homepage_message || ''
+      });
+    }
+  }, [homepageData]);
 
   const handleSaveGlobalSettings = async () => {
     setIsSavingGlobal(true);
@@ -75,7 +65,9 @@ const HomepageBuilder = () => {
       });
       const result = await response.json();
       if (result.success) {
-        Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Homepage Settings Saved!", showConfirmButton: false, timer: 1500 });
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Saved successfully!', showConfirmButton: false, timer: 1500 });
+        setIsModalOpen(false);
+        queryClient.invalidateQueries({ queryKey: ['homepage_data'] });
       } else {
         Swal.fire("Error", result.message, "error");
       }
@@ -87,35 +79,34 @@ const HomepageBuilder = () => {
     }
   };
 
-  const fetchCategories = async () => {
-    try {
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
       const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_categories.php`);
       const data = await res.json();
-      if(Array.isArray(data)) setCategories(data);
-    } catch(err) {
-      console.error(err);
+      return Array.isArray(data) ? data : [];
     }
-  };
+  });
 
-  const fetchMenuItems = async () => {
-    try {
+  const { data: menuItems = [] } = useQuery({
+    queryKey: ['menu'],
+    queryFn: async () => {
       const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
       const data = await res.json();
-      if (Array.isArray(data)) setMenuItems(data);
-    } catch (err) {
-      console.error(err);
+      return Array.isArray(data) ? data : [];
     }
-  };
+  });
 
-  const fetchDeals = async () => {
-    try {
+  const { data: deals = [] } = useQuery({
+    queryKey: ['active_deals'],
+    queryFn: async () => {
       const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_active_deals.php`);
       const data = await res.json();
-      if (data.success && data.data) setDeals(data.data);
-    } catch (err) {
-      console.error(err);
+      return data.success && data.data ? data.data : [];
     }
-  };
+  });
+
+  const [selectedProductIds, setSelectedProductIds] = useState([]);
 
   const uploadToCloudinary = async (file) => {
     const data = new FormData();
@@ -152,11 +143,13 @@ const HomepageBuilder = () => {
           },
           body: JSON.stringify({ action, id })
         });
-        const res = await response.json();
-        if (res.success) {
-          Swal.fire('Deleted!', 'Item has been deleted.', 'success');
-          fetchData();
-        }
+        const resultData = await response.json();
+          if (resultData.success) {
+            Swal.fire('Deleted!', 'The section has been deleted.', 'success');
+            queryClient.invalidateQueries({ queryKey: ['homepage_data'] });
+          } else {
+            Swal.fire('Error', 'Failed to delete item', 'error');
+          }
       } catch (error) {
         Swal.fire('Error', 'Failed to delete item', 'error');
       }
@@ -234,7 +227,7 @@ const HomepageBuilder = () => {
       if (res.success) {
         Swal.fire('Saved!', editId ? 'Item updated successfully' : 'New item added successfully', 'success');
         setIsModalOpen(false);
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ['homepage_data'] });
       } else {
         Swal.fire('Error', 'Failed to save: ' + JSON.stringify(res), 'error');
       }
@@ -439,7 +432,7 @@ const HomepageBuilder = () => {
         <div style={{ background: 'var(--admin-panel)', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: '1px solid var(--admin-border)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
             <h3><FaCog /> Global Homepage Settings</h3>
-            <button onClick={handleSaveGlobalSettings} disabled={isSavingGlobal} style={{ padding: '8px 12px', fontSize: '12px', background: 'var(--brand-red)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <button onClick={handleSaveGlobalSettings} disabled={isSavingGlobal} style={{ padding: '8px 12px', fontSize: '12px', background: 'var(--admin-orange)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
               <FaSave /> {isSavingGlobal ? 'Saving...' : 'Save Settings'}
             </button>
           </div>
@@ -629,7 +622,7 @@ const HomepageBuilder = () => {
                 <div style={{ padding: '15px', border: '1px solid var(--admin-border)', borderRadius: '8px', background: 'var(--admin-panel)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                     <h4 style={{ margin: 0 }}>Banner Slides</h4>
-                    <button type="button" onClick={() => setBannerSlides([...bannerSlides, { title: '', subtitle: '', link_url: '', file: null, image_url: '' }])} style={{ padding: '6px 12px', fontSize: '12px', background: 'var(--brand-red)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                    <button type="button" onClick={() => setBannerSlides([...bannerSlides, { title: '', subtitle: '', link_url: '', file: null, image_url: '' }])} style={{ padding: '6px 12px', fontSize: '12px', background: 'var(--admin-orange)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                       <FaPlus /> Add Slide
                     </button>
                   </div>

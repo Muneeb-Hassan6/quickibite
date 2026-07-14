@@ -1,26 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
-import "./styles/index.css";
 import KitchenHeader from "./Components/KitchenHeader.jsx";
 import KitchenCard from "./Components/KitchenCard.jsx";
-import PrintModal from "./Components/PrintModal.jsx";
 
 const KitchenDashboard = () => {
-  const [orders, setOrders] = useState([]);
+  const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState("All");
-  const [printOrder, setPrintOrder] = useState(null);
   const socketRef = useRef(null); // 🔥 Persistent socket reference
 
-  // 🔥 1. FETCH LIVE ORDERS (Updated for Two-Table Structure)
-  const fetchLiveOrders = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php`,
-      );
+  // 🔥 1. FETCH LIVE ORDERS via React Query
+  const { data: orders = [] } = useQuery({
+    queryKey: ['kitchen_orders'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_orders.php`);
       const data = await response.json();
-
-      if (Array.isArray(data)) {
+      
+      if (!Array.isArray(data)) return [];
         // Data Formatting: PHP se aane wale data ko frontend ke mutabiq dhalna
         const formattedOrders = data.map((dbOrder) => {
           // Items Handling: Agar items string mein hain toh parse karo, warna direct array use karo
@@ -88,18 +85,14 @@ const KitchenDashboard = () => {
           };
         });
 
-        setOrders(formattedOrders);
-      }
-    } catch (error) {
-      console.error("Failed to fetch kitchen orders", error);
-    }
-  };
+      return formattedOrders;
+    },
+    refetchInterval: 15000, // Background polling fallback
+    staleTime: 5000
+  });
 
-  // 🔥 REAL-TIME SOCKET.IO + POLLING FALLBACK
+  // 🔥 REAL-TIME SOCKET.IO
   useEffect(() => {
-    // 1. Initial load
-    fetchLiveOrders();
-
     // 2. Connect with auto-reconnect enabled
     const socket = io(import.meta.env.VITE_SOCKET_URL, {
       transports: ["websocket", "polling"],
@@ -121,29 +114,22 @@ const KitchenDashboard = () => {
 
     socket.on("refresh_kitchen", () => {
       console.log("🔔 New order signal received! Refreshing kitchen...");
-      fetchLiveOrders();
+      queryClient.invalidateQueries({ queryKey: ['kitchen_orders'] });
     });
 
     socket.on("disconnect", (reason) => {
       console.warn("⚠️ Kitchen socket disconnected:", reason);
     });
 
-    // Polling fallback every 30 seconds
-    const pollInterval = setInterval(() => {
-      fetchLiveOrders();
-    }, 30000);
-
     return () => {
       socket.off("connect", joinKitchen);
       socket.off("refresh_kitchen");
       socket.disconnect();
       socketRef.current = null;
-      clearInterval(pollInterval);
     };
   }, []);
 
-
-  // 🔥 UPDATE ORDER STATUS — emits socket so dispatcher refreshes instantly
+  // 🔥 UPDATE ORDER STATUS
   const updateStatus = async (id, newFrontendStatus) => {
     let backendStatus = "";
     if (newFrontendStatus === "preparing") backendStatus = "Cooking";
@@ -151,17 +137,17 @@ const KitchenDashboard = () => {
     else if (newFrontendStatus === "completed") backendStatus = "Delivered";
 
     // Optimistic UI update
-    setOrders((prevOrders) =>
-      prevOrders.map((o) =>
-        o.id === id ? { ...o, status: newFrontendStatus } : o,
-      ),
-    );
-
-    if (newFrontendStatus === "completed") {
-      setTimeout(() => {
-        setOrders((prev) => prev.filter((o) => o.id !== id));
-      }, 800);
-    }
+    queryClient.setQueryData(['kitchen_orders'], (oldOrders = []) => {
+      let updated = oldOrders.map((o) =>
+        o.id === id ? { ...o, status: newFrontendStatus } : o
+      );
+      if (newFrontendStatus === "completed") {
+        setTimeout(() => {
+          queryClient.setQueryData(['kitchen_orders'], (prev) => prev.filter((o) => o.id !== id));
+        }, 800);
+      }
+      return updated;
+    });
 
     try {
       const response = await fetch(
@@ -186,11 +172,11 @@ const KitchenDashboard = () => {
         }
       } else {
         toast.error("Database update failed!");
-        fetchLiveOrders();
+        queryClient.invalidateQueries({ queryKey: ['kitchen_orders'] });
       }
     } catch (error) {
       console.error("Server error:", error);
-      fetchLiveOrders();
+      queryClient.invalidateQueries({ queryKey: ['kitchen_orders'] });
     }
   };
 
@@ -210,20 +196,20 @@ const KitchenDashboard = () => {
   const readyOrders = filteredOrders.filter((o) => o.status === "ready");
 
   return (
-    <div className="k-container animate-slide-up">
+    <div className="h-screen overflow-hidden bg-[var(--k-bg)] text-[var(--k-text)] flex flex-col font-sans max-[900px]:overflow-y-auto max-[900px]:h-auto animate-slide-up">
       <KitchenHeader
         activeFilter={activeFilter}
         setActiveFilter={setActiveFilter}
       />
 
-      <div className="k-board">
+      <div className="flex-1 grid grid-cols-3 gap-[20px] px-[20px] pb-[20px] overflow-hidden max-[900px]:grid-cols-1 max-[900px]:px-[15px] max-[900px]:overflow-visible">
         {/* COLUMN 1: NEW ORDERS */}
-        <div className="k-column">
-          <div className="k-col-header yellow">
+        <div className="bg-[var(--k-panel)] rounded-[12px] flex flex-col h-full shadow-[0_4px_20px_rgba(0,0,0,0.5)] overflow-hidden max-[900px]:h-[500px] max-[900px]:mb-[20px]">
+          <div className="p-[15px_20px] flex justify-between items-center font-oswald font-extrabold text-[18px] uppercase text-[var(--k-text)] border-t-[4px] border-t-[var(--status-yellow)] bg-[rgba(245,158,11,0.05)]">
             <span>New Orders</span>
-            <span className="k-count">{newOrders.length}</span>
+            <span className="bg-[var(--k-bg)] text-[var(--k-text)] py-[4px] px-[12px] rounded-[20px] text-[14px] font-black">{newOrders.length}</span>
           </div>
-          <div className="k-col-body">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-[15px] flex flex-col gap-[15px] [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar]:block [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-track]:my-[5px] [&::-webkit-scrollbar-thumb]:bg-[#444] [&::-webkit-scrollbar-thumb]:rounded-[10px] hover:[&::-webkit-scrollbar-thumb]:bg-[#666]">
             {newOrders.map((order) => (
               <KitchenCard
                 key={order.id}
@@ -231,19 +217,18 @@ const KitchenDashboard = () => {
                 btnText="Start Prep"
                 btnClass="yellow"
                 onNext={() => updateStatus(order.id, "preparing")}
-                onPrint={() => setPrintOrder(order)}
               />
             ))}
           </div>
         </div>
 
         {/* COLUMN 2: PREPARING */}
-        <div className="k-column">
-          <div className="k-col-header red">
+        <div className="bg-[var(--k-panel)] rounded-[12px] flex flex-col h-full shadow-[0_4px_20px_rgba(0,0,0,0.5)] overflow-hidden max-[900px]:h-[500px] max-[900px]:mb-[20px]">
+          <div className="p-[15px_20px] flex justify-between items-center font-oswald font-extrabold text-[18px] uppercase text-[var(--k-text)] border-t-[4px] border-t-[var(--brand-red)] bg-[rgba(239,68,68,0.05)]">
             <span>Preparing</span>
-            <span className="k-count">{prepOrders.length}</span>
+            <span className="bg-[var(--k-bg)] text-[var(--k-text)] py-[4px] px-[12px] rounded-[20px] text-[14px] font-black">{prepOrders.length}</span>
           </div>
-          <div className="k-col-body">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-[15px] flex flex-col gap-[15px] [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar]:block [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-track]:my-[5px] [&::-webkit-scrollbar-thumb]:bg-[#444] [&::-webkit-scrollbar-thumb]:rounded-[10px] hover:[&::-webkit-scrollbar-thumb]:bg-[#666]">
             {prepOrders.map((order) => (
               <KitchenCard
                 key={order.id}
@@ -251,36 +236,35 @@ const KitchenDashboard = () => {
                 btnText="Mark Ready"
                 btnClass="red"
                 onNext={() => updateStatus(order.id, "ready")}
-                onPrint={() => setPrintOrder(order)}
               />
             ))}
           </div>
         </div>
 
         {/* COLUMN 3: READY TO SERVE */}
-        <div className="k-column">
-          <div className="k-col-header green">
+        <div className="bg-[var(--k-panel)] rounded-[12px] flex flex-col h-full shadow-[0_4px_20px_rgba(0,0,0,0.5)] overflow-hidden max-[900px]:h-[500px] max-[900px]:mb-[20px]">
+          <div className="p-[15px_20px] flex justify-between items-center font-oswald font-extrabold text-[18px] uppercase text-[var(--k-text)] border-t-[4px] border-t-[var(--status-green)] bg-[rgba(16,185,129,0.05)]">
             <span>Ready to Serve</span>
-            <span className="k-count">{readyOrders.length}</span>
+            <span className="bg-[var(--k-bg)] text-[var(--k-text)] py-[4px] px-[12px] rounded-[20px] text-[14px] font-black">{readyOrders.length}</span>
           </div>
-          <div className="k-col-body">
-            {readyOrders.map((order) => (
-              <KitchenCard
-                key={order.id}
-                order={order}
-                isReady={true}
-                btnText="Complete"
-                btnClass="green"
-                onNext={() => updateStatus(order.id, "completed")}
-                onPrint={() => setPrintOrder(order)}
-              />
-            ))}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-[15px] flex flex-col gap-[15px] [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar]:block [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-track]:my-[5px] [&::-webkit-scrollbar-thumb]:bg-[#444] [&::-webkit-scrollbar-thumb]:rounded-[10px] hover:[&::-webkit-scrollbar-thumb]:bg-[#666]">
+            {readyOrders.map((order) => {
+              const isDelivery = order.type.toLowerCase().includes("delivery");
+              return (
+                <KitchenCard
+                  key={order.id}
+                  order={order}
+                  isReady={true}
+                  btnText={isDelivery ? "Awaiting Rider" : "Complete"}
+                  btnClass={isDelivery ? "gray" : "green"}
+                  onNext={isDelivery ? () => {} : () => updateStatus(order.id, "completed")}
+                />
+              );
+            })}
           </div>
         </div>
       </div>
 
-      {/* Print Modal for KOT */}
-      <PrintModal printOrder={printOrder} onClose={() => setPrintOrder(null)} />
     </div>
   );
 };

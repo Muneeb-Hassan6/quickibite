@@ -153,3 +153,35 @@
   color: var(--admin-muted, #888);
   pointer-events: none;
 }
+
+/* Admin Table Styles */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+  text-align: left;
+}
+
+.admin-table th {
+  padding: 15px;
+  color: var(--admin-muted, #888);
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
+.admin-table td {
+  padding: 15px;
+  color: var(--admin-text, #fff);
+  font-size: 14px;
+}
+
+.admin-table tbody tr {
+  transition: background 0.2s;
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}

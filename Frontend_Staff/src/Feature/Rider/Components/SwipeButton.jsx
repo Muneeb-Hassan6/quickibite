@@ -44,8 +44,8 @@ const SwipeButton = ({ onComplete, text }) => {
     };
 
     return (
-        <div ref={containerRef} className={`swipe-container ${isUnlocked ? 'unlocked' : ''}`}>
-            <span className={`swipe-text ${isUnlocked ? 'hidden' : ''}`}>{text}</span>
+        <div ref={containerRef} className={`relative w-full h-[56px] rounded-[12px] flex items-center justify-center overflow-hidden touch-none select-none transition-all duration-300 shadow-[inset_0_2px_8px_rgba(0,0,0,0.1)] ${isUnlocked ? 'bg-[var(--rider-success)]' : 'bg-[var(--admin-bg)]'}`}>
+            <span className={`font-bold text-[14px] z-[1] transition-opacity duration-300 pointer-events-none uppercase tracking-[1px] font-inter ${isUnlocked ? 'text-white opacity-0' : 'text-[var(--admin-muted)]'}`}>{text}</span>
             <div
                 onMouseDown={(e) => handleDragStart(e.clientX)}
                 onMouseMove={(e) => handleDragMove(e.clientX)}
@@ -54,7 +54,7 @@ const SwipeButton = ({ onComplete, text }) => {
                 onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
                 onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
                 onTouchEnd={handleDragEnd}
-                className="swipe-thumb"
+                className="absolute top-[4px] w-[46px] h-[46px] bg-[var(--admin-panel)] rounded-[8px] flex items-center justify-center cursor-grab z-[2] touch-none text-[var(--admin-orange)] transition-all duration-200 shadow-sm"
                 style={{ left: `${sliderLeft}px`, transition: isDragging.current ? 'none' : 'left 0.3s' }}
             >
                 <FaChevronRight color="white" />

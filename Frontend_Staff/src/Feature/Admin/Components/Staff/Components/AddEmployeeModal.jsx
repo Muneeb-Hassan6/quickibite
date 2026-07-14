@@ -101,14 +101,14 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
   return (
     <div className="fixed top-0 left-0 right-0 bottom-0 bg-[rgba(0,0,0,0.6)] backdrop-blur-[6px] flex justify-center items-center z-[99999]" onClick={onClose}>
       <div
-        className="w-[90%] max-w-[37.5rem] bg-[var(--admin-bg,#141414)] border border-[var(--admin-border,#222)] rounded-[1rem] p-[1.563rem] shadow-[0_10px_30px_rgba(0,0,0,0.5)] relative animate-slide-up max-h-[90vh] overflow-y-auto custom-scrollbar"
+        className="w-[90%] max-w-[37.5rem] bg-[var(--admin-bg,#141414)] rounded-[1rem] p-[1.563rem] shadow-[0_10px_30px_rgba(0,0,0,0.5)] relative animate-slide-up max-h-[90vh] overflow-y-auto custom-scrollbar"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-[1.25rem] w-full">
           <h3 className="uppercase flex items-center gap-[0.625rem] text-white m-0 text-[1.25rem] font-black">Add New Employee</h3>
           <button
             type="button"
-            className="bg-transparent border-none text-[#949191] text-[1.25rem] cursor-pointer transition-colors duration-300 hover:text-white static !m-0"
+            className="bg-transparent border-none text-[#949191] text-[1.25rem] cursor-pointer transition-colors duration-300 hover:text-[var(--admin-text)] static !m-0"
             onClick={onClose}
           >
             <FaTimes />
@@ -124,7 +124,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
+              className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
               placeholder="e.g. Ali Khan"
             />
           </div>
@@ -136,15 +136,15 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
+                className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
               >
-                <option className="bg-[#111] text-white" value="Admin">Admin</option>
-                <option className="bg-[#111] text-white" value="Cashier">Cashier</option>
-                <option className="bg-[#111] text-white" value="Chef">Chef</option>
-                <option className="bg-[#111] text-white" value="Manager">Manager</option>
-                <option className="bg-[#111] text-white" value="Rider">Rider</option>
-                <option className="bg-[#111] text-white" value="Waiter">Waiter</option>
-                <option className="bg-[#111] text-white" value="Dispatcher">Dispatcher</option>
+                <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Admin">Admin</option>
+                <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Cashier">Cashier</option>
+                <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Chef">Chef</option>
+                <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Manager">Manager</option>
+                <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Rider">Rider</option>
+                <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Waiter">Waiter</option>
+                <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Dispatcher">Dispatcher</option>
               </select>
             </div>
             <div className="mb-[0.938rem] flex-1 min-w-0">
@@ -155,7 +155,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
                 value={formData.salary}
                 onChange={handleChange}
                 required
-                className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
+                className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
                 placeholder="e.g. 30000"
               />
             </div>
@@ -181,7 +181,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
                 }
               }}
               required
-              className={`w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black ${phoneError ? "!border-red-500" : ""}`}
+              className={`w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-[var(--admin-bg)] ${phoneError ? "!border-red-500" : ""}`}
               placeholder="e.g. 03001234567"
             />
             {phoneError && (
@@ -191,15 +191,15 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
             )}
           </div>
 
-          <hr className="border border-[var(--admin-border,#222)] my-[1.25rem]" />
+          <hr className="border-none bg-[var(--admin-border,#222)] h-[1px] my-[1.25rem]" />
 
-          <p className="text-[var(--brand-red,#ef4444)] text-[0.75rem] mt-0 font-bold">
+          <p className="text-[var(--admin-orange)] text-[0.75rem] mt-0 font-bold">
             System Access Credentials (Required)
           </p>
           {/* 🔥 CONDITIONAL RENDERING: Sirf tab dikhega jab role 'Rider' hoga */}
           {formData.role === "Rider" && (
             <>
-              <hr className="border border-[var(--admin-border,#222)] my-[1.25rem]" />
+              <hr className="border-none bg-[var(--admin-border,#222)] h-[1px] my-[1.25rem]" />
               <p className="text-[var(--brand-yellow,#eab308)] text-[0.75rem] mt-0 font-bold">
                 Rider Details (Required)
               </p>
@@ -213,7 +213,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
                     value={formData.bike_number}
                     onChange={handleChange}
                     required={formData.role === "Rider"} // Rider ke liye lazmi
-                    className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
+                    className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
                     placeholder="e.g. LEB-1234"
                   />
                 </div>
@@ -225,7 +225,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
                     value={formData.license_number}
                     onChange={handleChange}
                     required={formData.role === "Rider"} // Rider ke liye lazmi
-                    className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
+                    className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
                     placeholder="e.g. DL-9876543"
                   />
                 </div>
@@ -243,7 +243,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
                 value={formData.username}
                 onChange={handleChange}
                 required
-                className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
+                className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
                 placeholder="e.g. ali_cashier"
               />
             </div>
@@ -257,16 +257,16 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
+                className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
                 placeholder="Enter password"
               />
             </div>
           </div>
 
-          <div className="mt-[1.875rem] border-t border-[#333] pt-[1.25rem] flex justify-end gap-[0.938rem] w-full">
+          <div className="mt-[1.875rem] border-t border-[var(--admin-border)] pt-[1.25rem] flex justify-end gap-[0.938rem] w-full">
             <button
               type="button"
-              className="bg-transparent text-white border border-[#333] p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]"
+              className="bg-[rgba(255,255,255,0.05)] text-white p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -274,7 +274,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
             </button>
             <button
               type="submit"
-              className="bg-[var(--brand-red,#ef4444)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[0_4px_15px_rgba(239,68,68,0.4)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.6)] flex items-center justify-center disabled:opacity-50"
+              className="bg-[var(--admin-orange)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[var(--shadow-glow)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[var(--shadow-glow)] flex items-center justify-center disabled:opacity-50"
               disabled={isSubmitting}
             >
               <FaSave className="mr-[0.313rem]" />{" "}

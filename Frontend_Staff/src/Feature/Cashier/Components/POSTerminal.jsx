@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { io } from "socket.io-client";
 import Swal from "sweetalert2";
 import {
@@ -10,9 +11,14 @@ import {
   FaCheckSquare,
   FaRegSquare,
   FaTimes,
+  FaArrowLeft,
+  FaBars,
+  FaShoppingCart,
 } from "react-icons/fa";
 
-const POSTerminal = ({ onPlaceOrder }) => {
+const POSTerminal = ({ onPlaceOrder, terminalResetTrigger, setIsMobileSidebarOpen }) => {
+  const [viewMode, setViewMode] = useState("categories"); // "categories" or "products"
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -38,65 +44,71 @@ const POSTerminal = ({ onPlaceOrder }) => {
   const [selectedAddons, setSelectedAddons] = useState([]);
   const [customNote, setCustomNote] = useState("");
 
+  const { data: settingsData = {} } = useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
+      const data = await response.json();
+      return data.status === "success" ? data.data : {};
+    }
+  });
+
+  const { data: menuData = [] } = useQuery({
+    queryKey: ['menu'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
+      return await response.json();
+    }
+  });
+
+  const { data: realCategories = [] } = useQuery({
+    queryKey: ['realCategories'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_categories.php`);
+      return await response.json();
+    }
+  });
+
   useEffect(() => {
-    fetchLiveMenu();
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_settings.php`,
-      );
-      const data = await response.json();
-      if (data.status === "success") {
-        setGstRate(parseFloat(data.data.tax) || 0);
-        setDeliveryFee(parseFloat(data.data.delivery_charges) || 0);
-      }
-    } catch (error) {
-      console.error("Settings fetch error:", error);
+    if (terminalResetTrigger > 0) {
+      setSearchTerm("");
+      setSelectedCategory("All");
+      setViewMode("categories");
     }
-  };
+  }, [terminalResetTrigger]);
 
-  const fetchLiveMenu = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_menu.php`,
-      );
-      const data = await response.json();
-
-      if (Array.isArray(data)) {
-        const availableItems = data.filter((item) => item.isAvailable);
-        const formattedItems = availableItems.map((item) => ({
-          id: item.id,
-          title: item.name,
-          category: item.category || "Uncategorized",
-          variants: item.variants || [],
-          price:
-            item.variants && item.variants.length > 0
-              ? parseFloat(item.variants[0].price)
-              : parseFloat(item.price),
-        }));
-
-        setMenuItems(formattedItems);
-
-        const uniqueCategories = [
-          "All",
-          ...new Set(formattedItems.map((i) => i.category).filter(Boolean)),
-        ];
-        setCategories(uniqueCategories);
-      }
-    } catch (error) {
-      console.error("Menu fetch error:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to connect to database.",
-        background: "var(--admin-panel)",
-        color: "#fff",
-      });
+  useEffect(() => {
+    if (searchTerm.trim() !== "") {
+      setViewMode("products");
+    } else if (selectedCategory === "All") {
+      setViewMode("categories");
     }
-  };
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (settingsData && Object.keys(settingsData).length > 0) {
+      setGstRate(parseFloat(settingsData.tax) || 0);
+      setDeliveryFee(parseFloat(settingsData.delivery_charges) || 0);
+    }
+  }, [settingsData]);
+
+  useEffect(() => {
+    if (Array.isArray(menuData) && menuData.length > 0) {
+      const availableItems = menuData.filter((item) => item.isAvailable);
+      const formattedItems = availableItems.map((item) => ({
+        id: item.id,
+        title: item.name,
+        category: item.category || "Uncategorized",
+        variants: item.variants || [],
+        price: item.variants && item.variants.length > 0
+            ? parseFloat(item.variants[0].price)
+            : parseFloat(item.price),
+      }));
+      setMenuItems(formattedItems);
+      const uniqueCategories = ["All", ...new Set(formattedItems.map((i) => i.category).filter(Boolean))];
+      setCategories(uniqueCategories);
+    }
+  }, [menuData]);
 
   const filteredItems = menuItems.filter((item) => {
     return (
@@ -427,26 +439,50 @@ const POSTerminal = ({ onPlaceOrder }) => {
   };
 
   return (
-    <div className="pos-section-layout animate-slide-up">
-      <div className="menu-side">
-        <div className="terminal-header">
-          <h2 className="page-title">Point of Sale</h2>
+    <div className="flex h-full p-[25px] gap-[25px] flex-col min-[901px]:flex-row max-[900px]:p-[15px_12px_110px_12px] animate-slide-up">
+      <div className="flex-[3] flex flex-col overflow-y-auto pr-[15px] max-[900px]:w-full max-[900px]:max-w-full [&::-webkit-scrollbar]:hidden max-[900px]:pr-0">
+        <div className="flex justify-between items-center mb-[20px] max-[900px]:mb-[15px]">
+          <div className="flex items-center gap-[10px]">
+            <button 
+              className="hidden max-[900px]:flex bg-transparent border-none text-[var(--brand-red)] text-[24px] cursor-pointer items-center justify-center p-[5px]"
+              onClick={() => setIsMobileSidebarOpen(true)}
+            >
+              <FaBars />
+            </button>
+            <h2 className="m-0 font-oswald text-[28px] font-extrabold text-[var(--admin-text)] uppercase tracking-[1px] max-[900px]:text-[22px]">Point of Sale</h2>
+          </div>
+          
+          {/* Mobile Cart Toggle Button */}
+          <button 
+            className="hidden max-[900px]:flex relative bg-[#FFDD00] text-[#1a1a1a] border-none rounded-full w-[45px] h-[45px] items-center justify-center cursor-pointer shadow-md"
+            onClick={() => setIsMobileCartOpen(true)}
+          >
+            <FaShoppingCart className="text-[20px]" />
+            {cart.length > 0 && (
+              <span className="absolute top-[-5px] right-[-5px] bg-black text-[#FFDD00] w-[20px] h-[20px] rounded-full text-[12px] font-bold flex items-center justify-center border-2 border-[#FFDD00]">
+                {cart.length}
+              </span>
+            )}
+          </button>
         </div>
-        <div className="pos-controls-bar">
-          <div className="pos-search-wrapper">
-            <FaSearch className="pos-search-icon" />
+        <div className="flex gap-[15px] mb-[20px] items-center">
+          <div className="flex-[0_1_220px] flex items-center bg-[var(--pos-panel)] border border-[var(--admin-border)] rounded-[20px] px-[15px] transition-colors duration-300 focus-within:border-[var(--brand-red)] shadow-sm">
+            <FaSearch className="text-[var(--admin-muted)] mr-[10px]" />
             <input
               type="text"
-              className="pos-search-input"
+              className="bg-transparent border-none text-[var(--admin-text)] py-[12px] px-0 w-full outline-none"
               placeholder="Search menu..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <select
-            className="pos-category-dropdown"
+            className="bg-[var(--pos-panel)] text-[var(--admin-text)] border border-[var(--admin-border)] py-[12px] px-[15px] rounded-[20px] text-[14px] font-semibold outline-none cursor-pointer min-w-[180px] transition-all duration-300 focus:border-[var(--brand-red)] focus:bg-[var(--pos-panel)] shadow-sm"
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            onChange={(e) => {
+              setSelectedCategory(e.target.value);
+              setViewMode("products");
+            }}
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>
@@ -456,19 +492,67 @@ const POSTerminal = ({ onPlaceOrder }) => {
           </select>
         </div>
 
-        <div className="pos-grid">
-          {filteredItems.map((item) => (
+        {viewMode === "products" && selectedCategory !== "All" && !searchTerm && (
+          <div className="mb-[15px]">
+            <button 
+              className="bg-transparent border-none text-[var(--brand-red)] font-bold text-[14px] cursor-pointer flex items-center gap-[6px] hover:underline p-0"
+              onClick={() => {
+                setSelectedCategory("All");
+                setViewMode("categories");
+              }}
+            >
+              <FaArrowLeft /> Back to Categories
+            </button>
+          </div>
+        )}
+
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-[15px]">
+          {viewMode === "categories" ? (
+            realCategories.length > 0 ? (
+              realCategories.map((cat) => (
+                <div 
+                  key={cat.id} 
+                  className="relative bg-cover bg-center rounded-[16px] cursor-pointer overflow-hidden transition-transform duration-300 hover:scale-105 flex items-end justify-center min-h-[140px]"
+                  style={{ backgroundImage: `url(${cat.img})`, border: "none" }}
+                  onClick={() => {
+                    setSelectedCategory(cat.name);
+                    setViewMode("products");
+                  }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                  <span className="relative z-10 text-white font-extrabold text-[16px] mb-[15px] drop-shadow-md text-center">{cat.name}</span>
+                </div>
+              ))
+            ) : (
+              categories.filter(c => c !== "All").map((catName) => (
+                <div 
+                  key={catName} 
+                  className="bg-[var(--pos-panel)] border border-[var(--admin-border)] rounded-[16px] p-[20px] cursor-pointer transition-all duration-300 flex items-center justify-center min-h-[120px] hover:border-[var(--brand-red)] hover:bg-[rgba(239,68,68,0.1)] hover:-translate-y-[2px]"
+                  style={{ borderRadius: "16px" }}
+                  onClick={() => {
+                    setSelectedCategory(catName);
+                    setViewMode("products");
+                  }}
+                >
+                  <span className="text-[16px] font-bold text-[var(--admin-text)] text-center">{catName}</span>
+                </div>
+              ))
+            )
+          ) : (
+            filteredItems.map((item) => (
             <div
               key={item.id}
-              className="pos-card-text-only"
+              className="bg-[var(--pos-panel)] border border-[var(--admin-border)] shadow-sm rounded-[16px] p-[15px] cursor-pointer transition-all duration-300 flex flex-col justify-between min-h-[100px] hover:border-[var(--brand-red,#ef4444)] hover:shadow-[var(--shadow-glow)] hover:-translate-y-[2px]"
+              style={{ borderRadius: "16px", outline: "none" }}
               onClick={() => handleItemClick(item)}
             >
-              <div className="card-title">{item.title}</div>
-              <div className="card-bottom-row">
-                <span className="card-price">Rs {item.price}</span>
-                <div className="card-actions-wrapper">
+              <div className="text-[15px] font-bold text-[var(--admin-text)] mb-[10px] leading-[1.3]">{item.title}</div>
+              <div className="flex justify-between items-center mt-auto">
+                <span className="text-[var(--brand-red,#ef4444)] font-extrabold text-[14px]">Rs {item.price}</span>
+                <div className="flex items-center justify-center">
                   <button
-                    className="card-action-btn btn-add"
+                    className="bg-[#FFDD00] text-[#1a1a1a] border-none w-[34px] h-[34px] rounded-[10px] flex justify-center items-center cursor-pointer text-[14px] transition-all duration-200 shadow-[0_2px_6px_rgba(255,221,0,0.3)] hover:bg-[#E5C700] hover:scale-110 hover:shadow-[0_4px_10px_rgba(255,221,0,0.5)] active:scale-95"
+                    style={{ borderRadius: "10px", border: "none", outline: "none" }}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleItemClick(item);
@@ -480,30 +564,50 @@ const POSTerminal = ({ onPlaceOrder }) => {
                 </div>
               </div>
             </div>
-          ))}
+          )))}
         </div>
       </div>
 
-      <div className="cart-side">
-        <div className="cart-header-modern">
-          <h3>CURRENT ORDER</h3>
+      {/* Mobile Cart Overlay */}
+      {isMobileCartOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-[140] min-[901px]:hidden"
+          onClick={() => setIsMobileCartOpen(false)}
+        ></div>
+      )}
+
+      {/* Cart Container */}
+      <div className={`flex-1 min-w-[320px] max-w-[380px] bg-[var(--pos-panel)] border-l border-[var(--admin-border)] rounded-[24px] flex flex-col overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.5)] 
+        max-[900px]:fixed max-[900px]:right-0 max-[900px]:top-0 max-[900px]:h-full max-[900px]:z-[150] max-[900px]:rounded-none max-[900px]:transition-transform max-[900px]:duration-300 max-[900px]:w-[320px] 
+        ${isMobileCartOpen ? 'max-[900px]:translate-x-0' : 'max-[900px]:translate-x-full'}`}>
+        <div className="p-[20px] bg-[rgba(255,221,0,0.05)] border-b border-[var(--admin-border)] flex justify-between items-center border-t-[4px] border-t-[#FFDD00]">
+          <h3 className="m-0 font-oswald text-[18px] text-[var(--admin-text)] font-extrabold tracking-[1px]">CURRENT ORDER</h3>
+          <button 
+            className="hidden max-[900px]:flex bg-transparent border-none text-[var(--admin-muted)] text-[20px] cursor-pointer hover:text-[var(--brand-red)]"
+            onClick={() => setIsMobileCartOpen(false)}
+          >
+            <FaTimes />
+          </button>
         </div>
-        <div className="cart-inputs">
-          <div className="order-type-toggle">
+        <div className="p-[15px] border-b border-transparent">
+          <div className="flex bg-[var(--bg-body)] border border-[var(--admin-border)] rounded-[8px] p-[4px] mb-[15px]" style={{ borderRadius: "8px" }}>
             <button
-              className={`toggle-btn ${orderType === "Dine-In" ? "active" : ""}`}
+              className={`flex-1 py-[8px] px-0 border-none font-bold text-[13px] rounded-[6px] cursor-pointer transition-all duration-300 uppercase ${orderType === "Dine-In" ? "bg-[#FFDD00] text-[#1a1a1a]" : "bg-transparent text-[var(--admin-muted)]"}`}
+              style={{ borderRadius: "6px", border: "none" }}
               onClick={() => setOrderType("Dine-In")}
             >
               Dine-In
             </button>
             <button
-              className={`toggle-btn ${orderType === "Takeaway" ? "active" : ""}`}
+              className={`flex-1 py-[8px] px-0 border-none font-bold text-[13px] rounded-[6px] cursor-pointer transition-all duration-300 uppercase ${orderType === "Takeaway" ? "bg-[#FFDD00] text-[#1a1a1a]" : "bg-transparent text-[var(--admin-muted)]"}`}
+              style={{ borderRadius: "6px", border: "none" }}
               onClick={() => setOrderType("Takeaway")}
             >
               Takeaway
             </button>
             <button
-              className={`toggle-btn ${orderType === "Delivery" ? "active" : ""}`}
+              className={`flex-1 py-[8px] px-0 border-none font-bold text-[13px] rounded-[6px] cursor-pointer transition-all duration-300 uppercase ${orderType === "Delivery" ? "bg-[#FFDD00] text-[#1a1a1a]" : "bg-transparent text-[var(--admin-muted)]"}`}
+              style={{ borderRadius: "6px", border: "none" }}
               onClick={() => setOrderType("Delivery")}
             >
               Delivery
@@ -513,7 +617,7 @@ const POSTerminal = ({ onPlaceOrder }) => {
           {orderType === "Dine-In" && (
             <input
               type="text"
-              className="pos-input-dark"
+              className="w-full bg-[var(--bg-body)] border border-[var(--admin-border)] shadow-sm p-[12px] rounded-[12px] text-[var(--admin-text)] outline-none mb-[10px] focus:border-[var(--brand-red)]"
               placeholder="Table No *"
               value={tableNo}
               onChange={(e) => setTableNo(e.target.value)}
@@ -524,14 +628,14 @@ const POSTerminal = ({ onPlaceOrder }) => {
             <>
               <input
                 type="text"
-                className="pos-input-dark"
+                className="w-full bg-[var(--bg-body)] border border-[var(--admin-border)] shadow-sm p-[12px] rounded-[12px] text-[var(--admin-text)] outline-none mb-[10px] focus:border-[var(--brand-red)]"
                 placeholder="Delivery Address *"
                 value={tableNo}
                 onChange={(e) => setTableNo(e.target.value)}
               />
               <input
                 type="text"
-                className="pos-input-dark"
+                className="w-full bg-[var(--bg-body)] border border-[var(--admin-border)] shadow-sm p-[12px] rounded-[12px] text-[var(--admin-text)] outline-none mb-[10px] focus:border-[var(--brand-red)]"
                 placeholder="Customer Mobile *"
                 value={customerMobile}
                 onChange={(e) => setCustomerMobile(e.target.value)}
@@ -541,40 +645,40 @@ const POSTerminal = ({ onPlaceOrder }) => {
 
           <input
             type="text"
-            className="pos-input-dark"
+            className="w-full bg-[var(--bg-body)] border border-[var(--admin-border)] shadow-sm p-[12px] rounded-[12px] text-[var(--admin-text)] outline-none mb-[10px] focus:border-[var(--brand-red)]"
             placeholder="Customer Name (Optional)"
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
           />
         </div>
 
-        <div className="cart-items-area">
+        <div className="flex-1 overflow-y-auto p-[15px]">
           {cart.length > 0 ? (
             cart.map((item) => (
-              <div key={item.cartId} className="cart-item-modern">
-                <div className="ci-info">
-                  <h4>
+              <div key={item.cartId} className="grid grid-cols-[2fr_1.5fr_1fr_0.5fr] items-center gap-[10px] mb-[10px] p-[12px] bg-[var(--bg-body)] border border-[var(--admin-border)] shadow-sm rounded-[16px]">
+                <div>
+                  <h4 className="m-0 text-[13px] text-[var(--admin-text)]">
                     {item.title}{" "}
-                    <span className="cart-item-size">
+                    <span className="text-[12px] text-[var(--brand-red)] ml-[5px]">
                       {item.size && item.size !== "Regular"
                         ? `(${item.size})`
                         : ""}
                     </span>
                   </h4>
                   {item.note && (
-                    <div className="ci-note">Note: {item.note}</div>
+                    <div className="text-[11px] text-[var(--admin-muted)] mt-[3px] italic">Note: {item.note}</div>
                   )}
                   {item.excluded_ingredients &&
                     item.excluded_ingredients.length > 0 && (
-                      <div className="ci-excluded">
+                      <div className="text-[11px] text-[var(--brand-red)] mt-[1px] font-bold">
                         - Optional items removed
                       </div>
                     )}
-                  <span>@ Rs {item.price}</span>
+                  <span className="text-[11px] text-[var(--admin-muted)]">@ Rs {item.price}</span>
                 </div>
-                <div className="qty-group">
+                <div className="flex items-center justify-center bg-[var(--pos-panel)] rounded-[12px] border border-[var(--admin-border)] p-[2px] shadow-sm">
                   <button
-                    className="btn-qty-mini"
+                    className="w-[24px] h-[24px] bg-transparent text-[var(--admin-muted)] border-none cursor-pointer"
                     onClick={() =>
                       item.qty > 1
                         ? updateQty(item.cartId, -1)
@@ -583,17 +687,17 @@ const POSTerminal = ({ onPlaceOrder }) => {
                   >
                     <FaMinus />
                   </button>
-                  <span className="qty-display">{item.qty}</span>
+                  <span className="text-[12px] font-bold text-[var(--admin-text)] w-[20px] text-center">{item.qty}</span>
                   <button
-                    className="btn-qty-mini"
+                    className="w-[24px] h-[24px] bg-transparent text-[var(--admin-muted)] border-none cursor-pointer"
                     onClick={() => updateQty(item.cartId, 1)}
                   >
                     <FaPlus />
                   </button>
                 </div>
-                <div className="ci-total">Rs {item.price * item.qty}</div>
+                <div className="font-bold text-[var(--brand-red)] text-[14px] text-right">Rs {item.price * item.qty}</div>
                 <button
-                  className="btn-cart-remove"
+                  className="bg-transparent border-none text-[var(--admin-muted)] cursor-pointer hover:text-red-500"
                   onClick={() => removeFromCart(item.cartId)}
                 >
                   <FaTrash />
@@ -601,38 +705,38 @@ const POSTerminal = ({ onPlaceOrder }) => {
               </div>
             ))
           ) : (
-            <div className="empty-cart-msg">Cart is Empty</div>
+            <div className="text-center text-[var(--admin-muted)] py-4">Cart is Empty</div>
           )}
         </div>
 
-        <div className="cart-footer-modern">
-          <div className="bill-summary">
-            <div className="summary-row">
+        <div className="bg-[var(--bg-body)] p-[20px] border-t border-[var(--admin-border)] rounded-b-[24px]">
+          <div className="w-full mb-[15px] border-b border-[var(--admin-border)] pb-[10px]">
+            <div className="flex justify-between text-[14px] text-[var(--admin-muted)] mb-[5px]">
               <span>Subtotal:</span>
               <span>Rs {getSubtotal().toFixed(2)}</span>
             </div>
 
             {gstRate > 0 && (
-              <div className="summary-row">
+              <div className="flex justify-between text-[14px] text-[var(--admin-muted)] mb-[5px]">
                 <span>Tax ({gstRate}%):</span>
                 <span>Rs {getTaxAmount().toFixed(2)}</span>
               </div>
             )}
 
             {orderType === "Delivery" && deliveryFee > 0 && (
-              <div className="summary-row">
+              <div className="flex justify-between text-[14px] text-[var(--admin-muted)] mb-[5px]">
                 <span>Delivery Fee:</span>
                 <span>Rs {deliveryFee.toFixed(2)}</span>
               </div>
             )}
 
-            <div className="summary-row grand-total">
+            <div className="flex justify-between text-[14px] text-[var(--admin-muted)] mb-[5px] text-[18px] font-bold text-[var(--admin-text)] mt-[10px] pt-[10px] border-t border-dashed border-[var(--admin-border)]">
               <span>TOTAL:</span>
               <span>Rs {getGrandTotal().toFixed(2)}</span>
             </div>
           </div>
 
-          <button className="btn-print-pay" onClick={handleCheckout}>
+          <button className="w-full bg-[#FFDD00] p-[15px] border-none rounded-[12px] text-[#1a1a1a] font-oswald font-extrabold text-[16px] cursor-pointer flex justify-center items-center gap-[10px] transition-all duration-300 hover:bg-[#E5C700]" style={{ borderRadius: "12px", border: "none", outline: "none" }} onClick={handleCheckout}>
             <FaCheck /> PLACE ORDER
           </button>
         </div>
@@ -640,23 +744,23 @@ const POSTerminal = ({ onPlaceOrder }) => {
 
       {customizationItem && (
         <div
-          className="pos-modal-overlay"
+          className="fixed inset-0 bg-[rgba(0,0,0,0.6)] flex items-center justify-center z-[999999] backdrop-blur-[6px]"
           onClick={() => setCustomizationItem(null)}
         >
           <div
-            className="pos-modal-box animate-slide-up"
+            className="bg-[var(--admin-panel,#1f2937)] text-white rounded-[12px] w-full max-w-[450px] p-[25px] shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-[#333] max-h-[90vh] overflow-y-auto animate-slide-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="pos-modal-header">
+            <div className="flex justify-between items-start mb-[20px]">
               <div>
-                <h3 className="pos-modal-title">Customize Order</h3>
-                <p className="pos-modal-price">
+                <h3 className="m-0 text-[22px]">{customizationItem.title}</h3>
+                <p className="text-[var(--brand-red,#ef4444)] font-bold m-[5px_0_0_0]">
                   {customizationItem.title} - Rs{" "}
                   {selectedSize ? selectedSize.price : customizationItem.price}
                 </p>
               </div>
               <button
-                className="btn-close-modal"
+                className="bg-transparent border-none text-gray-500 text-[20px] cursor-pointer"
                 onClick={() => setCustomizationItem(null)}
               >
                 <FaTimes />
@@ -665,9 +769,9 @@ const POSTerminal = ({ onPlaceOrder }) => {
 
             {customizationItem.variants &&
               customizationItem.variants.length > 1 && (
-                <div className="pos-modal-section">
-                  <label className="pos-section-label">Select Size</label>
-                  <div className="pos-size-grid">
+                <div className="mb-[20px]">
+                  <label className="font-bold mb-[8px] text-[13px] text-[var(--admin-muted)] uppercase block">Select Size</label>
+                  <div className="flex gap-[10px] flex-wrap">
                     {customizationItem.variants.map((variant, index) => {
                       // 🔥 UPDATE: Check In-Stock logic
                       const isOutOfStock =
@@ -682,7 +786,7 @@ const POSTerminal = ({ onPlaceOrder }) => {
                             if (!isOutOfStock) setSelectedSize(variant);
                           }}
                           disabled={isOutOfStock}
-                          className={`pos-size-btn ${selectedSize?.size === variant.size && !isOutOfStock ? "active" : ""}`}
+                          className={`p-[10px_18px] rounded-[8px] font-bold transition-all duration-200 border border-[#333] cursor-pointer text-center ${selectedSize?.size === variant.size && !isOutOfStock ? "border-[var(--brand-red,#ef4444)] bg-[var(--brand-red,#ef4444)] text-[var(--text-main,#ffffff)]" : "bg-[rgba(255,255,255,0.05)] text-[var(--text-main,#ffffff)]"}`}
                           style={
                             isOutOfStock
                               ? {
@@ -704,11 +808,11 @@ const POSTerminal = ({ onPlaceOrder }) => {
               )}
 
             {optionalIngredients.length > 0 && (
-              <div className="pos-modal-section">
-                <label className="pos-section-label">
+              <div className="mb-[20px]">
+                <label className="font-bold mb-[8px] text-[13px] text-[var(--admin-muted)] uppercase block">
                   Optional Ingredients
                 </label>
-                <div className="spec-checkbox-grid">
+                <div className="grid grid-cols-2 gap-[10px]">
                   {isFetchingRecipe ? (
                     <span className="loading-text">Loading ingredients...</span>
                   ) : (
@@ -717,7 +821,7 @@ const POSTerminal = ({ onPlaceOrder }) => {
                       return (
                         <label
                           key={`ing-${index}`}
-                          className={`spec-checkbox-label ${isExcluded ? "excluded" : ""}`}
+                          className={`flex items-center gap-[10px] mb-[8px] cursor-pointer p-[12px] rounded-[8px] border border-[#333] text-[14px] ${isExcluded ? "text-gray-500 line-through bg-[rgba(0,0,0,0.3)]" : "bg-[rgba(255,255,255,0.05)] text-white"}`}
                         >
                           <input
                             type="checkbox"
@@ -734,9 +838,9 @@ const POSTerminal = ({ onPlaceOrder }) => {
             )}
 
             {addonsList.length > 0 && (
-              <div className="pos-modal-section">
-                <label className="pos-section-label">Extra Add-ons</label>
-                <div className="pos-addon-grid">
+              <div className="mb-[20px]">
+                <label className="font-bold mb-[8px] text-[13px] text-[var(--admin-muted)] uppercase block">Extra Add-ons</label>
+                <div className="flex gap-[10px] flex-wrap">
                   {addonsList.map((addon) => {
                     const isSelected = selectedAddons.find(
                       (a) => a.id === addon.id,
@@ -745,7 +849,7 @@ const POSTerminal = ({ onPlaceOrder }) => {
                       <button
                         key={addon.id}
                         onClick={() => toggleAddon(addon)}
-                        className={`pos-addon-btn ${isSelected ? "active" : ""}`}
+                        className={`flex items-center gap-[8px] p-[10px_15px] rounded-[8px] border cursor-pointer text-[14px] transition-all duration-200 ${isSelected ? "bg-[rgba(239,68,68,0.1)] text-[var(--brand-red)] border-[var(--brand-red)]" : "border-[#333] bg-[rgba(255,255,255,0.05)] text-[var(--text-main,#ffffff)]"}`}
                       >
                         {isSelected ? <FaCheckSquare /> : <FaPlus />}{" "}
                         {addon.addon_name} (+Rs {addon.addon_price})
@@ -756,11 +860,11 @@ const POSTerminal = ({ onPlaceOrder }) => {
               </div>
             )}
 
-            <div className="pos-modal-section">
-              <label className="pos-section-label">Other Instructions</label>
+            <div className="mb-[20px]">
+              <label className="font-bold mb-[8px] text-[13px] text-[var(--admin-muted)] uppercase block">Other Instructions</label>
               <input
                 type="text"
-                className="pos-custom-note-input"
+                className="w-full bg-[rgba(255,255,255,0.05)] border border-[#333] rounded-[8px] text-white p-[14px] resize-none text-[14px] outline-none focus:border-[var(--brand-red)]"
                 placeholder="e.g. Cut in half..."
                 value={customNote}
                 onChange={(e) => setCustomNote(e.target.value)}
@@ -769,7 +873,7 @@ const POSTerminal = ({ onPlaceOrder }) => {
 
             {/* 🔥 UPDATE: Button disabled agar out of stock hai */}
             <button
-              className="btn-confirm-add"
+              className="w-full bg-[#FFDD00] text-[#1a1a1a] border-none p-[16px] rounded-[8px] text-[16px] font-bold cursor-pointer shadow-[0_4px_15px_rgba(255,221,0,0.4)] mb-[10px] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               onClick={addCustomizedToCart}
               disabled={isCurrentSelectionOutOfStock()}
               style={
@@ -783,7 +887,7 @@ const POSTerminal = ({ onPlaceOrder }) => {
                 : "Confirm & Add to Cart"}
             </button>
             <button
-              className="btn-cancel-modal"
+              className="w-full bg-transparent text-gray-500 border-none p-[12px] text-[14px] cursor-pointer"
               onClick={() => setCustomizationItem(null)}
             >
               Cancel

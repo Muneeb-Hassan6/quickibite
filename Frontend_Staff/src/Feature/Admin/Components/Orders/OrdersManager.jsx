@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
 // Components Import
 import OrderFilterBar from "./Components/OrderFilterBar";
 import OrdersTable from "./Components/OrdersTable";
@@ -8,23 +10,22 @@ import UpdateStatusModal from "./Components/UpdateStatusModal";
 import OrderReceiptModal from "./Components/OrderReceiptModal";
 
 const OrdersManager = () => {
+  const queryClient = useQueryClient();
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedOrderToEdit, setSelectedOrderToEdit] = useState(null);
   const [selectedOrderToView, setSelectedOrderToView] = useState(null);
 
-  const [orders, setOrders] = useState([]);
-
-  // 🔥 2. FETCH LIVE ORDERS FROM DATABASE (Updated)
-  const fetchLiveOrders = async () => {
-    try {
-      // 🔥 FIX 1: URL mein '?type=all' add kar diya taake saare orders ayein
+  // 🔥 2. FETCH LIVE ORDERS FROM DATABASE (React Query)
+  const { data: orders = [] } = useQuery({
+    queryKey: ['admin_orders', 'all'],
+    queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=all`,
+        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=all`
       );
       const data = await response.json();
 
       if (Array.isArray(data)) {
-        const formattedOrders = data.map((dbOrder) => ({
+        return data.map((dbOrder) => ({
           id: `#${dbOrder.id}`,
           rawId: dbOrder.id,
           customerName: dbOrder.customer_name || "N/A",
@@ -32,7 +33,6 @@ const OrdersManager = () => {
             ? dbOrder.order_type.replace("_", " ").toUpperCase()
             : "DELIVERY",
 
-          // 🔥 FIX 2: 'cart' ki jagah 'items' kar diya hy
           items: (() => {
             let itemsArray = [];
             if (dbOrder.items) {
@@ -58,19 +58,11 @@ const OrdersManager = () => {
           time: dbOrder.time,
           date: dbOrder.date,
         }));
-
-        setOrders(formattedOrders);
       }
-    } catch (error) {
-      console.error("Failed to fetch admin orders", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchLiveOrders();
-    const interval = setInterval(fetchLiveOrders, 5000);
-    return () => clearInterval(interval);
-  }, []);
+      return [];
+    },
+    refetchInterval: 5000, // Automatically refetch every 5 seconds
+  });
 
   const filteredOrders = orders.filter((order) => {
     if (filterStatus === "all") return true;
@@ -82,8 +74,9 @@ const OrdersManager = () => {
     const backendStatus =
       newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
 
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)),
+    // Optimistic Update
+    queryClient.setQueryData(['admin_orders', 'all'], (old) =>
+      old ? old.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)) : old
     );
     setSelectedOrderToEdit(null);
 
@@ -94,7 +87,7 @@ const OrdersManager = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: numericId, status: backendStatus }),
-        },
+        }
       );
 
       if (response.ok) {
@@ -103,11 +96,11 @@ const OrdersManager = () => {
         });
       } else {
         toast.error("Failed to update status in Database!");
-        fetchLiveOrders();
+        queryClient.invalidateQueries({ queryKey: ['admin_orders', 'all'] });
       }
     } catch (error) {
       console.error("Status Update Error:", error);
-      fetchLiveOrders();
+      queryClient.invalidateQueries({ queryKey: ['admin_orders', 'all'] });
     }
   };
 

@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import Swal from "sweetalert2";
-import "./styles/index.css";
-
 // Components
 import CashierSidebar from "./Components/CashierSidebar";
 import POSTerminal from "./Components/POSTerminal";
@@ -13,6 +11,8 @@ const CashierPortal = () => {
   const [activeTab, setActiveTab] = useState("terminal");
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [selectedOrderToView, setSelectedOrderToView] = useState(null);
+  const [terminalResetTrigger, setTerminalResetTrigger] = useState(0);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Shift Report ke liye local state
   const [ordersData, setOrdersData] = useState([]);
@@ -60,7 +60,7 @@ const CashierPortal = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "terminal":
-        return <POSTerminal onPlaceOrder={handlePlaceNewOrder} />;
+        return <POSTerminal onPlaceOrder={handlePlaceNewOrder} terminalResetTrigger={terminalResetTrigger} setIsMobileSidebarOpen={setIsMobileSidebarOpen} />;
       case "history":
         return (
           <OrderHistory
@@ -76,14 +76,24 @@ const CashierPortal = () => {
   };
 
   return (
-    <div className="pos-dashboard-container">
+    <div className="flex h-screen w-full bg-[var(--admin-bg)] font-sans text-[var(--admin-text)] overflow-hidden relative">
+      {/* Mobile Sidebar Overlay */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-[90] min-[901px]:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        ></div>
+      )}
+
       <CashierSidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         handleLogout={handleLogout}
+        onResetTerminal={() => setTerminalResetTrigger((prev) => prev + 1)}
+        isMobileSidebarOpen={isMobileSidebarOpen}
       />
 
-      <div className="pos-content-area">{renderContent()}</div>
+      <div className="flex-1 flex flex-col overflow-hidden">{renderContent()}</div>
 
       {/* Receipt Modal */}
       <CashierReceiptModal

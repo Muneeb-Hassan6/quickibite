@@ -155,7 +155,7 @@ const RecipeModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
       >
         <div className="flex justify-between items-center mb-[1.563rem] w-full">
           <div>
-            <h3 className="uppercase flex items-center gap-[0.625rem] text-white m-0 text-[1.25rem] font-black">
+            <h3 className="uppercase flex items-center gap-[0.625rem] text-[var(--admin-text)] m-0 text-[1.25rem] font-black">
               <span
                 className="inline-block w-[0.25rem] h-[1.25rem] bg-[#f59e0b]"
               ></span>
@@ -163,7 +163,7 @@ const RecipeModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
             </h3>
             <p className="text-[#ef4444] text-[0.875rem] font-bold mt-[0.313rem] mb-0 capitalize">{menuItem.name}</p>
           </div>
-          <button onClick={onClose} className="bg-transparent border-none text-[#949191] text-[1.25rem] cursor-pointer transition-colors duration-300 hover:text-white static !m-0 self-start mt-[0.313rem]">
+          <button onClick={onClose} className="bg-transparent border-none text-[#949191] text-[1.25rem] cursor-pointer transition-colors duration-300 hover:text-[var(--admin-text)] static !m-0 self-start mt-[0.313rem]">
             <FaTimes />
           </button>
         </div>
@@ -174,7 +174,7 @@ const RecipeModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
               <button
                 key={index}
                 onClick={() => setSelectedVariant(variant.size)}
-                className={`px-[1.25rem] py-[0.5rem] rounded-[1.25rem] border border-[#333] cursor-pointer font-bold text-[0.813rem] text-white transition-all duration-200 ${selectedVariant === variant.size ? "bg-[#ef4444] border-[#ef4444]" : "bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)]"}`}
+                className={`px-[1.25rem] py-[0.5rem] rounded-[1.25rem] border cursor-pointer font-bold text-[0.813rem] transition-all duration-200 ${selectedVariant === variant.size ? "bg-[#ef4444] border-[#ef4444] text-white" : "border-[var(--admin-border)] bg-[rgba(255,255,255,0.05)] text-[var(--admin-text)] hover:bg-[rgba(255,255,255,0.1)]"}`}
               >
                 {variant.size}
               </button>
@@ -210,7 +210,7 @@ const RecipeModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
                 <div key={index} className="flex gap-[0.75rem] mb-[0.938rem] items-center">
                   {/* Custom select class applied here */}
                   <select
-                    className="flex-[2] bg-[#111] border border-[#333] text-white px-[0.938rem] rounded-[0.5rem] text-[0.875rem] outline-none h-[3rem] cursor-pointer"
+                    className="flex-[2] bg-[var(--admin-bg)] text-[var(--admin-text)] px-[0.938rem] rounded-[0.5rem] text-[0.875rem] outline-none h-[3rem] cursor-pointer"
                     value={ing.inventory_id}
                     onChange={(e) =>
                       handleIngredientChange(
@@ -220,21 +220,21 @@ const RecipeModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
                       )
                     }
                   >
-                    <option className="bg-[#111] text-white" value="" disabled>
+                    <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="" disabled>
                       Select Ingredient
                     </option>
                     {inventoryItems &&
                       inventoryItems.map((invItem) => (
-                        <option className="bg-[#111] text-white" key={invItem.id} value={invItem.id}>
+                        <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" key={invItem.id} value={invItem.id}>
                           {invItem.name} ({invItem.stock} {invItem.unit})
                         </option>
                       ))}
                   </select>
 
-                  <div className="flex-1 flex items-center bg-[#111] rounded-[0.5rem] border border-[#333] pr-[0.938rem] h-[3rem]">
+                  <div className="flex-1 flex items-center bg-[var(--admin-bg)] rounded-[0.5rem] border border-[var(--admin-border)] pr-[0.938rem] h-[3rem]">
                     <input
                       type="number"
-                      className="border-none bg-transparent w-full text-white px-[0.938rem] outline-none text-[0.875rem] h-full"
+                      className="border-none bg-transparent w-full text-[var(--admin-text)] px-[0.938rem] outline-none text-[0.875rem] h-full"
                       placeholder="0.00"
                       value={ing.qty}
                       onChange={(e) =>
@@ -285,11 +285,11 @@ const RecipeModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
         <div
           className="flex justify-end gap-[0.938rem] mt-[1.563rem]"
         >
-          <button className="bg-transparent text-white border border-[#333] p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]" onClick={onClose} disabled={isSaving}>
+          <button className="bg-transparent text-[var(--admin-text)] border border-[var(--admin-border)] p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]" onClick={onClose} disabled={isSaving}>
             Close
           </button>
           <button
-            className="bg-[var(--brand-red,#ef4444)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[0_4px_15px_rgba(239,68,68,0.4)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.6)] flex justify-center items-center gap-[0.5rem] min-w-[10rem]"
+            className="bg-[var(--admin-orange)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[var(--shadow-glow)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[var(--shadow-glow)] flex justify-center items-center gap-[0.5rem] min-w-[10rem]"
             onClick={handleSaveRecipe}
             disabled={isSaving}
           >

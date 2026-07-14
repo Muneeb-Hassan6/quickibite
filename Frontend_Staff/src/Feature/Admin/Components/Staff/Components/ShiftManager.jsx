@@ -154,7 +154,7 @@ const ShiftManager = () => {
   return (
     <div className="bg-[var(--admin-bg,#141414)] rounded-[0.75rem] border border-[var(--admin-border,#222)] overflow-hidden shadow-[0_4px_15px_rgba(0,0,0,0.2)] animate-slide-up custom-scrollbar">
       <div
-        className="flex justify-between items-center p-[0.938rem_1.25rem] border-b border-[var(--admin-border,#333)] flex-wrap gap-[0.938rem]"
+        className="flex justify-between items-center p-[0.938rem_1.25rem]  flex-wrap gap-[0.938rem]"
       >
         <div>
           <h4 className="m-0 text-[var(--admin-text,#fff)] text-[1.125rem] font-bold">Shift Roster</h4>
@@ -188,10 +188,10 @@ const ShiftManager = () => {
         <table className="w-full border-collapse min-w-[37.5rem] text-[0.875rem]">
           <thead>
             <tr>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px] pl-[1.25rem]">Staff Member</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Current Shift Status</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Shift Timings</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Change Shift</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px] pl-[1.25rem]">Staff Member</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Current Shift Status</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Shift Timings</th>
+              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Change Shift</th>
             </tr>
           </thead>
           <tbody>
@@ -199,7 +199,7 @@ const ShiftManager = () => {
               employees.map((emp) => {
                 const shiftInfo = getShiftDetails(emp.shift);
                 return (
-                  <tr key={emp.id} className="border-b border-[var(--admin-border,#333)] transition-colors duration-200 hover:bg-[rgba(255,255,255,0.02)]">
+                  <tr key={emp.id} className=" transition-colors duration-200 hover:bg-[rgba(255,255,255,0.02)]">
                     <td className="p-[1.25rem] align-middle pl-[1.25rem]">
                       <div className="flex items-center gap-[0.75rem]">
                         <div className="w-[2.5rem] h-[2.5rem] rounded-full bg-[rgba(255,255,255,0.05)] flex items-center justify-center font-bold text-[1rem] text-[var(--admin-orange,#f59e0b)] border border-[var(--admin-border,#333)]">

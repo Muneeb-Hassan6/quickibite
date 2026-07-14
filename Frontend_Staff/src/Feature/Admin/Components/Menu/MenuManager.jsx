@@ -10,6 +10,8 @@ import {
 } from "react-icons/fa";
 import imageCompression from "browser-image-compression";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
 import MenuModal from "./Components/MenuModal";
 import CategoryModal from "./Components/CategoryModal";
 import MenuTable from "./Components/MenuTable";
@@ -17,6 +19,7 @@ import RecipeModal from "./Components/RecipeModal";
 import AddonModal from "./Components/AddonModal";
 
 const MenuManager = () => {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("items");
 
   const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
@@ -38,11 +41,6 @@ const MenuManager = () => {
     title: "",
     message: "",
   });
-
-  const [menuItems, setMenuItems] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [inventoryItems, setInventoryItems] = useState([]);
-  const [customSliders, setCustomSliders] = useState([]);
 
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -67,65 +65,46 @@ const MenuManager = () => {
   const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dovuegkwa";
   const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "ml_default";
 
-  useEffect(() => {
-    fetchMenuData();
-    fetchCategoryData();
-    fetchInventoryData();
-    fetchCustomSliders();
-  }, []);
-
-  const fetchMenuData = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_menu.php`,
-      );
+  const { data: menuItems = [] } = useQuery({
+    queryKey: ['menu'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
       const data = await response.json();
-      setMenuItems(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Menu fetch error:", error);
+      return Array.isArray(data) ? data : [];
     }
-  };
+  });
 
-  const fetchCategoryData = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_categories.php`,
-      );
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_categories.php`);
       const data = await response.json();
-      setCategories(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Category fetch error:", error);
+      return Array.isArray(data) ? data : [];
     }
-  };
+  });
 
-  const fetchInventoryData = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/inventory_api.php`,
-      );
+  const { data: inventoryItems = [] } = useQuery({
+    queryKey: ['inventory'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/inventory_api.php`);
       const data = await response.json();
-      setInventoryItems(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Inventory fetch error:", error);
+      return Array.isArray(data) ? data : [];
     }
-  };
+  });
 
-  const fetchCustomSliders = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_homepage_data.php`,
-      );
+  const { data: customSliders = [] } = useQuery({
+    queryKey: ['homepage_sliders'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_homepage_data.php`);
       const result = await response.json();
       if (result.success && result.data && result.data.sections) {
-        const sliders = result.data.sections.filter(s => 
+        return result.data.sections.filter(s =>
           s.section_type === 'product_slider' && s.content_data && s.content_data.startsWith('custom:')
         );
-        setCustomSliders(sliders);
       }
-    } catch (error) {
-      console.error("Sliders fetch error:", error);
+      return [];
     }
-  };
+  });
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
@@ -197,7 +176,7 @@ const MenuManager = () => {
 
       const response = await fetch(url, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify(
@@ -213,7 +192,7 @@ const MenuManager = () => {
             : "Item added successfully!",
           "success",
         );
-        await fetchMenuData();
+        queryClient.invalidateQueries({ queryKey: ['menu'] });
         setIsMenuModalOpen(false);
       } else showToast("Error: " + result.message, "error");
     } catch (error) {
@@ -238,7 +217,7 @@ const MenuManager = () => {
         `${import.meta.env.VITE_API_BASE}/delete_menu.php`,
         {
           method: "POST",
-          headers: { 
+          headers: {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({ id: id, auth_token: sessionStorage.getItem("auth_token") }),
@@ -246,7 +225,7 @@ const MenuManager = () => {
       );
       const result = await response.json();
       if (result.success) {
-        setMenuItems(menuItems.filter((item) => item.id !== id));
+        queryClient.setQueryData(['menu'], old => old.filter(item => item.id !== id));
         showToast("Item deleted successfully!", "success");
       } else showToast("Failed to delete item.", "error");
     } catch (error) {
@@ -276,7 +255,7 @@ const MenuManager = () => {
 
       const response = await fetch(url, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify(
@@ -292,7 +271,7 @@ const MenuManager = () => {
             : "Category saved successfully!",
           "success",
         );
-        await fetchCategoryData();
+        queryClient.invalidateQueries({ queryKey: ['categories'] });
         setIsCategoryModalOpen(false);
       } else showToast("Error: " + result.message, "error");
     } catch (error) {
@@ -317,7 +296,7 @@ const MenuManager = () => {
         `${import.meta.env.VITE_API_BASE}/delete_category.php`,
         {
           method: "POST",
-          headers: { 
+          headers: {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({ id: id, auth_token: sessionStorage.getItem("auth_token") }),
@@ -325,7 +304,7 @@ const MenuManager = () => {
       );
       const result = await response.json();
       if (result.success) {
-        setCategories(categories.filter((cat) => cat.id !== id));
+        queryClient.setQueryData(['categories'], old => old.filter(cat => cat.id !== id));
         showToast("Category deleted successfully!", "success");
       } else showToast("Failed to delete category.", "error");
     } catch (error) {
@@ -341,7 +320,7 @@ const MenuManager = () => {
 
   const handleEditItem = (item) => {
     setEditingItem(item);
-    
+
     // Calculate which custom sliders this product currently belongs to
     const initialSliderPlacements = customSliders
       .filter(slider => {
@@ -368,27 +347,29 @@ const MenuManager = () => {
   return (
     <div>
       {toast.show && (
-        <div className={`custom-toast ${toast.type}`}>
+        <div className={`fixed top-[20px] right-[20px] bg-[var(--admin-panel)] text-white p-[15px_25px] rounded-[10px] flex items-center gap-[12px] font-bold shadow-[0_5px_15px_rgba(0,0,0,0.3)] z-[9999] animate-slide-up border-l-[4px] ${toast.type === "success" ? "border-green-500" : "border-red-500"}`}>
           {toast.type === "success" ? (
-            <FaCheckCircle size={20} />
+            <FaCheckCircle size={20} className="text-green-500" />
           ) : (
-            <FaExclamationCircle size={20} />
+            <FaExclamationCircle size={20} className="text-red-500" />
           )}
           <span>{toast.message}</span>
         </div>
       )}
 
       {confirmDialog.show && (
-        <div className="confirm-overlay">
-          <div className="confirm-box">
-            <div className="confirm-icon-box">
-              <FaTrash />
+        <div className="fixed top-0 left-0 right-0 bottom-0 bg-[rgba(0,0,0,0.6)] backdrop-blur-[6px] flex justify-center items-center z-[9999]">
+          <div className="w-[90%] max-w-[400px] bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[16px] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] animate-slide-up text-center">
+            <div className="bg-[rgba(239,68,68,0.03)] p-[30px_20px_20px] border-b border-[var(--admin-border)] relative">
+              <div className="w-[65px] h-[65px] bg-[rgba(239,68,68,0.1)] text-[var(--admin-orange)] rounded-full flex justify-center items-center text-[26px] mx-auto mb-[15px] shadow-[var(--shadow-glow)] border border-[rgba(239,68,68,0.2)]">
+                <FaTrash />
+              </div>
+              <h3 className="m-0 text-[22px] font-black text-[var(--admin-text)]">{confirmDialog.title}</h3>
+              <p className="mt-[5px] text-[13px] text-[var(--admin-muted)] font-semibold">{confirmDialog.message}</p>
             </div>
-            <h3 className="confirm-title">{confirmDialog.title}</h3>
-            <p className="confirm-message">{confirmDialog.message}</p>
-            <div className="confirm-actions">
+            <div className="p-[15px_25px] bg-[rgba(0,0,0,0.1)] flex gap-[12px]">
               <button
-                className="btn-confirm-cancel"
+                className="flex-1 p-[14px] bg-transparent border border-[var(--admin-border)] text-[var(--admin-muted)] rounded-[10px] font-bold cursor-pointer transition-colors duration-200 hover:text-[var(--admin-text)] hover:border-[var(--admin-text)]"
                 onClick={() =>
                   setConfirmDialog({ ...confirmDialog, show: false })
                 }
@@ -396,7 +377,7 @@ const MenuManager = () => {
                 Cancel
               </button>
               <button
-                className="btn-confirm-delete"
+                className="flex-[2] p-[14px] bg-[var(--admin-orange)] border-none text-white rounded-[10px] font-black text-[15px] flex justify-center items-center gap-[8px] cursor-pointer shadow-[var(--shadow-glow)] transition-transform duration-200 hover:-translate-y-[2px] hover:shadow-[var(--shadow-glow)]"
                 onClick={handleConfirmAction}
               >
                 Delete
@@ -409,15 +390,15 @@ const MenuManager = () => {
       <div className="flex justify-between items-end mb-[1.563rem] border-b border-[var(--admin-border)] pb-[0.938rem]">
         <div>
           <h2 className="text-[1.25rem] font-bold mb-[0.938rem] border-l-4 border-red-500 pl-[0.625rem] text-[var(--admin-text)]">Menu Management</h2>
-          <div className="inline-flex bg-[rgba(255,255,255,0.05)] rounded-[2.5rem] p-[0.375rem] gap-[0.313rem] border border-[var(--admin-border)]">
+          <div className="inline-flex bg-[var(--admin-panel)] border border-[var(--admin-border)] rounded-[2.5rem] p-[0.375rem] gap-[0.313rem] shadow-sm">
             <button
-              className={`bg-transparent text-[var(--admin-muted)] border-none py-[0.625rem] px-[1.5rem] rounded-[1.875rem] cursor-pointer flex items-center gap-[0.5rem] font-bold transition-all duration-300 text-[0.875rem] hover:text-white ${activeTab === "items" ? "bg-[var(--brand-red,#ef4444)] text-white shadow-[0_4px_12px_rgba(239,68,68,0.4)]" : ""}`}
+              className={`bg-transparent text-[var(--admin-muted)] py-[0.625rem] px-[1.5rem] rounded-[1.875rem] cursor-pointer flex items-center gap-[0.5rem] font-bold transition-all duration-300 text-[0.875rem] hover:text-[var(--admin-text)] ${activeTab === "items" ? "bg-[var(--admin-orange)] text-white hover:text-white" : ""}`}
               onClick={() => setActiveTab("items")}
             >
               <FaHamburger /> Menu Items
             </button>
             <button
-              className={`bg-transparent text-[var(--admin-muted)] border-none py-[0.625rem] px-[1.5rem] rounded-[1.875rem] cursor-pointer flex items-center gap-[0.5rem] font-bold transition-all duration-300 text-[0.875rem] hover:text-white ${activeTab === "categories" ? "bg-[var(--brand-red,#ef4444)] text-white shadow-[0_4px_12px_rgba(239,68,68,0.4)]" : ""}`}
+              className={`bg-transparent text-[var(--admin-muted)] border-none py-[0.625rem] px-[1.5rem] rounded-[1.875rem] cursor-pointer flex items-center gap-[0.5rem] font-bold transition-all duration-300 text-[0.875rem] hover:text-[var(--admin-text)] ${activeTab === "categories" ? "bg-[var(--admin-orange)] text-white hover:text-white" : ""}`}
               onClick={() => setActiveTab("categories")}
             >
               <FaList /> Explore Categories
@@ -426,7 +407,7 @@ const MenuManager = () => {
         </div>
         {activeTab === "items" && (
           <button
-            className="bg-[var(--admin-orange)] text-white border-none py-[0.625rem] px-[1.375rem] rounded-[1.875rem] text-[0.875rem] font-semibold flex items-center gap-[0.5rem] cursor-pointer transition-all duration-300 hover:opacity-90"
+            className="bg-[var(--admin-orange)] text-white border-none py-[0.625rem] px-[1.375rem] rounded text-[0.875rem] font-semibold flex items-center gap-[0.5rem] cursor-pointer transition-all duration-300 hover:opacity-90"
             onClick={() => {
               setEditingItem(null);
               setMenuForm(defaultMenuForm);
@@ -453,7 +434,7 @@ const MenuManager = () => {
       ) : (
         <div className="flex flex-wrap gap-[1.563rem] pt-[0.938rem] animate-slide-up">
           <div
-            className="w-[10rem] h-[10rem] rounded-[1.25rem] flex flex-col items-center justify-center cursor-pointer transition-all duration-300 border-2 border-dashed border-[var(--admin-muted)] bg-transparent text-[var(--admin-muted)] shadow-none hover:border-[var(--brand-red,#ef4444)] hover:text-[var(--brand-red,#ef4444)] hover:bg-[rgba(239,68,68,0.05)] hover:shadow-none"
+            className="w-[10rem] h-[10rem] rounded-[1.25rem] flex flex-col items-center justify-center cursor-pointer transition-all duration-300 border-2 border-dashed border-[var(--admin-muted)] bg-transparent text-[var(--admin-muted)] shadow-none hover:border-[var(--admin-orange)] hover:text-[var(--admin-orange)] hover:bg-[var(--admin-panel)] hover:shadow-none"
             onClick={() => {
               setEditingCategory(null);
               setCategoryForm(defaultCategoryForm);
@@ -468,17 +449,17 @@ const MenuManager = () => {
             </p>
           </div>
           {categories.map((cat) => (
-            <div key={cat.id} className="w-[10rem] h-[10rem] bg-black border-2 border-[var(--admin-border)] rounded-[1.25rem] flex items-center justify-center cursor-pointer overflow-hidden relative transition-all duration-300 shadow-[0_4px_10px_rgba(0,0,0,0.1)] hover:border-[var(--brand-red,#ef4444)] hover:-translate-y-[0.313rem] hover:shadow-[0_10px_20px_rgba(239,68,68,0.25)] group">
+            <div key={cat.id} className="w-[10rem] h-[10rem] bg-[var(--admin-panel)] border-2 border-[var(--admin-border)] rounded-[1.25rem] flex items-center justify-center cursor-pointer overflow-hidden relative transition-all duration-300 shadow-[0_4px_10px_rgba(0,0,0,0.1)] hover:border-[var(--admin-orange)] hover:-translate-y-[0.313rem] hover:shadow-[var(--shadow-glow)] group">
               <img
                 src={cat.img}
                 alt={cat.name}
                 className="absolute top-0 left-0 w-full h-full object-cover z-[1] opacity-60 transition-all duration-500 group-hover:scale-110 group-hover:opacity-30"
                 onError={(e) =>
-                  (e.target.src =
-                    "https://via.placeholder.com/150?text=No+Image")
+                (e.target.src =
+                  "https://via.placeholder.com/150?text=No+Image")
                 }
               />
-              <div className="relative z-[2] font-black text-[1.125rem] text-white uppercase tracking-[1.5px] text-center px-[0.625rem] transition-opacity duration-300 group-hover:opacity-0 group-hover:invisible" style={{textShadow: "0 4px 15px rgba(0, 0, 0, 1), 0 1px 3px rgba(0, 0, 0, 1)"}}>{cat.name}</div>
+              <div className="relative z-[2] font-black text-[1.125rem] text-white uppercase tracking-[1.5px] text-center px-[0.625rem] transition-opacity duration-300 group-hover:opacity-0 group-hover:invisible" style={{ textShadow: "0 4px 15px rgba(0, 0, 0, 1), 0 1px 3px rgba(0, 0, 0, 1)" }}>{cat.name}</div>
               <div className="absolute top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.7)] flex justify-center items-center gap-[0.938rem] opacity-0 transition-opacity duration-300 z-10 group-hover:opacity-100">
                 <button
                   className="bg-transparent border-none p-[0.313rem] cursor-pointer text-[1.25rem] transition-all duration-200 text-blue-500 hover:scale-125 hover:text-blue-400"

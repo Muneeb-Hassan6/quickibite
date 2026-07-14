@@ -49,7 +49,7 @@ const CategoryModal = ({
             ></span>
             {editingCategory ? "EDIT CATEGORY" : "ADD CATEGORY"}
           </h3>
-          <button onClick={onClose} className="bg-transparent border-none text-[#949191] text-[1.25rem] cursor-pointer transition-colors duration-300 hover:text-white static !m-0">
+          <button onClick={onClose} className="bg-transparent border-none text-[#949191] text-[1.25rem] cursor-pointer transition-colors duration-300 hover:text-[var(--admin-text)] static !m-0">
             <FaTimes />
           </button>
         </div>
@@ -98,7 +98,7 @@ const CategoryModal = ({
           <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">CATEGORY NAME</label>
           <input
             type="text"
-            className="w-full bg-[#111] border border-[#333] text-white p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-black"
+            className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-[var(--admin-bg)]"
             value={categoryForm.name}
             placeholder="e.g., drinks"
             onChange={(e) =>
@@ -110,13 +110,13 @@ const CategoryModal = ({
         <div
           className="flex justify-end gap-[0.938rem]"
         >
-          <button className="bg-transparent text-white border border-[#333] p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]" onClick={onClose} disabled={isSaving}>
+          <button className="bg-transparent text-white border border-[var(--admin-border)] p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]" onClick={onClose} disabled={isSaving}>
             Cancel
           </button>
 
           {/* 🔥 Updated Save Button with Loader */}
           <button
-            className="bg-[var(--brand-red,#ef4444)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[0_4px_15px_rgba(239,68,68,0.4)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.6)] flex justify-center items-center gap-[0.5rem] min-w-[10rem]"
+            className="bg-[var(--admin-orange)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[var(--shadow-glow)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[var(--shadow-glow)] flex justify-center items-center gap-[0.5rem] min-w-[10rem]"
             onClick={handleLocalSave}
             disabled={isSaving}
           >

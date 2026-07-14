@@ -4,7 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 const MapView = ({ viewState, setViewState, routePath, riderLocation, currentOrder, MAPBOX_TOKEN }) => {
     return (
-        <div className="map-wrapper">
+        <div className="h-[250px] w-full rounded-[16px] overflow-hidden  mb-[20px]">
             <Map {...viewState} onMove={evt => setViewState(evt.viewState)} mapStyle="mapbox://styles/mapbox/navigation-night-v1" mapboxAccessToken={MAPBOX_TOKEN} style={{ width: '100%', height: '100%' }}>
                 {routePath.length > 0 && (
                     <Source id="route-source" type="geojson" data={{ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: routePath } }}>
@@ -12,11 +12,11 @@ const MapView = ({ viewState, setViewState, routePath, riderLocation, currentOrd
                     </Source>
                 )}
                 <Marker longitude={riderLocation.lng} latitude={riderLocation.lat} anchor="bottom">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3198/3198336.png" className="map-marker-img" alt="rider" />
+                    <img src="https://cdn-icons-png.flaticon.com/512/3198/3198336.png" className="w-[44px] h-[44px] drop-shadow-[0_5px_8px_rgba(0,0,0,0.8)]" alt="rider" />
                 </Marker>
                 {currentOrder && (
                     <Marker longitude={currentOrder.targetLng} latitude={currentOrder.targetLat} anchor="bottom">
-                        <img src="https://cdn-icons-png.flaticon.com/512/2776/2776067.png" className="map-marker-img" alt="home" />
+                        <img src="https://cdn-icons-png.flaticon.com/512/2776/2776067.png" className="w-[44px] h-[44px] drop-shadow-[0_5px_8px_rgba(0,0,0,0.8)]" alt="home" />
                     </Marker>
                 )}
             </Map>

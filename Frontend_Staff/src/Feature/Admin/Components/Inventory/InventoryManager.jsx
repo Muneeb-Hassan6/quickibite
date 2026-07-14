@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
-import "./styles/index.css"
-
 // Components
 import InventoryStats from "./Components/InventoryStats";
 import InventoryControls from "./Components/InventoryControls";
@@ -9,6 +8,7 @@ import InventoryTable from "./Components/InventoryTable";
 import InventoryModal from "./Components/InventoryModal";
 
 const InventoryManager = () => {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,26 +26,16 @@ const InventoryManager = () => {
     threshold: "10",
   };
   const [form, setForm] = useState(defaultForm);
-  const [products, setProducts] = useState([]); // 🔥 Dummy data removed
+  const [productsData, setProducts] = useState([]); // Will be overridden by useQuery data
 
-  // 🔥 1. FETCH DATA FROM DATABASE
-  const fetchInventory = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/inventory_api.php`,
-      );
+  const { data: products = [] } = useQuery({
+    queryKey: ['inventory'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/inventory_api.php`);
       const data = await response.json();
-      if (Array.isArray(data)) {
-        setProducts(data);
-      }
-    } catch (error) {
-      console.error("Error fetching inventory:", error);
+      return Array.isArray(data) ? data : [];
     }
-  };
-
-  useEffect(() => {
-    fetchInventory();
-  }, []);
+  });
 
   const totalItems = products.length;
   const lowStock = products.filter((p) => p.stock <= 10 && p.stock > 0).length;
@@ -133,7 +123,7 @@ const InventoryManager = () => {
             method: "DELETE",
           },
         );
-        setProducts(products.filter((p) => p.id !== id));
+        queryClient.setQueryData(['inventory'], old => old ? old.filter(p => p.id !== id) : []);
         Swal.fire({
           icon: "success",
           title: "Deleted!",
@@ -176,7 +166,7 @@ const InventoryManager = () => {
       const result = await response.json();
 
       if (result.status === "success") {
-        fetchInventory(); // Reload fresh data
+        queryClient.invalidateQueries({ queryKey: ['inventory'] });
         setIsModalOpen(false);
         Swal.fire({
           icon: "success",

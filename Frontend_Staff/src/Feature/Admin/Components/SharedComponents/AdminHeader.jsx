@@ -23,7 +23,7 @@ const AdminHeader = ({
         </div>
       </div>
 
-      <button onClick={toggleTheme} className="theme-toggle-btn ml-auto md:ml-0" title={theme === "dark" ? "Light Mode" : "Dark Mode"}>
+      <button onClick={toggleTheme} className="ml-auto md:ml-0 bg-transparent border border-[var(--admin-border)] text-[var(--admin-text)] w-[2.5rem] h-[2.5rem] rounded-full flex justify-center items-center cursor-pointer text-[1.125rem] transition-all duration-300 hover:bg-[var(--admin-orange)] hover:text-white" title={theme === "dark" ? "Light Mode" : "Dark Mode"}>
         {theme === "dark" ? <FaSun /> : <FaMoon />}
       </button>
     </div>

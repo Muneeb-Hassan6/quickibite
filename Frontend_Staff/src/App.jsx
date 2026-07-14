@@ -72,7 +72,7 @@ const MainContent = () => {
 
   return (
     <div
-      className="App"
+      className="App w-full overflow-x-hidden"
       style={{
         minHeight: "100vh",
         backgroundColor: "var(--bg-body, #0a0a0a)",

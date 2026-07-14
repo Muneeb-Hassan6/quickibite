@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "./styles/index.css";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { io } from "socket.io-client"; // 🔥 SOCKET.IO IMPORT ADD KIYA HAI
 import {
   FaRobot,
@@ -24,12 +24,13 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const a =
     Math.sin(toRad(lat2 - lat1) / 2) ** 2 +
     Math.cos(toRad(lat1)) *
-      Math.cos(toRad(lat2)) *
-      Math.sin(toRad(lon2 - lon1) / 2) ** 2;
+    Math.cos(toRad(lat2)) *
+    Math.sin(toRad(lon2 - lon1) / 2) ** 2;
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 };
 
 const DispatchPortal = () => {
+  const queryClient = useQueryClient();
   const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
   // 🔥 DYNAMIC STATES
@@ -63,12 +64,30 @@ const DispatchPortal = () => {
   const [timerDisplay, setTimerDisplay] = useState("");
 
   // ==========================================
-  // 🔥 FETCH DATA FROM BACKEND & SOCKET.IO
+  // 🔥 FETCH DATA FROM BACKEND & SOCKET.IO (React Query)
   // ==========================================
-  useEffect(() => {
-    // 1. Initial load
-    fetchLiveData();
 
+  const { data: rawOrders = [] } = useQuery({
+    queryKey: ['dispatcher_orders'],
+    queryFn: async () => {
+      const orderRes = await fetch(`${import.meta.env.VITE_API_BASE}/get_orders.php?type=all`);
+      const orderData = await orderRes.json();
+      return Array.isArray(orderData) ? orderData : orderData.data || [];
+    },
+    refetchInterval: 10000,
+  });
+
+  const { data: rawStaff = [] } = useQuery({
+    queryKey: ['dispatcher_staff'],
+    queryFn: async () => {
+      const staffRes = await fetch(`${import.meta.env.VITE_API_BASE}/get_staff.php`);
+      const staffJson = await staffRes.json();
+      return (staffJson.success && Array.isArray(staffJson.data)) ? staffJson.data : [];
+    },
+    refetchInterval: 15000,
+  });
+
+  useEffect(() => {
     // 2. Robust socket with auto-reconnect
     const socket = io(import.meta.env.VITE_SOCKET_URL, {
       transports: ["websocket", "polling"],
@@ -85,30 +104,30 @@ const DispatchPortal = () => {
 
     socket.on("connect", joinDispatcher);
 
+    const invalidateDispatcherQueries = () => {
+      queryClient.invalidateQueries({ queryKey: ['dispatcher_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['dispatcher_staff'] });
+    };
+
     // Refresh on any order or rider update signal
     socket.on("refresh_kitchen", () => {
       console.log("🔔 New order signal in Dispatcher! Refreshing...");
-      fetchLiveData();
+      invalidateDispatcherQueries();
     });
 
     socket.on("refresh_rider", () => {
       console.log("🏄 Rider assignment update! Refreshing...");
-      fetchLiveData();
+      invalidateDispatcherQueries();
     });
 
     socket.on("refresh_rider_list", () => {
       console.log("🚴 Rider status changed! Refreshing...");
-      fetchLiveData();
+      invalidateDispatcherQueries();
     });
 
     socket.on("disconnect", (reason) => {
       console.warn("⚠️ Dispatcher socket disconnected:", reason);
     });
-
-    // 3. Polling fallback every 30 seconds
-    const pollInterval = setInterval(() => {
-      fetchLiveData();
-    }, 30000);
 
     return () => {
       socket.off("connect", joinDispatcher);
@@ -116,128 +135,89 @@ const DispatchPortal = () => {
       socket.off("refresh_rider");
       socket.off("refresh_rider_list");
       socket.disconnect();
-      clearInterval(pollInterval);
     };
   }, []);
-  const fetchLiveData = async () => {
-    try {
-      // 1. Fetch ALL orders (active + dispatched) using type=all
-      const orderRes = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=all`,
-      );
-      const orderData = await orderRes.json();
+  // Derived Data Synchronization
+  useEffect(() => {
+    if (rawOrders.length > 0) {
+      const deliveryReady = rawOrders.filter((o) => {
+        const type = String(o.order_type || "").toLowerCase().trim();
+        const status = String(o.status || "").toLowerCase().trim();
+        return type.includes("delivery") && (status === "ready" || status === "ready to serve");
+      }).map((o) => {
+        let rawItems = [];
+        try { rawItems = typeof o.items === "string" ? JSON.parse(o.items) : o.items; } catch (e) { }
+        return {
+          id: o.id,
+          customer: o.customer_name || "Unknown Customer",
+          address: o.customer_address || "No Address Provided",
+          targetLat: parseFloat(o.lat) || 31.5204 + (Math.random() - 0.5) * 0.05,
+          targetLng: parseFloat(o.lng) || 74.3587 + (Math.random() - 0.5) * 0.05,
+          items: `${rawItems?.length || 0} Items`,
+          total: `Rs ${o.total}`,
+          time: o.created_at ? new Date(o.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Just Now",
+          payment: "COD",
+          isUrgent: false,
+        };
+      });
+      setReadyOrders(deliveryReady);
 
-      let ordersArray = Array.isArray(orderData)
-        ? orderData
-        : orderData.data || [];
+      const dispatchedTrips = rawOrders.filter((o) => String(o.status || "").toLowerCase().trim() === "dispatched").map((o) => {
+        let rawItems = [];
+        try { rawItems = typeof o.items === "string" ? JSON.parse(o.items) : o.items; } catch (e) { }
+        return {
+          id: o.id,
+          customer: o.customer_name || "Unknown Customer",
+          address: o.customer_address || "No Address",
+          items: `${rawItems?.length || 0} Items`,
+          total: `Rs ${o.total}`,
+          time: o.created_at ? new Date(o.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Just Now",
+          payment: "COD",
+          assignedRider: { id: o.rider_id, name: "Rider #" + o.rider_id },
+        };
+      });
+      setActiveTrips(dispatchedTrips);
 
-      if (ordersArray.length > 0) {
-        // A. Ready delivery orders awaiting rider assignment
-        const deliveryOrders = ordersArray.filter((o) => {
-          const type   = String(o.order_type || "").toLowerCase().trim();
-          const status = String(o.status || "").toLowerCase().trim();
-          return (
-            type.includes("delivery") &&
-            (status === "ready" || status === "ready to serve")
-          );
-        });
-
-        const mappedOrders = deliveryOrders.map((o) => {
-          let rawItems = [];
-          if (o.items) {
-            try {
-              rawItems = typeof o.items === "string" ? JSON.parse(o.items) : o.items;
-            } catch (e) {}
-          }
-          return {
-            id: o.id,
-            customer: o.customer_name || "Unknown Customer",
-            address: o.customer_address || "No Address Provided",
-            targetLat: parseFloat(o.lat) || 31.5204 + (Math.random() - 0.5) * 0.05,
-            targetLng: parseFloat(o.lng) || 74.3587 + (Math.random() - 0.5) * 0.05,
-            items: `${rawItems.length} Items`,
-            total: `Rs ${o.total}`,
-            time: o.created_at
-              ? new Date(o.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-              : "Just Now",
-            payment: "COD",
-            isUrgent: false,
-          };
-        });
-        setReadyOrders(mappedOrders);
-
-        // B. 🔥 Sync Active Trips from DB (Dispatched orders)
-        //    This ensures delivery completion is reflected instantly when socket fires
-        const dispatchedOrders = ordersArray.filter((o) => {
-          const status = String(o.status || "").toLowerCase().trim();
-          return status === "dispatched";
-        });
-
-        const mappedTrips = dispatchedOrders.map((o) => {
-          let rawItems = [];
-          if (o.items) {
-            try { rawItems = typeof o.items === "string" ? JSON.parse(o.items) : o.items; } catch (e) {}
-          }
-          return {
-            id: o.id,
-            customer: o.customer_name || "Unknown Customer",
-            address: o.customer_address || "No Address",
-            items: `${rawItems.length} Items`,
-            total: `Rs ${o.total}`,
-            time: o.created_at
-              ? new Date(o.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-              : "Just Now",
-            payment: "COD",
-            assignedRider: { id: o.rider_id, name: "Rider #" + o.rider_id },
-          };
-        });
-        setActiveTrips(mappedTrips);  // 🔥 DB-synced — updates instantly on socket signal
-
-        // C. Completed deliveries count
-        const deliveredOrders = ordersArray.filter((o) => {
-          const type   = String(o.order_type || "").toLowerCase().trim();
-          const status = String(o.status || "").toLowerCase().trim();
-          return type.includes("delivery") && status === "delivered";
-        });
-        setCompletedCount(deliveredOrders.length);
-
-      } else {
-        setReadyOrders([]);
-        setActiveTrips([]);
-        setCompletedCount(0);
-      }
-
-      // 2. Fetch Staff / Riders
-      const staffRes  = await fetch(`${import.meta.env.VITE_API_BASE}/get_staff.php`);
-      const staffJson = await staffRes.json();
-
-      if (staffJson.success && Array.isArray(staffJson.data)) {
-        const riderStaff = staffJson.data.filter((s) => {
-          const role        = s.role        ? s.role.toLowerCase()        : "";
-          const designation = s.designation ? s.designation.toLowerCase() : "";
-          return role === "rider" || designation === "rider";
-        });
-
-        const mappedRiders = riderStaff.map((r) => ({
-          id: r.id,
-          name: r.name || "Unknown Rider",
-          status: r.shift_status || r.status || "Offline",
-          location: {
-            lat: parseFloat(r.lat) || 31.5204 + (Math.random() - 0.5) * 0.03,
-            lng: parseFloat(r.lng) || 74.3587 + (Math.random() - 0.5) * 0.03,
-          },
-          trips:    parseInt(r.trips_completed) || 0,
-          rating:   4.8,
-          vehicle:  r.vehicle || "Bike",
-          phone:    r.phone   || "N/A",
-          accuracy: "98%",
-        }));
-        setRiders(mappedRiders);
-      }
-    } catch (error) {
-      console.error("Error fetching live data:", error);
+      const compCount = rawOrders.filter((o) => {
+        const type = String(o.order_type || "").toLowerCase().trim();
+        const status = String(o.status || "").toLowerCase().trim();
+        return type.includes("delivery") && status === "delivered";
+      }).length;
+      setCompletedCount(compCount);
+    } else {
+      setReadyOrders([]);
+      setActiveTrips([]);
+      setCompletedCount(0);
     }
-  };
+  }, [rawOrders]);
+
+  useEffect(() => {
+    if (rawStaff.length > 0) {
+      const riderStaff = rawStaff.filter((s) => {
+        const role = s.role ? s.role.toLowerCase() : "";
+        const designation = s.designation ? s.designation.toLowerCase() : "";
+        return role === "rider" || designation === "rider";
+      });
+
+      const mapped = riderStaff.map((r) => ({
+        id: r.id,
+        name: r.name || "Unknown Rider",
+        status: r.shift_status || r.status || "Offline",
+        location: {
+          lat: parseFloat(r.lat) || 31.5204 + (Math.random() - 0.5) * 0.03,
+          lng: parseFloat(r.lng) || 74.3587 + (Math.random() - 0.5) * 0.03,
+        },
+        trips: parseInt(r.trips_completed) || 0,
+        rating: 4.8,
+        vehicle: r.vehicle || "Bike",
+        phone: r.phone || "N/A",
+        accuracy: "98%",
+      }));
+      setRiders(mapped);
+    } else {
+      setRiders([]);
+    }
+  }, [rawStaff]);
 
   // 🔥 SEND ASSIGNMENT TO DATABASE & NOTIFY RIDER VIA SOCKET
   const updateOrderInDatabase = async (orderId, riderId) => {
@@ -276,6 +256,10 @@ const DispatchPortal = () => {
     } catch (error) {
       console.error("Failed to assign order in DB", error);
     }
+
+    // Invalidate immediately for optimistic feel
+    queryClient.invalidateQueries({ queryKey: ['dispatcher_orders'] });
+    queryClient.invalidateQueries({ queryKey: ['dispatcher_staff'] });
   };
 
   // ==========================================
@@ -361,10 +345,10 @@ const DispatchPortal = () => {
       riders.map((r) =>
         r.id === bestRider.id
           ? {
-              ...r,
-              status: "On Delivery",
-              currentOrderId: finalOrderToAssign.id,
-            }
+            ...r,
+            status: "On Delivery",
+            currentOrderId: finalOrderToAssign.id,
+          }
           : r,
       ),
     );
@@ -481,8 +465,9 @@ const DispatchPortal = () => {
     setSelectedOrder(null);
     setSelectedRider(null);
 
-    // Naya data refresh karein taake portal update ho jaye
-    fetchLiveData();
+    // Remove explicit fetchLiveData, rely on query invalidation to fetch
+    // the local state updates instantly reflect UI.
+    // Invalidation in updateOrderInDatabase will re-fetch data in background and update the state automatically via useEffect.
   };
 
   const handleCompleteTrip = (tripId, riderId) => {
@@ -491,18 +476,18 @@ const DispatchPortal = () => {
       riders.map((r) =>
         r.id === riderId
           ? {
-              ...r,
-              status: "Available",
-              currentOrderId: null,
-              trips: r.trips + 1,
-            }
+            ...r,
+            status: "Available",
+            currentOrderId: null,
+            trips: r.trips + 1,
+          }
           : r,
       ),
     );
   };
 
   return (
-    <div className="dispatch-container">
+    <div className="bg-[var(--admin-bg)] min-h-screen text-[var(--admin-text)] font-sans overflow-x-hidden">
       <DispatchHeader />
       <DispatchStats
         readyCount={readyOrders.length}
@@ -513,7 +498,7 @@ const DispatchPortal = () => {
         avgDeliveryTime={avgDeliveryTime}
         completedToday={completedCount} // 🔥 Ab yeh database se length utha raha hai!
       />
-      <div className="dispatch-map-top-row">
+      <div className="w-full px-[40px] pt-[20px] pb-0">
         <DispatcherMap
           riders={riders}
           MAPBOX_TOKEN={MAPBOX_TOKEN}
@@ -522,10 +507,10 @@ const DispatchPortal = () => {
         />
       </div>
 
-      <div className="ai-controls-wrapper">
-        <div className="radius-control-box">
-          <FaSlidersH className="text-muted" />
-          <div className="radius-text">
+      <div className="p-[20px_40px] flex gap-[20px] items-center flex-wrap">
+        <div className="bg-[var(--admin-panel)] p-[10px_20px] rounded-[10px] shadow-sm flex items-center gap-[15px]">
+          <FaSlidersH className="text-[var(--admin-muted)]" />
+          <div className="text-[var(--admin-text)] text-[14px] font-bold">
             Radius: {(batchRadius / 1000).toFixed(1)} KM
           </div>
           <input
@@ -536,25 +521,25 @@ const DispatchPortal = () => {
             value={batchRadius}
             onChange={(e) => setBatchRadius(e.target.value)}
             disabled={isAutoPilotOn}
-            className="custom-range"
+            className="cursor-pointer"
           />
         </div>
 
         <button
           onClick={handleSmartBatching}
-          className="btn-ai-batch"
+          className="bg-[var(--admin-orange)] text-white border-none p-[12px_24px] rounded font-bold cursor-pointer flex items-center gap-[8px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(245,158,11,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={isAutoPilotOn}
         >
           <FaLayerGroup /> Manual Batch
         </button>
 
-        <div className="timer-select-box">
-          <FaClock className="text-orange" />
+        <div className="bg-[var(--admin-panel)] p-[10px_15px] rounded-[10px] shadow-sm flex items-center gap-[10px] ml-auto">
+          <FaClock className="text-[var(--admin-orange)]" />
           <select
             value={autoPilotMinutes}
             onChange={(e) => setAutoPilotMinutes(Number(e.target.value))}
             disabled={isAutoPilotOn}
-            className="custom-timer-select"
+            className="bg-transparent text-[var(--admin-text)] border-none outline-none cursor-pointer font-bold text-[14px] [&>option]:bg-[var(--admin-panel)] [&>option]:text-[var(--admin-text)]"
           >
             <option value={0}>Endless (No Limit)</option>
             <option value={15}>15 Minutes</option>
@@ -565,13 +550,13 @@ const DispatchPortal = () => {
 
         <button
           onClick={() => setIsAutoPilotOn(!isAutoPilotOn)}
-          className={`btn-ai-auto ${isAutoPilotOn ? "active-pulse auto-stop" : "auto-start"}`}
+          className={`text-[#ffffff] border-none p-[12px_24px] rounded font-bold cursor-pointer flex items-center gap-[8px] transition-all duration-300 flex-1 min-w-[250px] justify-center ${isAutoPilotOn ? "animate-pulse shadow-[var(--shadow-glow)] bg-[var(--brand-red)]" : "bg-[var(--rider-success)]"}`}
         >
           {isAutoPilotOn ? (
             <>
               <FaStopCircle /> STOP AUTO-PILOT{" "}
               {timerDisplay && (
-                <span className="timer-display ml-5">({timerDisplay})</span>
+                <span className="text-[#fca5a5] ml-[5px]">({timerDisplay})</span>
               )}
             </>
           ) : (
@@ -582,7 +567,7 @@ const DispatchPortal = () => {
         </button>
       </div>
 
-      <div className="dispatch-workspace-grid animate-slide-up">
+      <div className="grid grid-cols-3 gap-[25px] p-[0_40px_100px] items-stretch animate-slide-up">
         <ReadyOrdersList
           orders={readyOrders}
           selectedId={selectedOrder?.id}
