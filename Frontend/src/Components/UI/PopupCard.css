@@ -1,0 +1,492 @@
+/* =========================================
+   2. POPUP MODAL STYLES
+   ========================================= */
+.modal-overlay-fade {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content-bounce {
+    background-color: var(--panel-bg, #1a1a1a);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 400px;
+    max-height: 95vh;
+    overflow-y: auto;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 32px;
+    height: 32px;
+    background-color: rgba(255, 255, 255, 0.4);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    backdrop-filter: blur(4px);
+    transition: 0.2s;
+}
+
+.modal-close-btn:hover {
+    background-color: var(--brand-red, #ef4444);
+}
+
+.modal-img-container {
+    width: 100%;
+    height: 220px;
+    background-color: #fff;
+}
+
+.modal-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+
+.modal-content-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.modal-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.modal-title-text {
+    color: var(--text-main, #ffffff);
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.2;
+    font-family: "Oswald", sans-serif;
+}
+
+.modal-price-text {
+    color: var(--brand-red, #ef4444);
+    font-weight: 800;
+    font-size: 18px;
+    white-space: nowrap;
+    margin-left: 10px;
+}
+
+.modal-desc-text {
+    color: var(--text-muted, #cccccc);
+    font-size: 13px;
+    margin: 0;
+}
+
+.modal-section-title {
+    color: var(--text-main, #ffffff);
+    font-size: 14px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.size-options-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.size-pill {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s;
+    background-color: transparent;
+    color: var(--text-muted, #aaaaaa);
+    border: 1px solid var(--border-color, #444);
+}
+
+.size-pill.active {
+    background-color: var(--brand-red, #ef4444);
+    color: var(--btn-text, #ffffff);
+    border-color: var(--brand-red, #ef4444);
+}
+
+.note-input {
+    width: 100%;
+    background-color: var(--bg-body, #111111);
+    color: var(--text-main, #ffffff);
+    border: 1px solid var(--border-color, #333333);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    outline: none;
+    resize: none;
+    transition: 0.3s;
+}
+
+.note-input:focus {
+    border-color: var(--brand-yellow, #555);
+}
+
+.modal-footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.qty-control-box {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-body, #222222);
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    padding: 6px 12px;
+    gap: 15px;
+}
+
+.qty-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-main, #fff);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 5px;
+}
+
+.qty-number {
+    color: var(--text-main, #ffffff);
+    font-weight: bold;
+    font-size: 15px;
+    min-width: 15px;
+    text-align: center;
+}
+
+.total-price-box {
+    text-align: right;
+}
+
+.total-label {
+    color: var(--text-muted, #aaaaaa);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.total-value {
+    color: var(--text-main, #ffffff);
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.modal-add-btn {
+    width: 100%;
+    background: var(--brand-red, #ef4444);
+    color: var(--btn-text, #ffffff);
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    box-shadow: var(--shadow-glow, 0 4px 15px rgba(239, 68, 68, 0.4));
+    transition: 0.2s;
+}
+
+.modal-add-btn:active {
+    transform: scale(0.98);
+}
+
+/* Animations & Scrollbar */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0a0a0a;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #ef4444;
+}
+
+/* =======================================
+   FIXED CLOSE BUTTON FOR POPUP
+   ======================================= */
+.customer-popup-box {
+    position: relative;
+    overflow: hidden;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.modal-close-btn-fixed {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #ffffff;
+    border: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 100;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
+}
+
+.modal-close-btn-fixed:hover {
+    background: var(--brand-red, #ef4444);
+    transform: scale(1.1);
+}
+
+.popup-section {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.pill-price {
+    font-size: 11px;
+    opacity: 0.8;
+    font-weight: normal;
+}
+
+/* Ingredients Grid */
+.spec-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.spec-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8f9fa;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    color: #333;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: 500;
+}
+
+.spec-checkbox-label input {
+    cursor: pointer;
+}
+
+.spec-checkbox-label.excluded {
+    color: #94a3b8;
+    text-decoration: line-through;
+    background: #f1f5f9;
+    opacity: 0.7;
+}
+
+/* Add-ons Grid */
+.pos-addon-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.pos-addon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #333;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.addon-price-tag {
+    color: var(--brand-red);
+    font-size: 12px;
+}
+
+.pos-addon-btn.active {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--brand-red);
+    color: var(--brand-red);
+}
+
+.pos-addon-btn.active .addon-price-tag {
+    color: var(--brand-red);
+}
+
+/* --- MOBILE RESPONSIVENESS FOR POPUP --- */
+@media screen and (max-width: 768px) {
+    .modal-overlay-fade {
+        align-items: center;
+        /* Center mein rakha hai */
+        padding: 10px;
+        /* Sides se thora gap rakha hai */
+    }
+
+    .modal-content-bounce {
+        width: 92%;
+        /* 🔥 Width kam kar di taake sides par margin nazar aye */
+        max-width: 350px;
+        /* 🔥 Isay mazeed narrow aur sleek kar diya */
+        border-radius: 20px;
+        max-height: 85vh;
+        border: 1px solid #333;
+        overflow-y: auto;
+    }
+
+    /* Tasweer ki lambai kam ki taake neechay ke options pehle nazar ayen */
+    .modal-img-container {
+        height: 160px;
+    }
+
+    .modal-img {
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+    }
+
+    /* Padding aur gaps ko tight kar diya taake design clean lage */
+    .modal-content-body {
+        padding: 15px;
+        gap: 12px;
+    }
+
+    .modal-title-text {
+        font-size: 18px;
+        /* Title thora chota kiya */
+    }
+
+    .modal-price-text {
+        font-size: 16px;
+    }
+
+    .modal-desc-text {
+        font-size: 12px;
+        margin-bottom: 5px;
+    }
+
+    .modal-section-title {
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+
+    /* Size Pills aur Addons ko mazeed responsive banaya */
+    .size-pill,
+    .pos-addon-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 6px;
+    }
+
+    .spec-checkbox-grid {
+        grid-template-columns: 1fr;
+        /* Mobile par single column behtar hai */
+        gap: 8px;
+    }
+
+    .spec-checkbox-label {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    /* Footer Section (Qty & Button) */
+    .modal-footer-row {
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    .qty-control-box {
+        padding: 4px 10px;
+        gap: 10px;
+    }
+
+    .qty-number {
+        font-size: 14px;
+    }
+
+    .total-value {
+        font-size: 18px;
+    }
+
+    .modal-add-btn {
+        padding: 12px;
+        font-size: 14px;
+        border-radius: 10px;
+    }
+}
+
+/* 📱 Mazeed Choti Screens (iPhone SE wagaira) */
+@media screen and (max-width: 380px) {
+    .modal-content-bounce {
+        max-width: 310px;
+    }
+
+    .modal-img-container {
+        height: 140px;
+    }
+}
+
+@media screen and (max-width: 380px) {
+    .modal-img-container {
+        height: 150px;
+    }
+}

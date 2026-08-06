@@ -1,0 +1,76 @@
+.settings-page-wrapper {
+    display: flex;
+    gap: 30px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-bottom: 80px;
+    align-items: flex-start;
+}
+
+.settings-sidebar-nav {
+    width: 250px;
+    background: var(--admin-panel);
+    border: 1px solid var(--admin-border);
+    border-radius: 16px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: sticky;
+    top: 20px;
+}
+
+.settings-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--admin-muted);
+    padding: 14px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.settings-tab-btn svg {
+    font-size: 18px;
+}
+
+.settings-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--admin-text);
+}
+
+.settings-tab-btn.active {
+    background: var(--admin-orange);
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+}
+
+.settings-content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+@media screen and (max-width: 900px) {
+    .settings-page-wrapper {
+        flex-direction: column;
+    }
+
+    .settings-sidebar-nav {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        position: static;
+    }
+
+    .settings-tab-btn {
+        white-space: nowrap;
+    }
+}

@@ -1,0 +1,1082 @@
+/* 🔥 MAIN SECTION */
+.product-slider-section {
+  width: 100%;
+  overflow: hidden;
+  margin-bottom: 40px;
+}
+
+/* 🔥 HEADER ROW (Title & Arrows) */
+.slider-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 0 10px;
+}
+
+.section-title-modern {
+  color: #ffffff;
+  font-family: "Oswald", sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  text-transform: uppercase;
+  border-left: 5px solid #ef4444; /* Brand Red */
+  padding-left: 15px;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+/* 🔥 ARROWS STYLING */
+.slider-arrows {
+  display: flex;
+  gap: 12px;
+}
+
+.arrow-btn {
+  background: #141414; /* Dark button background */
+  color: #ffffff;
+  border: 1px solid #222222;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%; /* Gol (Circle) button */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.arrow-btn:hover {
+  background: #ef4444; /* Hover par red hoga */
+  border-color: #ef4444;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(239, 68, 68, 0.4);
+}
+
+.arrow-btn:active {
+  transform: scale(0.9); /* Click karne par button press feel hoga */
+}
+
+/* 🔥 SLIDER CONTAINER */
+.custom-slider-container {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding: 15px 10px 30px 10px;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox ke liye scrollbar hide karega */
+}
+
+/* Chrome, Safari, aur Edge ke liye purana scrollbar hide karna */
+.custom-slider-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* 🔥 SLIDER CARD ITEM */
+.slider-item {
+  min-width: 280px; /* Card ki width fixed rahegi */
+  max-width: 300px;
+  flex-shrink: 0; /* Cards ko chota (shrink) hone se rokega */
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transform-origin: center center;
+}
+
+/* 🔥 CINEMATIC SHOWCASE GALLERY (TOP DEALS) */
+.cinematic-showcase-container {
+  display: flex;
+  width: 100%;
+  height: 450px;
+  gap: 30px;
+  padding: 10px 0;
+}
+
+/* Left Side: Spotlight Hero */
+.showcase-hero {
+  flex: 1.5;
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  animation: fade-in 0.5s ease;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  background: #000;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.showcase-bg-glow {
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 120%;
+  height: 120%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(30px) brightness(0.3);
+  z-index: 1;
+}
+
+.showcase-hero-card-wrapper {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 2;
+  padding: 30px;
+}
+
+/* Restyle ProductCard for the Spotlight Hero */
+.showcase-hero-card-wrapper .custom-card {
+  width: 100%; height: 100%;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  flex-direction: row; /* Horizontal layout for hero */
+  align-items: center;
+  gap: 40px;
+  cursor: pointer;
+}
+.showcase-hero-card-wrapper .card-img-container {
+  flex: 0 0 55%; 
+  height: 100%;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Removed box-shadow, overflow: hidden, and border-radius for transparent SVGs */
+}
+.showcase-hero-card-wrapper .card-img-container::after {
+  display: none; /* remove overlay */
+}
+.showcase-hero-card-wrapper .card-img-fluid {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain; /* Perfect for SVGs so they don't get cropped */
+  transform: none; /* Removed scale */
+  filter: none; /* Removed drop shadow to fix messy borders on edges */
+}
+.showcase-hero-card-wrapper .custom-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 20px 0 0;
+  position: relative;
+}
+.showcase-hero-card-wrapper .card-title-text {
+  font-size: 42px;
+  font-weight: 900;
+  color: #fff !important;
+  margin-bottom: 15px;
+  text-shadow: none;
+}
+.showcase-hero-card-wrapper .card-desc-text {
+  font-size: 16px;
+  color: #ccc !important;
+  margin-bottom: 30px;
+  text-shadow: none;
+}
+.showcase-hero-card-wrapper .price-action-row {
+  margin-top: 0;
+}
+.showcase-hero-card-wrapper .desktop-price {
+  font-size: 36px !important;
+  color: var(--brand-red, #ef4444) !important;
+  font-weight: 900;
+  text-shadow: none;
+}
+.showcase-hero-card-wrapper .desktop-price small {
+  font-size: 20px !important;
+  color: var(--brand-red, #ef4444) !important;
+  text-shadow: none;
+}
+.showcase-hero-card-wrapper .btn-kfc-add {
+  padding: 12px 30px;
+  font-size: 18px;
+}
+
+/* Right Side: Interactive List */
+.showcase-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding-right: 15px;
+}
+.showcase-list::-webkit-scrollbar {
+  width: 4px;
+}
+.showcase-list::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 10px;
+}
+
+/* List Item Wrappers */
+.showcase-list-item-wrapper {
+  height: 90px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  opacity: 0.5;
+  transform: scale(0.96);
+  cursor: pointer;
+}
+.showcase-list-item-wrapper:hover {
+  opacity: 0.8;
+}
+.showcase-list-item-wrapper.active-item {
+  opacity: 1;
+  transform: scale(1);
+  box-shadow: 0 0 0 2px var(--brand-red, #ef4444), 0 5px 15px rgba(0,0,0,0.5);
+}
+
+/* Restyle ProductCard for the List Items */
+.showcase-list-item-wrapper .custom-card {
+  flex-direction: row;
+  height: 100%;
+  border-radius: 12px;
+  background: var(--panel-bg, #1a1a1a);
+  border: none !important;
+  box-shadow: none !important;
+}
+.showcase-list-item-wrapper .card-img-container {
+  width: 90px;
+  height: 100%;
+  flex-shrink: 0;
+  background: transparent;
+}
+.showcase-list-item-wrapper .card-img-container::after {
+  display: none;
+}
+.showcase-list-item-wrapper .card-img-fluid {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.showcase-list-item-wrapper .custom-card-body {
+  padding: 10px 15px;
+  justify-content: center;
+  position: relative;
+}
+.showcase-list-item-wrapper .card-title-text {
+  font-size: 16px;
+  margin-bottom: 5px;
+  color: #fff !important;
+  text-shadow: none;
+}
+.showcase-list-item-wrapper .card-desc-text,
+.showcase-list-item-wrapper .btn-kfc-add {
+  display: none !important; /* Hide description and add button in the thin list */
+}
+.showcase-list-item-wrapper .price-action-row {
+  margin-top: 0;
+}
+.showcase-list-item-wrapper .desktop-price {
+  font-size: 14px !important;
+  color: var(--brand-red, #ef4444) !important;
+  text-shadow: none;
+}
+.showcase-list-item-wrapper .desktop-price small {
+  font-size: 12px !important;
+  color: var(--brand-red, #ef4444) !important;
+  text-shadow: none;
+}
+
+/* Mobile responsive ke liye heading thori choti */
+@media screen and (max-width: 768px) {
+  .section-title-modern {
+    font-size: 22px;
+  }
+  .arrow-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+  }
+  .slider-item {
+    min-width: 250px;
+  }
+}
+/* 🔥 WRAPPER FOR ARROWS & CARDS */
+.slider-track-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* 🔥 ARROWS POSITIONING OVER CARDS */
+.arrow-btn {
+  position: absolute;
+  top: 40%; /* Cards ke bilkul darmiyan (center) mein */
+  transform: translateY(-50%);
+  z-index: 10; /* Cards ke upar nazar aane ke liye */
+  background: rgba(20, 20, 20, 0.9); /* Thora transparent dark background */
+  color: #ffffff;
+  border: 1px solid #222222;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+.arrow-left {
+  left: 5px; /* Left side se fasla */
+}
+
+.arrow-right {
+  right: 5px; /* Right side se fasla */
+}
+
+.arrow-btn:hover {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 6px 15px rgba(239, 68, 68, 0.5);
+  transform: translateY(-50%) scale(1.1); /* Hover par thora bara hoga */
+}
+
+.arrow-btn:active {
+  transform: translateY(-50%) scale(0.9);
+}
+
+/* 🔥 SWIPER STACKED CARDS STYLES (Mobile View) */
+.mobile-stacked-slider {
+  padding: 30px 0 50px 0;
+  display: flex;
+  justify-content: center;
+  overflow: visible;
+}
+
+.stacked-swiper {
+  width: 260px; /* Make it smaller */
+  height: 260px; /* Make it square */
+  padding-bottom: 20px;
+}
+
+.stacked-swiper .swiper-slide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background-color: transparent;
+}
+
+/* Ensure the product card fills the swiper slide completely and loses its default margin */
+.stacked-swiper .swiper-slide .product-card {
+  margin: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 18px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* 🔥 SWIPER CARD OVERLAY DESIGN */
+.stacked-swiper .custom-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.stacked-swiper .card-img-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.stacked-swiper .card-img-fluid {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 18px !important;
+}
+
+/* Gradient overlay so text is readable */
+.stacked-swiper .card-img-container::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60%;
+  background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 60%, transparent 100%);
+  z-index: 2;
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
+}
+
+.stacked-swiper .card-badges-wrapper {
+  z-index: 10;
+}
+
+.stacked-swiper .custom-card-body {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 5;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: transparent;
+}
+
+.stacked-swiper .card-title-text {
+  font-size: 20px;
+  color: #fff;
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.9);
+  margin-bottom: 2px;
+}
+
+.stacked-swiper .card-desc-text {
+  display: none !important;
+}
+
+.stacked-swiper .price-action-row {
+  padding-top: 0;
+}
+
+.stacked-swiper .desktop-price {
+  position: absolute;
+  bottom: 215px;
+  right: 15px;
+  background: var(--brand-red, #ef4444);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  z-index: 20;
+}
+.stacked-swiper .desktop-price small {
+  font-size: 10px;
+  color: #fff;
+}
+
+.stacked-swiper .btn-kfc-add {
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.stacked-swiper .btn-kfc-add .add-icon {
+  font-size: 12px !important;
+}
+
+.stacked-swiper .btn-kfc-add .add-text {
+  font-size: 12px !important;
+  display: inline-block !important;
+}
+
+
+
+/* ?? 3D GLASSMORPHISM COVERFLOW SLIDER */
+.glassmorphism-slider-container {
+  width: 100%;
+  padding: 40px 0 60px 0;
+  position: relative;
+}
+
+.glass-swiper {
+  width: 100%;
+  padding-top: 20px;
+  padding-bottom: 50px;
+}
+
+.glass-swiper-slide {
+  width: 300px;
+  height: 420px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05); /* Frosted glass base */
+  backdrop-filter: blur(15px); /* The magic */
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+  transition: all 0.4s ease;
+}
+
+/* Style the ProductCard inside the glass slide */
+.glass-swiper-slide .custom-card {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  height: 100%;
+}
+
+.glass-swiper-slide .card-img-container {
+  background: transparent;
+  transition: all 0.4s ease;
+}
+
+.glass-swiper-slide .card-img-container::after {
+  display: none;
+}
+
+.glass-swiper-slide .card-img-fluid {
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Hover Effect: The image pops out in 3D */
+.swiper-slide-active.glass-swiper-slide:hover .card-img-fluid {
+  transform: translateY(-30px) scale(1.15) rotate(2deg);
+  filter: drop-shadow(0 25px 35px rgba(0,0,0,0.8));
+}
+
+.glass-swiper-slide .card-title-text {
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.glass-swiper-slide .card-desc-text {
+  color: #bbb !important;
+}
+
+/* Swiper Pagination Styling */
+.glass-swiper .swiper-pagination-bullet {
+  background: rgba(255,255,255,0.4);
+  width: 10px;
+  height: 10px;
+  transition: all 0.3s ease;
+}
+.glass-swiper .swiper-pagination-bullet-active {
+  background: var(--brand-red, #ef4444);
+  width: 25px;
+  border-radius: 5px;
+}
+
+
+
+/* ?? DYNAMIC BENTO GRID */
+.dynamic-bento-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 220px);
+  gap: 15px;
+  width: 100%;
+  padding: 10px 0;
+}
+
+.bento-card {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.bento-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.5), 0 0 0 2px var(--brand-red, #ef4444);
+}
+
+/* Make the first item huge */
+.bento-card-1 {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+/* Background image filling the whole bento card */
+.bento-bg {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.6s ease;
+  z-index: 1;
+}
+
+.bento-card:hover .bento-bg {
+  transform: scale(1.08); /* slight zoom on hover */
+}
+
+/* Gradient overlay so text is readable */
+.bento-bg::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
+}
+
+.bento-content-wrapper {
+  position: absolute;
+  bottom: 0; left: 0; width: 100%; height: 100%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 20px;
+}
+
+/* Override default ProductCard completely so it fits perfectly in the bento box */
+.bento-content-wrapper .custom-card {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  height: auto;
+  padding: 0;
+}
+
+/* Hide the redundant image container inside ProductCard because bento-bg handles the image */
+.bento-content-wrapper .card-img-container {
+  display: none !important;
+}
+
+.bento-content-wrapper .custom-card-body {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  background: transparent !important;
+}
+
+.bento-content-wrapper .card-title-text {
+  color: #fff !important;
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 5px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.bento-card-1 .card-title-text {
+  font-size: 34px;
+  margin-bottom: 10px;
+}
+
+/* Hide descriptions in small bento boxes, show only in the huge one */
+.bento-card .card-desc-text {
+  display: none !important;
+}
+.bento-card-1 .card-desc-text {
+  display: block !important;
+  color: #ddd !important;
+  margin-bottom: 15px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.bento-content-wrapper .desktop-price {
+  color: var(--brand-red, #ef4444) !important;
+  font-size: 18px !important;
+  font-weight: 800;
+}
+.bento-content-wrapper .desktop-price small {
+  color: var(--brand-red, #ef4444) !important;
+  font-size: 14px !important;
+}
+
+.bento-card-1 .desktop-price {
+  font-size: 24px !important;
+}
+
+.bento-content-wrapper .price-action-row {
+  margin-top: 10px;
+}
+
+/* Smaller add button for bento */
+.bento-content-wrapper .btn-kfc-add {
+  padding: 8px 15px;
+  font-size: 14px;
+}
+.bento-card-1 .btn-kfc-add {
+  padding: 10px 25px;
+  font-size: 16px;
+}
+
+
+
+/* =========================================
+   ULTIMATE SLIDER COLLECTION CSS
+========================================= */
+
+/* 1. PARALLAX DEPTH SHOWCASE */
+.parallax-slider-container {
+  padding: 40px 0;
+  perspective: 1000px;
+}
+.parallax-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+}
+.parallax-card-wrapper {
+  transform-style: preserve-3d;
+  position: relative;
+  height: 400px;
+  cursor: pointer;
+  border-radius: 20px;
+  transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.1s; /* smooth catch up */
+}
+.parallax-card-inner {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  transform-style: preserve-3d;
+  background: var(--panel-bg);
+  overflow: hidden;
+}
+.parallax-bg {
+  position: absolute;
+  top: -10%; left: -10%; width: 120%; height: 120%;
+  background-size: cover;
+  background-position: center;
+  transform: translateZ(-50px) scale(1.1); /* Pushed back */
+  filter: brightness(0.5);
+  z-index: 1;
+}
+.parallax-content {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 2;
+  transform: translateZ(60px); /* Pulled forward */
+}
+/* Override ProductCard for Parallax */
+.parallax-content .custom-card {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  height: 100%;
+}
+.parallax-content .card-img-container {
+  display: none !important; /* Hide original image container */
+}
+.parallax-content .custom-card-body {
+  position: absolute; bottom: 0; width: 100%;
+  padding: 20px; background: transparent !important;
+}
+.parallax-content .card-title-text, .parallax-content .desktop-price {
+  color: #fff !important; text-shadow: 0 4px 10px rgba(0,0,0,0.8);
+}
+
+/* 2. CIRCULAR REVOLVING STAGE */
+.revolving-stage-container {
+  padding: 80px 0 40px 0;
+  position: relative;
+  overflow: hidden;
+}
+.revolving-stage-floor {
+  position: absolute;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 150%; height: 120px;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.05) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: 0;
+}
+.revolving-swiper {
+  padding-bottom: 40px;
+  z-index: 1;
+}
+.revolving-slide {
+  transition: all 0.5s ease;
+  opacity: 0.4;
+  transform: scale(0.7) translateY(40px);
+}
+.swiper-slide-active.revolving-slide {
+  opacity: 1;
+  transform: scale(1.1) translateY(-20px);
+  z-index: 10;
+}
+/* Override ProductCard for Revolving */
+.revolving-slide .custom-card {
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+/* 3. NEON CYBERPUNK DECK */
+.deck-slider-container {
+  padding: 50px 0;
+  display: flex; justify-content: center;
+}
+.deck-swiper {
+  width: 320px; height: 480px;
+}
+.deck-slide {
+  border-radius: 20px;
+  background: #0a0a0a !important;
+  border: 1px solid #333;
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.1);
+}
+/* Active slide glowing neon */
+.swiper-slide-active.deck-slide {
+  border: 1px solid var(--brand-red, #ef4444);
+  box-shadow: 0 0 40px rgba(239, 68, 68, 0.4), inset 0 0 20px rgba(239, 68, 68, 0.2);
+}
+.deck-slide .custom-card {
+  background: transparent !important; box-shadow: none !important; border: none !important;
+}
+
+/* 4. MAGAZINE SPLIT-SCREEN */
+.split-screen-container {
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  margin-bottom: 20px;
+}
+.split-swiper {
+  width: 100%; height: 500px;
+}
+.split-slide {
+  display: flex; width: 100%; height: 100%;
+}
+.split-left {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  padding: 40px;
+  position: relative; z-index: 2;
+}
+.split-right {
+  flex: 1;
+  position: relative;
+  clip-path: polygon(15% 0, 100% 0, 100% 100%, 0% 100%); /* Diagonal slash */
+}
+.split-hero-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transform: scale(1.1);
+}
+/* Override ProductCard for Split */
+.split-left .custom-card {
+  background: transparent !important; box-shadow: none !important; border: none !important;
+}
+.split-left .card-img-container { display: none !important; }
+.split-left .card-title-text { font-size: 48px; font-weight: 900; line-height: 1.1; margin-bottom: 20px; color: #fff !important; }
+.split-left .card-desc-text { color: #ccc !important; }
+
+/* 5. ENDLESS MARQUEE */
+.marquee-slider-container {
+  overflow: hidden; padding: 40px 0;
+  width: 100vw;
+  position: relative; left: 50%; transform: translateX(-50%); /* break container bounds */
+}
+.marquee-track {
+  display: flex; width: max-content;
+  animation: marquee-scroll 40s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-item {
+  width: 280px; margin: 0 15px;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.marquee-item:hover {
+  transform: scale(1.2);
+  z-index: 100;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  border-radius: 20px;
+}
+
+
+
+/* =========================================
+   EXTREME SLIDER EXPANSION (PART 2)
+========================================= */
+
+/* 1. FLOATING GRAVITY BUBBLES */
+.bubbles-slider-container {
+  width: 100%; height: 500px;
+  position: relative; overflow: hidden;
+  background: radial-gradient(circle at center, rgba(239, 68, 68, 0.05) 0%, transparent 70%);
+  border-radius: 20px;
+}
+.bubbles-space {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+}
+.bubble-item {
+  position: absolute;
+  border-radius: 50%;
+  background-size: cover; background-position: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  cursor: pointer;
+  animation: float-bubble 10s infinite ease-in-out alternate;
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+/* Randomize positions and sizes */
+.bubble-1 { width: 220px; height: 220px; top: 10%; left: 10%; animation-delay: 0s; }
+.bubble-2 { width: 150px; height: 150px; top: 60%; left: 25%; animation-delay: -2s; }
+.bubble-3 { width: 280px; height: 280px; top: 20%; left: 40%; animation-delay: -4s; z-index: 2;}
+.bubble-4 { width: 180px; height: 180px; top: 50%; left: 65%; animation-delay: -1s; }
+.bubble-5 { width: 200px; height: 200px; top: 15%; left: 80%; animation-delay: -3s; }
+.bubble-6 { width: 120px; height: 120px; top: 75%; left: 85%; animation-delay: -5s; }
+.bubble-7 { width: 140px; height: 140px; top: 80%; left: 5%; animation-delay: -6s; }
+
+@keyframes float-bubble {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-30px) rotate(5deg); }
+}
+.bubble-item:hover {
+  animation-play-state: paused;
+  transform: scale(1.3) translateY(-10px) !important;
+  z-index: 100;
+  box-shadow: 0 0 40px rgba(239, 68, 68, 0.8);
+}
+.bubble-card-wrapper {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  border-radius: 50%; overflow: hidden;
+  background: rgba(0,0,0,0.7); opacity: 0;
+  transition: opacity 0.3s;
+  display: flex; align-items: center; justify-content: center;
+}
+.bubble-item:hover .bubble-card-wrapper { opacity: 1; }
+/* Override ProductCard for Bubbles */
+.bubble-card-wrapper .custom-card { background: transparent !important; box-shadow: none !important; border: none !important; height: auto;}
+.bubble-card-wrapper .card-img-container { display: none !important; }
+.bubble-card-wrapper .card-desc-text { display: none !important; }
+.bubble-card-wrapper .card-title-text { color: #fff !important; text-align: center; font-size: 16px; margin-bottom: 5px; text-shadow: 0 2px 5px #000;}
+.bubble-card-wrapper .desktop-price { color: #fff !important; font-size: 14px !important; text-align: center; width: 100%; display: block; text-shadow: 0 2px 5px #000;}
+.bubble-card-wrapper .btn-kfc-add { margin: 0 auto; display: block; padding: 5px 15px; font-size: 12px;}
+
+/* 2. AGGRESSIVE SKEWED SPEED-GRID */
+.skewed-slider-container {
+  padding: 40px 0;
+}
+.skewed-grid {
+  display: flex; width: 100%; height: 400px;
+  transform: skewX(-10deg);
+  overflow: hidden;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+}
+.skewed-card-wrapper {
+  flex: 1;
+  position: relative;
+  background-size: cover; background-position: center;
+  border-right: 4px solid var(--panel-bg);
+  transition: all 0.4s ease;
+  cursor: pointer;
+  overflow: hidden;
+}
+.skewed-card-wrapper:last-child { border-right: none; }
+.skewed-card-wrapper:hover {
+  flex: 2.5; /* Expands to be larger */
+}
+.skewed-card-wrapper::after {
+  content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+}
+.skewed-content {
+  position: absolute; bottom: -50px; left: 0; width: 100%; height: 100%;
+  z-index: 2;
+  transform: skewX(10deg); /* Un-skew the text */
+  opacity: 0;
+  transition: all 0.4s ease;
+  display: flex; flex-direction: column; justify-content: flex-end; padding: 30px;
+}
+.skewed-card-wrapper:hover .skewed-content {
+  bottom: 0; opacity: 1;
+}
+/* Override ProductCard for Skewed */
+.skewed-content .custom-card { background: transparent !important; box-shadow: none !important; border: none !important; }
+.skewed-content .card-img-container { display: none !important; }
+.skewed-content .card-title-text { color: #fff !important; font-size: 28px; font-weight: 900; }
+
+/* 3. CYBERPUNK INVENTORY SLOTS */
+.inventory-slider-container {
+  padding: 40px 0;
+}
+.inventory-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 100px));
+  gap: 15px; justify-content: center;
+}
+.inventory-slot {
+  width: 100px; height: 100px;
+  background: #111;
+  border: 2px solid #333;
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.inventory-slot:hover {
+  border-color: var(--brand-red, #ef4444);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.5), inset 0 0 10px rgba(239, 68, 68, 0.3);
+}
+.inventory-icon {
+  width: 100%; height: 100%; object-fit: contain; padding: 10px;
+}
+.inventory-hologram {
+  position: absolute;
+  bottom: 120%; left: 50%; transform: translateX(-50%) translateY(20px);
+  width: 280px;
+  background: rgba(10,10,10,0.95);
+  border: 1px solid var(--brand-red, #ef4444);
+  border-radius: 15px;
+  padding: 15px;
+  opacity: 0; visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+  z-index: 100;
+}
+.inventory-slot:hover .inventory-hologram {
+  opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0);
+}
+/* Override ProductCard for Inventory Hologram */
+.inventory-hologram .custom-card { background: transparent !important; box-shadow: none !important; border: none !important; padding: 0; }
+.inventory-hologram .card-title-text { color: #fff !important; }
+.inventory-hologram .card-img-fluid { max-height: 120px !important; }
+
+/* 4. CINEMATIC VERTICAL ACCORDION */
+.vertical-accordion-container {
+  display: flex; flex-direction: column; gap: 5px; padding: 30px 0;
+}
+.v-accordion-strip {
+  height: 80px; width: 100%;
+  background-size: cover; background-position: center; background-attachment: fixed;
+  border-radius: 15px;
+  position: relative; overflow: hidden;
+  cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: inset 0 0 0 2000px rgba(0,0,0,0.7); /* Dark overlay by default */
+}
+.v-accordion-title-bar {
+  position: absolute; top: 0; left: 0; width: 100%; height: 80px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px;
+  z-index: 2;
+}
+.v-accordion-title-bar h3 { color: #fff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 2px; }
+.v-price { color: var(--brand-red, #ef4444); font-size: 20px; font-weight: 700; }
+
+.v-accordion-expanded-content {
+  opacity: 0; position: absolute; bottom: 0; left: 0; width: 100%;
+  padding: 40px; z-index: 3;
+  transition: opacity 0.3s;
+}
+.v-accordion-strip:hover {
+  height: 400px;
+  box-shadow: inset 0 0 0 2000px rgba(0,0,0,0.2); /* Lighten overlay on hover */
+}
+.v-accordion-strip:hover .v-accordion-expanded-content {
+  opacity: 1; transition-delay: 0.2s;
+}
+/* Override ProductCard for Vertical Accordion */
+.v-accordion-expanded-content .custom-card { background: transparent !important; box-shadow: none !important; border: none !important; width: 50%; }
+.v-accordion-expanded-content .card-img-container { display: none !important; }
+.v-accordion-expanded-content .card-title-text { color: #fff !important; font-size: 36px; text-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+.v-accordion-expanded-content .card-desc-text { color: #eee !important; font-size: 16px; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
+

@@ -1,0 +1,301 @@
+@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700;900&display=swap");
+
+/* =========================================
+   🔥 1. UNIVERSAL GRID CONTAINER (Yeh hissa missing tha!)
+   ========================================= */
+.cards-grid-container {
+    display: grid;
+    /* Desktop par cards ko 220px-240px ka rakhega aur ek line me 4/5 cards ayenge */
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 20px;
+    width: 100%;
+    justify-content: center;
+}
+
+/* =========================================
+   2. MAIN CARD STYLES (KFC PREMIUM)
+   ========================================= */
+.custom-card {
+    background-color: var(--panel-bg, #181818);
+    border-radius: 16px;
+    border: 1px solid var(--border-color, #2a2a2a);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform: translateY(0);
+    /* Width limit hata di kyunke ab grid isko khud theek se handle karega */
+    width: 100%;
+}
+
+.custom-card:hover {
+    border-color: var(--brand-red);
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-5px);
+}
+
+.card-img-container {
+    position: relative;
+    overflow: hidden;
+    height: 200px;
+    width: 100%;
+    background: transparent;
+    padding: 0px;
+}
+
+.card-img-fluid {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+    transform: scale(1);
+}
+
+.custom-card:hover .card-img-fluid {
+    transform: scale(1.1);
+}
+
+/* =========================================
+   🎀 PREMIUM EDGE RIBBON BADGES
+   ========================================= */
+.card-badges-wrapper {
+    position: absolute;
+    top: 15px;
+    /* Thora neechay kiya taake top margin acha lagay */
+    left: 0;
+    /* 🔥 JADOO: Card ke bilkul left edge (kinare) se chipka diya */
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+    /* Taake text ke hisab se width khud set ho */
+}
+
+.badge-top-deal {
+    background: var(--brand-red, #ef4444);
+    /* KFC Red */
+    color: var(--btn-text, #ffffff);
+    padding: 4px 10px 4px 8px;
+    border-radius: 0 12px 12px 0;
+    /* 🔥 Sirf right side se gol (Ribbon effect) */
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 3px 2px 10px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(4px);
+}
+
+.badge-best-seller {
+    background: var(--brand-yellow, #facc15);
+    /* Premium Gold/Yellow */
+    color: var(--panel-bg, #111111);
+    padding: 4px 10px 4px 8px;
+    border-radius: 0 12px 12px 0;
+    /* 🔥 Ribbon effect */
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 3px 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.custom-card-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.card-title-text {
+    color: var(--text-main, #ffffff);
+    font-weight: 800;
+    font-size: 19px;
+    margin-bottom: 6px;
+    font-family: "Oswald", sans-serif;
+    line-height: 1.2;
+}
+
+.card-desc-text {
+    color: var(--text-muted, #a3a3a3);
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.price-action-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 10px;
+}
+
+.desktop-price {
+    color: var(--text-main, #ffffff);
+    font-weight: 900;
+    font-size: 22px;
+    margin: 0;
+    font-family: "Oswald", sans-serif;
+}
+
+.desktop-price small {
+    font-size: 14px;
+    color: var(--brand-red, #ef4444);
+}
+
+.btn-kfc-add {
+    background: var(--brand-red, #ef4444);
+    color: var(--btn-text, #ffffff);
+    border: none;
+    border-radius: 30px;
+    padding: 8px 20px;
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-kfc-add:hover {
+    background: var(--brand-red-dark, #dc2626);
+    transform: scale(1.05);
+}
+
+/* =========================================
+   📱 3. MOBILE VIEW FIX (EXACT 2 COLUMNS)
+   ========================================= */
+@media screen and (max-width: 768px) {
+    .cards-grid-container {
+        /* 🔥 Mobile par strict 2 columns banayega Home page ki tarah */
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 0 5px;
+    }
+
+    .card-img-container {
+        height: 140px;
+        padding: 0px;
+    }
+
+    .card-img-fluid {
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+
+    .custom-card-body {
+        padding: 12px;
+        gap: 5px;
+    }
+
+    .card-title-text {
+        font-size: 15px;
+        margin-bottom: 0px;
+    }
+
+    .card-desc-text {
+        display: none;
+    }
+
+    /* Mobile pe jagah bachanay ke liye hide */
+
+    .price-action-row {
+        margin-top: auto;
+        padding-top: 8px;
+    }
+
+    .desktop-price {
+        font-size: 16px;
+    }
+
+    .desktop-price small {
+        font-size: 11px;
+    }
+
+    .btn-kfc-add {
+        padding: 6px 12px;
+    }
+
+    .btn-kfc-add .add-text {
+        display: none;
+    }
+
+    .btn-kfc-add .add-icon {
+        margin: 0;
+        font-size: 12px;
+    }
+
+    /* =========================================
+   📱 MOBILE RESPONSIVENESS (Product Card)
+   ========================================= */
+    @media screen and (max-width: 768px) {
+
+        /* Baqi classes jo aap ne pehle daali hain wo wese hi rahengi... */
+
+        /* 🔥 Yahan se BADGES ki setting update karni hai */
+        .card-badges-wrapper {
+            top: 8px;
+            /* Ribbon ko thora upar kar diya taake image k center me na aye */
+            gap: 4px;
+            /* Agar 2 badges hon to unka fasla kam kar diya */
+        }
+
+        .badge-top-deal,
+        .badge-best-seller {
+            font-size: 8px !important;
+            /* 🔥 Font mazeed chota aur sleek kar diya */
+            padding: 2px 6px 2px 4px !important;
+            /* 🔥 Dabbay ki chauraayi (width/height) kam kar di */
+            font-weight: 700;
+            /* Font ki motayi thori kam ki taake heavy na lagay */
+            border-radius: 0 8px 8px 0;
+            /* Golai (curve) mobile ke hisaab se adjust ki */
+            letter-spacing: 0px;
+            /* Huroof ke darmian fasla khatam kiya taake patti choti ho */
+            transform: none !important;
+        }
+
+        /* Baqi ki classes (custom-card, price waghera) wese hi rahengi... */
+    }
+
+    /* 📱 Extra Small Screens Ke Liye Mazeed Chota */
+    @media screen and (max-width: 380px) {
+
+        .badge-top-deal,
+        .badge-best-seller {
+            font-size: 7px !important;
+            padding: 2px 5px 2px 3px !important;
+        }
+    }
+}
+
+/* 📱 Extra Small Screens */
+@media screen and (max-width: 380px) {
+    .cards-grid-container {
+        gap: 8px;
+    }
+
+    .card-img-container {
+        height: 120px;
+    }
+
+    .card-title-text {
+        font-size: 13px;
+    }
+
+    .btn-kfc-add {
+        padding: 5px 10px;
+    }
+}

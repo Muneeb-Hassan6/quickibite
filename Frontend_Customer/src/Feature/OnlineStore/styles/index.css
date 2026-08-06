@@ -1,0 +1,8 @@
+/* =========================================
+   ONLINE STORE - MASTER CSS
+   ========================================= */
+
+@import './Layout.css';
+@import './Navbar.css';
+@import './Cart.css';
+@import './Checkout.css';

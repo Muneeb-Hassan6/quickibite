@@ -1,0 +1,271 @@
+/* =========================================
+   DISPATCH PORTAL - BASE & CONTROLS
+   ========================================= */
+
+
+.dispatch-container {
+    background-color: var(--admin-bg);
+    min-height: 100vh;
+    color: var(--admin-text);
+    font-family: "Inter", sans-serif;
+    overflow-x: hidden;
+}
+
+.dispatch-map-top-row {
+    padding: 20px 40px 0;
+    width: 100%;
+}
+
+/* Workspace Grid & Base Panels */
+.dispatch-workspace-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+    padding: 0 40px 100px;
+    align-items: stretch;
+}
+
+.dispatch-panel,
+.active-trips-section {
+    background: var(--admin-panel);
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    padding: 15px;
+    height: calc(100vh - 580px);
+    min-height: 550px;
+    overflow-y: auto;
+    margin: 0 !important;
+}
+
+.panel-header {
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--admin-border);
+    padding-bottom: 10px;
+}
+
+.panel-header h3 {
+    margin: 0 0 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--admin-text);
+    font-family: "Oswald", sans-serif;
+    text-transform: uppercase;
+}
+
+.panel-header p {
+    margin: 0;
+    color: var(--admin-muted);
+    font-size: 12px;
+}
+
+/* Base Card Style (Used in multiple components) */
+.card-list,
+.active-trips-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dispatch-card {
+    background: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dispatch-card:hover:not(.disabled) {
+    border-color: var(--admin-orange);
+    transform: translateY(-2px);
+}
+
+.dispatch-card.selected {
+    border-color: var(--rider-success) !important;
+    background: rgba(16, 185, 129, 0.08) !important;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2) !important;
+}
+
+/* AI Controls Wrapper */
+.ai-controls-wrapper {
+    padding: 20px 40px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.radius-control-box {
+    background: var(--admin-panel);
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--admin-border);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.radius-text {
+    color: var(--admin-text);
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.custom-range {
+    cursor: pointer;
+}
+
+.timer-select-box {
+    background: var(--admin-panel);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--admin-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+}
+
+.custom-timer-select {
+    background: transparent;
+    color: var(--admin-text);
+    border: none;
+    outline: none;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.custom-timer-select option {
+    background-color: var(--admin-panel);
+    color: var(--admin-text);
+}
+
+.btn-ai-batch {
+    background: var(--admin-orange);
+    color: #000;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.3s;
+}
+
+.btn-ai-batch:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+}
+
+.btn-ai-auto {
+    color: var(--text-main, #ffffff);
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.3s;
+}
+
+.auto-start {
+    background: var(--rider-success);
+    flex: 1;
+    min-width: 250px;
+    justify-content: center;
+}
+
+.auto-stop {
+    background: var(--brand-red);
+    flex: 1;
+    min-width: 250px;
+    justify-content: center;
+}
+
+.timer-display {
+    color: #fca5a5;
+    margin-left: 5px;
+}
+
+/* Animations & Globals */
+.animate-slide-up {
+    animation: slideUp 0.4s ease forwards;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.active-pulse {
+    animation: dangerPulse 1.5s infinite;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5) !important;
+}
+
+@keyframes dangerPulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.02);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes redPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3);
+    }
+
+    70% {
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+@keyframes greenPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+    }
+
+    70% {
+        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.text-muted {
+    color: var(--admin-muted);
+}
+
+.text-orange {
+    color: var(--admin-orange);
+}
+
+.text-red {
+    color: var(--brand-red) !important;
+    font-weight: bold;
+}

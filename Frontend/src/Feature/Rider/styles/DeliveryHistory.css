@@ -1,0 +1,67 @@
+/* =========================================
+   RIDER - DELIVERY HISTORY
+   ========================================= */
+.history-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.history-count-badge {
+    font-size: 12px;
+    color: var(--admin-muted);
+    font-weight: 600;
+}
+
+.btn-view-all {
+    text-align: center;
+    margin-top: 15px;
+    color: var(--admin-orange);
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.history-item {
+    background: var(--admin-panel);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    font-size: 14px;
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    transition: 0.3s;
+}
+
+.history-item:hover {
+    border-color: var(--admin-orange);
+}
+
+.history-id {
+    color: var(--admin-text);
+    font-weight: 700;
+    font-size: 14px;
+    font-family: "Oswald", sans-serif;
+    letter-spacing: 0.5px;
+}
+
+.history-time {
+    font-size: 12px;
+    color: var(--admin-muted);
+    margin-top: 4px;
+}
+
+.history-earning {
+    color: var(--admin-text);
+    font-weight: 700;
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-family: "Oswald", sans-serif;
+}

@@ -1,0 +1,88 @@
+/* =========================================
+   RIDER - CHAT DRAWER
+   ========================================= */
+.chat-drawer {
+    position: absolute;
+    bottom: -100%;
+    left: 0;
+    width: 100%;
+    height: max-content;
+    min-height: 400px;
+    background: var(--admin-bg);
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    transition: bottom 0.3s ease;
+    z-index: 9999;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
+    padding: 25px;
+    box-sizing: border-box;
+    border-top: 1px solid var(--admin-border);
+}
+
+.chat-drawer.open {
+    bottom: 0;
+}
+
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--admin-border);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    color: var(--admin-text);
+}
+
+.chat-header h3 {
+    font-weight: 600;
+    font-size: 20px;
+    margin: 0;
+    font-family: "Oswald", sans-serif;
+}
+
+.btn-quick-reply {
+    background: var(--admin-panel);
+    border: 1px solid var(--admin-border);
+    color: var(--admin-text);
+    padding: 15px;
+    border-radius: 12px;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 10px;
+    width: 100%;
+    font-weight: 500;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.btn-quick-reply:hover,
+.btn-quick-reply:active {
+    border-color: var(--admin-orange);
+}
+
+.btn-close-chat {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.btn-close-chat:hover {
+    color: var(--admin-orange);
+    transform: scale(1.1);
+}
+
+.chat-hint-text {
+    color: var(--admin-muted);
+    font-size: 12px;
+    text-align: center;
+    margin-bottom: 15px;
+}

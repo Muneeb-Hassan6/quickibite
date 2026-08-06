@@ -1,0 +1,99 @@
+.premium-table-wrapper {
+    background: var(--admin-panel);
+    border: 1px solid var(--admin-border);
+    border-radius: 16px;
+    padding: 20px;
+    overflow-x: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.admin-table th {
+    padding: 15px;
+    color: var(--admin-muted);
+    font-size: 13px;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--admin-border);
+    font-weight: 600;
+}
+
+.admin-table td {
+    padding: 15px;
+    border-bottom: 1px solid var(--admin-border);
+    font-size: 14px;
+    vertical-align: middle;
+    color: var(--admin-text);
+    transition: background 0.2s;
+}
+
+.admin-table tr:hover td {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.order-id-text {
+    font-weight: 800;
+    color: var(--admin-text);
+    font-size: 15px;
+}
+
+.amount-text {
+    font-weight: 800;
+    color: var(--admin-orange);
+    font-size: 15px;
+}
+
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+.status-badge.pending {
+    background: rgba(255, 174, 0, 0.15);
+    color: #ffae00;
+    border: 1px solid rgba(255, 174, 0, 0.3);
+}
+
+.status-badge.cooking {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--admin-orange);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-badge.delivered {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.btn-view,
+.btn-action-pill {
+    background: transparent;
+    border: 1px solid var(--admin-border);
+    color: var(--admin-muted);
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-view:hover,
+.btn-action-pill:hover {
+    border-color: var(--admin-orange);
+    color: var(--admin-orange);
+    background: rgba(239, 68, 68, 0.05);
+}
