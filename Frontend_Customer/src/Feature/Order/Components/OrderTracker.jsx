@@ -9,8 +9,7 @@ import {
   FaSync,
   FaMotorcycle,
 } from "react-icons/fa";
-import toast from "react-hot-toast";
-import "../styles/index.css";
+import "../styles/OrderTracker.css";
 
 const OrderTracker = () => {
   const [searchId, setSearchId] = useState("");

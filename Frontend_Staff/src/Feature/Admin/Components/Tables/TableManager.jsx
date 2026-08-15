@@ -3,8 +3,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { FaPlus, FaTrash, FaQrcode, FaPrint, FaPowerOff, FaSave, FaLink } from "react-icons/fa";
 import { QRCodeCanvas } from "qrcode.react";
-import "../../styles/index.css"; // Ensure admin styling
-import "./styles/index.css"; // Table Manager specific styles
 
 const TableManager = () => {
   const queryClient = useQueryClient();
