@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   FaMapMarkerAlt,
@@ -9,14 +8,24 @@ import {
   FaPhoneAlt,
   FaCopy,
   FaDownload,
+  FaCreditCard,
+  FaMoneyBillWave,
+  FaUniversity,
+  FaMobileAlt,
+  FaTimes,
+  FaShieldAlt,
+  FaEdit,
+  FaTrash
 } from "react-icons/fa";
 import { useCart } from "../../Context/CartContext";
 import Swal from "sweetalert2";
 import html2canvas from "html2canvas";
+import "../../style/payment-sandbox.css";
+import "../../style/premium-checkout.css"; // 🔥 THE NEW PREMIUM LAYOUT
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
-  const { cartItems, placeOrder } = useCart();
+  const { cartItems, placeOrder, removeFromCart } = useCart();
 
   // Read from Session Storage (if user scanned QR code)
   const sessionMode = sessionStorage.getItem("orderMode");
@@ -34,34 +43,33 @@ const CheckoutPage = () => {
   const [area, setArea] = useState("");
 
   const [tableNumber, setTableNumber] = useState(sessionTable || "");
+  const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
 
   // Modal & Processing States
   const [isProcessing, setIsProcessing] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
-
   const [copied, setCopied] = useState(false);
-
-  const { data: availableTables = [] } = useQuery({
-    queryKey: ['active_tables'],
-    queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`);
-      const result = await response.json();
-      if (result.success) {
-        return result.data.filter(t => t.status == 1);
-      }
-      return [];
-    }
-  });
+  const [availableTables, setAvailableTables] = useState([]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
-    if (!sessionTable && availableTables.length > 0 && orderType === "dine_in" && !tableNumber) {
-      setTableNumber(availableTables[0].table_name);
-    }
-  }, [availableTables, sessionTable, orderType, tableNumber]);
+    const fetchTables = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`);
+        const result = await response.json();
+        if (result.success) {
+          const activeTables = result.data.filter(t => t.status == 1);
+          setAvailableTables(activeTables);
+          if (!sessionTable && activeTables.length > 0 && orderType === "dine_in") {
+            setTableNumber(activeTables[0].table_name);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load tables", error);
+      }
+    };
+    fetchTables();
+  }, [sessionTable, orderType]);
 
   const receiptRef = useRef(null);
 
@@ -72,11 +80,222 @@ const CheckoutPage = () => {
   const deliveryFee = orderType === "delivery" ? 150 : 0;
   const total = subTotal + deliveryFee;
 
+  // Calculate expected time (30 mins from now)
+  const expectedDate = new Date(new Date().getTime() + 30 * 60000);
+  const expectedTimeStr = expectedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const finalizeReceipt = (newlyPlacedOrder) => {
+    setReceiptData({
+      ...newlyPlacedOrder,
+      customerName: customerName || "Customer",
+      orderType: orderType,
+      deliveryFee: deliveryFee,
+      cart: cartItems,
+      total: total,
+      paymentMethod: paymentMethod,
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    });
+
+    sessionStorage.removeItem("orderMode");
+    sessionStorage.removeItem("tableNumber");
+  };
+
+  const showJazzCashModal = () => {
+    return new Promise((resolve) => {
+      Swal.fire({
+        customClass: { popup: 'sandbox-modal-popup' },
+        html: `
+          <div class="sandbox-modal-header">
+            <h2 class="sandbox-modal-title"><span style="color:#ed2a26;"><i class="fas fa-mobile-alt"></i></span> JazzCash Payment</h2>
+            <button class="sandbox-modal-close" onclick="Swal.close()"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="sandbox-modal-body">
+            <div class="sandbox-amount-box">
+              <div class="sandbox-amount-value">Rs. ${total}</div>
+              <div class="sandbox-amount-label">Amount to pay</div>
+            </div>
+            <button class="sandbox-test-btn" onclick="document.getElementById('jc-mobile').value='03001234567'; document.getElementById('jc-mpin').value='1234';">
+              <i class="fas fa-edit"></i> Show Sandbox Test Data
+            </button>
+            <div class="sandbox-input-group">
+              <label class="sandbox-input-label">JazzCash Mobile Number</label>
+              <div class="sandbox-input-wrapper">
+                <i class="fas fa-mobile-alt sandbox-input-icon"></i>
+                <input id="jc-mobile" class="sandbox-input with-icon" placeholder="03XX XXXXXXX" type="tel" maxlength="11">
+              </div>
+              <span class="sandbox-input-subtext">Enter your JazzCash registered mobile number</span>
+            </div>
+            <div class="sandbox-input-group">
+              <label class="sandbox-input-label">MPIN (4 Digits)</label>
+              <input id="jc-mpin" class="sandbox-input" placeholder="XXXX" type="password" maxlength="4" style="-webkit-text-security: disc;">
+            </div>
+            <button class="sandbox-submit-btn btn-jazzcash" id="btn-pay-jc">Pay Rs. ${total} via JazzCash</button>
+          </div>
+        `,
+        showConfirmButton: false,
+        didOpen: () => {
+          document.getElementById('btn-pay-jc').addEventListener('click', () => {
+            const mobile = document.getElementById("jc-mobile").value;
+            const mpin = document.getElementById("jc-mpin").value;
+            if (!mobile || mobile.length !== 11) {
+              Swal.showValidationMessage("Please enter a valid 11-digit JazzCash number");
+              return;
+            }
+            if (!mpin || mpin.length !== 4) {
+              Swal.showValidationMessage("Please enter your 4-digit MPIN");
+              return;
+            }
+            Swal.close();
+            resolve(true);
+          });
+        }
+      }).then((result) => { if(result.dismiss) resolve(false); });
+    });
+  };
+
+  const showCardModal = () => {
+    return new Promise((resolve) => {
+      Swal.fire({
+        customClass: { popup: 'sandbox-modal-popup' },
+        html: `
+          <div class="sandbox-modal-header">
+            <h2 class="sandbox-modal-title"><span style="color:#2563eb;"><i class="fas fa-credit-card"></i></span> Card Payment</h2>
+            <button class="sandbox-modal-close" onclick="Swal.close()"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="sandbox-modal-body">
+            <div class="sandbox-amount-box">
+              <div class="sandbox-amount-value">Rs. ${total}</div>
+              <div class="sandbox-amount-label">Amount to pay</div>
+            </div>
+            <button class="sandbox-test-btn" onclick="document.getElementById('card-num').value='4242 4242 4242 4242'; document.getElementById('card-name').value='JOHN DOE'; document.getElementById('card-exp').value='12/26'; document.getElementById('card-cvv').value='123';">
+              <i class="fas fa-edit"></i> Show Sandbox Test Data
+            </button>
+            <div class="sandbox-input-group">
+              <label class="sandbox-input-label">Card Number</label>
+              <div class="sandbox-input-wrapper">
+                <i class="far fa-credit-card sandbox-input-icon"></i>
+                <input id="card-num" class="sandbox-input with-icon" placeholder="XXXX XXXX XXXX XXXX" type="text" maxlength="19">
+              </div>
+            </div>
+            <div class="sandbox-input-group">
+              <label class="sandbox-input-label">Cardholder Name</label>
+              <input id="card-name" class="sandbox-input" placeholder="JOHN DOE" type="text">
+            </div>
+            <div class="sandbox-row">
+              <div class="sandbox-col">
+                <div class="sandbox-input-group">
+                  <label class="sandbox-input-label">Expiry Date</label>
+                  <input id="card-exp" class="sandbox-input" placeholder="MM/YY" type="text" maxlength="5">
+                </div>
+              </div>
+              <div class="sandbox-col">
+                <div class="sandbox-input-group">
+                  <label class="sandbox-input-label">CVV</label>
+                  <div class="sandbox-input-wrapper">
+                    <input id="card-cvv" class="sandbox-input" placeholder="•••" type="password" maxlength="3" style="-webkit-text-security: disc;">
+                    <i class="fas fa-shield-alt" style="position: absolute; right: 14px; color: var(--text-muted);"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="sandbox-secure-box">
+              <i class="fas fa-shield-alt sandbox-secure-icon"></i>
+              <div class="sandbox-secure-text">Your card information is encrypted and secure. Sandbox mode - no real charges.</div>
+            </div>
+            <button class="sandbox-submit-btn btn-card" id="btn-pay-card">Pay Rs. ${total} via Card</button>
+          </div>
+        `,
+        showConfirmButton: false,
+        didOpen: () => {
+          document.getElementById('btn-pay-card').addEventListener('click', () => {
+            const num = document.getElementById("card-num").value;
+            const exp = document.getElementById("card-exp").value;
+            const cvv = document.getElementById("card-cvv").value;
+            if (!num || num.length < 15) {
+              Swal.showValidationMessage("Enter a valid card number");
+              return;
+            }
+            if (!exp || !cvv) {
+              Swal.showValidationMessage("Enter expiry and CVV");
+              return;
+            }
+            Swal.close();
+            resolve(true);
+          });
+        }
+      }).then((result) => { if(result.dismiss) resolve(false); });
+    });
+  };
+
+  const showBankModal = () => {
+    return new Promise((resolve) => {
+      Swal.fire({
+        customClass: { popup: 'sandbox-modal-popup' },
+        html: `
+          <div class="sandbox-modal-header">
+            <h2 class="sandbox-modal-title"><span style="color:#8b6d43;"><i class="fas fa-university"></i></span> Bank Transfer</h2>
+            <button class="sandbox-modal-close" onclick="Swal.close()"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="sandbox-modal-body">
+            <div class="sandbox-amount-box">
+              <div class="sandbox-amount-value">Rs. ${total}</div>
+              <div class="sandbox-amount-label">Amount to pay</div>
+            </div>
+            <button class="sandbox-test-btn" onclick="document.getElementById('bt-ref').value='PK00 MEZN 0000 0000 0000 0000';">
+              <i class="fas fa-edit"></i> Show Sandbox Test Data
+            </button>
+            <div class="sandbox-input-group">
+              <label class="sandbox-input-label">Bank Account / IBAN Number</label>
+              <div class="sandbox-input-wrapper">
+                <i class="fas fa-building sandbox-input-icon"></i>
+                <input id="bt-ref" class="sandbox-input with-icon" placeholder="PK00 XXXX 0000 0000 0000 0000" type="text">
+              </div>
+            </div>
+            <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; padding: 15px; text-align: left; margin-bottom: 20px;">
+              <div style="color: #3b82f6; font-size: 13px; font-weight: 600; margin-bottom: 8px;">Bank Transfer Instructions:</div>
+              <div style="color: #3b82f6; font-size: 12px; margin-bottom: 12px; line-height: 1.5;">
+                1. Transfer Rs. ${total} to the account below<br/>
+                2. Your order will be confirmed after admin verification<br/>
+                3. Please keep the transfer receipt for reference
+              </div>
+              <div style="background: var(--panel-bg); padding: 12px; border-radius: 6px; font-size: 13px;">
+                <div style="margin-bottom: 4px; color: var(--text-muted);">Bank: <strong style="color: var(--text-main);">Meezan Bank</strong></div>
+                <div style="margin-bottom: 4px; color: var(--text-muted);">Account: <strong style="color: var(--text-main);">0123-4567890</strong></div>
+                <div style="color: var(--text-muted);">Title: <strong style="color: var(--text-main);">QuickBite Foods</strong></div>
+              </div>
+            </div>
+            <button class="sandbox-submit-btn" style="background-color: #927f61;" id="btn-pay-bank">Confirm Transfer Rs. ${total}</button>
+          </div>
+        `,
+        showConfirmButton: false,
+        didOpen: () => {
+          document.getElementById('btn-pay-bank').addEventListener('click', () => {
+            const ref = document.getElementById("bt-ref").value;
+            if (!ref) {
+              Swal.showValidationMessage("Please enter the reference ID after transferring");
+              return;
+            }
+            Swal.close();
+            resolve(true);
+          });
+        }
+      }).then((result) => { if(result.dismiss) resolve(false); });
+    });
+  };
+
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    setMobileError("");
+    if(cartItems.length === 0) {
+      Swal.fire({icon: "warning", title: "Empty Cart", text: "Please add items before placing an order."});
+      return;
+    }
+    
+    if (!customerName) {
+      Swal.fire({icon: "warning", title: "Missing Details", text: "Please enter your name."});
+      return;
+    }
 
-    // Mobile Number Validation (Validate if required, or if user entered something voluntarily in Dine-In)
     if ((orderType !== "dine_in" || customerMobile.trim() !== "") && !/^03\d{9}$/.test(customerMobile)) {
       setMobileError("Please enter a valid 11-digit mobile number to proceed.");
       Swal.fire({
@@ -88,10 +307,14 @@ const CheckoutPage = () => {
       return;
     }
 
+    if (orderType === "delivery" && (!area)) {
+       Swal.fire({icon: "warning", title: "Missing Area", text: "Please provide delivery area."});
+       return;
+    }
+
     setIsProcessing(true);
 
-    const fullAddress =
-      orderType === "delivery" ? `${houseNo}, ${street}, ${area}`.trim() : "";
+    const fullAddress = orderType === "delivery" ? `${houseNo}, ${street}, ${area}`.trim() : "";
 
     const customerDetails = {
       orderType: orderType.charAt(0).toUpperCase() + orderType.slice(1),
@@ -104,307 +327,311 @@ const CheckoutPage = () => {
       tableNumber: orderType === "dine_in" ? tableNumber : null,
       cart: cartItems,
       totalAmount: total,
+      paymentMethod: paymentMethod,
+      paymentStatus: paymentMethod === "Cash on Delivery" ? "Pending" : "Paid"
     };
 
     if (placeOrder) {
-      const newlyPlacedOrder = await placeOrder(customerDetails);
+      if (paymentMethod !== "Cash on Delivery") {
+        let paymentConfirmed = false;
 
-      if (newlyPlacedOrder) {
-        setReceiptData({
-          ...newlyPlacedOrder,
-          customerName: customerName || "Customer",
-          orderType: orderType,
-          deliveryFee: deliveryFee,
-          cart: cartItems,
-          total: total,
-          date: new Date().toLocaleDateString(),
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        if (paymentMethod === "JazzCash") paymentConfirmed = await showJazzCashModal();
+        else if (paymentMethod === "Credit/Debit Card") paymentConfirmed = await showCardModal();
+        else if (paymentMethod === "Bank Transfer") paymentConfirmed = await showBankModal();
+
+        if (!paymentConfirmed) {
+          setIsProcessing(false);
+          return;
+        }
+
+        Swal.fire({
+          title: `Processing Payment...`,
+          text: 'Connecting to Secure Gateway',
+          allowOutsideClick: false,
+          background: "var(--admin-panel)",
+          color: "#fff",
+          didOpen: () => Swal.showLoading()
         });
 
-        // Clear QR Code session storage after a successful order
-        sessionStorage.removeItem("orderMode");
-        sessionStorage.removeItem("tableNumber");
+        setTimeout(async () => {
+          Swal.close();
+          const newlyPlacedOrder = await placeOrder(customerDetails);
+          if (newlyPlacedOrder) {
+            Swal.fire({
+              icon: "success",
+              title: "Payment Successful",
+              text: "Transaction Completed.",
+              timer: 1500,
+              showConfirmButton: false,
+              background: "var(--admin-panel)",
+              color: "#fff",
+            });
+            finalizeReceipt(newlyPlacedOrder);
+          }
+          setIsProcessing(false);
+        }, 2000);
+      } else {
+        const newlyPlacedOrder = await placeOrder(customerDetails);
+        if (newlyPlacedOrder) {
+          finalizeReceipt(newlyPlacedOrder);
+        }
+        setIsProcessing(false);
       }
+    } else {
+      setIsProcessing(false);
     }
-
-    setIsProcessing(false);
   };
 
   const handleCopy = (id) => {
-    const finalId = id || Math.floor(1000 + Math.random() * 9000);
-    navigator.clipboard.writeText(finalId);
+    navigator.clipboard.writeText(id);
     setCopied(true);
-
-    setTimeout(() => {
-      setCopied(false);
-    }, 2000);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownloadReceipt = async () => {
     if (!receiptRef.current) return;
-
     try {
-      Swal.fire({
-        title: "Generating Receipt Image...",
-        allowOutsideClick: false,
-        background: "var(--admin-panel)",
-        color: "#fff",
-        didOpen: () => Swal.showLoading(),
-      });
-
-      const element = receiptRef.current;
-      const canvas = await html2canvas(element, {
-        backgroundColor: "#0a0a0a",
-        scale: 2,
-        logging: false,
-        useCORS: true,
-      });
-
+      Swal.fire({title: "Generating Receipt...", didOpen: () => Swal.showLoading()});
+      const canvas = await html2canvas(receiptRef.current, { backgroundColor: "#0a0a0a", scale: 2 });
       const imgData = canvas.toDataURL("image/png");
       const link = document.createElement("a");
       link.href = imgData;
-      link.download = `QuickBite_Receipt_${receiptData?.id || "order"}.png`;
-      document.body.appendChild(link);
+      link.download = `Receipt_${receiptData.id}.png`;
       link.click();
-      document.body.removeChild(link);
-
-      Swal.fire({
-        icon: "success",
-        title: "Downloaded!",
-        text: "Your receipt image has been downloaded successfully.",
-        timer: 2000,
-        showConfirmButton: false,
-        background: "var(--admin-panel)",
-        color: "#fff",
-      });
-    } catch (error) {
-      console.error("Receipt download error:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Download Failed",
-        text: "Could not generate receipt image.",
-        background: "var(--admin-panel)",
-        color: "#fff",
-      });
+      Swal.close();
+    } catch (e) {
+      console.error(e);
+      Swal.fire("Error", "Could not download receipt", "error");
     }
   };
 
-  const handleCancelDineIn = () => {
-    sessionStorage.removeItem("orderMode");
-    sessionStorage.removeItem("tableNumber");
-    setOrderType("delivery");
-    setTableNumber("");
+  // Helper text for payment method
+  const getPaymentHelperText = () => {
+    if(paymentMethod === "Cash on Delivery") {
+      return orderType === "delivery" ? "Payment will be collected at the time of delivery." : "Payment will be collected at the counter.";
+    } else {
+      return "Payment will be processed securely via online gateway.";
+    }
   };
 
   return (
-    <div className="max-w-[75rem] mx-auto p-[2.5rem_1.25rem] animate-slide-up">
-      <h2 className="font-['Oswald',sans-serif] text-center text-[var(--text-main)] text-[2rem] uppercase tracking-[1px] mb-[1.875rem] border-b-[2px] border-[#333] pb-[0.625rem]">Checkout</h2>
+    <div className="premium-checkout-wrapper">
+      <div className="premium-checkout-content">
+        <h1 className="checkout-header-title">Checkout</h1>
 
-      <form className="flex items-start gap-[2.5rem] max-lg:flex-col max-lg:gap-[1.25rem]" onSubmit={handlePlaceOrder}>
-        {/* CHECKOUT FORM */}
-        <div className="flex-[2]">
-          {sessionMode !== "Dine-In" ? (
-            <>
-              <h3 className="font-['Oswald',sans-serif] text-[1.25rem] text-[var(--text-main)] mt-0 border-b border-[var(--border-color)] pb-[0.625rem] mb-[1.25rem]">1. Select Order Type</h3>
-              <div className="flex gap-[0.937rem] mb-[1.563rem] max-lg:grid max-lg:grid-cols-3 max-lg:gap-[0.625rem]">
-                <div
-                  className={`flex-1 border-2 border-[var(--border-color)] bg-[var(--panel-bg)] text-[var(--text-muted)] rounded-[0.75rem] p-[0.937rem] max-lg:p-[0.625rem] max-lg:text-[0.812rem] flex flex-col items-center justify-center gap-[0.625rem] max-lg:gap-[0.312rem] cursor-pointer font-bold transition-all duration-300 [&>svg]:text-[1.5rem] max-lg:[&>svg]:text-[1.25rem] ${orderType === "delivery" ? "border-[#ef4444] text-[#ef4444] bg-[rgba(239,68,68,0.05)]" : ""}`}
-                  onClick={() => setOrderType("delivery")}
-                >
-                  <FaMapMarkerAlt /> <span>Delivery</span>
+        {/* 1. ORDER SUMMARY CARD */}
+        <div className="premium-card">
+          <h2 className="premium-card-title">Order Summary</h2>
+          {cartItems && cartItems.length > 0 ? (
+            cartItems.map((item, idx) => (
+              <div className="order-summary-item" key={idx}>
+                <div className="order-item-info">
+                  <span className="order-item-name">{item.name || item.title}</span>
+                  <span className="order-item-desc">Rs. {item.price} × {item.qty}</span>
                 </div>
-                <div
-                  className={`flex-1 border-2 border-[var(--border-color)] bg-[var(--panel-bg)] text-[var(--text-muted)] rounded-[0.75rem] p-[0.937rem] max-lg:p-[0.625rem] max-lg:text-[0.812rem] flex flex-col items-center justify-center gap-[0.625rem] max-lg:gap-[0.312rem] cursor-pointer font-bold transition-all duration-300 [&>svg]:text-[1.5rem] max-lg:[&>svg]:text-[1.25rem] ${orderType === "takeaway" ? "border-[#ef4444] text-[#ef4444] bg-[rgba(239,68,68,0.05)]" : ""}`}
-                  onClick={() => setOrderType("takeaway")}
-                >
-                  <FaShoppingBag /> <span>Takeaway</span>
+                <div className="order-item-price" style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                  Rs. {item.price * item.qty}
+                  <button 
+                    type="button" 
+                    onClick={() => removeFromCart(item.id)} 
+                    style={{background: '#ef4444', border: 'none', color: '#fff', borderRadius: '4px', padding: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'}}
+                  >
+                    <FaTrash size={10} />
+                  </button>
                 </div>
               </div>
-            </>
+            ))
           ) : (
-            <>
-              <div className="flex justify-between items-center bg-[var(--admin-orange)] text-white p-[0.625rem_0.937rem] rounded-[0.313rem] mb-[1.25rem] font-bold">
-                <span><FaUtensils className="mr-[0.5rem]" /> Ordering for Dine-In</span>
-                <button 
-                  type="button" 
-                  onClick={handleCancelDineIn} 
-                  className="bg-[rgba(0,0,0,0.2)] border-none text-white p-[0.313rem_0.625rem] rounded-[0.313rem] cursor-pointer text-[0.75rem]"
-                >
-                  Cancel Dine-In
-                </button>
-              </div>
-            </>
+            <p style={{color: '#888', fontStyle: 'italic', fontSize: '14px', marginBottom: '15px'}}>Your cart is empty.</p>
           )}
 
-          <h3 className="font-['Oswald',sans-serif] text-[1.25rem] text-[var(--text-main)] mt-[1.875rem] border-b border-[var(--border-color)] pb-[0.625rem] mb-[1.25rem]">
-            2. Your Details
-          </h3>
-          <div className="mb-[1.25rem]">
-            <label className="flex items-center gap-[0.5rem] mb-[0.5rem] text-[var(--text-muted)] font-bold text-[0.875rem]">Full Name / Customer Name</label>
+          <div className="summary-totals-row">
+            <span>Original Subtotal</span>
+            <strong>Rs. {subTotal.toFixed(2)}</strong>
+          </div>
+          <div className="summary-totals-row">
+            <span>{orderType === "delivery" ? "Delivery Fee" : "Service Fee"}</span>
+            <strong>Rs. {deliveryFee.toFixed(2)}</strong>
+          </div>
+          <div className="grand-total-row">
+            <span>Grand Total</span>
+            <span>Rs. {total.toFixed(2)}</span>
+          </div>
+        </div>
+
+        {/* 2. YOUR DETAILS CARD */}
+        <div className="premium-card">
+          <h2 className="premium-card-title">Your Details</h2>
+          <div className="premium-input-group">
+            <label className="premium-label">Full Name</label>
             <input
               type="text"
               placeholder="Enter your name"
-              required
-              className="w-full bg-[var(--home-bg)] border border-[var(--border-color)] text-[var(--text-main)] p-[0.875rem] rounded-[0.625rem] text-[0.937rem] outline-none transition-all duration-300 focus:border-[#ef4444] focus:shadow-[0_0_10px_rgba(239,68,68,0.2)]"
+              className="premium-input"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
             />
           </div>
-          <div className="mb-[1.25rem]">
-            <label className="flex items-center gap-[0.5rem] mb-[0.5rem] text-[var(--text-muted)] font-bold text-[0.875rem]">
-              <FaPhoneAlt className="text-[#ef4444]" /> Phone Number
-            </label>
+          <div className="premium-input-group">
+            <label className="premium-label">Phone Number</label>
             <input
               type="tel"
               placeholder="e.g. 03001234567"
               maxLength="11"
-              required={orderType !== "dine_in"}
-              className={`w-full bg-[var(--home-bg)] border border-[var(--border-color)] text-[var(--text-main)] p-[0.875rem] rounded-[0.625rem] text-[0.937rem] outline-none transition-all duration-300 focus:border-[#ef4444] focus:shadow-[0_0_10px_rgba(239,68,68,0.2)] ${mobileError ? "border-red-500" : ""}`}
+              className="premium-input"
               style={mobileError ? { borderColor: "#ef4444" } : {}}
               value={customerMobile}
               onChange={(e) => {
                 const val = e.target.value.replace(/[^0-9]/g, "");
                 setCustomerMobile(val);
-                
-                // Real-time validation while typing
-                if (val.length > 0 && val.length < 11) {
-                  setMobileError("Please enter all 11 digits.");
-                } else if (val.length === 11 && !/^03\d{9}$/.test(val)) {
-                  setMobileError("Number must start with 03 (e.g. 03001234567).");
-                } else {
-                  setMobileError("");
-                }
+                if (val.length > 0 && val.length < 11) setMobileError("Enter 11 digits.");
+                else if (val.length === 11 && !/^03\d{9}$/.test(val)) setMobileError("Must start with 03");
+                else setMobileError("");
               }}
             />
-            {mobileError && (
-              <span className="text-red-500 text-[0.813rem] mt-[0.313rem] inline-block">
-                {mobileError}
-              </span>
-            )}
+            {mobileError && <span style={{ color: "#ef4444", fontSize: "12px", marginTop: "4px", display: "block" }}>{mobileError}</span>}
           </div>
 
           {orderType === "delivery" && (
-            <div className="mb-[1.25rem] animate-slide-up">
-              <label className="flex items-center gap-[0.5rem] mb-[0.5rem] text-[var(--text-muted)] font-bold text-[0.875rem]">
-                <FaMapMarkerAlt className="text-[#ef4444]" /> Delivery Address Details
-              </label>
-
-              <div className="flex flex-col lg:flex-row gap-[0.625rem] lg:gap-[0.938rem] mb-[0.937rem]">
-                <input
-                  type="text"
-                  placeholder="House / Flat No."
-                  className="w-full bg-[var(--home-bg)] border border-[var(--border-color)] text-[var(--text-main)] p-[0.875rem] rounded-[0.625rem] text-[0.937rem] outline-none transition-all duration-300 focus:border-[#ef4444] focus:shadow-[0_0_10px_rgba(239,68,68,0.2)] flex-1"
-                  value={houseNo}
-                  onChange={(e) => setHouseNo(e.target.value)}
-                />
-                <input
-                  type="text"
-                  placeholder="Street Name / No."
-                  className="w-full bg-[var(--home-bg)] border border-[var(--border-color)] text-[var(--text-main)] p-[0.875rem] rounded-[0.625rem] text-[0.937rem] outline-none transition-all duration-300 focus:border-[#ef4444] focus:shadow-[0_0_10px_rgba(239,68,68,0.2)] flex-1"
-                  value={street}
-                  onChange={(e) => setStreet(e.target.value)}
-                />
+            <div className="animate-slide-up" style={{marginTop: '20px', paddingTop: '20px', borderTop: '1px dashed #eaeaea'}}>
+              <h3 className="premium-label" style={{marginBottom: '15px', color: '#111'}}>Delivery Address</h3>
+              <div style={{display: 'flex', gap: '15px'}}>
+                <div className="premium-input-group" style={{flex: 1}}>
+                  <label className="premium-label" style={{fontWeight: 'normal', fontSize: '12px'}}>House / Flat No.</label>
+                  <input type="text" className="premium-input" value={houseNo} onChange={(e) => setHouseNo(e.target.value)} />
+                </div>
+                <div className="premium-input-group" style={{flex: 1}}>
+                  <label className="premium-label" style={{fontWeight: 'normal', fontSize: '12px'}}>Street No.</label>
+                  <input type="text" className="premium-input" value={street} onChange={(e) => setStreet(e.target.value)} />
+                </div>
               </div>
-
-              <input
-                type="text"
-                placeholder="Area / Society Name (e.g., Johar Town)"
-                required
-                className="w-full bg-[var(--home-bg)] border border-[var(--border-color)] text-[var(--text-main)] p-[0.875rem] rounded-[0.625rem] text-[0.937rem] outline-none transition-all duration-300 focus:border-[#ef4444] focus:shadow-[0_0_10px_rgba(239,68,68,0.2)]"
-                value={area}
-                onChange={(e) => setArea(e.target.value)}
-              />
+              <div className="premium-input-group" style={{marginBottom: 0}}>
+                <label className="premium-label" style={{fontWeight: 'normal', fontSize: '12px'}}>Area / Society</label>
+                <input type="text" placeholder="e.g. Johar Town" className="premium-input" value={area} onChange={(e) => setArea(e.target.value)} />
+              </div>
             </div>
           )}
-
+          
           {orderType === "dine_in" && (
-            <div className="mb-[1.25rem] animate-slide-up">
-              <label className="flex items-center gap-[0.5rem] mb-[0.5rem] text-[var(--text-muted)] font-bold text-[0.875rem]">
-                <FaUtensils className="text-[#ef4444]" /> Select Table
-              </label>
-              <select
-                required
-                className="w-full bg-[var(--home-bg)] border border-[var(--border-color)] text-[var(--text-main)] p-[0.875rem] rounded-[0.625rem] text-[0.937rem] outline-none transition-all duration-300 focus:border-[#ef4444] focus:shadow-[0_0_10px_rgba(239,68,68,0.2)]"
-                value={tableNumber}
-                onChange={(e) => setTableNumber(e.target.value)}
-                disabled={!!sessionTable} // Lock if scanned from QR code
-                style={sessionTable ? { backgroundColor: "#333", cursor: "not-allowed", color: "#ccc" } : {}}
-              >
-                <option value="" disabled>-- Select a Table --</option>
-                {availableTables.map((t) => (
-                  <option key={t.id} value={t.table_name}>
-                    {t.table_name}
-                  </option>
-                ))}
-              </select>
-              {sessionTable && <small className="text-[var(--admin-muted)]">Table number locked from QR Code scan.</small>}
-            </div>
+             <div className="animate-slide-up" style={{marginTop: '20px', paddingTop: '20px', borderTop: '1px dashed #eaeaea'}}>
+                <label className="premium-label">Select Table</label>
+                <select className="premium-input" value={tableNumber} onChange={(e) => setTableNumber(e.target.value)} disabled={!!sessionTable}>
+                  <option value="" disabled>-- Select a Table --</option>
+                  {availableTables.map((t) => (
+                    <option key={t.id} value={t.table_name}>{t.table_name}</option>
+                  ))}
+                </select>
+             </div>
           )}
+        </div>
 
-          {orderType === "takeaway" && (
-            <div className="mb-[1.25rem] animate-slide-up">
-              <div className="bg-[rgba(239,68,68,0.1)] text-[#ef4444] p-[0.937rem] rounded-[0.625rem] flex items-center gap-[0.625rem] font-bold border border-dashed border-[rgba(239,68,68,0.3)]">
-                <FaShoppingBag /> Please pick up your order from the counter in
-                20 minutes.
+        {/* 3. ORDER TYPE CARD */}
+        {sessionMode !== "Dine-In" && (
+          <div className="premium-card">
+            <h2 className="premium-card-title">Order Type</h2>
+            
+            <div className={`premium-radio-box ${orderType === 'takeaway' ? 'active' : ''}`} onClick={() => setOrderType('takeaway')}>
+              <div className="pr-circle"></div>
+              <div className="pr-icon" style={{color: '#8b6d43'}}><FaShoppingBag/></div>
+              <div className="pr-content">
+                <div className="pr-title">Pickup</div>
+                <div className="pr-subtitle">Collect from our store</div>
               </div>
             </div>
-          )}
+
+            <div className={`premium-radio-box ${orderType === 'delivery' ? 'active' : ''}`} onClick={() => setOrderType('delivery')}>
+              <div className="pr-circle"></div>
+              <div className="pr-icon" style={{color: '#2563eb'}}><FaMapMarkerAlt/></div>
+              <div className="pr-content">
+                <div className="pr-title">Delivery / Service</div>
+                <div className="pr-subtitle">Get it delivered at your location</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 4. PAYMENT METHOD CARD */}
+        <div className="premium-card">
+          <h2 className="premium-card-title">Payment Method</h2>
+          
+          <div className={`premium-radio-box ${paymentMethod === 'Cash on Delivery' ? 'active' : ''}`} onClick={() => setPaymentMethod('Cash on Delivery')}>
+            <div className="pr-circle"></div>
+            <div className="pr-icon" style={{color: '#8b6d43'}}><FaMoneyBillWave/></div>
+            <div className="pr-content">
+              <div className="pr-title">Cash ({orderType === 'delivery' ? 'on Delivery' : 'on Pickup'})</div>
+            </div>
+          </div>
+
+          <div className={`premium-radio-box ${paymentMethod === 'JazzCash' ? 'active' : ''}`} onClick={() => setPaymentMethod('JazzCash')}>
+            <div className="pr-circle"></div>
+            <div className="pr-icon" style={{color: '#ed2a26'}}><FaMobileAlt/></div>
+            <div className="pr-content">
+              <div className="pr-title">JazzCash <span className="pm-sandbox-badge" style={{marginLeft:'8px', fontSize: '9px', padding: '2px 5px'}}>SANDBOX</span></div>
+              <div className="pr-subtitle">Pay via JazzCash mobile wallet</div>
+            </div>
+          </div>
+
+          <div className={`premium-radio-box ${paymentMethod === 'Credit/Debit Card' ? 'active' : ''}`} onClick={() => setPaymentMethod('Credit/Debit Card')}>
+            <div className="pr-circle"></div>
+            <div className="pr-icon" style={{color: '#10b981'}}><FaCreditCard/></div>
+            <div className="pr-content">
+              <div className="pr-title">Credit / Debit Card <span className="pm-sandbox-badge" style={{marginLeft:'8px', fontSize: '9px', padding: '2px 5px'}}>SANDBOX</span></div>
+              <div className="pr-subtitle">Visa, Mastercard accepted</div>
+            </div>
+          </div>
+
+          <div className={`premium-radio-box ${paymentMethod === 'Bank Transfer' ? 'active' : ''}`} onClick={() => setPaymentMethod('Bank Transfer')}>
+            <div className="pr-circle"></div>
+            <div className="pr-icon" style={{color: '#8b6d43'}}><FaUniversity/></div>
+            <div className="pr-content">
+              <div className="pr-title">Bank Transfer</div>
+              <div className="pr-subtitle">Direct bank account transfer</div>
+            </div>
+          </div>
         </div>
 
-        {/* BILL SUMMARY */}
-        <div className="flex-1 bg-[var(--panel-bg)] border border-[var(--border-color)] p-[1.563rem] rounded-[1rem] sticky top-[1.25rem] max-lg:static max-lg:w-full max-lg:box-border">
-          <h3 className="font-['Oswald',sans-serif] text-[1.25rem] text-[var(--text-main)] mt-0 border-b border-[var(--border-color)] pb-[0.625rem] mb-[1.25rem]">Final Amount</h3>
-          <div className="flex justify-between mb-[0.75rem] text-[var(--text-main)] text-[0.937rem]">
-            <span>Subtotal</span>
-            <span>Rs {subTotal}</span>
-          </div>
-          <div className="flex justify-between mb-[0.75rem] text-[var(--text-main)] text-[0.937rem]">
-            <span>Delivery Fee</span>
-            <span>{deliveryFee === 0 ? "Free" : `Rs ${deliveryFee}`}</span>
-          </div>
-          <div className="h-[1px] bg-[var(--border-color)] my-[0.937rem]"></div>
-
-          <div className="flex justify-between m-0 p-[0.937rem_0] border-none">
-            <span className="text-[1.125rem] font-bold">Total to Pay</span>
-            <span className="text-[1.5rem] font-[900] text-[#ef4444]">Rs {total}</span>
-          </div>
-
-          <p className="text-[#aaa] text-[0.75rem] text-center mb-[1.25rem]">
-            Payment Method: <strong>Cash on Delivery / Counter</strong>
-          </p>
-
-          <button
-            type="submit"
-            className="w-full p-[0.937rem] rounded-[0.75rem] bg-[#ef4444] text-white font-bold text-[1rem] border-none cursor-pointer flex justify-center items-center gap-[0.625rem] transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
-            disabled={isProcessing}
-          >
-            <FaCheckCircle /> {isProcessing ? "Processing..." : "Confirm Order"}
-          </button>
+        {/* INFO BOX */}
+        <div className="info-box">
+          {getPaymentHelperText()}
         </div>
-      </form>
+
+        {/* SCHEDULED BOX */}
+        <div className="scheduled-box">
+          <div className="scheduled-icon">
+            <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 24 24" height="20px" width="20px" xmlns="http://www.w3.org/2000/svg"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"></path><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"></path></svg>
+          </div>
+          <div className="scheduled-text">
+            <div className="scheduled-title">Scheduled for Today</div>
+            <div className="scheduled-time">Expected: {expectedTimeStr}</div>
+          </div>
+          <div className="scheduled-badge">Today</div>
+        </div>
+
+      </div>
+
+      {/* STICKY BOTTOM BAR */}
+      <div className="sticky-bottom-bar">
+        <button className="btn-place-order" onClick={handlePlaceOrder} disabled={isProcessing}>
+          {isProcessing ? "Processing..." : `Place Order (Rs. ${total.toFixed(2)})`}
+        </button>
+      </div>
 
       {/* RECEIPT MODAL POPUP */}
       {receiptData && (
-        <div className="fixed top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.85)] backdrop-blur-[0.5rem] z-[100000] flex items-center justify-center p-[0.937rem] animate-fade-in">
-          <div className="bg-[var(--panel-bg)] border border-[var(--border-color)] w-full max-w-[30rem] p-[2.188rem_1.875rem] max-lg:p-[1.562rem_1.25rem] rounded-[1.5rem] max-lg:rounded-[1rem] text-center shadow-[0_20px_60px_rgba(0,0,0,0.4)] max-h-[90vh] overflow-y-auto animate-slide-up">
-            <FaCheckCircle className="text-[3.75rem] max-lg:text-[3.125rem] text-[#2ecc71] mb-[0.937rem] inline-block" />
-            <h2 className="font-['Oswald',sans-serif] text-[var(--text-main)] uppercase m-[0_0_0.313rem] text-[2rem] max-lg:text-[1.5rem] tracking-[1px]">Order Confirmed!</h2>
-            <p className="text-[var(--text-muted)] m-[0_0_1.563rem] text-[0.937rem]">
-              Your delicious food is being prepared.
-            </p>
+        <div className="receipt-modal-overlay" style={{zIndex: 99999}}>
+          <div className="receipt-modal-card animate-slide-up">
+            <FaCheckCircle className="receipt-icon" />
+            <h2 className="receipt-title">Order Confirmed!</h2>
+            <p className="receipt-subtitle">Your delicious food is being prepared.</p>
 
-            <div className="bg-[var(--home-bg)] rounded-[0.75rem] p-[1.25rem] border border-dashed border-[var(--border-color)] text-left" ref={receiptRef}>
-              <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-[0.625rem] mb-[0.937rem]">
-                <span className="text-[var(--text-muted)] font-bold">Order ID:</span>
-
-                <span className="flex items-center gap-[0.625rem]">
-                  <span className="font-bold text-[1.2rem] text-[var(--text-main)] tracking-[1px]">
-                    #{receiptData.id}
-                  </span>
-
+            <div className="receipt-bill-box" ref={receiptRef}>
+              <div className="receipt-row align-items-center">
+                <span className="receipt-label">Order ID:</span>
+                <span className="receipt-value-wrapper">
+                  <span className="receipt-order-id">#{receiptData.id}</span>
                   <button
                     data-html2canvas-ignore="true"
-                    className={`bg-transparent text-[#ef4444] border border-[#ef4444] rounded-[0.375rem] p-[0.25rem_0.625rem] text-[0.75rem] cursor-pointer flex items-center gap-[0.375rem] transition-all duration-300 ${copied ? "bg-[rgba(16,185,129,0.2)] !text-[#10b981] !border-[#10b981]" : ""}`}
+                    className={`btn-copy ${copied ? "copied" : ""}`}
                     onClick={(e) => {
                       e.preventDefault();
                       handleCopy(receiptData.id);
@@ -415,66 +642,50 @@ const CheckoutPage = () => {
                   </button>
                 </span>
               </div>
-
-              <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-[0.625rem] mb-[0.937rem]">
-                <span className="text-[var(--text-muted)] font-bold">Customer Name:</span>
-                <span className="text-[var(--text-main)] font-bold font-['Oswald',sans-serif] text-[1.125rem] max-lg:text-[0.875rem] tracking-[1px]">
-                  {receiptData.customerName}
-                </span>
+              <div className="receipt-row mt-2">
+                <span className="receipt-label">Customer:</span>
+                <span className="receipt-value">{receiptData.customerName}</span>
               </div>
-
-              <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-[0.625rem] mb-[0.937rem]">
-                <span className="text-[var(--text-muted)] font-bold">Date & Time:</span>
-                <span className="text-[var(--text-main)] font-bold text-[0.875rem]">
+              <div className="receipt-row mt-2">
+                <span className="receipt-label">Date & Time:</span>
+                <span className="receipt-value" style={{ fontFamily: "inherit", fontSize: "14px" }}>
                   {receiptData.date} | {receiptData.time}
                 </span>
               </div>
-
-              <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-[0.625rem] mb-[0.937rem]">
-                <span className="text-[var(--text-muted)] font-bold">Order Type:</span>
-                <span className="font-bold font-['Oswald',sans-serif] text-[1.125rem] max-lg:text-[0.875rem] tracking-[1px] text-[#ef4444]">
-                  {receiptData.orderType.replace("_", " ").toUpperCase()}
+              <div className="receipt-row mt-2">
+                <span className="receipt-label">Payment:</span>
+                <span className="receipt-value" style={{ fontWeight: "bold", color: receiptData.paymentMethod === "Cash on Delivery" ? "#ef4444" : "#10b981" }}>
+                  {receiptData.paymentMethod}
                 </span>
               </div>
-
-              <div className="mb-[0.937rem]">
+              
+              <div className="receipt-items-list mt-3">
                 {receiptData.cart &&
                   receiptData.cart.map((item, idx) => (
-                    <div key={idx} className="flex justify-between mb-[0.625rem] text-[var(--text-muted)] font-[500]">
-                      <span>
-                        {item.qty}x {item.name || item.title}
-                      </span>
+                    <div key={idx} className="receipt-item-row">
+                      <span>{item.qty}x {item.name || item.title}</span>
                       <span>Rs {item.price * item.qty}</span>
                     </div>
                   ))}
               </div>
-
-              <div className="flex justify-between border-t border-[var(--border-color)] pt-[0.937rem] mt-[0.937rem] items-center">
-                <span className="text-[var(--text-main)] text-[1.125rem] font-bold uppercase">Total Paid:</span>
-                <span className="text-[#ef4444] text-[1.5rem] font-[900]">
-                  Rs {receiptData.total}
-                </span>
+              <div className="receipt-total-row">
+                <span className="receipt-total-label">Total Paid:</span>
+                <span className="receipt-total-value">Rs {receiptData.total}</span>
               </div>
             </div>
-
+            
             <button
               onClick={handleDownloadReceipt}
-              className="w-full bg-[#10b981] text-white border-none p-[0.875rem] rounded-[0.75rem] font-bold text-[0.937rem] cursor-pointer mt-[1.25rem] flex items-center justify-center gap-[0.5rem] transition-all duration-300 uppercase hover:bg-[#059669] hover:-translate-y-[2px] hover:shadow-[0_4px_12px_rgba(16,185,129,0.2)]"
+              className="btn-receipt-download"
             >
               <FaDownload /> Download Receipt
             </button>
-
-            <div className="flex gap-[0.937rem] mt-[1.875rem] max-lg:flex-col max-lg:gap-[0.625rem]">
-              <button
-                className="flex-1 bg-[#ef4444] text-white border-none p-[0.937rem] max-lg:p-[0.75rem] max-lg:w-full rounded-[0.625rem] font-bold cursor-pointer transition-all duration-300 uppercase hover:bg-[#c62828] hover:-translate-y-[2px] max-lg:text-[0.812rem]"
-                onClick={() => navigate("/track-order")}
-              >
+            
+            <div className="receipt-actions">
+              <button className="btn-receipt-track" onClick={() => navigate("/track-order")}>
                 Track Order
               </button>
-              <button
-                className="flex-1 bg-transparent text-white border border-[#444] p-[0.937rem] max-lg:p-[0.75rem] max-lg:w-full rounded-[0.625rem] font-bold cursor-pointer transition-all duration-300 uppercase hover:bg-[#222] max-lg:text-[0.812rem]"
-                onClick={() => navigate("/")}
-              >
+              <button className="btn-receipt-home" onClick={() => navigate("/")}>
                 Back to Home
               </button>
             </div>

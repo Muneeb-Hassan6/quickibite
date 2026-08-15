@@ -28,18 +28,15 @@ $curr_ts = strtotime($current_time_str);
 $is_open = false;
 
 if ($close_ts > $open_ts) {
-    // Normal schedule: e.g., 10:00 to 22:00
     if ($curr_ts >= $open_ts && $curr_ts <= $close_ts) {
         $is_open = true;
     }
 } else {
-    // Cross midnight: e.g., 18:00 to 02:00
     if ($curr_ts >= $open_ts || $curr_ts <= $close_ts) {
         $is_open = true;
     }
 }
 
-// Bypass check if it's placed by Cashier/Admin locally (optional, but strictly following user's prompt to block if closed)
 if (!$is_open) {
     echo json_encode([
         "success" => false, 
@@ -49,50 +46,81 @@ if (!$is_open) {
     exit();
 }
 
-// Recalculate order total from database to prevent parameter/price tampering
 $order_total = 0;
+$addon_ids = [];
+$menu_item_ids = [];
+
+if (!empty($data->cart) && is_array($data->cart)) {
+    foreach($data->cart as $item) {
+        if (!empty($item->is_addon) && !empty($item->addon_data)) {
+            $addon_id = intval($item->addon_data->id ?? 0);
+            if ($addon_id > 0) $addon_ids[] = $addon_id;
+        } else {
+            $menu_item_id = isset($item->menuItemId) ? intval($item->menuItemId) : 0;
+            if ($menu_item_id <= 0 && isset($item->id)) {
+                $parts = explode('-', strval($item->id));
+                if (is_numeric($parts[0])) $menu_item_id = intval($parts[0]);
+            }
+            if ($menu_item_id > 0) $menu_item_ids[] = $menu_item_id;
+        }
+    }
+}
+
+// BULK FETCH PRICES
+$addon_prices = [];
+if (!empty($addon_ids)) {
+    $ids_str = implode(',', array_fill(0, count($addon_ids), '?'));
+    $stmt = $db->prepare("SELECT id, price FROM menu_addons WHERE id IN ($ids_str)");
+    $stmt->execute($addon_ids);
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $addon_prices[$row['id']] = floatval($row['price']);
+    }
+}
+
+$menu_item_prices = [];
+$menu_variant_prices = [];
+if (!empty($menu_item_ids)) {
+    $ids_str = implode(',', array_fill(0, count($menu_item_ids), '?'));
+    $stmt = $db->prepare("SELECT id, price FROM menu_items WHERE id IN ($ids_str)");
+    $stmt->execute($menu_item_ids);
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $menu_item_prices[$row['id']] = floatval($row['price']);
+    }
+    
+    $stmt = $db->prepare("SELECT menu_id, size_name, price FROM menu_variants WHERE menu_id IN ($ids_str)");
+    $stmt->execute($menu_item_ids);
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $menu_variant_prices[$row['menu_id'] . '_' . $row['size_name']] = floatval($row['price']);
+    }
+}
+
+// CALCULATE TOTAL
 if (!empty($data->cart) && is_array($data->cart)) {
     foreach($data->cart as $item) {
         $order_qty = intval($item->qty ?? 1);
         if (!empty($item->is_addon) && !empty($item->addon_data)) {
             $addon_id = intval($item->addon_data->id ?? 0);
-            if ($addon_id > 0) {
-                $addonQuery = "SELECT price FROM menu_addons WHERE id = :id";
-                $adStmt = $db->prepare($addonQuery);
-                $adStmt->execute([':id' => $addon_id]);
-                $addonPrice = floatval($adStmt->fetchColumn() ?: 0);
-                $order_total += $addonPrice * $order_qty;
+            if ($addon_id > 0 && isset($addon_prices[$addon_id])) {
+                $order_total += $addon_prices[$addon_id] * $order_qty;
             } else {
                 $order_total += floatval($item->price ?? 0) * $order_qty;
             }
         } else {
             $menu_item_id = isset($item->menuItemId) ? intval($item->menuItemId) : 0;
             if ($menu_item_id <= 0 && isset($item->id)) {
-                $id_str = strval($item->id);
-                if (is_numeric($id_str)) {
-                    $menu_item_id = intval($id_str);
-                } else {
-                    $parts = explode('-', $id_str);
-                    if (is_numeric($parts[0])) {
-                        $menu_item_id = intval($parts[0]);
-                    }
-                }
+                $parts = explode('-', strval($item->id));
+                if (is_numeric($parts[0])) $menu_item_id = intval($parts[0]);
             }
             $variant_name = $item->size ?? 'Regular';
             
             if ($menu_item_id > 0) {
-                $priceQuery = "SELECT price FROM menu_variants WHERE menu_id = :mid AND size_name = :vname";
-                $pStmt = $db->prepare($priceQuery);
-                $pStmt->execute([':mid' => $menu_item_id, ':vname' => $variant_name]);
-                $dbPrice = floatval($pStmt->fetchColumn() ?: 0);
-                
-                if ($dbPrice <= 0) {
-                    $itemQuery = "SELECT price FROM menu_items WHERE id = :id";
-                    $itStmt = $db->prepare($itemQuery);
-                    $itStmt->execute([':id' => $menu_item_id]);
-                    $dbPrice = floatval($itStmt->fetchColumn() ?: 0);
+                $key = $menu_item_id . '_' . $variant_name;
+                $dbPrice = 0;
+                if (isset($menu_variant_prices[$key]) && $menu_variant_prices[$key] > 0) {
+                    $dbPrice = $menu_variant_prices[$key];
+                } elseif (isset($menu_item_prices[$menu_item_id])) {
+                    $dbPrice = $menu_item_prices[$menu_item_id];
                 }
-                
                 $order_total += $dbPrice * $order_qty;
             } else {
                 $order_total += floatval($item->price ?? 0) * $order_qty;
@@ -110,18 +138,17 @@ if(!empty($data->cart) && $order_total > 0) {
     try {
         $db->beginTransaction();
 
-        $order_type      = !empty($data->order_type) ? $data->order_type : (!empty($data->orderType) ? $data->orderType : "Takeaway");
         $customer_name   = !empty($data->customer_name) ? $data->customer_name : (!empty($data->customerName) ? $data->customerName : "Walk-in");
         $customer_mobile = !empty($data->customer_mobile) ? $data->customer_mobile : (!empty($data->customerMobile) ? $data->customerMobile : null);
         $table_num       = !empty($data->table_number) ? $data->table_number : (!empty($data->tableNumber) ? $data->tableNumber : null);
-        
         $cust_addr = !empty($data->customer_address) ? $data->customer_address : (!empty($data->customerAddress) ? $data->customerAddress : "");
         $full_addr = $cust_addr ? $cust_addr : trim(($data->house_no ?? "")." ".($data->street ?? "")." ".($data->area ?? ""));
 
-        // 1. Insert into 'orders' table
-        $query = "INSERT INTO orders (order_type, customer_name, customer_mobile, customer_address, house_no, street, area, table_number, total, status) 
-                  VALUES (:type, :name, :mobile, :address, :house, :street, :area, :table, :total, 'Pending')";
-                  
+        $payment_method = !empty($data->paymentMethod) ? $data->paymentMethod : (!empty($data->payment_method) ? $data->payment_method : "Cash on Delivery");
+        $payment_status = !empty($data->paymentStatus) ? $data->paymentStatus : (!empty($data->payment_status) ? $data->payment_status : "Pending");
+
+        $query = "INSERT INTO orders (order_type, customer_name, customer_mobile, customer_address, house_no, street, area, table_number, total, status, payment_method, payment_status) 
+                  VALUES (:type, :name, :mobile, :address, :house, :street, :area, :table, :total, 'Pending', :pmethod, :pstatus)";
         $stmt = $db->prepare($query);
         $stmt->execute([
             ':type'    => $order_type,
@@ -132,17 +159,67 @@ if(!empty($data->cart) && $order_total > 0) {
             ':street'  => $data->street ?? null,
             ':area'    => $data->area ?? null,
             ':table'   => $table_num,
-            ':total'   => $order_total
+            ':total'   => $order_total,
+            ':pmethod' => $payment_method,
+            ':pstatus' => $payment_status
         ]);
-
         $order_id = $db->lastInsertId();
 
-        // 2. Insert order items
-        $itemQuery = "INSERT INTO order_items (order_id, title, size, note, qty, price) 
-                      VALUES (:oid, :title, :size, :note, :qty, :price)";
+        // FETCH ALL RECIPES
+        $recipes_map = [];
+        if (!empty($menu_item_ids)) {
+            $ids_str = implode(',', array_fill(0, count($menu_item_ids), '?'));
+            $stmt = $db->prepare("SELECT menu_item_id, variant_name, inventory_id, quantity_to_deduct FROM recipes WHERE menu_item_id IN ($ids_str)");
+            $stmt->execute($menu_item_ids);
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $key = $row['menu_item_id'] . '_' . $row['variant_name'];
+                if (!isset($recipes_map[$key])) $recipes_map[$key] = [];
+                $recipes_map[$key][] = [
+                    'inventory_id' => intval($row['inventory_id']),
+                    'quantity' => floatval($row['quantity_to_deduct'])
+                ];
+            }
+        }
+
+        // FETCH ALL INVENTORY PRICES
+        $needed_inv_ids = [];
+        foreach($data->cart as $item) {
+            if (!empty($item->is_addon) && !empty($item->addon_data)) {
+                $addon_inv_id = intval($item->addon_data->inventory_id ?? 0);
+                if ($addon_inv_id > 0) $needed_inv_ids[$addon_inv_id] = true;
+            } else {
+                $menu_item_id = isset($item->menuItemId) ? intval($item->menuItemId) : 0;
+                if ($menu_item_id <= 0 && isset($item->id)) {
+                    $parts = explode('-', strval($item->id));
+                    if (is_numeric($parts[0])) $menu_item_id = intval($parts[0]);
+                }
+                $variant_name = $item->size ?? 'Regular';
+                $key = $menu_item_id . '_' . $variant_name;
+                if (isset($recipes_map[$key])) {
+                    foreach ($recipes_map[$key] as $r) {
+                        $needed_inv_ids[$r['inventory_id']] = true;
+                    }
+                }
+            }
+        }
+
+        $inventory_prices = [];
+        if (!empty($needed_inv_ids)) {
+            $ids = array_keys($needed_inv_ids);
+            $ids_str = implode(',', array_fill(0, count($ids), '?'));
+            $stmt = $db->prepare("SELECT id, price FROM inventory WHERE id IN ($ids_str)");
+            $stmt->execute($ids);
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $inventory_prices[$row['id']] = floatval($row['price']);
+            }
+        }
+
+        // INSERT ORDER ITEMS & CALCULATE DEDUCTIONS
+        $itemQuery = "INSERT INTO order_items (order_id, title, size, note, qty, price) VALUES (:oid, :title, :size, :note, :qty, :price)";
         $itemStmt = $db->prepare($itemQuery);
 
-        $debugInfo = [];
+        $inventory_deductions = [];
+        $cost_updates = [];
 
         foreach($data->cart as $item) {
             $itemStmt->execute([
@@ -153,122 +230,79 @@ if(!empty($data->cart) && $order_total > 0) {
                 ':qty'   => $item->qty ?? 1,
                 ':price' => $item->price ?? 0
             ]);
+            $order_item_id = $db->lastInsertId();
 
-            $order_item_id = $db->lastInsertId(); // Save ID to update cost_price
-
-            // 🔥 INVENTORY DEDUCTION & COST CALCULATION
-            $log = "Processing item: " . json_encode($item) . "\n";
-            file_put_contents(__DIR__ . '/log.txt', $log, FILE_APPEND);
-            
-            $menu_item_id = null;
             $order_qty = intval($item->qty ?? 1);
-            $unit_cost = 0; // Store calculated cost for one unit
+            $unit_cost = 0;
 
-            // Check if this is an addon item
             if (!empty($item->is_addon) && !empty($item->addon_data)) {
-                // Addon ke liye directly inventory_id aur qty use karo
                 $addon_inv_id = intval($item->addon_data->inventory_id ?? 0);
                 $addon_deduct = floatval($item->addon_data->qty ?? 0);
                 if ($addon_inv_id > 0 && $addon_deduct > 0) {
-                    // Fetch inventory price for cost calculation
-                    $invQ = "SELECT price FROM inventory WHERE id = :iid";
-                    $invS = $db->prepare($invQ);
-                    $invS->execute([':iid' => $addon_inv_id]);
-                    $invPrice = floatval($invS->fetchColumn() ?: 0);
+                    $invPrice = $inventory_prices[$addon_inv_id] ?? 0;
                     $unit_cost += ($addon_deduct * $invPrice);
-
-                    $total_deduct = $addon_deduct * $order_qty;
-                    $deductQuery = "UPDATE inventory SET stock = GREATEST(stock - :deduct, 0) WHERE id = :iid";
-                    $dStmt = $db->prepare($deductQuery);
-                    $dStmt->execute([':deduct' => $total_deduct, ':iid' => $addon_inv_id]);
+                    if (!isset($inventory_deductions[$addon_inv_id])) $inventory_deductions[$addon_inv_id] = 0;
+                    $inventory_deductions[$addon_inv_id] += ($addon_deduct * $order_qty);
                 }
             } else {
-                // Normal menu item - menuItemId ya id se recipe dhoondo
                 $menu_item_id = isset($item->menuItemId) ? intval($item->menuItemId) : 0;
-                
-                // Agar menuItemId nahi mila to fallback: id se numeric part nikalo (e.g. "5-Large" => 5)
                 if ($menu_item_id <= 0 && isset($item->id)) {
-                    $id_str = strval($item->id);
-                    if (is_numeric($id_str)) {
-                        $menu_item_id = intval($id_str);
-                    } else {
-                        // "5-Large" jaise format se pehla number nikalo
-                        $parts = explode('-', $id_str);
-                        if (is_numeric($parts[0])) {
-                            $menu_item_id = intval($parts[0]);
-                        }
-                    }
+                    $parts = explode('-', strval($item->id));
+                    if (is_numeric($parts[0])) $menu_item_id = intval($parts[0]);
+                }
+                $variant_name = $item->size ?? 'Regular';
+                
+                $excluded = [];
+                if (!empty($item->excluded_ingredients) && is_array($item->excluded_ingredients)) {
+                    foreach ($item->excluded_ingredients as $exId) $excluded[] = intval($exId);
                 }
 
-                $variant_name = $item->size ?? 'Regular';
-
-                if ($menu_item_id > 0) {
-                    $debugInfo[] = "Searching recipes for menu_item_id=$menu_item_id, variant=$variant_name";
-                    
-                    // Excluded ingredients list (customer ne "Without" kiya)
-                    $excluded = [];
-                    if (!empty($item->excluded_ingredients) && is_array($item->excluded_ingredients)) {
-                        foreach ($item->excluded_ingredients as $exId) {
-                            $excluded[] = intval($exId);
-                        }
-                    }
-
-                    // Recipes table se ingredients fetch karo
-                    $recipeQuery = "SELECT inventory_id, quantity_to_deduct FROM recipes WHERE menu_item_id = :mid AND variant_name = :vname";
-                    $rStmt = $db->prepare($recipeQuery);
-                    $rStmt->execute([':mid' => $menu_item_id, ':vname' => $variant_name]);
-                    $ingredients = $rStmt->fetchAll(PDO::FETCH_ASSOC);
-
-                    $debugInfo[] = "Found " . count($ingredients) . " ingredients.";
-
-                    foreach ($ingredients as $ing) {
+                $key = $menu_item_id . '_' . $variant_name;
+                if (isset($recipes_map[$key])) {
+                    foreach ($recipes_map[$key] as $ing) {
                         $inv_id = intval($ing['inventory_id']);
+                        if (in_array($inv_id, $excluded)) continue;
                         
-                        // Agar customer ne ye ingredient exclude kiya hai to skip karo
-                        if (in_array($inv_id, $excluded)) {
-                            $debugInfo[] = "Skipping inv_id $inv_id (excluded)";
-                            continue;
-                        }
-
-                        $qty_to_deduct = floatval($ing['quantity_to_deduct']);
-                        
-                        // Fetch inventory price for cost calculation
-                        $invQ = "SELECT price FROM inventory WHERE id = :iid";
-                        $invS = $db->prepare($invQ);
-                        $invS->execute([':iid' => $inv_id]);
-                        $invPrice = floatval($invS->fetchColumn() ?: 0);
+                        $qty_to_deduct = $ing['quantity'];
+                        $invPrice = $inventory_prices[$inv_id] ?? 0;
                         $unit_cost += ($qty_to_deduct * $invPrice);
-
+                        
                         $total_deduct = $qty_to_deduct * $order_qty;
-
                         if ($total_deduct > 0) {
-                            $deductQuery = "UPDATE inventory SET stock = GREATEST(stock - :deduct, 0) WHERE id = :iid";
-                            $dStmt = $db->prepare($deductQuery);
-                            $res = $dStmt->execute([':deduct' => $total_deduct, ':iid' => $inv_id]);
-                            $debugInfo[] = "Deducting $total_deduct from inv_id $inv_id. Success? " . ($res ? "YES" : "NO");
+                            if (!isset($inventory_deductions[$inv_id])) $inventory_deductions[$inv_id] = 0;
+                            $inventory_deductions[$inv_id] += $total_deduct;
                         }
                     }
                 }
             }
             
-            // Save the calculated unit_cost to the order_items table
             if ($unit_cost > 0) {
-                $updateCostQuery = "UPDATE order_items SET cost_price = :cost WHERE id = :oiid";
-                $ucStmt = $db->prepare($updateCostQuery);
-                $ucStmt->execute([':cost' => $unit_cost, ':oiid' => $order_item_id]);
+                $cost_updates[$order_item_id] = $unit_cost;
             }
         }
-        $db->commit();
 
-        // 🔥 NOTE: Socket notification is now handled by the React frontend
-        // after receiving this success response. No more curl call needed here.
+        if (!empty($inventory_deductions)) {
+            $deductQuery = "UPDATE inventory SET stock = GREATEST(stock - :deduct, 0) WHERE id = :iid";
+            $dStmt = $db->prepare($deductQuery);
+            foreach ($inventory_deductions as $iid => $total_deduct) {
+                $dStmt->execute([':deduct' => $total_deduct, ':iid' => $iid]);
+            }
+        }
+
+        if (!empty($cost_updates)) {
+            $updateCostQuery = "UPDATE order_items SET cost_price = :cost WHERE id = :oiid";
+            $ucStmt = $db->prepare($updateCostQuery);
+            foreach ($cost_updates as $oiid => $cost) {
+                $ucStmt->execute([':cost' => $cost, ':oiid' => $oiid]);
+            }
+        }
+
+        $db->commit();
         echo json_encode([
             "success"  => true, 
             "message"  => "Order saved successfully!", 
-            "order_id" => $order_id,
-            "debug"    => $debugInfo
+            "order_id" => $order_id
         ]);
-
     } catch(Exception $e) {
         $db->rollBack();
         echo json_encode(["success" => false, "message" => "Database error: " . $e->getMessage()]);
@@ -276,4 +310,4 @@ if(!empty($data->cart) && $order_total > 0) {
 } else {
     echo json_encode(["success" => false, "message" => "Invalid Request Data"]);
 }
-?>
+?>
