@@ -25,8 +25,9 @@ const MenuPage = () => {
     queryFn: async () => {
       const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_categories.php`);
       const data = await res.json();
-      return Array.isArray(data) ? data.map((c) => c.name) : [];
-    }
+      return Array.isArray(data) ? data : [];
+    },
+    select: (data) => data.map((c) => c.name)
   });
 
   const { data: menuItems = [], isLoading: isMenuLoading } = useQuery({

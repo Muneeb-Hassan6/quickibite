@@ -692,18 +692,6 @@ const HomepageBuilder = () => {
                       style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '5px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
                     >
                       <option value="regular">Regular Horizontal Slider</option>
-                      <option value="stacked">Cinematic Showcase (Stacked)</option>
-                      <option value="glassmorphism">3D Glassmorphism Coverflow</option>
-                      <option value="bento">Dynamic Bento Grid</option>
-                      <option value="parallax">Parallax Depth Showcase</option>
-                      <option value="revolving">Circular Revolving Stage</option>
-                      <option value="deck">Neon Cyberpunk Deck</option>
-                      <option value="split">Magazine Split-Screen</option>
-                      <option value="marquee">Endless Marquee</option>
-                      <option value="bubbles">Floating Gravity Bubbles</option>
-                      <option value="skewed">Aggressive Skewed Speed-Grid</option>
-                      <option value="inventory">Cyberpunk Inventory Slots</option>
-                      <option value="vertical-accordion">Cinematic Vertical Accordion</option>
                     </select>
                   </div>
 

@@ -80,29 +80,52 @@ const ExploreMenu = ({ title = "EXPLORE MENU", subtitle = "VIEW ALL" }) => {
             )}
 
             <div 
-              className="grid grid-cols-3 auto-rows-[7.5rem] gap-[0.5rem] p-[0.313rem_0.625rem_1.25rem_0.625rem] overflow-x-hidden md:flex md:gap-[1.25rem] md:p-[0.625rem_1.25rem_1.874rem_1.25rem] md:overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*:nth-child(10n+1)]:row-span-2 [&>*:nth-child(10n+1)]:col-start-1 [&>*:nth-child(10n+8)]:row-span-2 [&>*:nth-child(10n+8)]:col-start-3 md:[&>*:nth-child(10n+1)]:row-span-1 md:[&>*:nth-child(10n+8)]:row-span-1" 
+              className="grid grid-cols-3 auto-rows-[7.5rem] gap-[0.5rem] p-[0.313rem_0.625rem_1.25rem_0.625rem] overflow-x-hidden md:flex md:gap-[1.25rem] md:p-[1.25rem_1.25rem_1.874rem_1.25rem] md:overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*:nth-child(10n+1)]:row-span-2 [&>*:nth-child(10n+1)]:col-start-1 [&>*:nth-child(10n+8)]:row-span-2 [&>*:nth-child(10n+8)]:col-start-3 md:[&>*:nth-child(10n+1)]:row-span-1 md:[&>*:nth-child(10n+8)]:row-span-1" 
               ref={scrollRef}
               onScroll={checkForScrollPosition}
             >
             {categories.map((cat) => (
               <div
-                key={cat.id}
-                className="group w-full h-full relative rounded-[0.375rem] md:min-w-[13.751rem] md:h-[13.751rem] md:mt-[2.813rem] md:rounded-none md:flex md:flex-col md:items-center cursor-pointer transition-transform duration-300 md:hover:-translate-y-[0.313rem]"
+                key={cat.id || cat.name}
+                className="group/card w-full h-full relative rounded-[0.375rem] md:min-w-[16.25rem] md:h-[17.5rem] md:mt-[4.375rem] md:rounded-none md:flex md:flex-col md:items-center cursor-pointer transition-transform duration-300 md:hover:-translate-y-[0.313rem]"
                 onClick={() =>
                   navigate("/menu", { state: { category: cat.name } })
                 }
               >
-                <div className="w-full h-full rounded-[0.375rem] bg-[var(--panel-bg,#f4f6f8)] border border-dashed border-[#94a3b8] p-[0.5rem] flex flex-col justify-center items-center relative overflow-hidden md:overflow-visible md:border-solid md:border-[#ffba00] md:rounded-[0.75rem] md:shadow-[0_4px_10px_rgba(0,0,0,0.05)] md:transition-all md:duration-400 md:justify-end md:pb-[1.25rem] md:group-hover:border-[var(--brand-red,#ef4444)] md:group-hover:shadow-[0_12px_25px_rgba(239,68,68,0.15)]">
-                  <img
-                    className="w-full h-full max-h-[6.25rem] object-contain relative m-auto filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.15)] md:w-[11.875rem] md:h-[11.875rem] md:max-h-none md:rounded-[0.5rem] md:absolute md:top-[-1.562rem] md:drop-shadow-[0_8px_12px_rgba(0,0,0,0.15)] md:transition-transform md:duration-400 md:z-5 md:group-hover:scale-110 md:group-hover:-translate-y-[0.937rem]"
-                    src={optimizeCloudinaryImage(cat.img, 300)}
-                    alt={cat.name}
-                    onError={(e) => {
-                      e.target.src =
-                        "https://via.placeholder.com/150?text=No+Image";
-                    }}
-                  />
-                  <span className="relative z-2 text-[var(--text-main,#111)] font-[900] text-center leading-[1.2] mt-auto w-full text-[0.687rem] font-['Oswald',sans-serif] uppercase md:text-[0.938rem] md:font-[700] md:text-[var(--text-main,#333)] md:tracking-[0.5px] md:transition-colors md:duration-300 md:group-hover:text-[var(--brand-red,#ef4444)]">{cat.name}</span>
+                <div className="w-full h-full rounded-[0.375rem] bg-[var(--panel-bg,#f4f6f8)] border border-dashed border-[#94a3b8] p-[0.5rem] flex flex-col justify-center items-center relative overflow-hidden md:border-none md:bg-white md:rounded-[1rem] md:shadow-[0_4px_15px_rgba(0,0,0,0.05)] md:transition-colors md:duration-300 md:justify-end md:pb-[1.5rem] md:group-hover/card:shadow-[0_15px_35px_rgba(255,186,0,0.3)]">
+                  
+                  {/* Sweeping Background Layers */}
+                  <div className="hidden md:block absolute inset-0 bg-[#d32f2f] translate-y-full transition-transform duration-300 delay-300 ease-[cubic-bezier(0.4,0,0.2,1)] md:group-hover/card:translate-y-0 md:group-hover/card:delay-0 z-0 rounded-[1rem]"></div>
+                  <div className="hidden md:block absolute inset-0 bg-[#ffba00] translate-y-full transition-transform duration-300 delay-0 ease-[cubic-bezier(0.4,0,0.2,1)] md:group-hover/card:translate-y-0 md:group-hover/card:delay-200 z-0 rounded-[1rem]"></div>
+
+                  {/* Circular Image wrapper to fix square images */}
+                  <div className="w-full max-w-[6.25rem] aspect-square rounded-full overflow-hidden relative m-auto filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.15)] md:w-[10rem] md:max-w-none md:h-[10rem] md:relative md:mt-[1.25rem] md:drop-shadow-[0_10px_20px_rgba(0,0,0,0.2)] md:transition-transform md:duration-400 md:z-10 md:border-[0.25rem] md:border-white bg-white">
+                    <img
+                      className="w-full h-full object-cover"
+                      src={optimizeCloudinaryImage(cat.img, 300)}
+                      alt={cat.name}
+                      onError={(e) => {
+                        e.target.src =
+                          "https://via.placeholder.com/150?text=No+Image";
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Desktop Content */}
+                  <div className="hidden md:flex flex-col items-center mt-auto w-full relative z-10">
+                    <span className="text-[1.25rem] font-['Oswald',sans-serif] font-[800] uppercase text-[#222] tracking-[0.5px]">
+                      {cat.name}
+                    </span>
+                    <div className="w-[2.5rem] h-[0.188rem] bg-[#d32f2f] my-[0.375rem] transition-colors duration-300 delay-0 md:group-hover/card:bg-white md:group-hover/card:delay-200"></div>
+                    <span className="text-[#d32f2f] font-[700] text-[0.875rem] transition-colors duration-300 delay-0 md:group-hover/card:text-[#222] md:group-hover/card:delay-200">
+                      Explore
+                    </span>
+                  </div>
+
+                  {/* Mobile Content */}
+                  <span className="md:hidden relative z-10 text-[var(--text-main,#111)] font-[900] text-center leading-[1.2] mt-auto w-full text-[0.687rem] font-['Oswald',sans-serif] uppercase">
+                    {cat.name}
+                  </span>
                 </div>
               </div>
             ))}
