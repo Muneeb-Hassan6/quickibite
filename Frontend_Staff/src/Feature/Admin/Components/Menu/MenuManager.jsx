@@ -17,6 +17,7 @@ import CategoryModal from "./Components/CategoryModal";
 import MenuTable from "./Components/MenuTable";
 import RecipeModal from "./Components/RecipeModal";
 import AddonModal from "./Components/AddonModal";
+import AddonGroupsManager from "./AddonGroupsManager";
 
 const MenuManager = () => {
   const queryClient = useQueryClient();
@@ -421,6 +422,12 @@ const MenuManager = () => {
             >
               <FaList /> Explore Categories
             </button>
+            <button
+              className={`bg-transparent text-[var(--admin-muted)] border-none py-[0.625rem] px-[1.5rem] rounded-[1.875rem] cursor-pointer flex items-center gap-[0.5rem] font-bold transition-all duration-300 text-[0.875rem] hover:text-[var(--admin-text)] ${activeTab === "addongroups" ? "bg-[var(--admin-orange)] text-white hover:text-white" : ""}`}
+              onClick={() => setActiveTab("addongroups")}
+            >
+              <FaPlus /> Addon Groups
+            </button>
           </div>
         </div>
         {activeTab === "items" && (
@@ -449,6 +456,8 @@ const MenuManager = () => {
             setIsRecipeModalOpen(true);
           }}
         />
+      ) : activeTab === "addongroups" ? (
+        <AddonGroupsManager />
       ) : (
         <div className="flex flex-wrap gap-[1.563rem] pt-[0.938rem] animate-slide-up">
           <div

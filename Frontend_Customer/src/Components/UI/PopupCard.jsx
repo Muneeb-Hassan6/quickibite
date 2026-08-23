@@ -1262,6 +1262,29 @@ const PopupCard = ({ image, title, description, price, item, closePopup }) => {
             <span>ADD TO CART &bull; RS {grandTotal}</span>
           </button>
         </div>
+
+        {/* Mobile Fixed Bottom Control */}
+        <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 z-50 flex items-center justify-between gap-4 shadow-[0_-5px_20px_rgba(0,0,0,0.1)]">
+           <div className="flex items-center gap-4 bg-gray-100 rounded-xl px-4 py-3 shrink-0">
+               <button className="border-none bg-transparent text-gray-600 font-bold p-1 cursor-pointer" onClick={decreaseQuantity}>
+                 <FaMinus size={12} />
+               </button>
+               <span className="text-lg font-black text-black min-w-[20px] text-center">{quantity}</span>
+               <button className="border-none bg-transparent text-[#e4002b] font-bold p-1 cursor-pointer" onClick={increaseQuantity}>
+                 <FaPlus size={12} />
+               </button>
+           </div>
+           
+           <button
+              className="flex-1 bg-[#e4002b] text-white border-none py-3 px-4 rounded-xl font-black text-base uppercase tracking-wide cursor-pointer hover:bg-[#c40022] transition-colors flex justify-between items-center shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleAddToCart}
+              disabled={selectedVariant && (selectedVariant.inStock === false || selectedVariant.inStock === 0 || selectedVariant.inStock === "0")}
+            >
+              <span>Add to bucket</span>
+              <span>Rs {finalTotal}</span>
+            </button>
+        </div>
+
       </div>
     </div>
   );
