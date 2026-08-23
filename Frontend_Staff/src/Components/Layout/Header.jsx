@@ -3,8 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import OrderTracking from "../../Feature/Order/Components/OrderTracker";
 import { useCart } from "../../Context/CartContext";
 
-// 🔥 Bolt ki jagah FaFire import kiya
 import { FaBox, FaSearch, FaFire } from "react-icons/fa";
+import { resolveImageUrl } from "../../utils/imageOptimizer";
 
 const Header = () => {
   const [showOrders, setShowOrders] = useState(false);
@@ -124,7 +124,15 @@ const Header = () => {
                           navigate(`/menu?search=${encodeURIComponent(item.name)}`);
                         }}
                       >
-                        <img className="w-[2.812rem] h-[2.812rem] rounded-[0.375rem] object-cover mr-[0.937rem]" src={item.img} alt={item.name} />
+                        <img
+                          className="w-[2.812rem] h-[2.812rem] rounded-[0.375rem] object-contain p-1 border border-[#333] bg-white/5 mr-[0.937rem]"
+                          src={resolveImageUrl(item.img, 100)}
+                          alt={item.name}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "https://placehold.co/100x100?text=No+Img";
+                          }}
+                        />
                         <div className="flex flex-col">
                           <span className="text-white text-[0.875rem] font-medium mb-[0.188rem]">{item.name}</span>
                           <span className="text-[#ef4444] text-[0.812rem] font-bold">Rs {Number(item.price).toFixed(2)}</span>

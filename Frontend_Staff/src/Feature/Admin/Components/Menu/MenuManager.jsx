@@ -49,6 +49,9 @@ const MenuManager = () => {
     description: "",
     category: "",
     img: "",
+    promo_banner_image: "",
+    is_featured_banner: false,
+    banner_order: 0,
     isAvailable: true,
     isTopDeal: false,
     isBestSeller: false,
@@ -108,18 +111,17 @@ const MenuManager = () => {
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
-    setTimeout(
-      () => setToast({ show: false, message: "", type: "success" }),
-      3000,
-    );
+    setTimeout(() => {
+      setToast({ show: false, message: "", type: "success" });
+    }, 3000);
   };
 
   const uploadToCloudinary = async (file) => {
     if (!file || typeof file === "string") return file;
     try {
       const options = {
-        maxSizeMB: 0.3,
-        maxWidthOrHeight: 1024,
+        maxSizeMB: 0.8,
+        maxWidthOrHeight: 1200,
         useWebWorker: true,
       };
       const compressedFile = await imageCompression(file, options);
@@ -169,7 +171,20 @@ const MenuManager = () => {
       if (!finalImgUrl && menuForm.img instanceof File) {
         return showToast("Image upload failed!", "error");
       }
-      const payload = { ...menuForm, img: finalImgUrl || "", auth_token: sessionStorage.getItem("auth_token") };
+
+      let finalPromoBannerUrl = menuForm.promo_banner_image;
+      if (menuForm.promo_banner_image instanceof File) {
+        finalPromoBannerUrl = await uploadToCloudinary(menuForm.promo_banner_image);
+      }
+
+      const payload = { 
+        ...menuForm, 
+        img: finalImgUrl || "", 
+        promo_banner_image: finalPromoBannerUrl || "",
+        is_featured_banner: menuForm.is_featured_banner ? 1 : 0,
+        banner_order: parseInt(menuForm.banner_order || 0),
+        auth_token: sessionStorage.getItem("auth_token") 
+      };
       const url = editingItem
         ? `${import.meta.env.VITE_API_BASE}/update_menu.php`
         : `${import.meta.env.VITE_API_BASE}/add_menu.php`;
@@ -333,6 +348,9 @@ const MenuManager = () => {
 
     setMenuForm({
       ...item,
+      promo_banner_image: item.promo_banner_image || "",
+      is_featured_banner: item.is_featured_banner == 1 || item.is_featured_banner === true,
+      banner_order: parseInt(item.banner_order || 0),
       isAvailable: item.isAvailable == 1,
       isTopDeal: item.isTopDeal == 1,
       isBestSeller: item.isBestSeller == 1,

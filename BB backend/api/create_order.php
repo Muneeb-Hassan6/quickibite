@@ -4,7 +4,35 @@ include_once __DIR__ . '/../config/Database.php';
 
 $database = new Database();
 $db = $database->getConnection();
+
+// ─── AUTO-MIGRATE: Ensure payment_method & payment_status columns exist ───
+try {
+    $checkCol = $db->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                               WHERE TABLE_SCHEMA = DATABASE() 
+                               AND TABLE_NAME = 'orders' 
+                               AND COLUMN_NAME = 'payment_method'");
+    $checkCol->execute();
+    if ($checkCol->fetchColumn() == 0) {
+        $db->exec("ALTER TABLE `orders` ADD COLUMN `payment_method` VARCHAR(50) NOT NULL DEFAULT 'cod' AFTER `status`");
+    }
+
+    $checkCol2 = $db->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                                WHERE TABLE_SCHEMA = DATABASE() 
+                                AND TABLE_NAME = 'orders' 
+                                AND COLUMN_NAME = 'payment_status'");
+    $checkCol2->execute();
+    if ($checkCol2->fetchColumn() == 0) {
+        $db->exec("ALTER TABLE `orders` ADD COLUMN `payment_status` VARCHAR(50) NOT NULL DEFAULT 'Pending' AFTER `payment_method`");
+    }
+} catch (PDOException $migErr) {
+    // Silently continue — migration may have already been applied
+    error_log("Auto-migrate notice: " . $migErr->getMessage());
+}
+
 $data = json_decode(file_get_contents("php://input"));
+
+// ─── DEBUG LOGGING ───
+error_log("Order Payload: " . json_encode($data));
 
 // 🔥 Time Validation Logic
 $settingsQuery = "SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('restaurant_open_time', 'restaurant_close_time')";
@@ -299,9 +327,10 @@ if(!empty($data->cart) && $order_total > 0) {
 
         $db->commit();
         echo json_encode([
-            "success"  => true, 
-            "message"  => "Order saved successfully!", 
-            "order_id" => $order_id
+            "success"       => true, 
+            "message"       => "Order saved successfully!", 
+            "order_id"      => $order_id,
+            "database_used" => "restaurant_db"
         ]);
     } catch(Exception $e) {
         $db->rollBack();

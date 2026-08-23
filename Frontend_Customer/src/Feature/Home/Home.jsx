@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import HomeHero from "./Components/HomeHero";
 import HomeProductSlider from "./Components/HomeProductSlider";
@@ -22,6 +22,27 @@ const HomePage = () => {
   // --- STATES ---
   const navigate = useNavigate();
   const [selectedPopupItem, setSelectedPopupItem] = useState(null);
+
+  // Centralized Modal Scroll Management
+  useEffect(() => {
+    if (selectedPopupItem) {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+      document.body.style.removeProperty("overflow");
+      document.body.style.removeProperty("padding-right");
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+      document.body.style.removeProperty("overflow");
+      document.body.style.removeProperty("padding-right");
+    };
+  }, [selectedPopupItem]);
   // --- FETCH DATA FROM API USING REACT QUERY ---
   const { data: menuItems = [], isLoading: isMenuLoading } = useQuery({
     queryKey: ['menu'],
@@ -40,12 +61,20 @@ const HomePage = () => {
       if (data.success && data.data) {
         return data.data.map((deal) => ({
           id: deal.id,
+          deal_id: deal.id,
           name: deal.title,
           title: deal.title,
           price: parseFloat(deal.price),
+          original_price: deal.original_price ? parseFloat(deal.original_price) : null,
+          badge_tag: deal.badge_tag || deal.tag || "HOT DEAL",
+          tag: deal.badge_tag || deal.tag || "HOT DEAL",
           image: deal.img,
           img: deal.img,
+          promo_banner_image: deal.promo_banner_image,
+          is_featured_banner: deal.is_featured_banner == 1,
+          items: deal.items || [],
           items_description: deal.items_description,
+          description: deal.description || deal.items_description,
           isAvailable: true,
           is_deal: true,
           size: "Combo",
@@ -55,37 +84,111 @@ const HomePage = () => {
     }
   });
 
-  const { data: homepageData = { hero: [], sections: [] }, isLoading: isHomeLoading } = useQuery({
+  const { data: homepageData = { hero: [], sections: [], featured_banners: [] }, isLoading: isHomeLoading } = useQuery({
     queryKey: ['homepage_data'],
     queryFn: async () => {
       const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_homepage_data.php`);
       const data = await res.json();
-      return data.success ? data.data : { hero: [], sections: [] };
+      return data.success ? data.data : { hero: [], sections: [], featured_banners: [] };
     }
   });
 
   const isLoading = isMenuLoading || isDealsLoading || isHomeLoading;
 
-  const handleBannerClick = (linkUrl) => {
+  const handleOpenDealModal = async (deal) => {
+    if (!deal) return;
+    const dealId = deal.deal_id || deal.id;
+    let fullDeal = comboDeals.find(d => d.id.toString() === dealId.toString());
+
+    // If deal items are not loaded, fetch complete details from backend
+    if (!fullDeal || !fullDeal.items || fullDeal.items.length === 0) {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_deal_details.php?id=${dealId}`);
+        const data = await res.json();
+        if (data.success && data.deal) {
+          fullDeal = {
+            ...data.deal,
+            id: data.deal.id,
+            deal_id: data.deal.id,
+            name: data.deal.title,
+            title: data.deal.title,
+            price: parseFloat(data.deal.price),
+            original_price: data.deal.original_price ? parseFloat(data.deal.original_price) : null,
+            image: data.deal.img,
+            img: data.deal.img,
+            is_deal: true,
+            isAvailable: true,
+            size: "Combo"
+          };
+        }
+      } catch (e) {
+        console.error("Error fetching deal details", e);
+      }
+    }
+
+    const itemToOpen = fullDeal || deal;
+    setSelectedPopupItem({
+      ...itemToOpen,
+      is_deal: true,
+      name: itemToOpen.title || itemToOpen.name,
+      desc: itemToOpen.description || itemToOpen.items_description
+    });
+  };
+
+  const handleBannerClick = async (bannerOrUrl, extraBanner) => {
+    console.log("Banner clicked payload:", bannerOrUrl, extraBanner);
+    const banner = (typeof bannerOrUrl === 'object' && bannerOrUrl !== null) ? bannerOrUrl : extraBanner;
+    const linkUrl = typeof bannerOrUrl === 'string' ? bannerOrUrl : (banner?.link || banner?.link_url);
+
+    if (banner) {
+      const isExplicitProduct = banner.type === 'product' || String(banner.id || '').startsWith('prod-') || Boolean(banner.category || banner.category_id);
+      const isExplicitDeal = banner.type === 'deal' || banner.is_deal === true || String(banner.id || '').startsWith('deal-') || Boolean(banner.deal_id);
+
+      if (isExplicitProduct && !isExplicitDeal) {
+        // Menu Product -> Find full item from menuItems for complete variants (Small, Medium, Large) & addons
+        const rawId = banner.target_id || (banner.raw_data && banner.raw_data.id) || String(banner.id).replace('prod-', '');
+        const matchedItem = menuItems.find(item => item.id.toString() === rawId.toString());
+        const fullProduct = matchedItem || banner.raw_data || banner;
+
+        setSelectedPopupItem({
+          ...fullProduct,
+          is_deal: false,
+          name: fullProduct.name || banner.title,
+          title: fullProduct.name || banner.title,
+          price: fullProduct.price || banner.price,
+          image: fullProduct.img || fullProduct.image || banner.promo_banner_image || banner.image
+        });
+        return;
+      }
+
+      if (isExplicitDeal) {
+        const rawId = banner.target_id || (banner.raw_data && (banner.raw_data.id || banner.raw_data.deal_id)) || String(banner.id).replace('deal-', '');
+        const matchedDeal = comboDeals.find(d => d.id.toString() === rawId.toString());
+        const fullDeal = matchedDeal || banner.raw_data || banner;
+        await handleOpenDealModal(fullDeal);
+        return;
+      }
+    }
+
     if (!linkUrl) return;
     
+    // Check if it links to a product or deal
     if (linkUrl.startsWith('product:')) {
-      const id = linkUrl.split(':')[1];
-      const foundItem = menuItems.find(item => item.id.toString() === id);
+      const pId = linkUrl.split(':')[1];
+      const foundItem = menuItems.find(item => item.id.toString() === pId.toString());
       if (foundItem) {
-        setSelectedPopupItem(foundItem);
-        document.body.style.overflow = "hidden";
+        setSelectedPopupItem({ ...foundItem, is_deal: false });
+        return;
       }
-    } else if (linkUrl.startsWith('deal:')) {
-      const id = linkUrl.split(':')[1];
-      const foundDeal = comboDeals.find(deal => deal.id.toString() === id);
-      if (foundDeal) {
-        setSelectedPopupItem({ ...foundDeal, is_deal: true, name: foundDeal.title, desc: foundDeal.description });
-        document.body.style.overflow = "hidden";
+    } else if (linkUrl.startsWith('deal:') || linkUrl.includes('selected=')) {
+      let dId = linkUrl.startsWith('deal:') ? linkUrl.split(':')[1] : (linkUrl.match(/selected=([^&]+)/) || [])[1];
+      if (dId) {
+        await handleOpenDealModal({ id: dId, deal_id: dId });
+        return;
       }
-    } else {
-      navigate(linkUrl);
     }
+
+    navigate(linkUrl);
   };
 
   // --- FILTERING DATA (Dynamic) ---
@@ -98,11 +201,15 @@ const HomePage = () => {
     (item) => item.isTopDeal === true && item.isAvailable === true,
   );
 
-  // 🔥 Yahan humne naye Combos aur Purani menu Top Deals dono ko mila diya!
-  const allTopDeals = [...comboDeals, ...menuTopDeals];
+  // Exclude deals promoted to Featured Banners from Top Deals Slider
+  const sliderDeals = comboDeals.filter(
+    (deal) => !deal.is_featured_banner
+  );
+
+  const allTopDeals = [...sliderDeals, ...menuTopDeals];
 
   return (
-    <div className="bg-[var(--home-bg,#0a0a0c)] min-h-[100vh] text-[var(--text-main,#fff)] pb-[10vh] md:pb-[3.125rem] font-['Segoe_UI',Tahoma,Geneva,Verdana,sans-serif] m-0 pt-0">
+    <div className="bg-slate-50 dark:bg-[#0A0A0C] min-h-[100vh] text-gray-900 dark:text-white pb-[10vh] md:pb-[3.125rem] font-['Segoe_UI',Tahoma,Geneva,Verdana,sans-serif] m-0 pt-0 transition-colors duration-300">
       {isLoading ? (
         <div className="w-full px-4 md:px-12 py-6">
           <div className="flex justify-center py-[3.125rem]">
@@ -133,9 +240,10 @@ const HomePage = () => {
               if (section.section_type === 'product_slider') {
                 // Determine which data to pass
                 let items = [];
+                const isDeals = section.content_data === 'filter:top_deals';
                 if (section.content_data === 'filter:best_sellers') {
                   items = bestSellersData;
-                } else if (section.content_data === 'filter:top_deals') {
+                } else if (isDeals) {
                   items = allTopDeals;
                 } else if (section.content_data && section.content_data.startsWith('category:')) {
                   const categoryName = section.content_data.split(':')[1];
@@ -149,87 +257,65 @@ const HomePage = () => {
                 }
 
                 sectionComponent = (
-                  <div key={`prod-${section.id}`} className="relative pb-5">
-                    <HomeProductSlider title={section.title} items={items} sliderType={section.slider_type || 'regular'} />
-                    {section.content_data === 'filter:top_deals' && (
-                      <div className="text-center mt-[0.938rem]">
-                        <button onClick={() => navigate("/deals")} className="bg-transparent border-2 border-red-500 text-red-500 px-6 py-2 rounded-full font-['Oswald',sans-serif] font-bold tracking-wider hover:bg-red-500 hover:text-white transition-all duration-300 inline-flex items-center justify-center">
-                          {section.subtitle || "Explore All Deals"} <FaArrowRight className="ml-2" />
-                        </button>
-                      </div>
-                    )}
+                  <div key={`prod-${section.id}`} className="relative pb-2">
+                    <HomeProductSlider
+                      title={isDeals ? (section.title || "TOP DEALS & COMBOS") : section.title}
+                      items={items}
+                      viewAllLink={isDeals ? "/deals" : (section.content_data === 'filter:best_sellers' ? "/menu" : (section.link_url || "/menu"))}
+                    />
                   </div>
                 );
               }
 
               if (section.section_type === 'banner') {
-                let isSlider = false;
-                let slideUrls = [];
-                
-                try {
-                  if (section.content_data && section.content_data.startsWith('[')) {
-                    slideUrls = JSON.parse(section.content_data);
-                    if (Array.isArray(slideUrls) && slideUrls.length > 1) {
-                      isSlider = true;
+                let bannerItems = [];
+                if (homepageData.featured_banners && homepageData.featured_banners.length > 0) {
+                  bannerItems = homepageData.featured_banners;
+                } else {
+                  try {
+                    if (section.content_data && section.content_data.startsWith('[')) {
+                      const parsed = JSON.parse(section.content_data);
+                      if (Array.isArray(parsed) && parsed.length > 0) {
+                        bannerItems = parsed.map((item, idx) => ({
+                          id: idx,
+                          image: typeof item === 'object' ? (item.image_url || item.image) : item,
+                          link: typeof item === 'object' ? (item.link_url || section.link_url) : section.link_url,
+                          title: typeof item === 'object' ? (item.title || section.title) : section.title,
+                        }));
+                      }
                     }
+                  } catch (e) {
+                    console.error("Error parsing banner data", e);
                   }
-                } catch (e) {
-                  console.error("Error parsing banner slider data", e);
+
+                  if (bannerItems.length === 0 && section.image_url) {
+                    bannerItems = [
+                      {
+                        id: 1,
+                        image: section.image_url,
+                        link: section.link_url || "/deals",
+                        title: section.title || "Special Deals",
+                      }
+                    ];
+                  }
                 }
 
-                if (isSlider) {
+                if (bannerItems.length > 0) {
                   sectionComponent = (
-                    <div className="home-banners-container my-[1.875rem]" key={`ban-${section.id}`}>
-                      <Swiper
-                        modules={[Autoplay, Pagination, Navigation]}
-                        spaceBetween={0}
-                        slidesPerView={1}
-                        autoplay={{ delay: 3000, disableOnInteraction: false }}
-                        pagination={{ clickable: true }}
-                        navigation={true}
-                        className="banner-swiper"
-                        style={{ borderRadius: '15px', overflow: 'hidden' }}
-                      >
-                        {slideUrls.map((slide, idx) => {
-                          const isObject = typeof slide === 'object' && slide !== null;
-                          const bgImage = optimizeCloudinaryImage(isObject ? slide.image_url : slide, 1200);
-                          const title = isObject ? (slide.title || section.title) : section.title;
-                          const subtitle = isObject ? (slide.subtitle || section.subtitle) : section.subtitle;
-                          const linkUrl = isObject ? (slide.link_url || section.link_url) : section.link_url;
-
-                          return (
-                            <SwiperSlide key={idx} onClick={() => linkUrl && handleBannerClick(linkUrl)}>
-                              <div 
-                                className="w-full h-[11.25rem] md:h-[18.75rem] bg-cover bg-center bg-no-repeat rounded-[0.937rem] transition-transform duration-300 hover:scale-[1.02]"
-                                style={{ backgroundImage: `url(${bgImage})`, cursor: linkUrl ? 'pointer' : 'default', margin: 0 }}
-                              >
-                              </div>
-                            </SwiperSlide>
-                          );
-                        })}
-                      </Swiper>
-                    </div>
-                  );
-                } else {
-                  // Default static banner
-                  sectionComponent = (
-                    <div className="home-banners-container my-[1.875rem]" key={`ban-${section.id}`}>
-                      <div 
-                        className="w-full h-[11.25rem] md:h-[18.75rem] bg-cover bg-center bg-no-repeat rounded-[0.937rem] shadow-lg transition-transform duration-300 hover:scale-[1.02]"
-                        style={{ backgroundImage: `url(${optimizeCloudinaryImage(section.image_url, 1200)})`, cursor: section.link_url ? 'pointer' : 'default' }}
-                        onClick={() => section.link_url && handleBannerClick(section.link_url)}
-                      >
-                      </div>
-                    </div>
+                    <HomeBanners
+                      key={`ban-${section.id}`}
+                      banners={bannerItems}
+                      onBannerClick={handleBannerClick}
+                    />
                   );
                 }
               }
 
               // Push section
               if (sectionComponent) {
-                if (section.section_type === 'hero') {
+                if (section.section_type === 'hero' || section.section_type === 'banner') {
                   elements.push(
-                    <div key={`wrapper-${section.id}`} className="w-full mb-2 mt-2">
+                    <div key={`wrapper-${section.id}`} className="w-full">
                       {sectionComponent}
                     </div>
                   );
@@ -279,6 +365,22 @@ const HomePage = () => {
           })()}
         </>
       )}
+
+      {/* ═══════════════════════════════════════════════════════════
+          ROOT MODAL PORTAL: CUSTOMIZATION POPUP (DEALS & PRODUCTS)
+      ═══════════════════════════════════════════════════════════ */}
+      {selectedPopupItem &&
+        ReactDOM.createPortal(
+          <PopupCard
+            item={selectedPopupItem}
+            title={selectedPopupItem.title || selectedPopupItem.name}
+            description={selectedPopupItem.description || selectedPopupItem.desc || selectedPopupItem.items_description}
+            price={selectedPopupItem.price}
+            image={selectedPopupItem.image || selectedPopupItem.img}
+            closePopup={() => setSelectedPopupItem(null)}
+          />,
+          document.body
+        )}
     </div>
   );
 };

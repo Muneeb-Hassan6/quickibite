@@ -1,12 +1,46 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Swal from 'sweetalert2';
-import { FaTrash, FaPlus, FaSave, FaImage, FaListUl, FaEdit, FaCog } from 'react-icons/fa';
+import toast from 'react-hot-toast';
+import { FaTrash, FaPlus, FaSave, FaImage, FaListUl, FaEdit, FaCog, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import FooterSettings from '../Settings/Components/FooterSettings';
 
 const HomepageBuilder = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [heroSlides, setHeroSlides] = useState([]);
+
+  // Auth Helpers
+  const getAuthToken = () => {
+    return (
+      localStorage.getItem('token') ||
+      localStorage.getItem('staff_token') ||
+      sessionStorage.getItem('auth_token') ||
+      sessionStorage.getItem('token') ||
+      ''
+    );
+  };
+
+  const getAuthHeaders = () => {
+    const token = getAuthToken();
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}`, 'X-Auth-Token': token } : {})
+    };
+  };
+
+  const handleAuthError = () => {
+    toast.error('Session expired or unauthorized (401). Redirecting to login...');
+    sessionStorage.removeItem('auth_token');
+    sessionStorage.removeItem('staff_session');
+    sessionStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('staff_token');
+    setTimeout(() => {
+      navigate('/login');
+    }, 1200);
+  };
 
   // Global Settings for Homepage
   const [globalSettings, setGlobalSettings] = useState({
@@ -32,11 +66,11 @@ const HomepageBuilder = () => {
   
   const [bannerSlides, setBannerSlides] = useState([{ title: '', subtitle: '', link_url: '', file: null, image_url: '' }]);
 
-  // Use React Query for homepage data
+  // Use React Query for homepage data (fetch all including inactive for admin)
   const { data: homepageData = {}, isLoading } = useQuery({
     queryKey: ['homepage_data'],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_homepage_data.php`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_homepage_data.php?all=1`);
       const result = await response.json();
       return result.success && result.data ? result.data : {};
     }
@@ -55,20 +89,90 @@ const HomepageBuilder = () => {
     }
   }, [homepageData]);
 
+  // Master Promo Banners Query
+  const { data: masterBanners = { deals: [], products: [] }, refetch: refetchMasterBanners } = useQuery({
+    queryKey: ['master_promo_banners'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/save_homepage_banners.php`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ action: 'get_all_banners' })
+      });
+      const data = await response.json();
+      return data.success ? data.data : { deals: [], products: [] };
+    }
+  });
+
+  const handleToggleMasterBanner = async (item, type) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/save_homepage_banners.php`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          action: 'update_banner_status',
+          type: type,
+          id: item.id,
+          is_featured_banner: !item.is_featured_banner,
+          banner_order: item.banner_order || 0
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`${item.name || item.title} ${!item.is_featured_banner ? 'activated on' : 'removed from'} homepage!`);
+        refetchMasterBanners();
+        queryClient.invalidateQueries({ queryKey: ['homepage_data'] });
+      }
+    } catch (e) {
+      toast.error('Failed to update banner');
+    }
+  };
+
+  const handleUpdateMasterBannerOrder = async (item, type, newOrder) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/save_homepage_banners.php`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          action: 'update_banner_status',
+          type: type,
+          id: item.id,
+          is_featured_banner: item.is_featured_banner ? 1 : 0,
+          banner_order: parseInt(newOrder || 0)
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Display order updated!`);
+        refetchMasterBanners();
+        queryClient.invalidateQueries({ queryKey: ['homepage_data'] });
+      }
+    } catch (e) {
+      toast.error('Failed to update order');
+    }
+  };
+
   const handleSaveGlobalSettings = async () => {
     setIsSavingGlobal(true);
     try {
       const response = await fetch(`${import.meta.env.VITE_API_BASE}/update_settings.php`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(globalSettings)
       });
+      if (response.status === 401) {
+        handleAuthError();
+        return;
+      }
       const result = await response.json();
       if (result.success) {
         Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Saved successfully!', showConfirmButton: false, timer: 1500 });
         setIsModalOpen(false);
         queryClient.invalidateQueries({ queryKey: ['homepage_data'] });
       } else {
+        if (result.code === 401 || result.message === 'Unauthorized' || result.message === 'Access denied') {
+          handleAuthError();
+          return;
+        }
         Swal.fire("Error", result.message, "error");
       }
     } catch (err) {
@@ -76,6 +180,39 @@ const HomepageBuilder = () => {
       Swal.fire("Error", "Could not connect to server.", "error");
     } finally {
       setIsSavingGlobal(false);
+    }
+  };
+
+  const handleToggleStatus = async (id, type, currentActive) => {
+    const nextActive = (currentActive === undefined || Number(currentActive) === 1) ? 0 : 1;
+    const action = type === 'hero' ? 'toggle_hero_status' : 'toggle_section_status';
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_homepage.php`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ action, id, is_active: nextActive })
+      });
+
+      if (response.status === 401) {
+        handleAuthError();
+        return;
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        toast.success(nextActive === 1 ? `${type === 'hero' ? 'Slide' : 'Section'} enabled on homepage!` : `${type === 'hero' ? 'Slide' : 'Section'} hidden from homepage!`);
+        queryClient.invalidateQueries({ queryKey: ['homepage_data'] });
+      } else {
+        if (result.code === 401 || result.message === 'Unauthorized' || result.message === 'Access denied') {
+          handleAuthError();
+          return;
+        }
+        toast.error(result.message || "Failed to update status");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Network error while updating status.");
     }
   };
 
@@ -138,18 +275,26 @@ const HomepageBuilder = () => {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_homepage.php`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ action, id })
         });
+
+        if (response.status === 401) {
+          handleAuthError();
+          return;
+        }
+
         const resultData = await response.json();
-          if (resultData.success) {
-            Swal.fire('Deleted!', 'The section has been deleted.', 'success');
-            queryClient.invalidateQueries({ queryKey: ['homepage_data'] });
-          } else {
-            Swal.fire('Error', 'Failed to delete item', 'error');
+        if (resultData.success) {
+          Swal.fire('Deleted!', 'The item has been deleted.', 'success');
+          queryClient.invalidateQueries({ queryKey: ['homepage_data'] });
+        } else {
+          if (resultData.code === 401 || resultData.message === 'Unauthorized' || resultData.message === 'Access denied') {
+            handleAuthError();
+            return;
           }
+          Swal.fire('Error', resultData.message || 'Failed to delete item', 'error');
+        }
       } catch (error) {
         Swal.fire('Error', 'Failed to delete item', 'error');
       }
@@ -218,18 +363,26 @@ const HomepageBuilder = () => {
 
       const response = await fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_homepage.php`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
       });
+
+      if (response.status === 401) {
+        handleAuthError();
+        return;
+      }
+
       const res = await response.json();
       if (res.success) {
         Swal.fire('Saved!', editId ? 'Item updated successfully' : 'New item added successfully', 'success');
         setIsModalOpen(false);
         queryClient.invalidateQueries({ queryKey: ['homepage_data'] });
       } else {
-        Swal.fire('Error', 'Failed to save: ' + JSON.stringify(res), 'error');
+        if (res.code === 401 || res.message === 'Unauthorized' || res.message === 'Access denied') {
+          handleAuthError();
+          return;
+        }
+        Swal.fire('Error', res.message || 'Failed to save component', 'error');
       }
     } catch (err) {
       console.error(err);
@@ -458,23 +611,185 @@ const HomepageBuilder = () => {
               <FaPlus /> Add Slide
             </button>
           </div>
-          {heroSlides.map((slide) => (
-            <div key={slide.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', padding: '10px', borderRadius: '8px' }}>
-              <img src={slide.image_url} alt="hero" style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
-              <div style={{ flex: 1, color: 'var(--admin-text)' }}>
-                <strong style={{ display: 'block', fontSize: '14px' }}>{slide.title || 'No Title'}</strong>
-                <small style={{ color: 'var(--admin-muted)' }}>Order: {slide.sort_order}</small>
+          {heroSlides.map((slide) => {
+            const isSlideActive = slide.is_active === undefined || Number(slide.is_active) === 1;
+            return (
+              <div 
+                key={slide.id} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '10px', 
+                  marginBottom: '10px', 
+                  border: '1px solid var(--admin-border)', 
+                  background: 'var(--admin-bg)', 
+                  padding: '10px', 
+                  borderRadius: '8px',
+                  opacity: isSlideActive ? 1 : 0.55,
+                  filter: isSlideActive ? 'none' : 'grayscale(40%)',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <img src={slide.image_url} alt="hero" style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
+                <div style={{ flex: 1, color: 'var(--admin-text)' }}>
+                  <strong style={{ display: 'block', fontSize: '14px' }}>{slide.title || 'No Title'}</strong>
+                  <small style={{ color: 'var(--admin-muted)' }}>Order: {slide.sort_order}</small>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    onClick={() => handleToggleStatus(slide.id, 'hero', isSlideActive ? 1 : 0)}
+                    title={isSlideActive ? "Hide slide" : "Show slide"}
+                    style={{
+                      background: isSlideActive ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      color: isSlideActive ? '#22c55e' : '#ef4444',
+                      border: `1px solid ${isSlideActive ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                      padding: '6px 10px',
+                      borderRadius: '16px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: '11px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    {isSlideActive ? <FaToggleOn size={16} /> : <FaToggleOff size={16} />}
+                    <span>{isSlideActive ? 'Active' : 'Hidden'}</span>
+                  </button>
+                  <button onClick={() => handleEdit(slide, 'hero')} style={{ background: 'var(--admin-bg)', color: 'var(--admin-text)', border: '1px solid var(--admin-border)', padding: '8px', borderRadius: '4px', cursor: 'pointer' }}>
+                    <FaEdit />
+                  </button>
+                  <button onClick={() => handleDelete(slide.id, 'hero')} style={{ background: 'var(--admin-bg)', color: '#ef4444', border: '1px solid var(--admin-border)', padding: '8px', borderRadius: '4px', cursor: 'pointer' }}>
+                    <FaTrash />
+                  </button>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: '5px' }}>
-                <button onClick={() => handleEdit(slide, 'hero')} style={{ background: 'var(--admin-bg)', color: 'var(--admin-text)', border: '1px solid var(--admin-border)', padding: '8px', borderRadius: '4px', cursor: 'pointer' }}>
-                  <FaEdit />
-                </button>
-                <button onClick={() => handleDelete(slide.id, 'hero')} style={{ background: 'var(--admin-bg)', color: '#ef4444', border: '1px solid var(--admin-border)', padding: '8px', borderRadius: '4px', cursor: 'pointer' }}>
-                  <FaTrash />
-                </button>
-              </div>
+            );
+          })}
+        </div>
+
+        {/* HOMEPAGE PROMO BANNERS MASTER CONTROL */}
+        <div style={{ background: 'var(--admin-panel)', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: '1px solid var(--admin-border)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <div>
+              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--admin-text)' }}>
+                <FaImage /> Homepage Promo Banners Master Control
+              </h3>
+              <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--admin-muted)' }}>
+                Enable, disable, and order bottom wide promo banners across Deals and Menu Items in one centralized place.
+              </p>
             </div>
-          ))}
+            <span style={{ fontSize: '11px', fontWeight: 'bold', padding: '4px 10px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+              {([...masterBanners.deals, ...masterBanners.products].filter(b => b.is_featured_banner).length)} Live on Home
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '15px' }}>
+            {[...masterBanners.deals, ...masterBanners.products].map((item) => {
+              const isLive = item.is_featured_banner;
+              const bannerImg = item.promo_banner_image || item.img;
+
+              return (
+                <div
+                  key={`${item.type}-${item.id}`}
+                  style={{
+                    border: `1px solid ${isLive ? 'rgba(245, 158, 11, 0.5)' : 'var(--admin-border)'}`,
+                    background: isLive ? 'rgba(245, 158, 11, 0.04)' : 'var(--admin-bg)',
+                    borderRadius: '10px',
+                    padding: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <img
+                      src={bannerImg}
+                      alt={item.name || item.title}
+                      style={{
+                        width: '90px',
+                        height: '55px',
+                        objectFit: 'cover',
+                        borderRadius: '6px',
+                        border: '1px solid var(--admin-border)',
+                        background: '#000'
+                      }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://placehold.co/180x110?text=Banner';
+                      }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                        <span style={{
+                          fontSize: '9px',
+                          fontWeight: '800',
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          textTransform: 'uppercase',
+                          background: item.type === 'deal' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                          color: item.type === 'deal' ? '#ef4444' : '#3b82f6'
+                        }}>
+                          {item.type.toUpperCase()}
+                        </span>
+                        <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--admin-orange)' }}>
+                          Rs. {parseFloat(item.price || 0).toLocaleString()}
+                        </span>
+                      </div>
+                      <strong style={{ display: 'block', fontSize: '13px', color: 'var(--admin-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {item.name || item.title}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid var(--admin-border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <label style={{ fontSize: '11px', color: 'var(--admin-muted)', fontWeight: '600' }}>Order:</label>
+                      <input
+                        type="number"
+                        min="0"
+                        defaultValue={item.banner_order || 0}
+                        onBlur={(e) => handleUpdateMasterBannerOrder(item, item.type, e.target.value)}
+                        style={{
+                          width: '50px',
+                          padding: '3px 6px',
+                          fontSize: '11px',
+                          borderRadius: '4px',
+                          border: '1px solid var(--admin-border)',
+                          background: 'var(--admin-panel)',
+                          color: 'var(--admin-text)',
+                          textAlign: 'center'
+                        }}
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggleMasterBanner(item, item.type)}
+                      style={{
+                        padding: '5px 12px',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        border: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: isLive ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                        color: isLive ? '#22c55e' : 'var(--admin-muted)',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      {isLive ? <FaToggleOn size={16} /> : <FaToggleOff size={16} />}
+                      <span>{isLive ? 'Active on Home' : 'Disabled'}</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* HOMEPAGE SECTIONS */}
@@ -485,51 +800,98 @@ const HomepageBuilder = () => {
               <FaPlus /> Add Section
             </button>
           </div>
-          {sections.map((sec) => (
-            <div key={sec.id} style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '10px', border: '1px solid var(--admin-border)', padding: '15px', borderRadius: '8px', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}>
-              <div style={{ background: 'var(--admin-orange)', color: '#fff', width: '30px', height: '30px', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: '50%', fontWeight: 'bold' }}>
-                {sec.sort_order}
-              </div>
-              <div style={{ flex: 1 }}>
-                <strong style={{ display: 'block', fontSize: '16px' }}>{sec.title || sec.section_type.toUpperCase()}</strong>
-                <span style={{ fontSize: '12px', background: 'var(--admin-panel)', padding: '2px 8px', borderRadius: '12px', color: 'var(--admin-muted)', border: '1px solid var(--admin-border)' }}>
-                  {sec.section_type} 
-                  {(() => {
-                    if (sec.section_type === 'banner' && sec.content_data && sec.content_data.startsWith('[')) {
-                      try {
-                        return ` (${JSON.parse(sec.content_data).length} Slides)`;
-                      } catch(e) {
-                        return ' (Dynamic Banner)';
+          {sections.map((sec) => {
+            const isSecActive = sec.is_active === undefined || Number(sec.is_active) === 1;
+            return (
+              <div 
+                key={sec.id} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '15px', 
+                  marginBottom: '10px', 
+                  border: '1px solid var(--admin-border)', 
+                  padding: '15px', 
+                  borderRadius: '8px', 
+                  background: 'var(--admin-bg)', 
+                  color: 'var(--admin-text)',
+                  opacity: isSecActive ? 1 : 0.55,
+                  filter: isSecActive ? 'none' : 'grayscale(40%)',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <div style={{ background: isSecActive ? 'var(--admin-orange)' : '#64748b', color: '#fff', width: '30px', height: '30px', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: '50%', fontWeight: 'bold', flexShrink: 0 }}>
+                  {sec.sort_order}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <strong style={{ fontSize: '16px' }}>{sec.title || sec.section_type.toUpperCase()}</strong>
+                    {!isSecActive && (
+                      <span style={{ fontSize: '10px', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                        HIDDEN
+                      </span>
+                    )}
+                  </div>
+                  <span style={{ fontSize: '12px', background: 'var(--admin-panel)', padding: '2px 8px', borderRadius: '12px', color: 'var(--admin-muted)', border: '1px solid var(--admin-border)', display: 'inline-block', marginTop: '4px' }}>
+                    {sec.section_type} 
+                    {(() => {
+                      if (sec.section_type === 'banner' && sec.content_data && sec.content_data.startsWith('[')) {
+                        try {
+                          return ` (${JSON.parse(sec.content_data).length} Slides)`;
+                        } catch(e) {
+                          return ' (Dynamic Banner)';
+                        }
                       }
-                    }
-                    if (sec.content_data && sec.section_type === 'product_slider') {
-                      if (sec.content_data.startsWith('custom:')) {
-                        return ' (Custom Products)';
+                      if (sec.content_data && sec.section_type === 'product_slider') {
+                        if (sec.content_data.startsWith('custom:')) {
+                          return ' (Custom Products)';
+                        }
+                        if (sec.content_data.startsWith('category:')) {
+                          return ` (${sec.content_data.split(':')[1]})`;
+                        }
+                        if (sec.content_data === 'filter:best_sellers') return ' (Best Sellers)';
+                        if (sec.content_data === 'filter:top_deals') return ' (Top Deals)';
+                        
+                        const dataStr = sec.content_data.length > 30 ? sec.content_data.substring(0, 30) + '...' : sec.content_data;
+                        return ` (${dataStr})`;
                       }
-                      if (sec.content_data.startsWith('category:')) {
-                        return ` (${sec.content_data.split(':')[1]})`;
-                      }
-                      if (sec.content_data === 'filter:best_sellers') return ' (Best Sellers)';
-                      if (sec.content_data === 'filter:top_deals') return ' (Top Deals)';
-                      
-                      const dataStr = sec.content_data.length > 30 ? sec.content_data.substring(0, 30) + '...' : sec.content_data;
-                      return ` (${dataStr})`;
-                    }
-                    return sec.content_data ? ` (${sec.content_data})` : '';
-                  })()}
-                  {sec.section_type === 'product_slider' ? ` [${sec.slider_type || 'regular'}]` : ''}
-                </span>
+                    })()}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {/* Active/Inactive Toggle Switch */}
+                  <button
+                    onClick={() => handleToggleStatus(sec.id, 'section', isSecActive ? 1 : 0)}
+                    title={isSecActive ? "Hide section from homepage" : "Show section on homepage"}
+                    style={{
+                      background: isSecActive ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      color: isSecActive ? '#22c55e' : '#ef4444',
+                      border: `1px solid ${isSecActive ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                      padding: '6px 12px',
+                      borderRadius: '20px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {isSecActive ? <FaToggleOn size={18} /> : <FaToggleOff size={18} />}
+                    <span>{isSecActive ? 'Active' : 'Hidden'}</span>
+                  </button>
+
+                  <button onClick={() => handleEdit(sec, 'section')} style={{ background: 'var(--admin-bg)', color: 'var(--admin-text)', border: '1px solid var(--admin-border)', padding: '10px', borderRadius: '6px', cursor: 'pointer' }}>
+                    <FaEdit />
+                  </button>
+                  <button onClick={() => handleDelete(sec.id, 'section')} style={{ background: 'var(--admin-bg)', color: '#ef4444', border: '1px solid var(--admin-border)', padding: '10px', borderRadius: '6px', cursor: 'pointer' }}>
+                    <FaTrash />
+                  </button>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: '5px' }}>
-                <button onClick={() => handleEdit(sec, 'section')} style={{ background: 'var(--admin-bg)', color: 'var(--admin-text)', border: '1px solid var(--admin-border)', padding: '10px', borderRadius: '6px', cursor: 'pointer' }}>
-                  <FaEdit />
-                </button>
-                <button onClick={() => handleDelete(sec.id, 'section')} style={{ background: 'var(--admin-bg)', color: '#ef4444', border: '1px solid var(--admin-border)', padding: '10px', borderRadius: '6px', cursor: 'pointer' }}>
-                  <FaTrash />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* FOOTER SETTINGS INTEGRATION */}
@@ -684,29 +1046,6 @@ const HomepageBuilder = () => {
 
               {modalType === 'section' && formData.section_type === 'product_slider' && (
                 <>
-                  <div>
-                    <label>Slider Layout</label>
-                    <select 
-                      value={formData.slider_type} 
-                      onChange={e => setFormData({...formData, slider_type: e.target.value})}
-                      style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '5px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
-                    >
-                      <option value="regular">Regular Horizontal Slider</option>
-                      <option value="stacked">Cinematic Showcase (Stacked)</option>
-                      <option value="glassmorphism">3D Glassmorphism Coverflow</option>
-                      <option value="bento">Dynamic Bento Grid</option>
-                      <option value="parallax">Parallax Depth Showcase</option>
-                      <option value="revolving">Circular Revolving Stage</option>
-                      <option value="deck">Neon Cyberpunk Deck</option>
-                      <option value="split">Magazine Split-Screen</option>
-                      <option value="marquee">Endless Marquee</option>
-                      <option value="bubbles">Floating Gravity Bubbles</option>
-                      <option value="skewed">Aggressive Skewed Speed-Grid</option>
-                      <option value="inventory">Cyberpunk Inventory Slots</option>
-                      <option value="vertical-accordion">Cinematic Vertical Accordion</option>
-                    </select>
-                  </div>
-
                   <div>
                     <label>Data Source (Content)</label>
                   <select 

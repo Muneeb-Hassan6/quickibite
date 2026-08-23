@@ -135,10 +135,14 @@ export const CartProvider = ({ children }) => {
       customer_address: customerDetails.customerAddress || "",
       table_number: customerDetails.tableNumber || "",
       
-      // 🔥 YEH 3 LINES ADD KI HAIN TAAYKE ADDRESS BHI SATH JAYE
+      // Address Breakdown
       house_no: customerDetails.house_no || null,
       street: customerDetails.street || null,
       area: customerDetails.area || null,
+
+      // Payment Details
+      payment_method: customerDetails.paymentMethod || "Cash on Delivery",
+      payment_status: customerDetails.paymentStatus || "Pending",
 
       total: orderTotal,
       cart: cartItems,
@@ -157,39 +161,9 @@ export const CartProvider = ({ children }) => {
       );
 
       const result = await response.json();
+      console.log("DB Insert Response:", result);
 
-      if (result.success) {
-        const newLocalOrder = {
-          ...orderData,
-          id: result.order_id, // 🔥 Database ki asli ID
-          status: "Pending",
-          time: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          date: new Date().toLocaleDateString(),
-        };
-
-        // Orders history update karein
-        setOrders([newLocalOrder, ...orders]);
-
-        clearCart();
-        setIsCartOpen(false);
-
-        toast.success("Order Placed Successfully!", {
-          id: loadingToast,
-          duration: 4000,
-          style: { background: "#10b981", color: "#fff" },
-        });
-
-        // 🔥 SOCKET EMIT: Node Server ko directly frontend se batao!
-        const socket = io(import.meta.env.VITE_SOCKET_URL);
-        socket.emit("new_order_placed");
-        setTimeout(() => socket.disconnect(), 1000); // Disconnect after emitting
-
-        // 🔥 BULLETPROOF: Newly placed order wapis bhejo taake Checkout page foran popup show kare
-        return newLocalOrder;
-      } else {
+      if (!result.success || !result.order_id) {
         toast.dismiss(loadingToast);
         if (result.code === "RESTAURANT_CLOSED") {
           Swal.fire({
@@ -199,13 +173,67 @@ export const CartProvider = ({ children }) => {
             confirmButtonColor: "#ef4444",
           });
         } else {
-          toast.error("Error: " + result.message);
+          const errMsg = result.message || result.error || "Failed to insert order into MySQL database";
+          toast.error("Database Error: " + errMsg);
+          Swal.fire({
+            title: "Order Failed",
+            text: errMsg,
+            icon: "error",
+            confirmButtonColor: "#ef4444",
+          });
         }
         return null;
       }
+
+      // Store ONLY the real backend order_id and order object
+      const realOrderId = result.order_id;
+      localStorage.setItem("activeOrderId", realOrderId.toString());
+
+      const newLocalOrder = {
+        ...orderData,
+        id: realOrderId, // Real MySQL DB ID
+        status: "Pending",
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        date: new Date().toLocaleDateString(),
+      };
+
+      localStorage.setItem("latestOrder", JSON.stringify(newLocalOrder));
+
+      // Orders history update karein
+      setOrders([newLocalOrder, ...orders]);
+
+      clearCart();
+      setIsCartOpen(false);
+
+      toast.success(`Order #${realOrderId} Placed Successfully!`, {
+        id: loadingToast,
+        duration: 4000,
+        style: { background: "#10b981", color: "#fff" },
+      });
+
+      // 🔥 SOCKET EMIT: Node Server ko directly frontend se batao!
+      try {
+        const socket = io(import.meta.env.VITE_SOCKET_URL);
+        socket.emit("new_order_placed");
+        setTimeout(() => socket.disconnect(), 1000);
+      } catch (sockErr) {
+        console.warn("Socket notification warning:", sockErr);
+      }
+
+      return newLocalOrder;
     } catch (error) {
-      console.error("Order Failed:", error);
-      toast.error("Failed to connect to the server.", { id: loadingToast });
+      console.error("Order Insertion Error:", error);
+      toast.dismiss(loadingToast);
+      toast.error("Database Connection Error: " + error.message);
+      Swal.fire({
+        title: "Connection Error",
+        text: "Could not reach database server: " + error.message,
+        icon: "error",
+        confirmButtonColor: "#ef4444",
+      });
       return null;
     }
   };

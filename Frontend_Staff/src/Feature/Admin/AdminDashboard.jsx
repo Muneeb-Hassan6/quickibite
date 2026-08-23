@@ -1,7 +1,7 @@
-// src/pages/Admin/AdminDashboard.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; // 🔥 Navigate import kiya
 import Swal from "sweetalert2"; // 🔥 Premium Alerts ke liye Swal import kiya
+import { useTheme } from "../../Context/ThemeContext"; // 🔥 Global Theme Context
 // Components Import
 import AdminSidebar from "./Components/SharedComponents/AdminSidebar";
 import AdminHeader from "./Components/SharedComponents/AdminHeader";
@@ -19,7 +19,8 @@ import ProductProfitTab from "./Components/ProductProfitTab/ProductProfitTab"; /
 
 const AdminDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { theme, toggleTheme } = useTheme(); // 🔥 Global theme (defaults to "dark")
+  const isDarkMode = theme === "dark";
   const navigate = useNavigate(); // 🔥 Hook initialize kiya
 
   // 1. Initial state ab localStorage se aayegi
@@ -32,16 +33,6 @@ const AdminDashboard = () => {
   useEffect(() => {
     localStorage.setItem("adminActiveTab", activeTab);
   }, [activeTab]);
-
-  // Theme Toggle Logic
-  const toggleTheme = () => setIsDarkMode((prev) => !prev);
-
-  useEffect(() => {
-    document.documentElement.setAttribute(
-      "data-theme",
-      isDarkMode ? "dark" : "light",
-    );
-  }, [isDarkMode]);
 
   const handleLogout = () => {
     Swal.fire({

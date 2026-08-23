@@ -6,6 +6,7 @@ import {
   FaBookOpen,
   FaPlusCircle,
 } from "react-icons/fa";
+import { resolveImageUrl } from "../../../../../utils/imageOptimizer";
 
 const MenuTable = ({
   menuItems,
@@ -74,11 +75,13 @@ const MenuTable = ({
                   <td className="p-[1rem_1.25rem] align-middle text-[0.938rem] font-bold">
                     <div className="flex items-center gap-[0.938rem]">
                       <img
-                        src={
-                          item.img || "https://via.placeholder.com/40?text=No+Img"
-                        }
+                        src={resolveImageUrl(item.img, 100)}
                         alt={item.name}
-                        className="w-[2.813rem] h-[2.813rem] rounded-[0.5rem] object-cover bg-[var(--admin-bg)]"
+                        className="w-[2.813rem] h-[2.813rem] rounded-[0.5rem] object-contain p-1 bg-[var(--admin-bg)] border border-[var(--border-color,#333)]"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "https://placehold.co/100x100?text=No+Img";
+                        }}
                       />
                       <span className="font-extrabold text-[0.938rem] text-[var(--admin-text)]">{item.name}</span>
                     </div>

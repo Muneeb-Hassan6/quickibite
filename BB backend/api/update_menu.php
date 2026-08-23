@@ -23,14 +23,17 @@ if(!empty($data->id) && !empty($data->name) && !empty($data->variants)) {
     $isAvailable = !empty($data->isAvailable) ? 1 : 0;
     $isTopDeal = !empty($data->isTopDeal) ? 1 : 0;
     $isBestSeller = !empty($data->isBestSeller) ? 1 : 0;
+    $promo_banner_image = isset($data->promo_banner_image) ? $data->promo_banner_image : null;
+    $is_featured_banner = !empty($data->is_featured_banner) ? 1 : 0;
+    $banner_order = isset($data->banner_order) ? intval($data->banner_order) : 0;
     
     $slider_placements = isset($data->slider_placements) && is_array($data->slider_placements) ? $data->slider_placements : [];
 
     try {
         // 1. Update Main Item
-        $query1 = "UPDATE menu_items SET name=?, description=?, category=?, img=?, isAvailable=?, isTopDeal=?, isBestSeller=? WHERE id=?";
+        $query1 = "UPDATE menu_items SET name=?, description=?, category=?, img=?, isAvailable=?, isTopDeal=?, isBestSeller=?, promo_banner_image=?, is_featured_banner=?, banner_order=? WHERE id=?";
         $stmt1 = $conn->prepare($query1);
-        $stmt1->execute([$name, $description, $category, $img, $isAvailable, $isTopDeal, $isBestSeller, $id]);
+        $stmt1->execute([$name, $description, $category, $img, $isAvailable, $isTopDeal, $isBestSeller, $promo_banner_image, $is_featured_banner, $banner_order, $id]);
 
         // 2. Delete Old Variants
         $delQuery = "DELETE FROM menu_variants WHERE menu_id=?";

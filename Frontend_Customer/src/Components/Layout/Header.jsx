@@ -1,177 +1,225 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import OrderTracking from "../../Feature/Order/Components/OrderTracker";
 import { useCart } from "../../Context/CartContext";
-
-// 🔥 Bolt ki jagah FaFire import kiya
-import { FaBox, FaSearch, FaFire } from "react-icons/fa";
-import { optimizeCloudinaryImage } from "../../utils/imageOptimizer";
+import { useTheme } from "../../Context/ThemeContext";
+import {
+  FaShoppingBag,
+  FaSun,
+  FaMoon,
+  FaMapMarkerAlt,
+  FaBars,
+  FaTimes,
+  FaChevronRight,
+  FaPhoneAlt,
+} from "react-icons/fa";
 
 const Header = () => {
-  const [showOrders, setShowOrders] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [cartBounce, setCartBounce] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { orders } = useCart();
-  const searchRef = useRef(null);
-
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-
-  const isMenuPage = location.pathname.toLowerCase().includes("menu");
+  const { orders, cartItems, toggleCart } = useCart();
+  const { theme, toggleTheme } = useTheme();
+  const prevCartCount = useRef(0);
 
   const currentPath = location.pathname.toLowerCase();
-  const shouldHideIcon =
+  const shouldHideNav =
     currentPath.includes("kitchen") ||
     currentPath.includes("cashier") ||
     currentPath.includes("admin") ||
     currentPath.includes("login");
 
+  // Cart count & animation
+  const totalCartQty = (cartItems || []).reduce(
+    (sum, item) => sum + (item.qty || 1),
+    0
+  );
+
   useEffect(() => {
-    if (isMenuPage) {
-      const params = new URLSearchParams(location.search);
-      setSearchTerm(params.get("search") || "");
-    } else {
-      setSearchTerm("");
+    if (totalCartQty > prevCartCount.current && prevCartCount.current >= 0) {
+      setCartBounce(true);
+      const timer = setTimeout(() => setCartBounce(false), 500);
+      return () => clearTimeout(timer);
     }
-  }, [location.search, isMenuPage]);
+    prevCartCount.current = totalCartQty;
+  }, [totalCartQty]);
 
-  // Fetch Menu for Dynamic Search using React Query
-  const { data: menuItems = [] } = useQuery({
-    queryKey: ['menu'],
-    queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
-      const result = await response.json();
-      return (result.success && result.data) ? result.data : (Array.isArray(result) ? result : []);
-    }
-  });
-
-  // Handle outside click for search dropdown
+  // Close mobile drawer on route change
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
-        setIsSearchFocused(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    setIsSearchFocused(false);
-    if (searchTerm.trim()) {
-      navigate(`/menu?search=${searchTerm.trim()}`);
-    } else {
-      navigate(`/menu`);
-    }
-  };
+  const navItems = [
+    { label: "Home", to: "/" },
+    { label: "Menu", to: "/menu" },
+    { label: "Deals", to: "/deals" },
+    { label: "Track Order", to: "/track-order" },
+    { label: "About Us", to: "/about-us" },
+  ];
 
-  const filteredItems = searchTerm.trim() 
-    ? menuItems.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    : [];
+  const isNavActive = (to) =>
+    to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
 
   return (
-    <>
-      <header className="sticky top-0 z-[1100] bg-[var(--bg-body,#0a0a0a)]">
-        <div className="bg-[var(--bg-body,#0a0a0a)] shadow-[0_4px_10px_rgba(0,0,0,0.3)]">
-          <div className="h-[4.375rem] md:h-[4.375rem] h-[3.75rem] flex items-center justify-between px-5">
-            {/* 1. LEFT SECTION (Logo with Fire Icon) */}
-            <div className="flex items-center">
-              <div className="flex items-center gap-[0.625rem] cursor-pointer" onClick={() => navigate("/")}>
-                <div className="bg-[#ef4444] text-white p-2 rounded-lg">
-                  <FaFire /> {/* 🔥 Yahan Fire Icon laga diya */}
-                </div>
-                <div>
-                  <h1 className="font-['Oswald',sans-serif] text-[1.5rem] text-[var(--text-main,#ffffff)] m-0 tracking-[1px]">
-                    Big<span className="text-[#ef4444]">Bite</span>
-                  </h1>
-                </div>
-              </div>
-            </div>
+    <header className="sticky top-0 z-[100] w-full max-w-full px-4 py-3 bg-neutral-950/85 dark:bg-neutral-950/85 backdrop-blur-xl border-b border-white/10 shadow-lg transition-all duration-300">
+      <div className="flex items-center justify-between w-full max-w-7xl mx-auto">
+        {/* ═══ LEFT: Clean Typographic Wordmark ═══ */}
+        <div
+          className="flex items-center cursor-pointer group flex-shrink-0"
+          onClick={() => navigate("/")}
+        >
+          <span className="font-['Oswald',sans-serif] font-black text-2xl sm:text-3xl tracking-wider leading-none text-white group-hover:opacity-90 transition-opacity duration-200">
+            BIG<span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">BITE</span>
+          </span>
+        </div>
 
-            {/* 2. MIDDLE SECTION (Dynamic Search) */}
-            <div className="relative hidden md:block" ref={searchRef}>
-              <form onSubmit={handleSearchSubmit} className={`relative flex items-center transition-all duration-300 ${isSearchFocused ? '' : 'opacity-70'}`}>
-                <FaSearch className={`absolute left-[0.75rem] text-[0.875rem] z-10 pointer-events-none transition-all duration-300 ${isSearchFocused ? 'text-[#ef4444]' : 'text-[#888]'}`} />
-                <input
-                  type="text"
-                  placeholder="Search your favorite food..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
-                  className={`rounded-full py-2 pr-[0.937rem] pl-[2.188rem] text-[var(--text-main,#fff)] outline-none w-[21.875rem] transition-all duration-300 ${isSearchFocused ? 'opacity-100 border border-[#ef4444] bg-[var(--panel-bg,#1a1a1a)]' : 'border-transparent bg-white/5 border'}`}
-                />
-              </form>
+        {/* ═══ RIGHT: Desktop Nav + Mobile Action Cluster ═══ */}
+        <div className="flex items-center gap-2 sm:gap-6 flex-shrink-0">
+          {/* Desktop Nav Links */}
+          <nav className="hidden md:flex items-center gap-6 sm:gap-8 mr-2">
+            {[
+              { label: "Home", to: "/" },
+              { label: "Menu", to: "/menu" },
+              { label: "Deals", to: "/deals" },
+            ].map((nav) => {
+              const active = isNavActive(nav.to);
+              return (
+                <button
+                  key={nav.to}
+                  type="button"
+                  onClick={() => navigate(nav.to)}
+                  className={`text-sm md:text-[15px] font-extrabold uppercase tracking-wider transition-all duration-200 py-1 relative group cursor-pointer bg-transparent border-none ${
+                    active
+                      ? "text-white"
+                      : "text-neutral-300 hover:text-amber-400"
+                  }`}
+                >
+                  <span className="inline-block transition-transform duration-200 group-hover:-translate-y-0.5">
+                    {nav.label}
+                  </span>
+                  <span
+                    className={`absolute -bottom-1 left-0 h-[2.5px] bg-amber-400 rounded-full transition-all duration-300 ease-out ${
+                      active ? "w-full" : "w-0 group-hover:w-full"
+                    }`}
+                  />
+                </button>
+              );
+            })}
+          </nav>
 
-              {/* Dynamic Search Dropdown */}
-              {isSearchFocused && searchTerm.trim() !== "" && (
-                <div className="absolute top-[2.812rem] left-0 w-full bg-[#111] border border-[#333] rounded-xl max-h-[21.875rem] overflow-y-auto shadow-[0px_8px_20px_rgba(0,0,0,0.8)] z-[1000] animate-[slideDown_0.2s_ease-out]">
-                  {filteredItems.length > 0 ? (
-                    filteredItems.map(item => (
-                      <div 
-                        key={item.id} 
-                        className="flex items-center p-[0.625rem_0.937rem] border-b border-[#222] cursor-pointer transition-colors duration-200 hover:bg-[#222] last:border-b-0"
-                        onClick={() => {
-                          setSearchTerm("");
-                          setIsSearchFocused(false);
-                          navigate(`/menu?search=${encodeURIComponent(item.name)}`);
-                        }}
-                      >
-                        <img className="w-[2.812rem] h-[2.812rem] rounded-[0.375rem] object-cover mr-[0.937rem]" src={optimizeCloudinaryImage(item.img, 100)} alt={item.name} />
-                        <div className="flex flex-col">
-                          <span className="text-white text-[0.875rem] font-medium mb-[0.188rem]">{item.name}</span>
-                          <span className="text-[#ef4444] text-[0.812rem] font-bold">Rs {Number(item.price).toFixed(2)}</span>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-[0.937rem] text-center text-[#888] text-[0.875rem]">No products found...</div>
-                  )}
-                </div>
+          {/* Action Icon Buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Theme Toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white active:scale-90 transition-all cursor-pointer"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <FaSun className="text-amber-400 text-xs sm:text-sm" />
+              ) : (
+                <FaMoon className="text-neutral-200 text-xs sm:text-sm" />
               )}
-            </div>
+            </button>
 
-            {/* 3. RIGHT SECTION */}
-            <div className="flex items-center">
-              <div className="flex items-center gap-[0.937rem]">
-                {!shouldHideIcon && (
-                  <div
-                    className="relative text-[1.25rem] text-[var(--text-main,#fff)] cursor-pointer transition-colors duration-200 hover:text-[#ef4444]"
-                    onClick={() => setShowOrders(true)}
-                    title="Live Tracking"
-                  >
-                    <FaBox />
-                    {orders?.length > 0 && (
-                      <span className="absolute -top-[0.375rem] -right-[0.5rem] bg-[#ef4444] text-white text-[0.625rem] w-[1.125rem] h-[1.125rem] rounded-full flex items-center justify-center border-2 border-[#0a0a0a] font-bold">{orders.length}</span>
-                    )}
-                  </div>
+            {/* Track Order Icon (Desktop only shortcut) */}
+            {!shouldHideNav && (
+              <button
+                type="button"
+                onClick={() => navigate("/track-order")}
+                className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 items-center justify-center text-white active:scale-90 transition-all cursor-pointer relative"
+                aria-label="Track orders"
+              >
+                <FaMapMarkerAlt className="text-xs sm:text-sm" />
+                {orders?.length > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 z-30">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+                  </span>
                 )}
-              </div>
-            </div>
+              </button>
+            )}
+
+            {/* Cart Button */}
+            <button
+              type="button"
+              onClick={toggleCart}
+              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white active:scale-90 transition-all cursor-pointer relative ${
+                cartBounce ? "animate-bounce" : ""
+              }`}
+              aria-label="Open cart"
+            >
+              <FaShoppingBag className="text-xs sm:text-sm text-amber-400" />
+              {totalCartQty > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-amber-400 text-neutral-950 text-[10px] font-black rounded-full flex items-center justify-center shadow-md border border-neutral-950 z-30 animate-in zoom-in duration-200 leading-none">
+                  {totalCartQty}
+                </span>
+              )}
+            </button>
+
+            {/* Mobile Hamburger Button */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white active:scale-90 transition-all cursor-pointer"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? (
+                <FaTimes className="text-sm text-amber-400" />
+              ) : (
+                <FaBars className="text-sm" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ MODERN MOBILE FROSTED GLASS SLIDE DRAWER ═══ */}
+      {mobileMenuOpen && (
+        <div className="md:hidden absolute top-full left-0 w-full bg-neutral-950/95 backdrop-blur-2xl border-b border-white/10 p-4 sm:p-5 shadow-2xl space-y-2.5 animate-in slide-in-from-top-3 duration-200 z-[100]">
+          <div className="space-y-1.5">
+            {navItems.map((nav) => {
+              const active = isNavActive(nav.to);
+              return (
+                <button
+                  key={nav.to}
+                  type="button"
+                  onClick={() => {
+                    navigate(nav.to);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-['Oswald',sans-serif] font-bold text-base tracking-wide border cursor-pointer transition-all ${
+                    active
+                      ? "bg-amber-400/15 border-amber-400/40 text-amber-400 shadow-sm"
+                      : "bg-white/5 hover:bg-amber-500/10 text-neutral-200 border-white/5 hover:border-amber-500/30"
+                  }`}
+                >
+                  <span className="uppercase">{nav.label}</span>
+                  <FaChevronRight className={`text-xs ${active ? "text-amber-400" : "text-neutral-500"}`} />
+                </button>
+              );
+            })}
           </div>
 
-          {/* 4. MOBILE SEARCH ROW */}
-          {isMenuPage && (
-            <div className="block md:hidden px-[0.937rem] pb-[0.937rem] bg-[var(--bg-body,#0a0a0a)]">
-              <form onSubmit={handleSearchSubmit} className="relative w-full">
-                <FaSearch className="absolute left-[0.937rem] top-1/2 -translate-y-1/2 text-[#ef4444]" />
-                <input
-                  type="text"
-                  placeholder="Search item or category..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-[var(--panel-bg,#1a1a1a)] border border-[var(--border-color,#333)] rounded-[0.75rem] py-[0.75rem] pr-[0.937rem] pl-[2.812rem] text-[var(--text-main,#fff)] outline-none text-[0.875rem] transition-colors duration-300 focus:border-[#ef4444]"
-                />
-              </form>
-            </div>
-          )}
+          {/* Quick Helpline Support Button inside Drawer */}
+          <div className="pt-2 border-t border-white/10">
+            <button
+              type="button"
+              onClick={() => {
+                navigate("/track-order");
+                setMobileMenuOpen(false);
+              }}
+              className="w-full py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-neutral-950 font-['Oswald',sans-serif] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 border-none cursor-pointer"
+            >
+              <FaMapMarkerAlt className="text-xs" />
+              <span>Live Order Tracking</span>
+            </button>
+          </div>
         </div>
-      </header>
-
-      <OrderTracking isOpen={showOrders} onClose={() => setShowOrders(false)} />
-    </>
+      )}
+    </header>
   );
 };
 

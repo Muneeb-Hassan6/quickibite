@@ -12,6 +12,7 @@ const MenuModal = ({
   customSliders = [],
 }) => {
   const fileInputRef = useRef(null);
+  const promoFileInputRef = useRef(null);
 
   if (!isOpen) return null;
 
@@ -145,6 +146,82 @@ const MenuModal = ({
                 />
                 Mark as Best Seller
               </label>
+
+              {/* Promo Banner Integration */}
+              <div className="my-[0.625rem] border-b border-[var(--admin-border)]"></div>
+              <label
+                className={`flex items-center gap-[0.75rem] text-[0.813rem] font-bold cursor-pointer p-[0.625rem_0.938rem] rounded-[0.5rem] border transition-all duration-200 ${menuForm.is_featured_banner ? "bg-amber-400/10 border-amber-400/50 text-amber-400" : "bg-[rgba(255,255,255,0.02)] border-transparent text-[var(--admin-text,#ccc)] hover:bg-[rgba(255,255,255,0.05)]"}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={menuForm.is_featured_banner || false}
+                  onChange={(e) =>
+                    setMenuForm({ ...menuForm, is_featured_banner: e.target.checked })
+                  }
+                  className="w-[1rem] h-[1rem] cursor-pointer accent-amber-400"
+                />
+                Show as Homepage Promo Banner
+              </label>
+
+              {menuForm.is_featured_banner && (
+                <div className="flex flex-col gap-2 p-3 bg-black/40 rounded-xl border border-neutral-800">
+                  <label className="text-[0.688rem] text-[#aaa] font-bold uppercase block">
+                    Wide Promo Banner Image (1200x500px)
+                  </label>
+                  <div
+                    onClick={() => promoFileInputRef.current?.click()}
+                    className="border-2 border-dashed border-[var(--admin-border)] rounded-lg h-24 flex flex-col justify-center items-center cursor-pointer overflow-hidden relative bg-[rgba(255,255,255,0.02)] hover:border-amber-400 group"
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={promoFileInputRef}
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) setMenuForm({ ...menuForm, promo_banner_image: file });
+                      }}
+                    />
+                    {menuForm.promo_banner_image ? (
+                      <>
+                        <img
+                          src={
+                            typeof menuForm.promo_banner_image === "string"
+                              ? menuForm.promo_banner_image
+                              : URL.createObjectURL(menuForm.promo_banner_image)
+                          }
+                          alt="Banner Preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-[10px] font-bold">Change Banner</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center text-[#888] text-center p-2">
+                        <FaCloudUploadAlt className="text-xl text-amber-500 mb-1" />
+                        <span className="text-[10px] font-bold">Upload Wide Banner</span>
+                        <span className="text-[8px] text-neutral-500">Leaves empty to use standard item image</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="text-[0.688rem] text-[#aaa] font-bold block mb-1">
+                      Banner Order (0 = First)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={menuForm.banner_order ?? 0}
+                      onChange={(e) =>
+                        setMenuForm({ ...menuForm, banner_order: e.target.value })
+                      }
+                      className="w-full p-2 text-xs bg-[rgba(255,255,255,0.05)] border border-[var(--admin-border)] text-white rounded-lg focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+              )}
 
               {customSliders.length > 0 && (
                 <>

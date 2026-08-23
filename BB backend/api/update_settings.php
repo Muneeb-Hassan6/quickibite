@@ -3,25 +3,28 @@ include_once __DIR__ . '/../config/cors_headers.php';
 include_once __DIR__ . '/../config/auth_middleware.php';
 require_role(['Admin', 'Manager']);
 include_once '../config/Database.php';
+
 $database = new Database();
 $db = $database->getConnection();
 
 // Frontend se aane wala JSON data catch karein
 $data = json_decode(file_get_contents("php://input"), true);
 
-if ($data) {
+if ($data && is_array($data)) {
     try {
         $db->beginTransaction();
 
-        $query = "UPDATE settings SET setting_value = :value WHERE setting_key = :key";
+        $query = "INSERT INTO settings (setting_key, setting_value) VALUES (:key, :val) 
+                  ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)";
         $stmt = $db->prepare($query);
 
-        // Sirf wahi settings update karein jo payload mein bheji gayi hain
+        // Sirf wahi settings update/insert karein jo payload mein bheji gayi hain
         foreach ($data as $key => $value) {
-            // "old_logo" jaise extra keys jo database mein nahi hain, unhe ignore kar dein ya handle karein
-            if ($key !== 'old_logo') {
-                $stmt->bindParam(':value', $value);
-                $stmt->bindParam(':key', $key);
+            // Ignore extra frontend helper keys
+            if (!in_array($key, ['old_logo', 'original_logo'])) {
+                $valStr = is_bool($value) ? ($value ? 'true' : 'false') : (string)$value;
+                $stmt->bindValue(':key', $key);
+                $stmt->bindValue(':val', $valStr);
                 $stmt->execute();
             }
         }
@@ -34,7 +37,6 @@ if ($data) {
         ]);
 
     } catch(PDOException $e) {
-        // Agar masla aaya toh changes wapis reverse (rollback) kar do
         $db->rollBack();
         echo json_encode([
             "success" => false, 

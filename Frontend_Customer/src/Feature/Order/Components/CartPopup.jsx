@@ -1,17 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../../Context/CartContext";
-import { optimizeCloudinaryImage } from "../../../utils/imageOptimizer";
+import { resolveImageUrl } from "../../../utils/imageOptimizer";
+import heroBurgerImg from "../../../assets/products/doublepatty-removebg-preview.png";
 import {
   FaTimes,
-  FaTrash,
+  FaTrashAlt,
   FaPlus,
   FaMinus,
-  FaShoppingCart,
-  FaArrowLeft,
-  FaUtensils,
-  FaChevronDown,
-  FaChevronUp,
+  FaShoppingBag,
+  FaArrowRight,
+  FaShieldAlt,
 } from "react-icons/fa";
 
 const CartPopup = () => {
@@ -22,148 +21,231 @@ const CartPopup = () => {
     cartItems,
     removeFromCart,
     updateQty,
-    placeOrder,
   } = useCart();
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [expandedItems, setExpandedItems] = useState({});
 
-  const toggleExpand = (cartId) => {
-    setExpandedItems((prev) => ({
-      ...prev,
-      [cartId]: !prev[cartId],
-    }));
-  };
-
-  if (!isCartOpen) return null;
+  // Lock body background scroll when drawer is open
+  useEffect(() => {
+    if (isCartOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+      document.body.style.removeProperty("overflow");
+    }
+    return () => {
+      document.body.style.overflow = "auto";
+      document.body.style.removeProperty("overflow");
+    };
+  }, [isCartOpen]);
 
   const totalAmount = cartItems.reduce(
-    (total, item) => total + parseFloat(item.price) * (item.qty || 1),
-    0,
+    (total, item) => total + parseFloat(item.price || 0) * (item.qty || 1),
+    0
   );
 
-  const confirmOrder = () => {
-    placeOrder();
-    setShowConfirm(false);
-  };
+  const totalQty = cartItems.reduce(
+    (total, item) => total + (item.qty || 1),
+    0
+  );
 
   return (
-    <div className="fixed top-0 left-0 w-full h-[100dvh] bg-[rgba(0,0,0,0.8)] backdrop-blur-[0.313rem] z-[10000] flex justify-end animate-fade-in" onClick={toggleCart}>
-      <div className="w-full max-w-[26.25rem] max-md:w-[82%] h-[100dvh] bg-[var(--panel-bg,#0a0a0a)] shadow-[-10px_0_50px_rgba(0,0,0,0.9)] flex flex-col animate-slide-in-right border-l border-[var(--border-color)]" onClick={(e) => e.stopPropagation()}>
-        {/* HEADER */}
-        <div className="bg-[var(--bg-body,#141414)] border-b border-[var(--border-color)] p-[1.25rem] flex justify-between items-center z-10">
-          <div className="flex items-center gap-[0.937rem]">
-            <div className="w-[2.188rem] h-[2.188rem] bg-[#222] rounded-full flex justify-center items-center cursor-pointer border border-[#444] transition-all duration-300 text-[var(--text-main)] hover:bg-[var(--brand-red)] hover:text-white hover:border-[var(--brand-red)]" onClick={toggleCart}>
-              <FaArrowLeft size={16} />
-            </div>
-            <h5 className="flex items-center gap-[0.625rem] text-white m-0 font-['Oswald',sans-serif] tracking-[1px] text-[1.25rem] font-[800]">
-              <FaShoppingCart className="text-[var(--brand-red)]" /> My Order
-            </h5>
+    <div className="fixed inset-0 z-[99999] pointer-events-none">
+      {/* ═══ 1. BACKDROP WITH SMOOTH FADE (Over navbar) ═══ */}
+      <div
+        className={`fixed inset-0 bg-black/75 backdrop-blur-md z-[99999] transition-opacity duration-300 ${
+          isCartOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={toggleCart}
+      />
+
+      {/* ═══ 2. DRAWER CONTAINER (Full-width on mobile, max-w-md on sm+) ═══ */}
+      <div
+        className={`fixed top-0 right-0 h-full w-full sm:max-w-md bg-white dark:bg-neutral-950 border-l border-gray-200/80 dark:border-white/10 shadow-2xl z-[100000] flex flex-col justify-between transform transition-transform duration-300 ease-out pointer-events-auto ${
+          isCartOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ── HEADER ── */}
+        <div className="p-3.5 sm:p-4 flex items-center justify-between border-b border-gray-100 dark:border-neutral-800/80 bg-white/90 dark:bg-neutral-950/90 backdrop-blur-md shrink-0">
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={toggleCart}
+              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 flex items-center justify-center hover:scale-105 active:scale-95 transition-all border-none cursor-pointer"
+              aria-label="Close cart"
+            >
+              <FaTimes className="text-xs" />
+            </button>
+            <h2 className="font-['Oswald',sans-serif] font-black text-lg sm:text-xl uppercase tracking-wider text-neutral-900 dark:text-white m-0">
+              MY BUCKET
+            </h2>
           </div>
-          <div className="bg-[var(--brand-red)] text-white p-[0.25rem_0.75rem] rounded-[1.25rem] text-[0.812rem] font-bold">{cartItems.length} Items</div>
+          <span className="text-xs font-bold uppercase tracking-wider text-amber-500 dark:text-amber-400 font-['Oswald',sans-serif]">
+            {totalQty} {totalQty === 1 ? "ITEM" : "ITEMS"}
+          </span>
         </div>
 
-        {/* BODY */}
-        <div className="flex-1 overflow-y-auto p-[0.937rem] bg-[var(--panel-bg,#0a0a0a)] [&::-webkit-scrollbar]:w-[0.313rem] [&::-webkit-scrollbar-thumb]:bg-[var(--border-color)] [&::-webkit-scrollbar-thumb]:rounded-[0.625rem]">
+        {/* ── CART ITEM LIST ── */}
+        <div className="flex-1 overflow-y-auto px-3.5 sm:px-5 py-3 space-y-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-200 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-full">
           {cartItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-[#aaa]">
-              <FaUtensils className="text-[2.5rem] opacity-50 mb-[0.937rem]" />
-              <p className="text-[1.125rem] m-0">Your cart is empty.</p>
+            <div className="flex flex-col items-center justify-center h-full text-center py-10 select-none">
+              {/* 3D Animated Illustration */}
+              <div className="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-3 flex items-center justify-center">
+                <div className="absolute inset-0 bg-radial from-amber-400/20 to-transparent rounded-full blur-xl pointer-events-none" />
+                <img
+                  src={heroBurgerImg}
+                  alt="Empty Cart"
+                  className="w-full h-full object-contain drop-shadow-md opacity-85 hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+
+              <h3 className="font-['Oswald',sans-serif] font-black text-lg sm:text-xl uppercase tracking-tight text-neutral-900 dark:text-white mb-1 m-0">
+                YOUR CART IS HUNGRY!
+              </h3>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-[220px] mb-5 mt-1 leading-relaxed">
+                Add mouth-watering burgers, pizzas, or hot crispy deals to fill it up.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  toggleCart();
+                  navigate("/menu");
+                }}
+                className="px-5 py-2.5 rounded-xl sm:rounded-2xl bg-amber-400 hover:bg-amber-500 text-neutral-950 font-['Oswald',sans-serif] font-black text-xs uppercase tracking-wider shadow-md hover:shadow-amber-500/20 active:scale-95 transition-all border-none cursor-pointer"
+              >
+                Explore Delicious Menu
+              </button>
             </div>
           ) : (
-            cartItems.map((item) => (
-              <div 
-                key={item.cartId} 
-                className={`flex items-start bg-[var(--bg-body,#141414)] border border-[var(--border-color)] rounded-[1rem] p-[0.75rem] mb-[0.937rem] shadow-[0_4px_15px_rgba(0,0,0,0.4)] max-md:p-[0.75rem_2.501rem_2.813rem_0.75rem] max-md:relative max-md:cursor-pointer group ${expandedItems[item.cartId] ? "expanded" : ""}`}
-                onClick={() => toggleExpand(item.cartId)}
-              >
-                <div className="shrink-0 mr-[0.75rem] max-md:mr-[0.625rem]">
-                  <img
-                    src={optimizeCloudinaryImage(item.img || item.image, 200)}
-                    alt={item.title}
-                    className="w-[4.688rem] h-[4.688rem] object-cover rounded-[0.75rem] max-md:w-[3.437rem] max-md:h-[3.437rem] max-md:rounded-[0.5rem]"
-                  />
-                </div>
+            cartItems.map((item) => {
+              const itemPrice = parseFloat(item.price || 0);
+              const qty = item.qty || 1;
+              const lineTotal = itemPrice * qty;
 
-                <div className="flex-1 flex flex-col justify-center gap-[0.25rem] max-md:gap-[2px]">
-                  <div className="flex justify-between items-start gap-[0.313rem]">
-                    <h6 className="text-[1rem] font-[800] text-[var(--text-main)] m-0 leading-[1.2] max-md:text-[0.875rem] max-md:pr-[0.625rem]">{item.title}</h6>
-                    {((item.size && item.size !== "Regular") || item.note) && (
-                      <div className="text-[var(--brand-red)] cursor-pointer text-[0.875rem] p-[2px] hidden max-md:block max-md:absolute max-md:bottom-[0.5rem] max-md:right-[0.75rem]" onClick={(e) => {
-                        e.stopPropagation();
-                        toggleExpand(item.cartId);
-                      }}>
-                        {expandedItems[item.cartId] ? <FaChevronUp /> : <FaChevronDown />}
-                      </div>
-                    )}
+              // Extract extra details (size, note, options, instructions, items_description)
+              const details = [];
+              if (item.size && item.size !== "Regular") details.push(`Size: ${item.size}`);
+              if (item.items_description) details.push(item.items_description);
+              if (item.options) details.push(item.options);
+              if (item.instructions) details.push(item.instructions);
+              if (item.note) details.push(`Note: "${item.note}"`);
+
+              return (
+                <div
+                  key={item.cartId || item.id}
+                  className="p-3 sm:p-3.5 rounded-2xl bg-gray-50/90 dark:bg-neutral-900/90 border border-gray-200/70 dark:border-white/10 flex gap-3 items-start relative group transition-all duration-200 hover:border-amber-400/40 hover:shadow-md"
+                >
+                  {/* Thumbnail */}
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white dark:bg-neutral-800/60 p-1 border border-gray-100 dark:border-neutral-700/50 shrink-0 flex items-center justify-center overflow-hidden mt-0.5">
+                    <img
+                      src={resolveImageUrl(item.img || item.image, 200)}
+                      alt={item.title || item.name}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://placehold.co/100x100?text=Food";
+                      }}
+                    />
                   </div>
 
-                  {((item.size && item.size !== "Regular") || item.note) && (
-                    <div className="text-[0.75rem] text-[#aaaaaa] mt-[2px] mb-[0.25rem] max-md:hidden max-md:mb-[0.312rem] group-[.expanded]:max-md:block animate-slide-down">
-                      {item.size && item.size !== "Regular" && (
-                        <div>
-                          <span>Size:</span> {item.size}
-                        </div>
-                      )}
-                      {item.note && (
-                        <div className="italic leading-[1.2]">
-                          <span>Note:</span> "{item.note}"
-                        </div>
-                      )}
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-1.5">
+                      <h4 className="font-['Oswald',sans-serif] font-bold text-sm sm:text-base text-neutral-900 dark:text-white leading-snug m-0 uppercase truncate">
+                        {item.title || item.name}
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => removeFromCart(item.cartId || item.id)}
+                        className="text-neutral-400 hover:text-red-500 transition-colors p-0.5 border-none bg-transparent cursor-pointer shrink-0"
+                        title="Remove item"
+                        aria-label="Remove item"
+                      >
+                        <FaTrashAlt className="text-xs" />
+                      </button>
                     </div>
-                  )}
 
-                  <div className="flex items-center gap-[0.5rem] mt-[0.25rem] whitespace-nowrap">
-                    <span className="text-[var(--brand-red)] font-[800] text-[0.937rem] max-md:text-[0.875rem]">
-                      Rs. {item.price * (item.qty || 1)}
-                    </span>
+                    {/* Details breakdown */}
+                    {details.length > 0 && (
+                      <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5 leading-relaxed break-words m-0 line-clamp-2">
+                        {details.join(" • ")}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between gap-2 mt-2 pt-1 border-t border-gray-100 dark:border-neutral-800/60">
+                      <span className="text-sm sm:text-base font-black text-amber-500 dark:text-amber-400 font-['Oswald',sans-serif]">
+                        Rs {lineTotal.toLocaleString()}
+                      </span>
+
+                      {/* Stepper (+ / -) */}
+                      <div className="flex items-center gap-1.5 bg-white dark:bg-neutral-800 rounded-lg p-0.5 border border-gray-200 dark:border-neutral-700">
+                        <button
+                          type="button"
+                          onClick={() => updateQty(item.cartId || item.id, -1)}
+                          className="w-6 h-6 rounded-md bg-gray-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:text-amber-500 flex items-center justify-center transition-all border-none cursor-pointer text-xs active:scale-90"
+                          aria-label="Decrease quantity"
+                        >
+                          <FaMinus className="text-[8px]" />
+                        </button>
+                        <span className="text-xs font-bold text-neutral-900 dark:text-white min-w-[14px] text-center">
+                          {qty}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateQty(item.cartId || item.id, 1)}
+                          className="w-6 h-6 rounded-md bg-gray-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:text-amber-500 flex items-center justify-center transition-all border-none cursor-pointer text-xs active:scale-90"
+                          aria-label="Increase quantity"
+                        >
+                          <FaPlus className="text-[8px]" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                <div className="flex flex-col justify-between items-end h-[4.688rem] ml-[0.625rem] max-md:block max-md:m-0 max-md:h-auto">
-                  <FaTrash
-                    className="text-[1rem] text-[var(--brand-red)] cursor-pointer transition-transform duration-200 hover:scale-110 max-md:absolute max-md:top-[50%] max-md:right-[0.938rem] max-md:-translate-y-1/2 max-md:m-0 hover:max-md:-translate-y-1/2 hover:max-md:scale-110"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFromCart(item.cartId);
-                    }}
-                  />
-                  <div className="bg-[#222] border border-[#444] rounded-[3.125rem] p-[0.25rem] flex items-center min-w-[5.625rem] justify-between max-md:absolute max-md:bottom-[0.625rem] max-md:left-[4.812rem] max-md:min-w-[4.375rem] max-md:p-[2px] max-md:mt-0" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      className="w-[1.5rem] h-[1.5rem] bg-transparent border-none text-white cursor-pointer flex items-center justify-center transition-transform duration-200 hover:text-[var(--brand-red)] hover:scale-125 max-md:w-[1.25rem] max-md:h-[1.25rem]"
-                      onClick={() => updateQty(item.cartId, -1)}
-                    >
-                      <FaMinus size={10} />
-                    </button>
-                    <span className="text-[0.937rem] font-[800] text-white text-center max-md:text-[0.75rem]">{item.qty || 1}</span>
-                    <button
-                      className="w-[1.5rem] h-[1.5rem] bg-transparent border-none text-white cursor-pointer flex items-center justify-center transition-transform duration-200 hover:text-[var(--brand-red)] hover:scale-125 max-md:w-[1.25rem] max-md:h-[1.25rem]"
-                      onClick={() => updateQty(item.cartId, 1)}
-                    >
-                      <FaPlus size={10} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
-        {/* FOOTER */}
+        {/* ── STICKY PINNED FOOTER & PROCEED CTA ── */}
         {cartItems.length > 0 && (
-          <div className="bg-[var(--bg-body,#141414)] p-[1.25rem] border-t border-[var(--border-color)] shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
-            <div className="flex justify-between mb-[0.937rem]">
-              <span className="text-[var(--text-main)] text-[1.125rem] font-bold">Total Amount</span>
-              <span className="text-[var(--brand-yellow)] text-[1.25rem] font-[900]">Rs. {totalAmount}</span>
+          <div className="p-3.5 sm:p-5 border-t border-gray-200/80 dark:border-white/10 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md space-y-3 shrink-0">
+            <div className="space-y-1">
+              <div className="flex justify-between items-center text-xs text-neutral-500 dark:text-neutral-400">
+                <span>Subtotal ({totalQty} items)</span>
+                <span className="font-bold text-neutral-900 dark:text-white">
+                  Rs {totalAmount.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs text-neutral-500 dark:text-neutral-400">
+                <span>Delivery & Taxes</span>
+                <span className="font-semibold text-amber-500 dark:text-amber-400">Calculated at Checkout</span>
+              </div>
+              <div className="pt-1.5 border-t border-gray-100 dark:border-neutral-800 flex justify-between items-baseline">
+                <span className="font-['Oswald',sans-serif] font-bold text-xs sm:text-sm uppercase text-neutral-900 dark:text-white">
+                  Estimated Total
+                </span>
+                <span className="text-lg sm:text-xl font-black font-['Oswald',sans-serif] text-amber-500 dark:text-amber-400">
+                  Rs {totalAmount.toLocaleString()}
+                </span>
+              </div>
             </div>
+
             <button
-              className="bg-[var(--brand-red)] text-white border-none w-full p-[0.875rem] rounded-[0.75rem] font-[900] text-[1rem] cursor-pointer transition-all duration-300 hover:bg-[#c62828] hover:-translate-y-[2px]"
+              type="button"
               onClick={() => {
                 toggleCart();
                 navigate("/checkout");
               }}
+              className="w-full py-3 sm:py-3.5 rounded-xl sm:rounded-2xl bg-amber-400 hover:bg-amber-500 active:scale-[0.98] text-neutral-950 font-['Oswald',sans-serif] font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-amber-400/20 transition-all flex items-center justify-center gap-2 cursor-pointer border-none"
             >
-              CHECKOUT
+              <span>Proceed to Checkout</span>
+              <FaArrowRight className="text-xs" />
             </button>
+
+            <div className="flex items-center justify-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-neutral-400 dark:text-neutral-500">
+              <FaShieldAlt className="text-amber-500 text-[10px]" />
+              <span>Safe & Secure Checkout</span>
+            </div>
           </div>
         )}
       </div>

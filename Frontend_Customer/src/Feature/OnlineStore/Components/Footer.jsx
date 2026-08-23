@@ -1,119 +1,259 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube, FaPhoneAlt, FaEnvelope, FaChevronDown } from "react-icons/fa";
+import {
+  FaFacebookF,
+  FaTwitter,
+  FaInstagram,
+  FaYoutube,
+  FaPhoneAlt,
+  FaEnvelope,
+  FaChevronDown,
+} from "react-icons/fa";
 
 const Footer = ({ style }) => {
   const navigate = useNavigate();
   const [expandedSection, setExpandedSection] = useState(null);
 
   const toggleSection = (section) => {
-    if (window.innerWidth <= 576) {
+    if (window.innerWidth <= 640) {
       setExpandedSection(expandedSection === section ? null : section);
     }
   };
 
   // Fetch Footer Settings via React Query
   const { data: footerData } = useQuery({
-    queryKey: ['store_settings_footer'],
+    queryKey: ["store_settings_footer"],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE}/get_settings.php`
+      );
       const result = await response.json();
       if (result.success) {
         return {
-          footer_tagline: result.data.footer_tagline || "Fresh Food, Delivered Hot & Fast. Experience the best taste in town with our premium quality ingredients.",
+          footer_tagline:
+            result.data.footer_tagline ||
+            "Fresh Food, Delivered Hot & Fast. Experience the best taste in town with our premium quality ingredients.",
           footer_facebook: result.data.footer_facebook || "#",
           footer_twitter: result.data.footer_twitter || "#",
           footer_instagram: result.data.footer_instagram || "#",
           footer_youtube: result.data.footer_youtube || "#",
-          footer_phone: result.data.footer_phone || "+1 234 567 8900",
-          footer_email: result.data.footer_email || "support@bigbite.com"
+          footer_phone: result.data.footer_phone || "+92 300 1234567",
+          footer_email: result.data.footer_email || "support@bigbite.com",
         };
       }
       return {
-        footer_tagline: "Fresh Food, Delivered Hot & Fast. Experience the best taste in town with our premium quality ingredients.",
+        footer_tagline:
+          "Fresh Food, Delivered Hot & Fast. Experience the best taste in town with our premium quality ingredients.",
         footer_facebook: "#",
         footer_twitter: "#",
         footer_instagram: "#",
         footer_youtube: "#",
-        footer_phone: "+1 234 567 8900",
-        footer_email: "support@bigbite.com"
+        footer_phone: "+92 300 1234567",
+        footer_email: "support@bigbite.com",
       };
-    }
+    },
   });
 
   return (
-    <footer className="bg-[var(--panel-bg)] text-[var(--text-main)] font-['Open_Sans',sans-serif] border-t-2 border-[var(--brand-red)]" style={style}>
-      <div className="pt-[2.5rem] pb-[1.875rem] min-[36.062rem]:pt-[3.75rem] min-[36.062rem]:pb-[2.5rem]">
-        <div className="max-w-[75rem] mx-auto px-[1.25rem]">
-          <div className="grid grid-cols-1 min-[36.062rem]:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-[0.937rem] min-[36.062rem]:gap-[2.5rem]">
-            {/* Column 1: Brand Info */}
-            <div className="brand-col flex flex-col">
-              <h2 className="font-['Oswald',sans-serif] text-[2rem] font-[800] text-[var(--brand-red)] m-[0_0_0.937rem_0] tracking-[1px]">BIG BITE</h2>
-              <p className="text-[0.875rem] text-[var(--text-muted)] leading-[1.6] mb-[0.937rem] min-[36.062rem]:mb-[1.563rem] w-full min-[36.062rem]:max-w-[18.75rem]">
-                {footerData?.footer_tagline}
-              </p>
-              <div className="flex gap-[0.937rem] mb-[1.25rem] min-[36.062rem]:mb-0">
-                <a href={footerData?.footer_facebook} target="_blank" rel="noreferrer" className="flex items-center justify-center w-[2.5rem] h-[2.5rem] bg-[var(--home-bg)] text-[var(--text-main)] rounded-full text-[1.125rem] transition-all duration-300 no-underline hover:bg-[var(--brand-red)] hover:text-white hover:-translate-y-[0.188rem]"><FaFacebookF /></a>
-                <a href={footerData?.footer_twitter} target="_blank" rel="noreferrer" className="flex items-center justify-center w-[2.5rem] h-[2.5rem] bg-[var(--home-bg)] text-[var(--text-main)] rounded-full text-[1.125rem] transition-all duration-300 no-underline hover:bg-[var(--brand-red)] hover:text-white hover:-translate-y-[0.188rem]"><FaTwitter /></a>
-                <a href={footerData?.footer_instagram} target="_blank" rel="noreferrer" className="flex items-center justify-center w-[2.5rem] h-[2.5rem] bg-[var(--home-bg)] text-[var(--text-main)] rounded-full text-[1.125rem] transition-all duration-300 no-underline hover:bg-[var(--brand-red)] hover:text-white hover:-translate-y-[0.188rem]"><FaInstagram /></a>
-                <a href={footerData?.footer_youtube} target="_blank" rel="noreferrer" className="flex items-center justify-center w-[2.5rem] h-[2.5rem] bg-[var(--home-bg)] text-[var(--text-main)] rounded-full text-[1.125rem] transition-all duration-300 no-underline hover:bg-[var(--brand-red)] hover:text-white hover:-translate-y-[0.188rem]"><FaYoutube /></a>
-              </div>
+    <footer
+      className="bg-white dark:bg-[#121214] text-gray-900 dark:text-white border-t border-gray-200 dark:border-neutral-800 transition-colors duration-300"
+      style={style}
+    >
+      <div className="pt-8 pb-8 sm:pt-14 sm:pb-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-10">
+          {/* Column 1: Brand Info */}
+          <div className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-3 sm:space-y-4">
+            <h2 className="font-['Oswald',sans-serif] text-2xl sm:text-3xl font-black text-gray-900 dark:text-white m-0 tracking-wide uppercase">
+              BIG<span className="text-amber-500">BITE</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-neutral-400 leading-relaxed max-w-sm m-0">
+              {footerData?.footer_tagline}
+            </p>
+            <div className="flex items-center justify-center sm:justify-start gap-2.5 pt-1">
+              <a
+                href={footerData?.footer_facebook}
+                target="_blank"
+                rel="noreferrer"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gray-100 dark:bg-neutral-800 hover:bg-amber-400 dark:hover:bg-amber-400 text-gray-700 dark:text-gray-200 hover:text-gray-950 dark:hover:text-gray-950 flex items-center justify-center transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 no-underline shadow-xs"
+                aria-label="Facebook"
+              >
+                <FaFacebookF className="text-xs sm:text-sm" />
+              </a>
+              <a
+                href={footerData?.footer_twitter}
+                target="_blank"
+                rel="noreferrer"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gray-100 dark:bg-neutral-800 hover:bg-amber-400 dark:hover:bg-amber-400 text-gray-700 dark:text-gray-200 hover:text-gray-950 dark:hover:text-gray-950 flex items-center justify-center transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 no-underline shadow-xs"
+                aria-label="Twitter"
+              >
+                <FaTwitter className="text-xs sm:text-sm" />
+              </a>
+              <a
+                href={footerData?.footer_instagram}
+                target="_blank"
+                rel="noreferrer"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gray-100 dark:bg-neutral-800 hover:bg-amber-400 dark:hover:bg-amber-400 text-gray-700 dark:text-gray-200 hover:text-gray-950 dark:hover:text-gray-950 flex items-center justify-center transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 no-underline shadow-xs"
+                aria-label="Instagram"
+              >
+                <FaInstagram className="text-xs sm:text-sm" />
+              </a>
+              <a
+                href={footerData?.footer_youtube}
+                target="_blank"
+                rel="noreferrer"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gray-100 dark:bg-neutral-800 hover:bg-amber-400 dark:hover:bg-amber-400 text-gray-700 dark:text-gray-200 hover:text-gray-950 dark:hover:text-gray-950 flex items-center justify-center transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 no-underline shadow-xs"
+                aria-label="YouTube"
+              >
+                <FaYoutube className="text-xs sm:text-sm" />
+              </a>
             </div>
+          </div>
 
-            {/* Column 2: Information */}
-            <div className={`flex flex-col group ${expandedSection === 'info' ? 'expanded' : ''}`}>
-              <h4 className="flex min-[36.062rem]:block justify-between items-center font-['Oswald',sans-serif] text-[1.25rem] font-[700] text-[var(--text-main)] m-0 min-[36.062rem]:mb-[1.563rem] uppercase tracking-[0.5px] max-[36rem]:p-[0.937rem_0] max-[36rem]:border-b max-[36rem]:border-[var(--border-color)] cursor-pointer min-[36.062rem]:cursor-auto" onClick={() => toggleSection('info')}>
-                Information <FaChevronDown className={`block min-[36.062rem]:hidden text-[0.875rem] transition-transform duration-300 ${expandedSection === 'info' ? 'rotate-180' : ''}`} />
-              </h4>
-              <ul className={`list-none p-0 m-0 max-h-0 min-[36.062rem]:max-h-none overflow-hidden min-[36.062rem]:overflow-visible transition-all duration-400 ease-out pt-0 min-[36.062rem]:pt-0 ${expandedSection === 'info' ? 'max-[36rem]:max-h-[18.75rem] max-[36rem]:pt-[0.937rem] max-[36rem]:pb-[0.937rem]' : ''}`}>
-                <li className="mb-[0.937rem]"><a className="text-[var(--text-muted)] no-underline text-[0.875rem] transition-colors duration-300 cursor-pointer hover:text-[var(--brand-red)]" onClick={() => navigate("/about")}>About Us</a></li>
-                <li className="mb-[0.937rem]"><a className="text-[var(--text-muted)] no-underline text-[0.875rem] transition-colors duration-300 cursor-pointer hover:text-[var(--brand-red)]" onClick={() => navigate("/privacy")}>Privacy Policy</a></li>
-                <li className="mb-[0.937rem]"><a className="text-[var(--text-muted)] no-underline text-[0.875rem] transition-colors duration-300 cursor-pointer hover:text-[var(--brand-red)]" onClick={() => navigate("/terms")}>Terms & Conditions</a></li>
-              </ul>
-            </div>
+          {/* Column 2: Information */}
+          <div className="flex flex-col">
+            <h4
+              className="flex justify-between items-center sm:block font-['Oswald',sans-serif] text-sm sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-wider mb-2 sm:mb-4 cursor-pointer sm:cursor-auto"
+              onClick={() => toggleSection("info")}
+            >
+              Information
+              <FaChevronDown
+                className={`sm:hidden text-xs text-gray-400 transition-transform duration-300 ${
+                  expandedSection === "info" ? "rotate-180" : ""
+                }`}
+              />
+            </h4>
+            <ul
+              className={`list-none p-0 m-0 space-y-2 max-h-0 sm:max-h-none overflow-hidden sm:overflow-visible transition-all duration-300 ${
+                expandedSection === "info" ? "max-h-48 pt-1" : ""
+              }`}
+            >
+              <li>
+                <span
+                  className="text-xs sm:text-sm text-gray-600 dark:text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors"
+                  onClick={() => navigate("/about")}
+                >
+                  About Us
+                </span>
+              </li>
+              <li>
+                <span
+                  className="text-xs sm:text-sm text-gray-600 dark:text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors"
+                  onClick={() => navigate("/privacy")}
+                >
+                  Privacy Policy
+                </span>
+              </li>
+              <li>
+                <span
+                  className="text-xs sm:text-sm text-gray-600 dark:text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors"
+                  onClick={() => navigate("/terms")}
+                >
+                  Terms & Conditions
+                </span>
+              </li>
+            </ul>
+          </div>
 
-            {/* Column 3: Food */}
-            <div className={`flex flex-col group ${expandedSection === 'food' ? 'expanded' : ''}`}>
-              <h4 className="flex min-[36.062rem]:block justify-between items-center font-['Oswald',sans-serif] text-[1.25rem] font-[700] text-[var(--text-main)] m-0 min-[36.062rem]:mb-[1.563rem] uppercase tracking-[0.5px] max-[36rem]:p-[0.937rem_0] max-[36rem]:border-b max-[36rem]:border-[var(--border-color)] cursor-pointer min-[36.062rem]:cursor-auto" onClick={() => toggleSection('food')}>
-                Food <FaChevronDown className={`block min-[36.062rem]:hidden text-[0.875rem] transition-transform duration-300 ${expandedSection === 'food' ? 'rotate-180' : ''}`} />
-              </h4>
-              <ul className={`list-none p-0 m-0 max-h-0 min-[36.062rem]:max-h-none overflow-hidden min-[36.062rem]:overflow-visible transition-all duration-400 ease-out pt-0 min-[36.062rem]:pt-0 ${expandedSection === 'food' ? 'max-[36rem]:max-h-[18.75rem] max-[36rem]:pt-[0.937rem] max-[36rem]:pb-[0.937rem]' : ''}`}>
-                <li className="mb-[0.937rem]"><a className="text-[var(--text-muted)] no-underline text-[0.875rem] transition-colors duration-300 cursor-pointer hover:text-[var(--brand-red)]" onClick={() => navigate("/menu")}>Explore Menu</a></li>
-                <li className="mb-[0.937rem]"><a className="text-[var(--text-muted)] no-underline text-[0.875rem] transition-colors duration-300 cursor-pointer hover:text-[var(--brand-red)]" onClick={() => navigate("/deals")}>Top Deals</a></li>
-                <li className="mb-[0.937rem]"><a className="text-[var(--text-muted)] no-underline text-[0.875rem] transition-colors duration-300 cursor-pointer hover:text-[var(--brand-red)]" onClick={() => navigate("/menu")}>Best Sellers</a></li>
-                <li className="mb-[0.937rem]"><a className="text-[var(--text-muted)] no-underline text-[0.875rem] transition-colors duration-300 cursor-pointer hover:text-[var(--brand-red)]" onClick={() => navigate("/track-order")}>Track Order</a></li>
-              </ul>
-            </div>
+          {/* Column 3: Food & Orders */}
+          <div className="flex flex-col">
+            <h4
+              className="flex justify-between items-center sm:block font-['Oswald',sans-serif] text-sm sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-wider mb-2 sm:mb-4 cursor-pointer sm:cursor-auto"
+              onClick={() => toggleSection("food")}
+            >
+              Our Menu
+              <FaChevronDown
+                className={`sm:hidden text-xs text-gray-400 transition-transform duration-300 ${
+                  expandedSection === "food" ? "rotate-180" : ""
+                }`}
+              />
+            </h4>
+            <ul
+              className={`list-none p-0 m-0 space-y-2 max-h-0 sm:max-h-none overflow-hidden sm:overflow-visible transition-all duration-300 ${
+                expandedSection === "food" ? "max-h-48 pt-1" : ""
+              }`}
+            >
+              <li>
+                <span
+                  className="text-xs sm:text-sm text-gray-600 dark:text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors"
+                  onClick={() => navigate("/menu")}
+                >
+                  Explore Menu
+                </span>
+              </li>
+              <li>
+                <span
+                  className="text-xs sm:text-sm text-gray-600 dark:text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors"
+                  onClick={() => navigate("/deals")}
+                >
+                  Top Deals
+                </span>
+              </li>
+              <li>
+                <span
+                  className="text-xs sm:text-sm text-gray-600 dark:text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors"
+                  onClick={() => navigate("/track-order")}
+                >
+                  Live Order Tracker
+                </span>
+              </li>
+            </ul>
+          </div>
 
-            {/* Column 4: Contact Us */}
-            <div className={`flex flex-col group ${expandedSection === 'contact' ? 'expanded' : ''}`}>
-              <h4 className="flex min-[36.062rem]:block justify-between items-center font-['Oswald',sans-serif] text-[1.25rem] font-[700] text-[var(--text-main)] m-0 min-[36.062rem]:mb-[1.563rem] uppercase tracking-[0.5px] max-[36rem]:p-[0.937rem_0] max-[36rem]:border-b max-[36rem]:border-[var(--border-color)] cursor-pointer min-[36.062rem]:cursor-auto" onClick={() => toggleSection('contact')}>
-                Contact Us <FaChevronDown className={`block min-[36.062rem]:hidden text-[0.875rem] transition-transform duration-300 ${expandedSection === 'contact' ? 'rotate-180' : ''}`} />
-              </h4>
-              <ul className={`list-none p-0 min-[36.062rem]:m-[0_0_1.563rem_0] max-h-0 min-[36.062rem]:max-h-none overflow-hidden min-[36.062rem]:overflow-visible transition-all duration-400 ease-out pt-0 min-[36.062rem]:pt-0 ${expandedSection === 'contact' ? 'max-[36rem]:max-h-[18.75rem] max-[36rem]:pt-[0.937rem] max-[36rem]:pb-[0.937rem]' : ''}`}>
-                <li className="flex items-center gap-[0.625rem] mb-[0.937rem] text-[var(--text-muted)] text-[0.875rem]">
-                  <FaPhoneAlt className="text-[var(--brand-red)] text-[1rem]" />
-                  <span>{footerData?.footer_phone}</span>
-                </li>
-                <li className="flex items-center gap-[0.625rem] text-[var(--text-muted)] text-[0.875rem]">
-                  <FaEnvelope className="text-[var(--brand-red)] text-[1rem]" />
-                  <span>{footerData?.footer_email}</span>
-                </li>
-              </ul>
-            </div>
+          {/* Column 4: Contact Us */}
+          <div className="flex flex-col">
+            <h4
+              className="flex justify-between items-center sm:block font-['Oswald',sans-serif] text-sm sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-wider mb-2 sm:mb-4 cursor-pointer sm:cursor-auto"
+              onClick={() => toggleSection("contact")}
+            >
+              Contact Us
+              <FaChevronDown
+                className={`sm:hidden text-xs text-gray-400 transition-transform duration-300 ${
+                  expandedSection === "contact" ? "rotate-180" : ""
+                }`}
+              />
+            </h4>
+            <ul
+              className={`list-none p-0 m-0 space-y-2.5 max-h-0 sm:max-h-none overflow-hidden sm:overflow-visible transition-all duration-300 ${
+                expandedSection === "contact" ? "max-h-48 pt-1" : ""
+              }`}
+            >
+              <li className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-600 dark:text-neutral-400">
+                <FaPhoneAlt className="text-amber-500 text-xs flex-shrink-0" />
+                <a href={`tel:${footerData?.footer_phone}`} className="text-inherit no-underline hover:text-amber-500">
+                  {footerData?.footer_phone}
+                </a>
+              </li>
+              <li className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-600 dark:text-neutral-400">
+                <FaEnvelope className="text-amber-500 text-xs flex-shrink-0" />
+                <a href={`mailto:${footerData?.footer_email}`} className="text-inherit no-underline hover:text-amber-500 truncate">
+                  {footerData?.footer_email}
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
 
-      <div className="bg-[var(--bg-body)] py-[1.25rem] border-t border-[var(--border-color)]">
-        <div className="max-w-[75rem] mx-auto px-[1.25rem]">
-          <div className="flex flex-col min-[36.062rem]:flex-row justify-between items-center flex-wrap gap-[0.937rem] text-center min-[36.062rem]:text-left">
-            <p className="m-0 text-[var(--text-muted)] text-[0.812rem]">© {new Date().getFullYear()} BigBite POS. All Rights Reserved.</p>
-            <div className="flex gap-[1.25rem]">
-              <a className="text-[var(--text-muted)] no-underline text-[0.812rem] transition-colors duration-300 hover:text-[var(--brand-red)] cursor-pointer" onClick={() => navigate("/privacy")}>Privacy Policy</a>
-              <a className="text-[var(--text-muted)] no-underline text-[0.812rem] transition-colors duration-300 hover:text-[var(--brand-red)] cursor-pointer" onClick={() => navigate("/terms")}>Terms of Use</a>
-            </div>
+      {/* Bottom Copyright Bar */}
+      <div className="border-t border-gray-200/80 dark:border-neutral-800/80 py-4 bg-gray-50 dark:bg-neutral-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-2.5 text-center sm:text-left">
+          <p className="m-0 text-xs text-gray-500 dark:text-neutral-500">
+            © {new Date().getFullYear()} BigBite. All Rights Reserved.
+          </p>
+          <div className="flex gap-4">
+            <span
+              className="text-xs text-gray-500 dark:text-neutral-500 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors"
+              onClick={() => navigate("/privacy")}
+            >
+              Privacy Policy
+            </span>
+            <span
+              className="text-xs text-gray-500 dark:text-neutral-500 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors"
+              onClick={() => navigate("/terms")}
+            >
+              Terms of Use
+            </span>
           </div>
         </div>
       </div>

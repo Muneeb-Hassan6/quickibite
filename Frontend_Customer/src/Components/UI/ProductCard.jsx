@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import { useCart } from "../../Context/CartContext";
-import { FaPlus } from "react-icons/fa";
+import { FaShoppingBag, FaFire, FaCrown } from "react-icons/fa";
 import PopupCard from "./PopupCard";
-import { optimizeCloudinaryImage } from "../../utils/imageOptimizer";
+import DealCard from "./DealCard";
+import { resolveImageUrl } from "../../utils/imageOptimizer";
 
 const ProductCard = ({
   image,
@@ -17,70 +18,133 @@ const ProductCard = ({
   const { addToCart } = useCart();
   const [isOpen, setIsOpen] = useState(false);
 
-  const finalTitle = title || item?.name || "Delicious Item";
+  // If this item is explicitly a combo deal, render the specialized DealCard
+  if (item?.is_deal === true) {
+    return <DealCard deal={item} />;
+  }
+
+  const finalTitle = title || item?.name || item?.title || "Delicious Item";
   const finalDesc =
     description ||
     item?.desc ||
+    item?.description ||
+    item?.items_description ||
     "Spicy, crunchy, and freshly prepared for you.";
   const finalPrice = price || item?.price || 0;
-  const finalImageRaw =
-    image || item?.img || "https://placehold.co/600x400?text=No+Image";
-  const finalImage = optimizeCloudinaryImage(finalImageRaw, 500);
+  const originalPrice = item?.original_price || item?.originalPrice || null;
+  const customTag = item?.tag || null;
 
-  const openPopup = () => {
+  // Resolve raw image across all backend API fields
+  const rawImage =
+    image ||
+    item?.image ||
+    item?.img ||
+    item?.image_url ||
+    item?.photo ||
+    item?.img_url ||
+    item?.image_path ||
+    "";
+
+  const finalImage = resolveImageUrl(rawImage, 600);
+
+  const openPopup = (e) => {
+    if (e) e.stopPropagation();
     setIsOpen(true);
-    document.body.style.overflow = "hidden";
   };
 
   const closePopup = (e) => {
     if (e) e.stopPropagation();
     setIsOpen(false);
-    document.body.style.overflow = "auto";
   };
 
   return (
     <>
-      <div className="bg-[var(--panel-bg,#181818)] rounded-[1rem] border border-[var(--border-color,#2a2a2a)] overflow-hidden flex flex-col h-full cursor-pointer shadow-[0_8px_24px_rgba(0,0,0,0.4)] transition-all duration-[300ms] ease-[cubic-bezier(0.25,0.8,0.25,1)] w-full hover:border-[var(--brand-red)] hover:shadow-[var(--shadow-glow)] hover:-translate-y-[0.313rem] group" onClick={openPopup}>
-        {/* 📸 IMAGE CONTAINER (KFC STYLE) */}
-        <div className="relative overflow-hidden h-[12.5rem] w-full bg-transparent p-0 max-md:h-[8.749rem] max-[23.75rem]:h-[7.5rem]">
-          <div className="absolute top-[0.937rem] left-0 z-10 flex flex-col gap-[0.375rem] items-start max-md:top-[0.5rem] max-md:gap-[0.251rem]">
-            {isTopDeal && <span className="bg-[var(--brand-red,#ef4444)] text-[var(--btn-text,#ffffff)] p-[0.25rem_0.625rem_0.25rem_0.5rem] rounded-[0_0.75rem_0.75rem_0] text-[0.625rem] font-[800] uppercase tracking-[0.5px] shadow-[3px_2px_10px_rgba(0,0,0,0.2)] backdrop-blur-[0.25rem] max-md:text-[0.5rem] max-md:p-[2px_0.376rem_2px_0.251rem] max-md:font-[700] max-md:rounded-[0_0.5rem_0.5rem_0] max-md:tracking-0 max-[23.75rem]:text-[0.438rem] max-[23.75rem]:p-[2px_0.313rem_2px_0.188rem]">Top Deal</span>}
-            {isBestSeller && <span className="bg-[var(--brand-yellow,#facc15)] text-[var(--panel-bg,#111111)] p-[0.25rem_0.625rem_0.25rem_0.5rem] rounded-[0_0.75rem_0.75rem_0] text-[0.625rem] font-[800] uppercase tracking-[0.5px] shadow-[3px_2px_10px_rgba(0,0,0,0.2)] max-md:text-[0.5rem] max-md:p-[2px_0.376rem_2px_0.251rem] max-md:font-[700] max-md:rounded-[0_0.5rem_0.5rem_0] max-md:tracking-0 max-[23.75rem]:text-[0.438rem] max-[23.75rem]:p-[2px_0.313rem_2px_0.188rem]">Best Seller</span>}
+      <div
+        className="group relative bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between hover:border-amber-500/40 transition-all duration-300 shadow-md cursor-pointer select-none"
+        onClick={openPopup}
+      >
+        {/* 📸 IMAGE CONTAINER WITH BOTTOM-TO-TOP RICH AMBER FILL */}
+        <div className="w-full h-28 min-[400px]:h-32 sm:h-40 md:h-44 flex items-center justify-center overflow-hidden my-1 relative rounded-lg sm:rounded-xl bg-gray-50 dark:bg-neutral-800/60 transition-colors duration-300 group-hover:bg-amber-400/10 dark:group-hover:bg-amber-400/5">
+          {/* Animated Bottom-to-Top Amber Background Layer */}
+          <div className="absolute inset-0 bg-amber-400 dark:bg-amber-400 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-0 pointer-events-none rounded-lg sm:rounded-xl" />
+
+          {/* Badges Overlay */}
+          <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 z-10 flex flex-wrap gap-1 items-center pointer-events-none">
+            {customTag ? (
+              <span className="inline-flex items-center gap-1 backdrop-blur-md bg-red-600/95 text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded-md shadow-xs border border-white/20 tracking-wide uppercase">
+                <FaFire className="text-[8px] text-amber-300" /> {customTag}
+              </span>
+            ) : isTopDeal ? (
+              <span className="inline-flex items-center gap-1 backdrop-blur-md bg-red-600/90 text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-xs border border-white/20 tracking-wide uppercase">
+                <FaFire className="text-[8px] text-amber-300" /> Deal
+              </span>
+            ) : null}
+            {isBestSeller && !customTag && (
+              <span className="inline-flex items-center gap-1 backdrop-blur-md bg-black/60 text-amber-300 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-xs border border-amber-400/30 tracking-wide uppercase">
+                <FaCrown className="text-[8px] text-amber-400" /> Best
+              </span>
+            )}
           </div>
-          <img src={finalImage} alt={finalTitle} className="w-full h-full object-cover transition-transform duration-500 scale-100 group-hover:scale-110 max-md:rounded-t-[0.75rem]" />
+
+          {/* Food Cutout Image */}
+          <img
+            src={finalImage}
+            alt={finalTitle}
+            className="relative z-10 w-full h-full object-contain drop-shadow-md transition-transform duration-300 group-hover:scale-105 p-1"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "https://placehold.co/600x400?text=Delicious+Food";
+            }}
+          />
         </div>
 
-        {/* 📝 CARD DETAILS */}
-        <div className="p-[1rem] flex flex-col grow max-md:p-[0.75rem] max-md:gap-[0.312rem]">
-          <h5 className="text-[var(--text-main,#ffffff)] font-[800] text-[1.188rem] mb-[0.375rem] font-['Oswald',sans-serif] leading-[1.2] max-md:text-[0.938rem] max-md:mb-0 max-[23.75rem]:text-[0.812rem]">{finalTitle}</h5>
-          <p className="text-[var(--text-muted,#a3a3a3)] text-[0.812rem] leading-[1.4] mb-[0.75rem] max-md:hidden display-[-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden">{finalDesc}</p>
+        {/* 📝 TITLE */}
+        <h5
+          className="text-xs sm:text-base font-bold font-['Oswald',sans-serif] tracking-wide text-gray-900 dark:text-white uppercase line-clamp-1 mt-1 text-left group-hover:text-amber-500 transition-colors m-0"
+          title={finalTitle}
+        >
+          {finalTitle}
+        </h5>
 
-          {/* 💰 PRICE & ADD BUTTON IN ONE ROW */}
-          <div className="flex justify-between items-center mt-auto pt-[0.625rem] max-md:pt-[0.5rem]">
-            <span className="text-[var(--text-main,#ffffff)] font-[900] text-[1.375rem] m-0 font-['Oswald',sans-serif] max-md:text-[1rem]">
-              <small className="text-[0.875rem] text-[var(--brand-red,#ef4444)] max-md:text-[0.688rem]">Rs</small> {finalPrice}
+        {/* 💰 BOTTOM BAR (PRICE & ACTION) */}
+        <div className="flex items-center justify-between mt-2 pt-1 border-t border-gray-100 dark:border-white/5">
+          {/* Price */}
+          <div className="flex items-baseline gap-1 flex-wrap">
+            <span className="text-[10px] sm:text-xs font-extrabold text-amber-500 dark:text-amber-400 uppercase tracking-tight font-['Oswald',sans-serif]">
+              Rs
             </span>
-            <button
-              className="bg-[var(--brand-red,#ef4444)] text-[var(--btn-text,#ffffff)] border-none rounded-[1.875rem] p-[0.5rem_1.25rem] font-[800] text-[0.875rem] uppercase cursor-pointer flex items-center gap-[0.375rem] transition-all duration-200 shadow-[0_4px_15px_rgba(0,0,0,0.2)] hover:bg-[var(--brand-red-dark,#dc2626)] hover:scale-105 max-md:p-[0.376rem_0.75rem] max-[23.75rem]:p-[0.313rem_0.625rem]"
-              onClick={(e) => {
-                e.stopPropagation();
-                openPopup();
-              }}
-            >
-              <FaPlus className="max-md:m-0 max-md:text-[0.75rem]" /> <span className="max-md:hidden">Add</span>
-            </button>
+            <span className="text-xs sm:text-sm md:text-base font-bold text-amber-500 dark:text-amber-400 font-['Oswald',sans-serif]">
+              {finalPrice}
+            </span>
+            {originalPrice && parseFloat(originalPrice) > parseFloat(finalPrice) && (
+              <span className="text-[9px] sm:text-xs text-gray-400 dark:text-neutral-500 line-through font-semibold font-['Oswald',sans-serif] ml-0.5">
+                {Math.round(originalPrice)}
+              </span>
+            )}
           </div>
+
+          {/* Add Button */}
+          <button
+            type="button"
+            className="w-7 h-7 sm:w-9 sm:h-9 bg-amber-500 hover:bg-amber-400 text-black rounded-lg sm:rounded-xl flex items-center justify-center font-bold shadow-sm active:scale-95 cursor-pointer border-none transition-all"
+            onClick={openPopup}
+            aria-label="Add to cart"
+          >
+            <FaShoppingBag className="text-[10px] sm:text-xs text-neutral-950" />
+          </button>
         </div>
       </div>
 
+      {/* 🚀 PORTAL TO PREVENT MODAL CLIPPING */}
       {isOpen &&
         ReactDOM.createPortal(
           <PopupCard
+            item={item}
             image={finalImage}
             title={finalTitle}
             description={finalDesc}
             price={finalPrice}
-            item={item}
+            isDeal={false}
             closePopup={closePopup}
           />,
           document.body

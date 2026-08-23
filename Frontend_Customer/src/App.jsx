@@ -14,7 +14,7 @@ import Home from "./Feature/Home/Home";
 import MenuPage from "./Feature/Menu/MenuPage";
 import CategoryItemPage from "./Feature/Menu/Components/CategoryItemPage";
 import OrderTracker from "./Feature/Order/Components/OrderTracker";
-import DealsPage from "./Feature/Home/Components/DealsPage"; 
+import DealsPage from "./Feature/Deals/DealsPage"; 
 import AboutUs from "./Feature/OnlineStore/AboutUs";
 import PrivacyPolicy from "./Feature/OnlineStore/PrivacyPolicy";
 import TermsAndConditions from "./Feature/OnlineStore/TermsAndConditions";
@@ -38,6 +38,7 @@ import { FaShoppingCart } from "react-icons/fa";
 // ✅ CONTEXT IMPORTS (Aapke image k mutabiq capital 'C' wale folder se)
 import { CartProvider, useCart } from "./Context/CartContext";
 import { OrderProvider } from "./Context/OrderContext";
+import { MenuUIProvider } from "./Context/MenuUIContext";
 
 const MainContent = () => {
   const { toggleCart, cartItems, isCartOpen } = useCart();
@@ -64,6 +65,14 @@ const MainContent = () => {
     }
   }, [location.search]);
 
+  // Route change listener: Guarantee scroll unlocking and scroll to top
+  useEffect(() => {
+    document.body.style.overflow = "auto";
+    document.body.style.removeProperty("overflow");
+    document.body.style.removeProperty("padding-right");
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   // Routes Logic (Taa ke staff pages par customer UI hide ho)
   const isKitchenPage = currentPath.startsWith("/kitchen");
   const isCashierPage = currentPath.startsWith("/cashier");
@@ -80,9 +89,8 @@ const MainContent = () => {
 
   return (
     <div
-      className="App w-full overflow-x-hidden"
+      className="App w-full max-w-full overflow-x-hidden min-h-screen relative"
       style={{
-        minHeight: "100vh",
         backgroundColor: "var(--bg-body, #0a0a0a)",
         transition: "0.3s",
       }}
@@ -105,8 +113,11 @@ const MainContent = () => {
           <Route path="/track-order" element={<OrderTracker />} />
           <Route path="/deals" element={<DealsPage />} />
           <Route path="/about" element={<AboutUs />} />
+          <Route path="/about-us" element={<AboutUs />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsAndConditions />} />
+          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
 
@@ -125,9 +136,11 @@ function App() {
   return (
     <CartProvider>
       <OrderProvider>
-        <Router>
-          <MainContent />
-        </Router>
+        <MenuUIProvider>
+          <Router>
+            <MainContent />
+          </Router>
+        </MenuUIProvider>
       </OrderProvider>
     </CartProvider>
   );
