@@ -50,7 +50,7 @@ const RiderHeader = ({ onLogout, riderName }) => {
                     onClick={toggleTheme}
                     title={theme === "dark" ? "Light Mode" : "Dark Mode"}
                 >
-                    {theme === "dark" ? <FaSun /> : <FaMoon />}
+                    {theme === "dark" ? <FaSun className="theme-toggle-icon" /> : <FaMoon className="theme-toggle-icon" />}
                 </button>
 
                 <button className="bg-transparent  text-[var(--admin-text)] p-[8px_16px] rounded-[8px] cursor-pointer flex items-center gap-[6px] font-semibold text-[13px] transition-all duration-300 active:bg-[rgba(239,68,68,0.1)] active:text-[var(--admin-orange)] active:border-[var(--admin-orange)]" onClick={onLogout}>

@@ -79,7 +79,7 @@ const DispatchHeader = () => {
           onClick={toggleTheme}
           title={theme === "dark" ? "Light Mode" : "Dark Mode"}
         >
-          {theme === "dark" ? <FaSun /> : <FaMoon />}
+          {theme === "dark" ? <FaSun className="theme-toggle-icon" /> : <FaMoon className="theme-toggle-icon" />}
         </button>
 
         <button className="bg-[var(--brand-yellow)] rounded border-none text-[var(--admin-text)] p-[8px_16px] rounded-[10px] cursor-pointer flex items-center gap-[8px] transition-all duration-300 font-semibold hover:bg-[rgba(239,68,68,0.1)] hover:text-[var(--brand-yellow)]" onClick={handleLogout}>

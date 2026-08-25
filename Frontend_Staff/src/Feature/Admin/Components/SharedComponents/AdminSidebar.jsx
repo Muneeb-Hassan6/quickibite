@@ -93,20 +93,19 @@ const AdminSidebar = ({
 
   return (
     <>
-      {/* Mobile Backdrop Overlay */}
+      {/* Mobile Backdrop Overlay (< lg) */}
       <div
-        className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-[1040] md:hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-[1040] lg:hidden transition-opacity duration-300 ${
           isSidebarOpen ? "opacity-100 block" : "opacity-0 pointer-events-none hidden"
         }`}
         onClick={() => setIsSidebarOpen(false)}
       />
 
-      {/* Main Sidebar Shell */}
+      {/* Main Sidebar Shell (Fixed Drawer on < lg, Static on lg+) */}
       <aside
-        className={`w-64 sm:w-72 bg-[var(--admin-panel,#171717)] border-r border-[var(--admin-border,rgba(255,255,255,0.06))] shadow-2xl flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0 fixed top-0 left-0 h-full z-[1050] select-none shrink-0`}
-        style={{
-          transform: isSidebarOpen || window.innerWidth >= 768 ? "translateX(0)" : "translateX(-100%)",
-        }}
+        className={`w-64 sm:w-72 bg-[var(--admin-panel,#171717)] border-r border-[var(--admin-border,rgba(255,255,255,0.06))] shadow-2xl flex flex-col transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 fixed inset-y-0 left-0 h-full z-[1050] select-none shrink-0 ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
       >
         {/* Brand Header */}
         <div className="p-5 border-b border-[var(--admin-border,rgba(255,255,255,0.06))] flex items-center justify-between shrink-0 bg-white/[0.01]">

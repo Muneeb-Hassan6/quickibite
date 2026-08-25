@@ -413,31 +413,33 @@ const MenuManager = () => {
               Menu Management
             </h2>
           </div>
-          <div className="inline-flex bg-slate-100 dark:bg-[#202020] border border-slate-200/80 dark:border-white/[0.06] rounded-full p-1 gap-1 shadow-sm mt-3">
-            <button
-              type="button"
-              className={`py-1.5 px-4 rounded-full cursor-pointer flex items-center gap-2 font-bold transition-all text-xs border-none ${
-                activeTab === "items"
-                  ? "btn-brand-cta !rounded-full"
-                  : "bg-transparent text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-              onClick={() => setActiveTab("items")}
-            >
-              <FaHamburger className="text-xs" />
-              <span>Menu Items</span>
-            </button>
-            <button
-              type="button"
-              className={`py-1.5 px-4 rounded-full cursor-pointer flex items-center gap-2 font-bold transition-all text-xs border-none ${
-                activeTab === "categories"
-                  ? "btn-brand-cta !rounded-full"
-                  : "bg-transparent text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-              onClick={() => setActiveTab("categories")}
-            >
-              <FaList className="text-xs" />
-              <span>Explore Categories</span>
-            </button>
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 no-scrollbar w-full sm:w-auto mt-3">
+            <div className="inline-flex bg-slate-100 dark:bg-[#202020] border border-slate-200/80 dark:border-white/[0.06] rounded-full p-1 gap-1 shadow-sm">
+              <button
+                type="button"
+                className={`py-1.5 px-4 rounded-full cursor-pointer flex items-center gap-2 font-bold transition-all text-xs border-none whitespace-nowrap shrink-0 ${
+                  activeTab === "items"
+                    ? "btn-brand-cta !rounded-full"
+                    : "bg-transparent text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+                onClick={() => setActiveTab("items")}
+              >
+                <FaHamburger className="text-xs" />
+                <span>Menu Items</span>
+              </button>
+              <button
+                type="button"
+                className={`py-1.5 px-4 rounded-full cursor-pointer flex items-center gap-2 font-bold transition-all text-xs border-none whitespace-nowrap shrink-0 ${
+                  activeTab === "categories"
+                    ? "btn-brand-cta !rounded-full"
+                    : "bg-transparent text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+                onClick={() => setActiveTab("categories")}
+              >
+                <FaList className="text-xs" />
+                <span>Explore Categories</span>
+              </button>
+            </div>
           </div>
         </div>
         {activeTab === "items" && (

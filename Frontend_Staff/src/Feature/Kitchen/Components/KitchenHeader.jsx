@@ -109,7 +109,7 @@ const KitchenHeader = ({ activeFilter, setActiveFilter }) => {
           onClick={toggleTheme}
           title={theme === "dark" ? "Light Mode" : "Dark Mode"}
         >
-          {theme === "dark" ? <FaSun /> : <FaMoon />}
+          {theme === "dark" ? <FaSun className="theme-toggle-icon" /> : <FaMoon className="theme-toggle-icon" />}
         </button>
 
         <button onClick={handleSecureLogout} className="flex items-center gap-[8px] p-[10px_18px] bg-[rgba(239,68,68,0.1)] text-[var(--brand-yellow)] rounded font-bold text-[14px] cursor-pointer transition-all duration-300 border-none hover:bg-[var(--brand-yellow)] hover:text-[var(--text-main,#ffffff)]">

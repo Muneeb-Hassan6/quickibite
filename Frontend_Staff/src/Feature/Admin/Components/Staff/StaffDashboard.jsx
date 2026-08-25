@@ -103,14 +103,14 @@ const StaffDashboard = () => {
       </div>
 
       {/* Tabs Navigation Strip */}
-      <div className="flex items-center gap-2 flex-wrap py-2 border-b border-slate-200 dark:border-white/[0.06]">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 no-scrollbar w-full py-2 border-b border-slate-200 dark:border-white/[0.06]">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               type="button"
-              className={`flex items-center gap-2 cursor-pointer transition-all border-none ${
+              className={`flex items-center gap-2 cursor-pointer transition-all border-none whitespace-nowrap shrink-0 ${
                 isActive
                   ? "btn-brand-cta !rounded-full px-5 py-2 text-xs font-bold shadow-sm"
                   : "text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/[0.04] hover:bg-slate-200 dark:hover:bg-white/[0.08] px-5 py-2 rounded-full text-xs font-semibold border border-slate-200/60 dark:border-white/[0.06]"

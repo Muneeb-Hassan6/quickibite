@@ -26,30 +26,31 @@ const getStatusBadge = (status) => {
 
 const OrdersTable = ({ orders, onEditClick, onViewClick }) => {
   return (
-    <div className="admin-card-surface rounded-2xl p-3 sm:p-4 overflow-x-auto shadow-sm">
-      <table className="w-full border-collapse text-left min-w-[640px]">
-        <thead>
-          <tr className="border-b border-slate-200 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
-            <th className="p-3 sm:p-3.5 text-slate-800 dark:text-neutral-200 text-[11px] uppercase font-bold tracking-wider">
-              Order ID
-            </th>
-            <th className="p-3 sm:p-3.5 text-slate-800 dark:text-neutral-200 text-[11px] uppercase font-bold tracking-wider">
-              Customer
-            </th>
-            <th className="p-3 sm:p-3.5 text-slate-800 dark:text-neutral-200 text-[11px] uppercase font-bold tracking-wider">
-              Items Summary
-            </th>
-            <th className="p-3 sm:p-3.5 text-slate-800 dark:text-neutral-200 text-[11px] uppercase font-bold tracking-wider">
-              Total
-            </th>
-            <th className="p-3 sm:p-3.5 text-slate-800 dark:text-neutral-200 text-[11px] uppercase font-bold tracking-wider">
-              Status
-            </th>
-            <th className="p-3 sm:p-3.5 text-slate-800 dark:text-neutral-200 text-[11px] uppercase font-bold tracking-wider text-right">
-              Actions
-            </th>
-          </tr>
-        </thead>
+    <div className="admin-card-surface rounded-2xl p-3 sm:p-4 shadow-sm">
+      <div className="table-responsive-container">
+        <table className="min-w-[760px] lg:min-w-full w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b border-slate-200 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+              <th className="p-3 sm:p-3.5 text-slate-800 dark:text-neutral-200 text-[11px] uppercase font-bold tracking-wider">
+                Order ID
+              </th>
+              <th className="p-3 sm:p-3.5 text-slate-800 dark:text-neutral-200 text-[11px] uppercase font-bold tracking-wider">
+                Customer
+              </th>
+              <th className="p-3 sm:p-3.5 text-slate-800 dark:text-neutral-200 text-[11px] uppercase font-bold tracking-wider">
+                Items Summary
+              </th>
+              <th className="p-3 sm:p-3.5 text-slate-800 dark:text-neutral-200 text-[11px] uppercase font-bold tracking-wider">
+                Total
+              </th>
+              <th className="p-3 sm:p-3.5 text-slate-800 dark:text-neutral-200 text-[11px] uppercase font-bold tracking-wider">
+                Status
+              </th>
+              <th className="p-3 sm:p-3.5 text-slate-800 dark:text-neutral-200 text-[11px] uppercase font-bold tracking-wider text-right">
+                Actions
+              </th>
+            </tr>
+          </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-white/[0.04]">
           {orders.length > 0 ? (
             orders.map((order) => (
@@ -123,6 +124,7 @@ const OrdersTable = ({ orders, onEditClick, onViewClick }) => {
           )}
         </tbody>
       </table>
+      </div>
     </div>
   );
 };
