@@ -5,98 +5,176 @@ import {
   FaClock,
   FaTimes,
   FaSyncAlt,
+  FaCheck,
+  FaMotorcycle,
+  FaBan,
 } from "react-icons/fa";
+
+const ALL_STATUSES = [
+  {
+    key: "pending",
+    label: "Pending",
+    desc: "Order received, awaiting kitchen confirmation.",
+    icon: FaClock,
+    color: "text-amber-400",
+    border: "border-amber-500/40",
+    bg: "bg-amber-500/10",
+  },
+  {
+    key: "cooking",
+    label: "Preparing / Cooking",
+    desc: "Kitchen is preparing and cooking this order.",
+    icon: FaFire,
+    color: "text-orange-400",
+    border: "border-orange-500/40",
+    bg: "bg-orange-500/10",
+  },
+  {
+    key: "ready",
+    label: "Ready for Dispatch / Serving",
+    desc: "Order is cooked, packed and ready.",
+    icon: FaCheck,
+    color: "text-blue-400",
+    border: "border-blue-500/40",
+    bg: "bg-blue-500/10",
+  },
+  {
+    key: "dispatched",
+    label: "Dispatched with Rider",
+    desc: "Rider is out for delivery with this order.",
+    icon: FaMotorcycle,
+    color: "text-purple-400",
+    border: "border-purple-500/40",
+    bg: "bg-purple-500/10",
+  },
+  {
+    key: "delivered",
+    label: "Delivered / Completed",
+    desc: "Order has been fulfilled and delivered to customer.",
+    icon: FaCheckCircle,
+    color: "text-emerald-400",
+    border: "border-emerald-500/40",
+    bg: "bg-emerald-500/10",
+  },
+  {
+    key: "cancelled",
+    label: "Cancelled / Declined",
+    desc: "Order has been cancelled or rejected.",
+    icon: FaBan,
+    color: "text-red-400",
+    border: "border-red-500/40",
+    bg: "bg-red-500/10",
+  },
+];
 
 const UpdateStatusModal = ({ order, onClose, onSave }) => {
   const [newStatus, setNewStatus] = useState("");
 
   useEffect(() => {
-    if (order) setNewStatus(order.status);
+    if (order) {
+      const s = (order.status || "").toLowerCase();
+      if (s === "preparing") setNewStatus("cooking");
+      else if (s === "completed") setNewStatus("delivered");
+      else if (s === "declined") setNewStatus("cancelled");
+      else setNewStatus(s);
+    }
   }, [order]);
 
   if (!order) return null;
 
-  // Helper functions for icons and descriptions
-  const getIcon = (status) => {
-    if (status === "pending") return <FaClock />;
-    if (status === "cooking") return <FaFire />;
-    if (status === "delivered") return <FaCheckCircle />;
-  };
-
-  const getDesc = (status) => {
-    if (status === "pending") return "Order received, waiting for kitchen.";
-    if (status === "cooking")
-      return "Kitchen is currently preparing this order.";
-    if (status === "delivered")
-      return "Order has been served/delivered successfully.";
-  };
-
   return (
-    <div className="fixed top-0 left-0 right-0 bottom-0 bg-[rgba(0,0,0,0.6)] backdrop-blur-[6px] flex justify-center items-center z-[9999]" onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-black/75 backdrop-blur-md flex justify-center items-center p-3 sm:p-5 z-[99999]"
+      onClick={onClose}
+    >
       <div
-        className="w-full max-w-[28.125rem] bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[1rem] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] animate-slide-up"
+        className="w-full max-w-md bg-[var(--admin-panel,#171717)] border border-[var(--admin-border,rgba(255,255,255,0.08))] rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl animate-slide-up flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* --- HEADER --- */}
-        <div className="bg-[rgba(239,68,68,0.03)] p-[1.875rem_1.25rem_1.25rem] text-center border-b border-[var(--admin-border)] relative">
-          <button className="absolute top-[0.938rem] right-[0.938rem] bg-transparent border-none text-[var(--admin-muted)] text-[1rem] cursor-pointer transition-colors duration-200 hover:text-[var(--admin-text)]" onClick={onClose}>
-            <FaTimes />
+        {/* Header */}
+        <div className="p-4 sm:p-5 text-center border-b border-[var(--admin-border,rgba(255,255,255,0.06))] relative bg-white/[0.02]">
+          <button
+            type="button"
+            className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-[var(--admin-muted,#888)] hover:text-white flex items-center justify-center border-none cursor-pointer transition-all absolute top-3 right-3"
+            onClick={onClose}
+          >
+            <FaTimes className="text-xs" />
           </button>
-          <div className="w-[4.063rem] h-[4.063rem] bg-[rgba(239,68,68,0.1)] text-[var(--admin-orange)] rounded-full flex justify-center items-center text-[1.625rem] mx-auto mb-[0.938rem] shadow-[var(--shadow-glow)] border border-[rgba(239,68,68,0.2)]">
+          <div className="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center text-lg mx-auto mb-2 border border-amber-500/20 shadow-sm">
             <FaSyncAlt />
           </div>
-          <h3 className="m-0 text-[1.375rem] font-black text-[var(--admin-text)]">Update Order Status</h3>
-          <p className="m-0 mt-[0.313rem] text-[0.813rem] text-[var(--admin-muted)] font-semibold">
-            Current tracking ID: <strong>{order.id}</strong>
+          <h3 className="m-0 text-base sm:text-lg font-black text-[var(--admin-text,#fff)] uppercase font-['Oswald',sans-serif]">
+            Update Order Status
+          </h3>
+          <p className="m-0 mt-1 text-xs text-[var(--admin-muted,#888)] font-semibold">
+            Order <strong className="text-amber-400">{order.id}</strong> •{" "}
+            {order.customerName}
           </p>
         </div>
 
-        {/* --- STATUS SELECTION CARDS --- */}
-        <div className="p-[1.563rem]">
-          <div className="flex flex-col gap-[0.75rem]">
-            {["pending", "cooking", "delivered"].map((status) => {
-              const statusColor = status === "pending" ? "#f59e0b" : status === "cooking" ? "var(--admin-orange)" : "#10b981";
-              const isSelected = newStatus === status;
-              const selectedBg = status === "pending" ? "rgba(245,158,11,0.15)" : status === "cooking" ? "rgba(239,68,68,0.15)" : "rgba(16,185,129,0.15)";
-              const selectedShadow = status === "pending" ? "0 4px 15px rgba(245,158,11,0.1)" : status === "cooking" ? "0 4px 15px rgba(239,68,68,0.1)" : "0 4px 15px rgba(16,185,129,0.1)";
+        {/* Status Selection Cards */}
+        <div className="p-4 sm:p-5 overflow-y-auto space-y-2 flex-1">
+          {ALL_STATUSES.map((item) => {
+            const isSelected = newStatus === item.key;
+            const Icon = item.icon;
 
-              return (
-                <div
-                  key={status}
-                  onClick={() => setNewStatus(status)}
-                  className={`flex items-center gap-[0.938rem] p-[1rem_1.25rem] rounded-[0.75rem] bg-transparent border-2 cursor-pointer transition-all duration-300 ${isSelected ? "scale-[1.02]" : ""}`}
-                  style={{ 
-                    borderColor: isSelected ? statusColor : "var(--admin-border)",
-                    backgroundColor: isSelected ? selectedBg : "transparent",
-                    boxShadow: isSelected ? selectedShadow : "none"
-                  }}
-                >
-                  <div className="text-[1.5rem]" style={{ color: statusColor }}>{getIcon(status)}</div>
+            return (
+              <div
+                key={item.key}
+                onClick={() => setNewStatus(item.key)}
+                className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                  isSelected
+                    ? `${item.border} ${item.bg} scale-[1.01] shadow-md`
+                    : "border-[var(--admin-border,rgba(255,255,255,0.06))] bg-white/[0.02] hover:bg-white/5"
+                }`}
+              >
+                <div className={`text-base ${item.color} shrink-0`}>
+                  <Icon />
+                </div>
 
-                  <div className="flex-1">
-                    <div className="text-[1rem] font-extrabold uppercase transition-colors duration-300" style={{ color: isSelected ? statusColor : "var(--admin-text)" }}>{status}</div>
-                    <div className="text-[0.75rem] text-[var(--admin-muted)] font-semibold mt-[0.125rem]">{getDesc(status)}</div>
+                <div className="flex-1 min-w-0">
+                  <div
+                    className={`text-xs font-black uppercase tracking-wide ${
+                      isSelected ? item.color : "text-[var(--admin-text,#fff)]"
+                    }`}
+                  >
+                    {item.label}
                   </div>
-
-                  <div className="w-[1.25rem] h-[1.25rem] rounded-full border-2 flex justify-center items-center transition-colors duration-300" style={{ borderColor: isSelected ? statusColor : "var(--admin-muted)" }}>
-                    {isSelected && <div className="w-[0.625rem] h-[0.625rem] rounded-full" style={{ backgroundColor: statusColor }}></div>}
+                  <div className="text-[10px] text-[var(--admin-muted,#888)] mt-0.5 line-clamp-1">
+                    {item.desc}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+
+                <div
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                    isSelected ? item.border : "border-neutral-600"
+                  }`}
+                >
+                  {isSelected && (
+                    <div className="w-2 h-2 rounded-full bg-amber-400" />
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* --- FOOTER BUTTONS --- */}
-        <div className="p-[0.938rem_1.563rem] bg-[rgba(0,0,0,0.1)] border-t border-[var(--admin-border)] flex gap-[0.75rem]">
-          <button className="flex-1 p-[0.875rem] bg-transparent border border-[var(--admin-border)] text-[var(--admin-muted)] rounded-[0.625rem] font-bold cursor-pointer transition-colors duration-200 hover:text-[var(--admin-text)] hover:border-[var(--admin-text)]" onClick={onClose}>
+        {/* Footer */}
+        <div className="p-3 sm:p-4 bg-white/[0.02] border-t border-[var(--admin-border,rgba(255,255,255,0.06))] flex gap-2.5">
+          <button
+            type="button"
+            className="flex-1 py-2.5 rounded-xl bg-transparent hover:bg-white/5 text-[var(--admin-text,#ccc)] border border-[var(--admin-border,rgba(255,255,255,0.08))] text-xs font-bold uppercase tracking-wider cursor-pointer transition-all"
+            onClick={onClose}
+          >
             Cancel
           </button>
           <button
-            className="flex-[2] p-[0.875rem] bg-[var(--admin-orange)] border-none text-white rounded-[0.625rem] font-black text-[0.938rem] flex justify-center items-center gap-[0.5rem] cursor-pointer shadow-[var(--shadow-glow)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[var(--shadow-glow)]"
+            type="button"
+            className="flex-[2] py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-500/25 active:scale-95 border-none cursor-pointer transition-all flex items-center justify-center gap-1.5"
             onClick={() => onSave(order.id, newStatus)}
           >
-            <FaCheckCircle /> Save Changes
+            <FaCheckCircle className="text-xs" />
+            <span>Apply Status</span>
           </button>
         </div>
       </div>

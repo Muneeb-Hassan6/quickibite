@@ -1,20 +1,65 @@
-﻿<?php
+<?php
 include_once __DIR__ . '/../config/cors_headers.php';
 include_once __DIR__ . '/../config/auth_middleware.php';
-include_once '../config/Database.php';
-include_once '../models/Order.php';
+require_role(['Admin', 'Manager', 'Cashier', 'Kitchen', 'Chef', 'Dispatcher', 'Rider']);
+include_once __DIR__ . '/../config/Database.php';
 
 $database = new Database();
 $db = $database->getConnection();
-$orderModel = new Order($db);
+
+if (!$db) {
+    http_response_code(500);
+    echo json_encode(["success" => false, "message" => "Database connection failed"]);
+    exit();
+}
 
 $data = json_decode(file_get_contents("php://input"));
 
-if(!empty($data->id) && !empty($data->status)) {
-    if($orderModel->updateStatus($data->id, $data->status)) {
-        echo json_encode(["message" => "Status updated."]);
-    } else {
-        echo json_encode(["message" => "Failed to update."]);
+if (!empty($data->id) && !empty($data->status)) {
+    try {
+        $id = intval($data->id);
+        $rawStatus = trim($data->status);
+
+        // Normalize status string (capitalized word for DB, lowercase for client)
+        $statusMap = [
+            'pending' => 'Pending',
+            'cooking' => 'Cooking',
+            'preparing' => 'Cooking',
+            'ready' => 'Ready',
+            'dispatched' => 'Dispatched',
+            'delivered' => 'Delivered',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+            'declined' => 'Declined'
+        ];
+
+        $dbStatus = isset($statusMap[strtolower($rawStatus)]) ? $statusMap[strtolower($rawStatus)] : ucfirst($rawStatus);
+
+        $query = "UPDATE orders SET status = :status WHERE id = :id";
+        $stmt = $db->prepare($query);
+        $stmt->execute([
+            ':status' => $dbStatus,
+            ':id' => $id
+        ]);
+
+        echo json_encode([
+            "success" => true,
+            "message" => "Order #$id status updated to $dbStatus",
+            "status" => $dbStatus,
+            "id" => $id
+        ]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode([
+            "success" => false,
+            "message" => "Database Error: " . $e->getMessage()
+        ]);
     }
+} else {
+    http_response_code(400);
+    echo json_encode([
+        "success" => false,
+        "message" => "Order ID and status are required."
+    ]);
 }
 ?>

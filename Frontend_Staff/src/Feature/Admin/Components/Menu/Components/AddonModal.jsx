@@ -1,29 +1,27 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-// 🔥 FaSpinner ko import me add kar liya
-import { FaTimes, FaPlus, FaTrash, FaSpinner } from "react-icons/fa";
+import { FaTimes, FaPlus, FaTrash, FaSpinner, FaLayerGroup } from "react-icons/fa";
 
-const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
+const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems = [] }) => {
   const [addons, setAddons] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // 🔥 1. Naya state loader ko control karne ke liye
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen && menuItem) {
       setLoading(true);
       fetch(
-        `${import.meta.env.VITE_API_BASE}/get_addons.php?menu_item_id=${menuItem.id}`,
+        `${import.meta.env.VITE_API_BASE}/get_addons.php?menu_item_id=${menuItem.id}`
       )
         .then((res) => res.json())
-        .then((data) => {
-          if (data.addons.length > 0) {
-            const mapped = data.addons.map((a) => ({
-              addon_name: a.addon_name,
-              addon_price: a.addon_price,
-              inventory_id: a.inventory_id,
-              qty: a.qty_to_deduct,
+        .then((resData) => {
+          const list = resData.data || resData.addons || [];
+          if (Array.isArray(list) && list.length > 0) {
+            const mapped = list.map((a) => ({
+              addon_name: a.addon_name || "",
+              addon_price: a.addon_price || "",
+              inventory_id: a.inventory_id || "",
+              qty: a.qty_to_deduct || "",
             }));
             setAddons(mapped);
           } else {
@@ -31,6 +29,10 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
               { addon_name: "", addon_price: "", inventory_id: "", qty: "" },
             ]);
           }
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error("Failed to load addons", err);
           setLoading(false);
         });
     }
@@ -49,13 +51,30 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
     setAddons(updated);
   };
 
+  const handleRemoveRow = (index) => {
+    const updated = addons.filter((_, i) => i !== index);
+    setAddons(
+      updated.length > 0
+        ? updated
+        : [{ addon_name: "", addon_price: "", inventory_id: "", qty: "" }]
+    );
+  };
+
   const handleSave = async () => {
-    // 🔥 2. API hit hone se pehle loader On karein
     setIsSaving(true);
+
+    const filteredAddons = addons
+      .filter((a) => a.addon_name.trim() !== "")
+      .map((a) => ({
+        addon_name: a.addon_name.trim(),
+        addon_price: a.addon_price !== "" ? Number(a.addon_price) : 0,
+        inventory_id: a.inventory_id ? Number(a.inventory_id) : null,
+        qty: a.qty ? Number(a.qty) : null,
+      }));
 
     const payload = {
       menu_item_id: menuItem.id,
-      addons: addons.filter((a) => a.addon_name !== ""),
+      addons: filteredAddons,
     };
 
     try {
@@ -63,116 +82,202 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
         `${import.meta.env.VITE_API_BASE}/save_addons.php`,
         {
           method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        },
+        }
       );
-      if (res.ok) {
-        Swal.fire({ icon: "success", title: "Saved!", timer: 1500 });
+      const result = await res.json();
+      if (res.ok && (result.success || result.status === "success")) {
+        Swal.fire({
+          icon: "success",
+          title: "Saved!",
+          text: "Item add-ons updated successfully",
+          timer: 1500,
+          showConfirmButton: false,
+        });
         onClose();
+      } else {
+        throw new Error(result.message || "Failed to save addons");
       }
     } catch (error) {
-      console.error("Save failed", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to save addons",
-      });
+      console.error(error);
+      Swal.fire("Error", error.message || "Network Error", "error");
     } finally {
-      // 🔥 3. Save ho jaye ya error aye, dono suraton me loader Off kar dein
       setIsSaving(false);
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !menuItem) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 bottom-0 bg-[rgba(0,0,0,0.6)] backdrop-blur-[6px] flex justify-center items-center z-[9999]">
-      <div className="w-[90%] max-w-[46.875rem] bg-[var(--admin-bg,#141414)] rounded-[1rem] p-[1.563rem] shadow-[0_10px_30px_rgba(0,0,0,0.5)] relative animate-slide-up">
-        <div className="flex justify-between items-center mb-[1.563rem] w-full">
-          <h3 className="uppercase flex items-center gap-[0.625rem] text-[var(--admin-text)] m-0 text-[1.25rem] font-black">Add-ons for {menuItem.name}</h3>
-          <button className="bg-transparent border-none text-[#949191] text-[1.25rem] cursor-pointer transition-colors duration-300 hover:text-[var(--admin-text)] static !m-0" onClick={onClose}>
-            <FaTimes />
+    <div
+      className="fixed inset-0 bg-black/80 backdrop-blur-md flex justify-center items-center p-3 sm:p-5 z-[99999]"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg md:max-w-2xl bg-[var(--admin-panel,#171717)] border border-[var(--admin-border,rgba(255,255,255,0.08))] rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-2xl max-h-[88vh] flex flex-col animate-slide-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex justify-between items-center pb-4 mb-5 border-b border-[var(--admin-border,rgba(255,255,255,0.06))]">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <span className="w-1.5 h-5 bg-amber-500 rounded-full" />
+              <h3 className="m-0 text-base sm:text-lg md:text-xl font-black text-[var(--admin-text,#fff)] font-['Oswald',sans-serif] uppercase tracking-wide">
+                Custom Add-on Options
+              </h3>
+            </div>
+            <p className="text-xs text-amber-400 font-bold mt-1 m-0">
+              Product: {menuItem.name}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-[var(--admin-muted,#888)] hover:text-white flex items-center justify-center border-none cursor-pointer transition-all active:scale-90"
+            onClick={onClose}
+          >
+            <FaTimes className="text-sm" />
           </button>
         </div>
 
-        <div>
+        {/* Content Body */}
+        <div className="flex-1 overflow-y-auto pr-1 space-y-3">
           {loading ? (
-            <p>Loading...</p>
+            <div className="py-12 flex flex-col justify-center items-center text-amber-400 gap-2 font-bold text-xs">
+              <FaSpinner className="animate-spin text-xl" />
+              <span>Loading add-ons configuration...</span>
+            </div>
           ) : (
-            addons.map((addon, index) => (
-              <div key={index} className="flex gap-[0.75rem] mb-[0.75rem] items-center">
-                <input
-                  type="text"
-                  placeholder="Name (e.g. Extra Cheese)"
-                  className="flex-[2] h-[3rem] w-full bg-[var(--admin-bg)] text-[var(--admin-text)] px-[0.938rem] rounded-[0.5rem] outline-none focus:border-[#ef4444]"
-                  value={addon.addon_name}
-                  onChange={(e) =>
-                    handleFieldChange(index, "addon_name", e.target.value)
-                  }
-                />
-                <input
-                  type="number"
-                  placeholder="Price"
-                  className="flex-1 h-[3rem] w-full bg-[var(--admin-bg)] text-[var(--admin-text)] px-[0.938rem] rounded-[0.5rem] outline-none focus:border-[#ef4444]"
-                  value={addon.addon_price}
-                  onChange={(e) =>
-                    handleFieldChange(index, "addon_price", e.target.value)
-                  }
-                />
-                <select
-                  className="flex-[2] h-[3rem] w-full bg-[var(--admin-bg)] text-[var(--admin-text)] px-[0.938rem] rounded-[0.5rem] outline-none cursor-pointer focus:border-[#ef4444]"
-                  value={addon.inventory_id}
-                  onChange={(e) =>
-                    handleFieldChange(index, "inventory_id", e.target.value)
-                  }
-                >
-                  <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="">Link Inventory</option>
-                  {inventoryItems.map((inv) => (
-                    <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" key={inv.id} value={inv.id}>
-                      {inv.name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  placeholder="Qty"
-                  className="flex-[0.8] h-[3rem] w-full bg-[var(--admin-bg)] text-[var(--admin-text)] px-[0.938rem] rounded-[0.5rem] outline-none focus:border-[#ef4444]"
-                  value={addon.qty}
-                  onChange={(e) =>
-                    handleFieldChange(index, "qty", e.target.value)
-                  }
-                />
-                <button
-                  onClick={() =>
-                    setAddons(addons.filter((_, i) => i !== index))
-                  }
-                  className="bg-transparent border-none text-[#888] text-[1.125rem] cursor-pointer transition-all duration-200 flex items-center justify-center px-[0.625rem] h-[3rem] hover:text-[#ef4444] hover:scale-125"
-                >
-                  <FaTrash />
-                </button>
-              </div>
-            ))
-          )}
+            <>
+              {addons.map((addon, index) => {
+                const selectedInv = inventoryItems.find(
+                  (i) => i.id == addon.inventory_id
+                );
+                return (
+                  <div
+                    key={index}
+                    className="p-3.5 rounded-2xl bg-white/[0.02] border border-[var(--admin-border,rgba(255,255,255,0.06))] flex flex-col sm:flex-row gap-3 items-stretch sm:items-center hover:border-amber-500/20 transition-all"
+                  >
+                    {/* Addon Title */}
+                    <div className="flex-1 min-w-[140px]">
+                      <label className="text-[10px] text-[var(--admin-muted,#888)] font-extrabold uppercase tracking-wider block mb-1">
+                        Add-on Title *
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Extra Cheese, Dip Sauce"
+                        value={addon.addon_name}
+                        onChange={(e) =>
+                          handleFieldChange(index, "addon_name", e.target.value)
+                        }
+                        className="w-full p-2.5 text-xs bg-black/40 border border-white/10 text-white rounded-xl focus:outline-none focus:border-amber-500 font-semibold"
+                      />
+                    </div>
 
-          <button className="bg-[rgba(255,255,255,0.05)] text-[var(--admin-text)] mb-10 px-[1.25rem] py-[0.75rem] rounded text-[0.875rem] font-semibold inline-flex items-center gap-[0.5rem] transition-all duration-300 cursor-pointer hover:bg-[rgba(239,68,68,0.1)] hover:border-[#ef4444] hover:text-[#ef4444] hover:-translate-y-[2px]" onClick={handleAddRow}>
-            <FaPlus /> Add Option
-          </button>
+                    {/* Price Input */}
+                    <div className="w-full sm:w-28">
+                      <label className="text-[10px] text-[var(--admin-muted,#888)] font-extrabold uppercase tracking-wider block mb-1">
+                        Price (Rs.)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={addon.addon_price}
+                        onChange={(e) =>
+                          handleFieldChange(index, "addon_price", e.target.value)
+                        }
+                        className="w-full p-2.5 text-xs bg-black/40 border border-white/10 text-white rounded-xl focus:outline-none focus:border-amber-500 font-bold"
+                      />
+                    </div>
+
+                    {/* Linked Ingredient */}
+                    <div className="flex-1 min-w-[140px]">
+                      <label className="text-[10px] text-[var(--admin-muted,#888)] font-extrabold uppercase tracking-wider block mb-1">
+                        Linked Stock Item
+                      </label>
+                      <select
+                        value={addon.inventory_id}
+                        onChange={(e) =>
+                          handleFieldChange(index, "inventory_id", e.target.value)
+                        }
+                        className="w-full p-2.5 text-xs bg-black/40 border border-white/10 text-white rounded-xl focus:outline-none focus:border-amber-500 font-medium cursor-pointer"
+                      >
+                        <option value="">None (No Stock Deduction)</option>
+                        {inventoryItems.map((inv) => (
+                          <option key={inv.id} value={inv.id}>
+                            {inv.name} ({inv.stock} {inv.unit})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Deduct Qty */}
+                    {addon.inventory_id && (
+                      <div className="w-full sm:w-24">
+                        <label className="text-[10px] text-[var(--admin-muted,#888)] font-extrabold uppercase tracking-wider block mb-1">
+                          Qty ({selectedInv?.unit || "Unit"})
+                        </label>
+                        <input
+                          type="number"
+                          step="any"
+                          min="0"
+                          placeholder="1"
+                          value={addon.qty}
+                          onChange={(e) =>
+                            handleFieldChange(index, "qty", e.target.value)
+                          }
+                          className="w-full p-2.5 text-xs bg-black/40 border border-white/10 text-white rounded-xl focus:outline-none focus:border-amber-500 font-medium"
+                        />
+                      </div>
+                    )}
+
+                    {/* Trash Action */}
+                    <div className="sm:self-end mb-1">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveRow(index)}
+                        className="w-8 h-8 rounded-xl bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white flex items-center justify-center border-none cursor-pointer transition-colors"
+                        title="Remove Add-on"
+                      >
+                        <FaTrash className="text-xs" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={handleAddRow}
+                className="w-full py-2.5 bg-transparent text-amber-400 hover:text-amber-300 border border-dashed border-amber-500/30 hover:border-amber-500 rounded-2xl cursor-pointer font-bold text-xs flex justify-center items-center gap-2 transition-all mt-2"
+              >
+                <FaPlus className="text-[10px]" />
+                <span>Add Another Add-on Option</span>
+              </button>
+            </>
+          )}
         </div>
 
-        <button
-          className="w-full bg-[var(--brand-yellow,#ef4444)] text-white border-none p-[0.75rem_1.563rem] rounded cursor-pointer font-bold shadow-[var(--shadow-glow)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[var(--shadow-glow)] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-[0.625rem]"
-          style={{ marginTop: '20px' }}
-          onClick={handleSave}
-          disabled={isSaving}
-        >
-          {isSaving ? (
-            <>
-              <FaSpinner className="animate-spin" /> Saving...
-            </>
-          ) : (
-            "Save Settings"
-          )}
-        </button>
+        {/* Footer Actions */}
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-[var(--admin-border,rgba(255,255,255,0.06))]">
+          <button
+            type="button"
+            className="px-5 py-2.5 rounded-xl bg-transparent hover:bg-white/5 text-[var(--admin-muted,#888)] hover:text-white border border-[var(--admin-border,rgba(255,255,255,0.08))] text-xs font-bold uppercase tracking-wider cursor-pointer transition-all"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-500/20 active:scale-95 border-none cursor-pointer transition-all flex items-center gap-2"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
+            {isSaving && <FaSpinner className="animate-spin text-xs" />}
+            <span>Save Add-ons</span>
+          </button>
+        </div>
       </div>
     </div>
   );

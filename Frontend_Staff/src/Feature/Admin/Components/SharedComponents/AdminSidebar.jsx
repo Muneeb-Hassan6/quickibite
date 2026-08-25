@@ -11,8 +11,9 @@ import {
   FaUserTie,
   FaDesktop,
   FaQrcode,
-  FaMoneyBillWave
-} from "react-icons/fa"; // 🔥 FaTimes yahan se nikal diya hai
+  FaMoneyBillWave,
+  FaUserShield,
+} from "react-icons/fa";
 
 const AdminSidebar = ({
   activeTab,
@@ -22,13 +23,32 @@ const AdminSidebar = ({
   handleLogout,
 }) => {
   const [storeLogo, setStoreLogo] = useState("");
+  const [userData, setUserData] = useState({ name: "Admin", role: "Manager" });
 
-  // 🔥 Fetch Logo from settings
+  // Fetch user info from session
+  useEffect(() => {
+    try {
+      const rawUser =
+        sessionStorage.getItem("staff_session") ||
+        sessionStorage.getItem("user");
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        setUserData({
+          name: parsed.name || parsed.username || "Administrator",
+          role: parsed.role || "Admin",
+        });
+      }
+    } catch (e) {
+      console.error("Sidebar user parse error", e);
+    }
+  }, []);
+
+  // Fetch Logo from settings
   useEffect(() => {
     const fetchLogo = async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_settings.php`,
+          `${import.meta.env.VITE_API_BASE}/get_settings.php`
         );
         const result = await response.json();
 
@@ -42,68 +62,149 @@ const AdminSidebar = ({
     fetchLogo();
   }, []);
 
-  const menuItems = [
-    { id: "dashboard", icon: <FaHome />, label: "Dashboard" },
-    { id: "orders", icon: <FaClipboardList />, label: "Orders" },
-    { id: "menu", icon: <FaUtensils />, label: "Menu" },
-    { id: "deals", icon: <FaTag />, label: "Combos & Deals" },
-    { id: "inventory", icon: <FaBoxOpen />, label: "Inventory" },
-    { id: "staff", icon: <FaUserTie />, label: "Staff & HR" },
-    { id: "analytics", icon: <FaChartLine />, label: "Analytics" },
-    { id: "profit", icon: <FaMoneyBillWave />, label: "Product Profits" },
-    { id: "tables", icon: <FaQrcode />, label: "Tables & QR" },
-    { id: "homepage_builder", icon: <FaDesktop />, label: "Homepage Builder" },
-    { id: "settings", icon: <FaCog />, label: "Settings" },
+  const menuSections = [
+    {
+      title: "Core Operations",
+      items: [
+        { id: "dashboard", icon: <FaHome />, label: "Overview" },
+        { id: "orders", icon: <FaClipboardList />, label: "Live Orders" },
+        { id: "menu", icon: <FaUtensils />, label: "Menu & Addons" },
+        { id: "deals", icon: <FaTag />, label: "Combos & Deals" },
+      ],
+    },
+    {
+      title: "Management & HR",
+      items: [
+        { id: "inventory", icon: <FaBoxOpen />, label: "Inventory" },
+        { id: "staff", icon: <FaUserTie />, label: "Staff & HR" },
+        { id: "tables", icon: <FaQrcode />, label: "Tables & QR" },
+      ],
+    },
+    {
+      title: "Finance & Store",
+      items: [
+        { id: "analytics", icon: <FaChartLine />, label: "Analytics" },
+        { id: "profit", icon: <FaMoneyBillWave />, label: "Product Profits" },
+        { id: "homepage_builder", icon: <FaDesktop />, label: "Homepage Builder" },
+        { id: "settings", icon: <FaCog />, label: "System Settings" },
+      ],
+    },
   ];
 
   return (
     <>
-      {/* Mobile Overlay (Click karne par sidebar band ho jayega) */}
+      {/* Mobile Backdrop Overlay */}
       <div
-        className={`fixed top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.7)] z-[1040] md:hidden ${isSidebarOpen ? "block" : "hidden"}`}
+        className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-[1040] md:hidden transition-opacity duration-300 ${
+          isSidebarOpen ? "opacity-100 block" : "opacity-0 pointer-events-none hidden"
+        }`}
         onClick={() => setIsSidebarOpen(false)}
-      ></div>
+      />
 
-      {/* Main Sidebar */}
-      <div className={`w-[17.5rem] bg-[var(--admin-panel)] shadow-[4px_0_24px_rgba(0,0,0,0.04)] flex flex-col p-[1.25rem] transition-transform duration-300 overflow-y-auto overflow-x-hidden md:relative md:translate-x-0 fixed top-0 left-0 h-full z-[1050] ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        {/* 🔥 Header / Dynamic Logo (Cross Removed & Centered) */}
-        <div className="flex justify-center items-center pb-[1.25rem] mb-[1.25rem] border-b border-[var(--admin-border)] shrink-0">
-          {storeLogo ? (
-            <img
-              src={storeLogo}
-              alt="Store Logo"
-              className="max-w-[9.375rem] max-h-[3.75rem] object-contain"
-            />
-          ) : (
-            <span className="text-[1.5rem] font-black text-red-500 tracking-[2px]">
-              ADMIN
-            </span>
-          )}
+      {/* Main Sidebar Shell */}
+      <aside
+        className={`w-64 sm:w-72 bg-[var(--admin-panel,#171717)] border-r border-[var(--admin-border,rgba(255,255,255,0.06))] shadow-2xl flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0 fixed top-0 left-0 h-full z-[1050] select-none shrink-0`}
+        style={{
+          transform: isSidebarOpen || window.innerWidth >= 768 ? "translateX(0)" : "translateX(-100%)",
+        }}
+      >
+        {/* Brand Header */}
+        <div className="p-5 border-b border-[var(--admin-border,rgba(255,255,255,0.06))] flex items-center justify-between shrink-0 bg-white/[0.01]">
+          <div className="flex items-center gap-3">
+            {storeLogo ? (
+              <img
+                src={storeLogo}
+                alt="Store Logo"
+                className="max-w-[130px] max-h-9 object-contain"
+              />
+            ) : (
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500 text-neutral-950 flex items-center justify-center font-black text-sm shadow-md shadow-amber-500/20">
+                  BB
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-black text-[var(--admin-text,#fff)] tracking-wider font-['Oswald',sans-serif] uppercase">
+                    BigBite Suite
+                  </span>
+                  <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest">
+                    Staff Portal
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Menu Items Loop */}
-        <ul className="list-none p-0 m-0 flex flex-col gap-[0.625rem]">
-          {menuItems.map((item) => (
-            <li
-              key={item.id}
-              className={`flex items-center gap-[0.938rem] p-[0.75rem_0.938rem] rounded-[0.625rem] no-underline text-[1rem] transition-all duration-300 cursor-pointer ${activeTab === item.id ? "bg-red-500 text-white font-bold shadow-[var(--shadow-glow)] hover:translate-x-0" : "text-[var(--admin-muted)] font-medium hover:bg-[rgba(128,128,128,0.1)] hover:text-[var(--admin-text)] hover:translate-x-1"}`}
-              onClick={() => {
-                setActiveTab(item.id);
-                setIsSidebarOpen(false);
-              }}
-            >
-              <div className="text-[1.125rem] w-[1.563rem] text-center flex items-center justify-center">{item.icon}</div> <span>{item.label}</span>
-            </li>
+        {/* Navigation Sections */}
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-5">
+          {menuSections.map((sec, sIdx) => (
+            <div key={sIdx} className="space-y-1.5">
+              <div className="px-3 text-[10px] font-extrabold uppercase tracking-widest text-[var(--admin-muted,#9ca3af)]">
+                {sec.title}
+              </div>
+              <ul className="list-none p-0 m-0 space-y-1">
+                {sec.items.map((item) => {
+                  const isActive = activeTab === item.id;
+                  return (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          setIsSidebarOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer border-none text-left relative ${
+                          isActive
+                            ? "bg-amber-400/90 dark:bg-amber-500 text-neutral-950 font-bold shadow-sm scale-[1.01]"
+                            : "bg-transparent text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white"
+                        }`}
+                      >
+                        <span
+                          className={`text-sm shrink-0 transition-transform duration-200 ${
+                            isActive ? "scale-110 text-neutral-950 font-black" : "text-[var(--admin-muted,#9ca3af)]"
+                          }`}
+                        >
+                          {item.icon}
+                        </span>
+                        <span className="tracking-wide flex-1 truncate">{item.label}</span>
+                        {isActive && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-neutral-950 shrink-0" />
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
 
-        {/* Footer / Logout */}
-        <div className="mt-auto pt-[1.25rem] shrink-0">
-          <button onClick={handleLogout} className="w-full p-[0.75rem] bg-[rgba(239,68,68,0.1)] text-red-500 border border-[rgba(239,68,68,0.3)] rounded-[0.5rem] flex items-center justify-center gap-[0.5rem] font-bold cursor-pointer transition-all duration-300 hover:bg-red-500 hover:text-white hover:border-red-500">
-            <FaSignOutAlt className="mr-[0.5rem]" /> Logout
+        {/* User Profile & Logout Footer */}
+        <div className="p-3 sm:p-4 border-t border-[var(--admin-border,rgba(255,255,255,0.06))] bg-white/[0.01] shrink-0 space-y-2.5">
+          <div className="flex items-center gap-3 p-2 rounded-xl bg-white/[0.02] border border-white/5">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xs font-black shrink-0">
+              <FaUserShield />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-black text-[var(--admin-text,#fff)] truncate">
+                {userData.name}
+              </div>
+              <div className="text-[10px] text-[var(--admin-muted,#9ca3af)] font-semibold uppercase tracking-wider">
+                {userData.role}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full py-2 px-3 rounded-xl bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 shadow-sm"
+          >
+            <FaSignOutAlt className="text-xs" />
+            <span>Sign Out</span>
           </button>
         </div>
-      </div>
+      </aside>
     </>
   );
 };

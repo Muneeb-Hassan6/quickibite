@@ -3,24 +3,38 @@ import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 
 const SummaryCards = ({ metrics }) => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[20px] mb-[30px]">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
       {metrics.map((metric, index) => (
         <div
           key={index}
-          className="bg-[var(--admin-panel)] rounded-[16px] p-[20px] flex flex-col gap-[12px] transition-all duration-300 relative shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:-translate-y-[5px] hover:shadow-[var(--shadow-glow)] animate-in slide-in-from-bottom-4 fade-in"
-          style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}
+          className="bg-[var(--admin-panel,#171717)] rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-3 border border-[var(--admin-border,rgba(255,255,255,0.06))] shadow-sm hover:border-amber-500/30 hover:-translate-y-0.5 transition-all duration-200"
         >
-          <div className="flex justify-between items-center text-[var(--admin-muted)] text-[13px] font-semibold uppercase">
-            <span>{metric.title}</span>
-            <div className="w-[40px] h-[40px] rounded-[10px] flex items-center justify-center text-[18px] bg-[rgba(255,255,255,0.03)] text-[var(--admin-text)]">{metric.icon}</div>
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--admin-muted,#888)] truncate">
+              {metric.title}
+            </span>
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center text-sm bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+              {metric.icon}
+            </div>
           </div>
-          <div className="text-[28px] font-black text-[var(--admin-text)] tracking-[0.5px]">{metric.value}</div>
-          <span
-            className={`inline-flex items-center gap-[5px] text-[12px] font-bold p-[4px_10px] rounded-[20px] w-fit ${metric.isUp ? "bg-[rgba(16,185,129,0.15)] text-[#10b981]" : "bg-[rgba(239,68,68,0.15)] text-[#ef4444]"}`}
-          >
-            {metric.isUp ? <FaArrowUp /> : <FaArrowDown />} {metric.trend} from
-            last month
-          </span>
+
+          <div>
+            <div className="text-xl sm:text-2xl font-black text-white tracking-tight truncate font-sans">
+              {metric.value}
+            </div>
+            <div className="mt-2 flex items-center gap-1.5 text-[10px] font-bold">
+              <span
+                className={`px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                  metric.isUp
+                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                    : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                }`}
+              >
+                {metric.isUp ? <FaArrowUp className="text-[8px]" /> : <FaArrowDown className="text-[8px]" />}
+                <span>{metric.trend}</span>
+              </span>
+            </div>
+          </div>
         </div>
       ))}
     </div>

@@ -1,57 +1,66 @@
 import React from "react";
-import { FaCube, FaExclamationTriangle, FaDollarSign } from "react-icons/fa";
+import { FaCube, FaExclamationTriangle, FaCoins } from "react-icons/fa";
 
 const InventoryStats = ({ totalItems, lowStock, totalValue }) => {
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-[24px] mb-[35px]">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       {/* Card 1: Total Items */}
-      <div className="bg-[var(--admin-panel)] p-[24px] rounded-[16px] flex items-center gap-[20px] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.4)] transition-all duration-200 relative overflow-hidden hover:-translate-y-[3px] hover:border-[var(--admin-orange)] group">
-        <div
-          className="w-[56px] h-[56px] rounded-[12px] flex items-center justify-center text-[28px] z-[2]"
-          style={{ color: "#3b82f6", background: "rgba(59, 130, 246, 0.1)" }}
-        >
-          <FaCube />
+      <div className="bg-[var(--panel-bg)] p-5 rounded-2xl border border-[var(--border-subtle)] shadow-sm flex items-center justify-between gap-4 relative overflow-hidden group hover:border-blue-500/30 transition-all">
+        <div className="flex items-center gap-3.5 z-10">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-blue-500/10 text-blue-500 border border-blue-500/20 shrink-0">
+            <FaCube />
+          </div>
+          <div>
+            <h3 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] font-mono m-0">
+              {totalItems}
+            </h3>
+            <p className="text-[11px] font-extrabold text-[var(--text-secondary)] uppercase tracking-wider m-0 mt-0.5">
+              Total Raw Ingredients
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-[28px] font-extrabold text-[var(--admin-text)] m-[0_0_5px_0] z-[2] relative">{totalItems}</h3>
-          <p className="text-[14px] font-semibold text-[var(--admin-muted)] uppercase m-0 z-[2] relative">Total Items</p>
-        </div>
-        <div className="absolute -right-[20px] -bottom-[20px] text-[100px] opacity-[0.03] text-[var(--admin-text)] -rotate-[15deg] pointer-events-none z-[1]">
+        <div className="text-4xl text-blue-500/5 -rotate-12 select-none pointer-events-none">
           <FaCube />
         </div>
       </div>
 
       {/* Card 2: Low Stock */}
-      <div className="bg-[var(--admin-panel)] p-[24px] rounded-[16px] flex items-center gap-[20px] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.4)] transition-all duration-200 relative overflow-hidden hover:-translate-y-[3px] hover:border-[var(--admin-orange)] group">
-        <div
-          className="w-[56px] h-[56px] rounded-[12px] flex items-center justify-center text-[28px] z-[2]"
-          style={{ color: "#f59e0b", background: "rgba(245, 158, 11, 0.1)" }}
-        >
-          <FaExclamationTriangle />
+      <div className="bg-[var(--panel-bg)] p-5 rounded-2xl border border-[var(--border-subtle)] shadow-sm flex items-center justify-between gap-4 relative overflow-hidden group hover:border-amber-500/30 transition-all">
+        <div className="flex items-center gap-3.5 z-10">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
+            <FaExclamationTriangle />
+          </div>
+          <div>
+            <h3 className="text-xl sm:text-2xl font-black text-amber-500 font-mono m-0">
+              {lowStock}
+            </h3>
+            <p className="text-[11px] font-extrabold text-[var(--text-secondary)] uppercase tracking-wider m-0 mt-0.5">
+              Low Stock Warnings
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-[28px] font-extrabold text-[var(--admin-text)] m-[0_0_5px_0] z-[2] relative">{lowStock}</h3>
-          <p className="text-[14px] font-semibold text-[var(--admin-muted)] uppercase m-0 z-[2] relative">Low Stock</p>
-        </div>
-        <div className="absolute -right-[20px] -bottom-[20px] text-[100px] opacity-[0.03] text-[var(--admin-text)] -rotate-[15deg] pointer-events-none z-[1]">
+        <div className="text-4xl text-amber-500/5 -rotate-12 select-none pointer-events-none">
           <FaExclamationTriangle />
         </div>
       </div>
 
       {/* Card 3: Total Value */}
-      <div className="bg-[var(--admin-panel)] p-[24px] rounded-[16px] flex items-center gap-[20px] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.4)] transition-all duration-200 relative overflow-hidden hover:-translate-y-[3px] hover:border-[var(--admin-orange)] group">
-        <div
-          className="w-[56px] h-[56px] rounded-[12px] flex items-center justify-center text-[28px] z-[2]"
-          style={{ color: "#10b981", background: "rgba(16, 185, 129, 0.1)" }}
-        >
-          <FaDollarSign />
+      <div className="bg-[var(--panel-bg)] p-5 rounded-2xl border border-[var(--border-subtle)] shadow-sm flex items-center justify-between gap-4 relative overflow-hidden group hover:border-emerald-500/30 transition-all sm:col-span-2 lg:col-span-1">
+        <div className="flex items-center gap-3.5 z-10">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
+            <FaCoins />
+          </div>
+          <div>
+            <h3 className="text-xl sm:text-2xl font-black text-emerald-500 font-mono m-0">
+              Rs. {parseFloat(totalValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </h3>
+            <p className="text-[11px] font-extrabold text-[var(--text-secondary)] uppercase tracking-wider m-0 mt-0.5">
+              Total Stock Valuation
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-[28px] font-extrabold text-[var(--admin-text)] m-[0_0_5px_0] z-[2] relative">Rs {totalValue}</h3>
-          <p className="text-[14px] font-semibold text-[var(--admin-muted)] uppercase m-0 z-[2] relative">Total Value</p>
-        </div>
-        <div className="absolute -right-[20px] -bottom-[20px] text-[100px] opacity-[0.03] text-[var(--admin-text)] -rotate-[15deg] pointer-events-none z-[1]">
-          <FaDollarSign />
+        <div className="text-4xl text-emerald-500/5 -rotate-12 select-none pointer-events-none">
+          <FaCoins />
         </div>
       </div>
     </div>

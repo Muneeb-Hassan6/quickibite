@@ -1,217 +1,239 @@
 @import "tailwindcss";
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, .dark, .dark *));
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
 
 /* =======================================================
-   🍽️ GLOBAL THEME VARIABLES (Big Bite Color Scheme)
+   🛡️ STRICT VIEWPORT & OVERFLOW LOCK
    ======================================================= */
-:root {
-  /* --- Brand Colors (Bold Fast Food Theme) --- */
-  --brand-red: #E60000;
-  /* Spicy Red: High energy, appetizing */
-  --brand-red-dark: #B30000;
-  --brand-yellow: #FFC107;
-  /* Crispy Yellow: Hover effects, Badges */
-  --brand-yellow-dark: #e0a800;
-
-  /* --- Dark Theme Default Colors --- */
-  /* Midnight Dark (#0A0A0C) for background, Dark Onyx (#141417) for panels */
-  --home-bg: #0A0A0C;
-  --web-bg: #0A0A0C;
-  --admin-bg: #0A0A0C;
-  --bg-body: #0A0A0C;
-
-  --panel-bg: #141417;
-  /* Dark Onyx for panels */
-  --web-panel: #141417;
-  --admin-panel: #141417;
-
-  --border-color: #2A2A30;
-  --web-border: #2A2A30;
-  --admin-border: #2A2A30;
-
-  --text-main: #FFFFFF;
-  /* High contrast bright white */
-  --admin-text: #FFFFFF;
-  --text-muted: #A0A0A5;
-  /* Sleek cool grey for muted text */
-  --admin-muted: #A0A0A5;
-
-  --admin-orange: #E60000;
-  --admin-yellow: #FFC107;
-  --btn-main: #E60000;
-  --btn-text: #ffffff;
-
-  --badge-bg: rgba(255, 193, 7, 0.1);
-  --badge-text: #FFC107;
-  --badge-border: rgba(255, 193, 7, 0.2);
-
-  --overlay-gradient: linear-gradient(to top, #0A0A0C 5%, rgba(10, 10, 12, 0.6) 60%, rgba(10, 10, 12, 0.9) 100%);
-  --shadow-glow: 0 8px 30px rgba(230, 0, 0, 0.25);
-
-  /* --- Cashier / POS Variables --- */
-  --pos-bg: #0A0A0C;
-  --pos-panel: #141417;
-  --pos-border: #2A2A30;
-
-  /* --- Kitchen Variables --- */
-  --k-bg: #0A0A0C;
-  --k-panel: #141417;
-  --k-border: #2A2A30;
-  --k-text: #FFFFFF;
-  --k-muted: #A0A0A5;
-  --status-yellow: #FFC107;
-  --status-green: #00C853;
-  /* Vibrant green for fast food readiness */
-
-  /* --- Rider/Dispatch Variables --- */
-  --rider-success: #00C853;
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden !important;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  scroll-behavior: smooth;
+  min-height: 100vh;
 }
 
-/* --- Light Theme Override --- */
-[data-theme="light"] {
-  /* Slate & White Theme (SaaS Modern Look) - Improved Contrast */
-  --home-bg: #F8FAFC;
-  --web-bg: #F8FAFC;
-  --admin-bg: #F1F5F9;
-  --bg-body: #F8FAFC;
+#root {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden !important;
+}
 
-  --panel-bg: #FFFFFF;
-  --web-panel: #FFFFFF;
+/* =======================================================
+   🍽️ GLOBAL THEME VARIABLES & ENGINE
+   ======================================================= */
+/* --- AESTHETIC LIGHT PALETTE (Default) --- */
+:root, [data-theme="light"] {
+  --admin-bg: #F8FAFC;
   --admin-panel: #FFFFFF;
-
-  --border-color: #E2E8F0;
-  --web-border: #E2E8F0;
+  --admin-card: #FFFFFF;
   --admin-border: #E2E8F0;
+  --admin-text-main: #0F172A;
+  --admin-text-muted: #475569;
+  --admin-input-bg: #F1F5F9;
+  --admin-table-head: #F8FAFC;
+  --admin-hover: rgba(245, 158, 11, 0.08);
 
-  --text-main: #0F172A;
-  /* Slate-900 (High readable contrast but not pure black) */
-  --admin-text: #0F172A;
-  --text-muted: #64748B;
-  /* Slate-500 */
-  --admin-muted: #64748B;
+  --app-bg: var(--admin-bg);
+  --panel-bg: var(--admin-panel);
+  --card-bg: var(--admin-card);
+  --input-bg: var(--admin-input-bg);
+  --border-subtle: var(--admin-border);
+  --text-primary: var(--admin-text-main);
+  --text-secondary: var(--admin-text-muted);
+  --text-muted: #94A3B8;
+  --table-header-bg: var(--admin-table-head);
+  --table-row-hover: var(--admin-bg);
 
-  --brand-red: #EF4444;
-  /* Bright energetic red */
-  --brand-red-dark: #DC2626;
+  /* Aliases & Brand Accents */
+  --brand-red: #DC2626;
+  --brand-red-dark: #B91C1C;
   --brand-yellow: #F59E0B;
-  /* Amber-500 */
   --brand-yellow-dark: #D97706;
 
-  --admin-orange: #EF4444;
+  --home-bg: var(--admin-bg);
+  --web-bg: var(--admin-bg);
+  --bg-body: var(--admin-bg);
+
+  --web-panel: var(--admin-panel);
+  --border-color: var(--admin-border);
+  --web-border: var(--admin-border);
+
+  --text-main: var(--admin-text-main);
+  --admin-text: var(--admin-text-main);
+  --admin-muted: var(--admin-text-muted);
+
+  --admin-orange: #DC2626;
   --admin-yellow: #F59E0B;
-  --btn-main: #EF4444;
+  --btn-main: #DC2626;
+  --btn-text: #FFFFFF;
 
-  --badge-bg: #FEF3C7;
-  --badge-text: #B45309;
-  --badge-border: #FDE68A;
-
-  --overlay-gradient: linear-gradient(to top, #F8FAFC 5%, rgba(248, 250, 252, 0.7) 50%, rgba(248, 250, 252, 0.9) 100%);
-  --shadow-glow: 0 4px 15px rgba(0, 0, 0, 0.06);
-
-  /* --- Cashier / POS Variables --- */
-  --pos-bg: #F1F5F9;
-  --pos-panel: #FFFFFF;
-  --pos-border: #E2E8F0;
-
-  /* --- Kitchen Variables --- */
-  --k-bg: #F1F5F9;
-  --k-panel: #FFFFFF;
-  --k-border: #E2E8F0;
-  --k-text: #0F172A;
-  --k-muted: #64748B;
-  --status-yellow: #F59E0B;
+  /* Semantic Status Tokens */
   --status-green: #10B981;
-  /* Emerald-500 */
+  --status-yellow: #F59E0B;
+  --status-red: #EF4444;
+  --status-blue: #3B82F6;
+  --status-purple: #8B5CF6;
+
+  --badge-bg: rgba(245, 158, 11, 0.12);
+  --badge-text: #B45309;
+  --badge-border: rgba(245, 158, 11, 0.25);
+
+  --pos-bg: var(--admin-bg);
+  --pos-panel: var(--admin-panel);
+  --pos-border: var(--admin-border);
+
+  --k-bg: var(--admin-bg);
+  --k-panel: var(--admin-panel);
+  --k-border: var(--admin-border);
+  --k-text: var(--admin-text-main);
+  --k-muted: var(--admin-text-muted);
+
+  --rider-success: #10B981;
 }
 
-/* SWEETALERT PREMIUM CUSTOMIZATION */
+/* --- PREMIUM MATTE DARK PALETTE --- */
+.dark, [data-theme="dark"] {
+  --admin-bg: #0D0D0D;
+  --admin-panel: #161616;
+  --admin-card: #1C1C1C;
+  --admin-border: rgba(255, 255, 255, 0.06);
+  --admin-text-main: #F8FAFC;
+  --admin-text-muted: #94A3B8;
+  --admin-input-bg: #111111;
+  --admin-table-head: #111111;
+  --admin-hover: rgba(255, 255, 255, 0.04);
+
+  --app-bg: var(--admin-bg);
+  --panel-bg: var(--admin-panel);
+  --card-bg: var(--admin-card);
+  --input-bg: var(--admin-input-bg);
+  --border-subtle: var(--admin-border);
+  --text-primary: var(--admin-text-main);
+  --text-secondary: var(--admin-text-muted);
+  --text-muted: #64748B;
+  --table-header-bg: var(--admin-table-head);
+  --table-row-hover: rgba(255, 255, 255, 0.02);
+
+  --home-bg: var(--admin-bg);
+  --web-bg: var(--admin-bg);
+  --bg-body: var(--admin-bg);
+
+  --web-panel: var(--admin-panel);
+  --border-color: var(--admin-border);
+  --web-border: var(--admin-border);
+
+  --text-main: var(--admin-text-main);
+  --admin-text: var(--admin-text-main);
+  --admin-muted: var(--admin-text-muted);
+
+  --badge-text: #FBBF24;
+  --badge-bg: rgba(245, 158, 11, 0.12);
+  --badge-border: rgba(245, 158, 11, 0.25);
+
+  --pos-bg: var(--admin-bg);
+  --pos-panel: var(--admin-panel);
+  --pos-border: var(--admin-border);
+
+  --k-bg: var(--admin-bg);
+  --k-panel: var(--admin-panel);
+  --k-border: var(--admin-border);
+  --k-text: var(--admin-text-main);
+  --k-muted: var(--admin-text-muted);
+}
+
+/* Global Application Surface */
+body, .admin-shell, .admin-layout-root {
+  background-color: var(--admin-bg) !important;
+  color: var(--admin-text-main) !important;
+}
+
+.theme-card, .theme-panel {
+  background-color: var(--admin-panel) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text-main) !important;
+}
+
+.theme-input {
+  background-color: var(--admin-input-bg) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text-main) !important;
+}
+
+/* =======================================================
+   SWEETALERT PREMIUM SAAS CUSTOMIZATION
+   ======================================================= */
 .swal2-container {
   z-index: 999999 !important;
-  /* Modal ke upar laane ke liye */
 }
 
 .swal2-popup {
-  background-color: #161619 !important;
-  /* Premium charcoal background */
-  border: 1px solid #2a2a30 !important;
-  color: #f5f5f7 !important;
-  border-radius: 16px !important;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7) !important;
-  padding: 1.5em 2em !important;
+  background-color: #171717 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #FFFFFF !important;
+  border-radius: 20px !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8) !important;
+  padding: 1.8em 2.2em !important;
+  font-family: inherit !important;
 }
 
 .swal2-title {
-  color: #ffffff !important;
-  font-size: 1.5em !important;
+  color: #FFFFFF !important;
+  font-size: 1.4em !important;
+  font-weight: 800 !important;
 }
 
 .swal2-html-container {
-  color: #8e8e93 !important;
-  font-size: 1em !important;
+  color: #9CA3AF !important;
+  font-size: 0.95em !important;
 }
 
-/* Error Icon Colors */
 .swal2-icon.swal2-error {
-  border-color: #d32f2f !important;
-  color: #d32f2f !important;
+  border-color: #EF4444 !important;
+  color: #EF4444 !important;
 }
 
 .swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
-  background-color: #d32f2f !important;
+  background-color: #EF4444 !important;
 }
 
-/* Success Icon Colors */
 .swal2-icon.swal2-success {
-  border-color: #22c55e !important;
-  color: #22c55e !important;
+  border-color: #10B981 !important;
+  color: #10B981 !important;
 }
 
 .swal2-icon.swal2-success [class^='swal2-success-line'] {
-  background-color: #22c55e !important;
+  background-color: #10B981 !important;
 }
 
 .swal2-icon.swal2-success .swal2-success-ring {
-  border-color: rgba(34, 197, 94, 0.3) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
 }
 
-/* Custom Confirm Button */
 .swal2-confirm {
-  background-color: #d32f2f !important;
-  border-radius: 8px !important;
+  background-color: #DC2626 !important;
+  color: #FFFFFF !important;
+  border-radius: 12px !important;
   padding: 10px 24px !important;
-  font-weight: bold !important;
-  box-shadow: 0 4px 15px rgba(211, 47, 47, 0.4) !important;
-  transition: all 0.3s ease !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.35) !important;
+  transition: all 0.2s ease !important;
 }
 
 .swal2-confirm:hover {
-  background-color: #b71c1c !important;
+  background-color: #EF4444 !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(211, 47, 47, 0.6) !important;
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5) !important;
 }
 
-/* Universal Theme Toggle Button */
-.theme-toggle-btn {
-  background: var(--bg-secondary) !important;
-  border: 1px solid var(--border-color) !important;
-  color: var(--brand-yellow) !important;
-  cursor: pointer;
-  width: 42px;
-  height: 42px;
-  border-radius: 50% !important;
-  display: inline-flex !important;
-  justify-content: center;
-  align-items: center;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 0 !important;
-}
-
-.theme-toggle-btn:hover {
-  background: rgba(251, 192, 45, 0.1) !important;
-  border-color: var(--brand-yellow) !important;
-  transform: scale(1.08);
+.swal2-cancel {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: #9CA3AF !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  padding: 10px 20px !important;
 }
 
 /* Hide arrows (spinners) from number inputs */
@@ -237,18 +259,173 @@ input[type="number"] {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 [data-theme="light"] ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.15);
 }
 
 [data-theme="light"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* =======================================================
+   THEME TOKENS & STREAMLINED SURFACES
+   ======================================================= */
+:root, [data-theme="light"] {
+  --admin-bg: #F8FAFC;
+  --admin-surface: #FFFFFF;
+  --admin-border: #E2E8F0;
+  --admin-text-main: #0F172A;
+  --admin-text-sub: #64748B;
+  --admin-input-bg: #F8FAFC;
+
+  /* Softened Button Accent (No harsh neon/glare) */
+  --btn-primary-bg: #F59E0B;
+  --btn-primary-hover: #EA580C;
+  --btn-primary-text: #0F172A;
+  
+  /* Soft Badge Accents */
+  --chip-amber-bg: #FEF3C7;
+  --chip-amber-text: #B45309;
+  --chip-amber-border: #FDE68A;
+
+  /* Ultra-Soft Tab Capsule Container */
+  --tab-container-bg: #F1F5F9;
+  --tab-inactive-text: #64748B;
+
+  /* Brand Yellow Mappings */
+  --brand-yellow: #F59E0B;
+  --brand-yellow-hover: #D97706;
+  --brand-yellow-surface: #FEF3C7;
+  --brand-yellow-text: #92400E;
+  --brand-yellow-border: #FCD34D;
+  
+  --brand-primary: var(--btn-primary-bg);
+  --brand-primary-hover: var(--btn-primary-hover);
+  --brand-primary-surface: var(--chip-amber-bg);
+  --brand-primary-text: var(--chip-amber-text);
+}
+
+.dark, [data-theme="dark"] {
+  --admin-bg: #0D0D0D;
+  --admin-surface: #161616;
+  --admin-border: rgba(255, 255, 255, 0.06);
+  --admin-text-main: #F8FAFC;
+  --admin-text-sub: #94A3B8;
+  --admin-input-bg: #111111;
+
+  --btn-primary-bg: #F59E0B;
+  --btn-primary-hover: #FBBF24;
+  --btn-primary-text: #000000;
+
+  --chip-amber-bg: rgba(245, 158, 11, 0.12);
+  --chip-amber-text: #FDE68A;
+  --chip-amber-border: rgba(245, 158, 11, 0.25);
+
+  --tab-container-bg: #202020;
+  --tab-inactive-text: #94A3B8;
+
+  /* Brand Yellow Mappings */
+  --brand-yellow: #F59E0B;
+  --brand-yellow-hover: #FBBF24;
+  --brand-yellow-surface: rgba(245, 158, 11, 0.12);
+  --brand-yellow-text: #FDE68A;
+  --brand-yellow-border: rgba(245, 158, 11, 0.3);
+  
+  --brand-primary: var(--btn-primary-bg);
+  --brand-primary-hover: var(--btn-primary-hover);
+  --brand-primary-surface: var(--chip-amber-bg);
+  --brand-primary-text: var(--chip-amber-text);
+}
+
+/* Base Body Surface */
+body {
+  background-color: var(--admin-bg);
+  color: var(--admin-text-main);
+  margin: 0;
+  font-family: inherit;
+}
+
+/* Unified Card Surface */
+.admin-card-surface {
+  background-color: var(--admin-surface) !important;
+  border: 1px solid var(--admin-border) !important;
+  color: var(--admin-text-main) !important;
+  border-radius: 1rem !important; /* 16px */
+}
+
+/* Modal Surface Overlays */
+.modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+.modal-surface {
+  background-color: var(--admin-surface) !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: 1.5rem !important; /* 24px */
+}
+
+/* Global Tab Pill Bar Refinement */
+.filter-tab-bar,
+.segmented-control {
+  background-color: var(--tab-container-bg) !important;
+  border-radius: 9999px !important;
+  padding: 4px !important;
+}
+
+/* Status Badges: True Capsule Pill */
+.status-pill,
+.badge,
+[class*="rounded-full"],
+span[class*="status"],
+span[class*="badge"] {
+  border-radius: 9999px !important;
+}
+
+/* Table Icon Buttons: 12px Smooth */
+td button,
+.action-btn {
+  border-radius: 0.75rem !important;
+}
+
+/* Universal Soft Brand CTA Button */
+.btn-brand-cta {
+  background-color: #F59E0B !important;
+  color: #0F172A !important;
+  font-weight: 700 !important;
+  border-radius: 0.75rem !important; /* 12px */
+  transition: all 0.2s ease-in-out !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Light Mode Softness */
+html:not(.dark) .btn-brand-cta,
+[data-theme="light"] .btn-brand-cta {
+  background-color: #FBBF24 !important; /* Soft warm gold (No neon glare) */
+  color: #1E293B !important;
+}
+
+html:not(.dark) .btn-brand-cta:hover,
+[data-theme="light"] .btn-brand-cta:hover {
+  background-color: #F59E0B !important;
+}
+
+/* Dark Mode Vibrant Gold */
+html.dark .btn-brand-cta,
+[data-theme="dark"] .btn-brand-cta {
+  background-color: #F59E0B !important;
+  color: #000000 !important;
+}
+
+html.dark .btn-brand-cta:hover,
+[data-theme="dark"] .btn-brand-cta:hover {
+  background-color: #FBBF24 !important;
 }

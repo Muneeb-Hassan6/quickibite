@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-import { FaSave, FaHeading } from "react-icons/fa";
+import { FaSave, FaHeading, FaSpinner } from "react-icons/fa";
 
 const HeroTextSettings = () => {
   const [settings, setSettings] = useState({
     hero_title: "",
     hero_subtitle: "",
-    hero_search_placeholder: ""
+    hero_search_placeholder: "",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -20,7 +20,7 @@ const HeroTextSettings = () => {
           setSettings({
             hero_title: result.data.hero_title || "",
             hero_subtitle: result.data.hero_subtitle || "",
-            hero_search_placeholder: result.data.hero_search_placeholder || ""
+            hero_search_placeholder: result.data.hero_search_placeholder || "",
           });
         }
       } catch (error) {
@@ -52,6 +52,8 @@ const HeroTextSettings = () => {
           text: "Hero text settings have been updated successfully.",
           timer: 1500,
           showConfirmButton: false,
+          background: "#171717",
+          color: "#fff",
         });
       } else {
         Swal.fire("Error", result.message || "Failed to update settings.", "error");
@@ -63,55 +65,74 @@ const HeroTextSettings = () => {
     }
   };
 
-  if (isLoading) return <div style={{ padding: "20px", color: "#fff" }}>Loading Hero Text Settings...</div>;
+  if (isLoading)
+    return (
+      <div className="py-8 text-center text-xs text-[var(--admin-muted,#888)] font-bold uppercase tracking-wider">
+        Loading Hero Static Content...
+      </div>
+    );
 
   return (
-    <div style={{ background: "var(--admin-panel)", padding: "20px", borderRadius: "10px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", border: "1px solid var(--admin-border)", marginBottom: "20px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
-        <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "10px", color: "#fff" }}>
-          <FaHeading style={{ color: "var(--admin-orange)" }} /> Hero Static Content
-        </h3>
-        <button 
-          onClick={handleSave} 
+    <div className="admin-card-surface bg-white dark:bg-[#161616] p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-white shadow-sm space-y-4">
+      <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-white/[0.06]">
+        <div className="flex items-center gap-2">
+          <FaHeading className="text-amber-500 text-sm" />
+          <h3 className="m-0 text-sm sm:text-base font-black text-slate-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
+            Hero Static Content & Headings
+          </h3>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSave}
           disabled={isSaving}
-          style={{ padding: "8px 15px", background: "var(--admin-orange)", color: "#fff", border: "none", borderRadius: "5px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", fontWeight: "bold" }}
+          className="btn-brand-cta px-4 py-2 text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer border-none disabled:opacity-50 active:scale-95"
         >
-          <FaSave /> {isSaving ? "Saving..." : "Save Content"}
+          {isSaving ? <FaSpinner className="animate-spin text-xs" /> : <FaSave className="text-xs" />}
+          <span>Save Content</span>
         </button>
       </div>
-      
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
-        <div style={{ gridColumn: "1 / -1" }}>
-          <label style={{ display: "block", marginBottom: "5px", color: "var(--admin-muted)", fontSize: "13px", fontWeight: "bold" }}>Hero Title (Supports HTML e.g. &lt;span style="color:red;"&gt;BIG BITE&lt;/span&gt;)</label>
-          <input 
-            type="text" 
-            name="hero_title" 
-            value={settings.hero_title} 
-            onChange={handleChange} 
-            style={{ width: "100%", padding: "10px", background: "var(--admin-bg)", border: "1px solid var(--admin-border)", color: "var(--admin-text)", borderRadius: "6px" }} 
-            placeholder="WELCOME TO <span style='color:#ef4444;'>BIG BITE!</span>" 
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="sm:col-span-2">
+          <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+            Hero Title (Supports HTML e.g. &lt;span style="color:#f59e0b;"&gt;BIG BITE&lt;/span&gt;)
+          </label>
+          <input
+            type="text"
+            name="hero_title"
+            value={settings.hero_title}
+            onChange={handleChange}
+            placeholder="WELCOME TO <span style='color:#f59e0b;'>BIG BITE!</span>"
+            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
           />
         </div>
+
         <div>
-          <label style={{ display: "block", marginBottom: "5px", color: "var(--admin-muted)", fontSize: "13px", fontWeight: "bold" }}>Hero Subtitle</label>
-          <input 
-            type="text" 
-            name="hero_subtitle" 
-            value={settings.hero_subtitle} 
-            onChange={handleChange} 
-            style={{ width: "100%", padding: "10px", background: "var(--admin-bg)", border: "1px solid var(--admin-border)", color: "var(--admin-text)", borderRadius: "6px" }} 
-            placeholder="Fresh Food, Delivered Hot & Fast." 
+          <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+            Hero Subtitle
+          </label>
+          <input
+            type="text"
+            name="hero_subtitle"
+            value={settings.hero_subtitle}
+            onChange={handleChange}
+            placeholder="Order Delicious Fast Food Online"
+            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
           />
         </div>
+
         <div>
-          <label style={{ display: "block", marginBottom: "5px", color: "var(--admin-muted)", fontSize: "13px", fontWeight: "bold" }}>Search Placeholder</label>
-          <input 
-            type="text" 
-            name="hero_search_placeholder" 
-            value={settings.hero_search_placeholder} 
-            onChange={handleChange} 
-            style={{ width: "100%", padding: "10px", background: "var(--admin-bg)", border: "1px solid var(--admin-border)", color: "var(--admin-text)", borderRadius: "6px" }} 
-            placeholder="Search your favorite food..." 
+          <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+            Search Bar Placeholder
+          </label>
+          <input
+            type="text"
+            name="hero_search_placeholder"
+            value={settings.hero_search_placeholder}
+            onChange={handleChange}
+            placeholder="Search our delicious burgers, pizzas..."
+            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
           />
         </div>
       </div>

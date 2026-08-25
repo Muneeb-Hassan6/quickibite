@@ -1,36 +1,56 @@
 import React from "react";
+import { FaChartBar } from "react-icons/fa";
 
 const SalesChart = ({ chartData, filter, setFilter }) => {
   return (
-    <div className="bg-[var(--admin-panel)] rounded-[16px] p-[25px] flex flex-col h-[380px] shadow-[0_4px_6px_rgba(0,0,0,0.2)] lg:max-xl:h-auto lg:max-xl:min-h-[350px] max-lg:h-auto max-lg:min-h-[350px]">
-      <div className="flex justify-between items-center mb-[30px]">
-        <div className="text-[18px] font-extrabold text-[var(--admin-text)] border-l-[4px] border-[var(--admin-orange)] pl-[10px]">Sales Overview</div>
+    <div className="bg-[var(--admin-panel,#171717)] rounded-2xl p-5 border border-[var(--admin-border,rgba(255,255,255,0.06))] shadow-sm flex flex-col h-[380px]">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6 pb-3 border-b border-[var(--admin-border,rgba(255,255,255,0.06))]">
+        <div className="flex items-center gap-2">
+          <FaChartBar className="text-amber-400 text-sm" />
+          <h3 className="m-0 text-sm sm:text-base font-black text-white font-['Oswald',sans-serif] uppercase tracking-wide">
+            Sales Overview
+          </h3>
+        </div>
+
         <select
-          className="bg-[var(--admin-bg)] text-[var(--admin-text)] p-[8px_12px] rounded-[8px] text-[12px] font-semibold outline-none cursor-pointer transition-all duration-200"
+          className="bg-white/5 text-white px-3 py-1.5 rounded-xl text-xs font-semibold border border-white/10 outline-none cursor-pointer focus:border-amber-500 transition-colors"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         >
-          <option value="daily">Today</option>
-          <option value="weekly">This Week</option>
-          <option value="monthly">This Month</option>
-          <option value="yearly">This Year</option>
-          <option value="all">All Time</option>
-          <option value="custom">📅 Custom Range</option>
+          <option className="bg-[#171717]" value="daily">Today</option>
+          <option className="bg-[#171717]" value="weekly">This Week</option>
+          <option className="bg-[#171717]" value="monthly">This Month</option>
+          <option className="bg-[#171717]" value="yearly">This Year</option>
+          <option className="bg-[#171717]" value="all">All Time</option>
+          <option className="bg-[#171717]" value="custom">Custom Range</option>
         </select>
       </div>
 
-      <div className="flex-1 flex items-end justify-between pb-[10px] border-b border-[var(--admin-border)] gap-[15px] mt-[10px]">
+      {/* Bar Chart Canvas */}
+      <div className="flex-1 flex items-end justify-between pb-3 gap-2 sm:gap-4 px-2">
         {chartData.map((data, idx) => (
-          <div key={idx} className="flex-1 h-full flex flex-col justify-end items-center relative cursor-pointer group">
+          <div
+            key={idx}
+            className="flex-1 h-full flex flex-col justify-end items-center relative cursor-pointer group"
+          >
             {/* Tooltip on hover */}
-            <div className="absolute -top-[35px] bg-[var(--admin-text)] text-[var(--admin-bg)] p-[5px_10px] rounded-[6px] text-[12px] font-extrabold opacity-0 transition-all duration-200 pointer-events-none whitespace-nowrap translate-y-[10px] shadow-[0_4px_6px_rgba(0,0,0,0.3)] group-hover:opacity-100 group-hover:translate-y-0 after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-[5px] after:border-solid after:border-[var(--admin-text)_transparent_transparent_transparent] z-10">{data.amount}</div>
+            <div className="absolute -top-9 bg-neutral-900 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-lg text-[11px] font-black opacity-0 transition-all duration-200 pointer-events-none whitespace-nowrap translate-y-2 shadow-xl group-hover:opacity-100 group-hover:translate-y-0 z-20">
+              {data.amount}
+            </div>
 
-            {/* Actual Bar */}
-            <div
-              className="w-full max-w-[45px] bg-gradient-to-b from-[var(--admin-orange)] to-[#b71c1c] rounded-t-[6px] transition-all duration-[1000ms] ease-out origin-bottom shadow-[var(--shadow-glow)] group-hover:scale-y-[1.05] group-hover:brightness-125"
-              style={{ height: `${data.value}%` }}
-            ></div>
-            <span className="mt-[15px] text-[13px] text-[var(--admin-muted)] font-semibold">{data.day}</span>
+            {/* Bar Fill */}
+            <div className="w-full max-w-[40px] bg-white/5 rounded-t-xl h-full flex items-end overflow-hidden p-0.5 border border-white/5">
+              <div
+                className="w-full bg-gradient-to-t from-amber-600 to-amber-400 rounded-t-lg transition-all duration-700 ease-out origin-bottom group-hover:brightness-125 shadow-sm shadow-amber-500/20"
+                style={{ height: `${Math.max(8, data.value)}%` }}
+              />
+            </div>
+
+            {/* Label */}
+            <span className="mt-3 text-[11px] text-[var(--admin-muted,#888)] font-bold group-hover:text-white transition-colors">
+              {data.day}
+            </span>
           </div>
         ))}
       </div>

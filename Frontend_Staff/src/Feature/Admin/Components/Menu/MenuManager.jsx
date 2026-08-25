@@ -406,21 +406,38 @@ const MenuManager = () => {
         </div>
       )}
 
-      <div className="flex justify-between items-end mb-[1.563rem] border-b border-[var(--admin-border)] pb-[0.938rem]">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-[var(--admin-border,rgba(255,255,255,0.06))] pb-4">
         <div>
-          <h2 className="text-[1.25rem] font-bold mb-[0.938rem] border-l-4 border-red-500 pl-[0.625rem] text-[var(--admin-text)]">Menu Management</h2>
-          <div className="inline-flex bg-[var(--admin-panel)] border border-[var(--admin-border)] rounded-[2.5rem] p-[0.375rem] gap-[0.313rem] shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-4 bg-red-600 rounded-full shrink-0" />
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-[var(--admin-text,#fff)] m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
+              Menu Management
+            </h2>
+          </div>
+          <div className="inline-flex bg-slate-100 dark:bg-[#202020] border border-slate-200/80 dark:border-white/[0.06] rounded-full p-1 gap-1 shadow-sm mt-3">
             <button
-              className={`bg-transparent text-[var(--admin-muted)] py-[0.625rem] px-[1.5rem] rounded-[1.875rem] cursor-pointer flex items-center gap-[0.5rem] font-bold transition-all duration-300 text-[0.875rem] hover:text-[var(--admin-text)] ${activeTab === "items" ? "bg-[var(--admin-orange)] text-white hover:text-white" : ""}`}
+              type="button"
+              className={`py-1.5 px-4 rounded-full cursor-pointer flex items-center gap-2 font-bold transition-all text-xs border-none ${
+                activeTab === "items"
+                  ? "btn-brand-cta !rounded-full"
+                  : "bg-transparent text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
               onClick={() => setActiveTab("items")}
             >
-              <FaHamburger /> Menu Items
+              <FaHamburger className="text-xs" />
+              <span>Menu Items</span>
             </button>
             <button
-              className={`bg-transparent text-[var(--admin-muted)] border-none py-[0.625rem] px-[1.5rem] rounded-[1.875rem] cursor-pointer flex items-center gap-[0.5rem] font-bold transition-all duration-300 text-[0.875rem] hover:text-[var(--admin-text)] ${activeTab === "categories" ? "bg-[var(--admin-orange)] text-white hover:text-white" : ""}`}
+              type="button"
+              className={`py-1.5 px-4 rounded-full cursor-pointer flex items-center gap-2 font-bold transition-all text-xs border-none ${
+                activeTab === "categories"
+                  ? "btn-brand-cta !rounded-full"
+                  : "bg-transparent text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
               onClick={() => setActiveTab("categories")}
             >
-              <FaList /> Explore Categories
+              <FaList className="text-xs" />
+              <span>Explore Categories</span>
             </button>
             <button
               className={`bg-transparent text-[var(--admin-muted)] border-none py-[0.625rem] px-[1.5rem] rounded-[1.875rem] cursor-pointer flex items-center gap-[0.5rem] font-bold transition-all duration-300 text-[0.875rem] hover:text-[var(--admin-text)] ${activeTab === "addongroups" ? "bg-[var(--admin-orange)] text-white hover:text-white" : ""}`}
@@ -432,14 +449,16 @@ const MenuManager = () => {
         </div>
         {activeTab === "items" && (
           <button
-            className="bg-[var(--admin-orange)] text-white border-none py-[0.625rem] px-[1.375rem] rounded text-[0.875rem] font-semibold flex items-center gap-[0.5rem] cursor-pointer transition-all duration-300 hover:opacity-90"
+            type="button"
+            className="btn-brand-cta px-4 py-2 text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer border-none shrink-0 active:scale-95"
             onClick={() => {
               setEditingItem(null);
               setMenuForm(defaultMenuForm);
               setIsMenuModalOpen(true);
             }}
           >
-            <FaPlus /> Add Product
+            <FaPlus className="text-xs" />
+            <span>Add Product</span>
           </button>
         )}
       </div>
@@ -459,37 +478,47 @@ const MenuManager = () => {
       ) : activeTab === "addongroups" ? (
         <AddonGroupsManager />
       ) : (
-        <div className="flex flex-wrap gap-[1.563rem] pt-[0.938rem] animate-slide-up">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pt-4 animate-slide-up">
           <div
-            className="w-[10rem] h-[10rem] rounded-[1.25rem] flex flex-col items-center justify-center cursor-pointer transition-all duration-300 border-2 border-dashed border-[var(--admin-muted)] bg-transparent text-[var(--admin-muted)] shadow-none hover:border-[var(--admin-orange)] hover:text-[var(--admin-orange)] hover:bg-[var(--admin-panel)] hover:shadow-none"
+            className="border-2 border-dashed border-slate-300 dark:border-white/15 rounded-2xl hover:border-amber-500/50 hover:bg-amber-500/[0.03] transition-all flex flex-col items-center justify-center min-h-[140px] cursor-pointer text-slate-500 dark:text-neutral-400 hover:text-amber-500 dark:hover:text-amber-400 group p-4"
             onClick={() => {
               setEditingCategory(null);
               setCategoryForm(defaultCategoryForm);
               setIsCategoryModalOpen(true);
             }}
           >
-            <FaPlus size={30} />
-            <p
-              className="mt-[0.625rem] font-semibold"
-            >
+            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-amber-500/10 transition-colors mb-2">
+              <FaPlus className="text-sm" />
+            </div>
+            <p className="m-0 text-xs font-bold uppercase tracking-wider text-center">
               Add Category
             </p>
           </div>
           {categories.map((cat) => (
-            <div key={cat.id} className="w-[10rem] h-[10rem] bg-[var(--admin-panel)] border-2 border-[var(--admin-border)] rounded-[1.25rem] flex items-center justify-center cursor-pointer overflow-hidden relative transition-all duration-300 shadow-[0_4px_10px_rgba(0,0,0,0.1)] hover:border-[var(--admin-orange)] hover:-translate-y-[0.313rem] hover:shadow-[var(--shadow-glow)] group">
+            <div
+              key={cat.id}
+              className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-white/[0.06] bg-slate-100 dark:bg-[#161616] group transition-all min-h-[140px] flex items-center justify-center shadow-sm hover:border-amber-500/40 hover:-translate-y-1 hover:shadow-lg"
+            >
               <img
                 src={cat.img}
                 alt={cat.name}
-                className="absolute top-0 left-0 w-full h-full object-cover z-[1] opacity-60 transition-all duration-500 group-hover:scale-110 group-hover:opacity-30"
-                onError={(e) =>
-                (e.target.src =
-                  "https://via.placeholder.com/150?text=No+Image")
-                }
+                className="absolute inset-0 w-full h-full object-cover z-[1] opacity-70 dark:opacity-50 transition-all duration-500 group-hover:scale-110 group-hover:opacity-30"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://via.placeholder.com/150?text=No+Image";
+                }}
               />
-              <div className="relative z-[2] font-black text-[1.125rem] text-white uppercase tracking-[1.5px] text-center px-[0.625rem] transition-opacity duration-300 group-hover:opacity-0 group-hover:invisible" style={{ textShadow: "0 4px 15px rgba(0, 0, 0, 1), 0 1px 3px rgba(0, 0, 0, 1)" }}>{cat.name}</div>
-              <div className="absolute top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.7)] flex justify-center items-center gap-[0.938rem] opacity-0 transition-opacity duration-300 z-10 group-hover:opacity-100">
+              <div
+                className="relative z-[2] font-black text-sm text-white uppercase tracking-wider text-center px-3 transition-opacity duration-300 group-hover:opacity-0 group-hover:invisible"
+                style={{ textShadow: "0 2px 10px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.9)" }}
+              >
+                {cat.name}
+              </div>
+              <div className="absolute inset-0 bg-black/75 flex justify-center items-center gap-3 opacity-0 transition-opacity duration-300 z-10 group-hover:opacity-100 p-2">
                 <button
-                  className="bg-transparent border-none p-[0.313rem] cursor-pointer text-[1.25rem] transition-all duration-200 text-blue-500 hover:scale-125 hover:text-blue-400"
+                  type="button"
+                  className="w-9 h-9 rounded-xl bg-blue-500/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-sm"
+                  title="Edit Category"
                   onClick={(e) => {
                     e.stopPropagation();
                     setEditingCategory(cat);
@@ -497,16 +526,18 @@ const MenuManager = () => {
                     setIsCategoryModalOpen(true);
                   }}
                 >
-                  <FaEdit />
+                  <FaEdit className="text-xs" />
                 </button>
                 <button
-                  className="bg-transparent border-none p-[0.313rem] cursor-pointer text-[1.25rem] transition-all duration-200 text-red-500 hover:scale-125 hover:text-red-400"
+                  type="button"
+                  className="w-9 h-9 rounded-xl bg-rose-500/20 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/30 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-sm"
+                  title="Delete Category"
                   onClick={(e) => {
                     e.stopPropagation();
                     triggerDeleteCategory(cat.id);
                   }}
                 >
-                  <FaTrash />
+                  <FaTrash className="text-xs" />
                 </button>
               </div>
             </div>

@@ -1,26 +1,50 @@
 <?php
 include_once __DIR__ . '/../config/cors_headers.php';
-
 include_once __DIR__ . '/../config/auth_middleware.php';
-require_role(['Admin', 'Cashier', 'Kitchen', 'Chef', 'Dispatcher']);
+require_role(['Admin', 'Cashier', 'Kitchen', 'Chef', 'Dispatcher', 'Manager', 'Rider']);
 
-include_once '../config/Database.php';
+include_once __DIR__ . '/../config/Database.php';
 $database = new Database();
 $db = $database->getConnection();
 
+if (!$db) {
+    http_response_code(500);
+    echo json_encode(["success" => false, "message" => "Database connection failed", "data" => []]);
+    exit();
+}
+
 try {
-    // 🔥 CONDITION: Check karo ke kisne call kiya hy
-    $type = isset($_GET['type']) ? $_GET['type'] : 'active';
+    $type = isset($_GET['type']) ? trim($_GET['type']) : 'active';
 
     if ($type === 'all') {
-        // ADMIN KE LIYE: Saare orders bhejo
-        $query = "SELECT * FROM orders ORDER BY id DESC";
+        $query = "SELECT o.*, 
+                         COALESCE(p.status, 'Pending') as payment_status, 
+                         COALESCE(p.method, 'Cash') as payment_method,
+                         DATE_FORMAT(o.created_at, '%h:%i %p') as time,
+                         DATE_FORMAT(o.created_at, '%d/%m/%Y') as date
+                  FROM orders o 
+                  LEFT JOIN payments p ON o.id = p.order_id 
+                  ORDER BY o.id DESC";
     } elseif ($type === 'cashier') {
-        // CASHIER KE LIYE: Jo orders unpaid hain sirf wo dikhao
-        $query = "SELECT * FROM orders WHERE payment_status != 'Paid' ORDER BY id DESC";
+        $query = "SELECT o.*, 
+                         COALESCE(p.status, 'Pending') as payment_status, 
+                         COALESCE(p.method, 'Cash') as payment_method,
+                         DATE_FORMAT(o.created_at, '%h:%i %p') as time,
+                         DATE_FORMAT(o.created_at, '%d/%m/%Y') as date
+                  FROM orders o 
+                  LEFT JOIN payments p ON o.id = p.order_id 
+                  WHERE COALESCE(p.status, '') != 'Paid' 
+                  ORDER BY o.id DESC";
     } else {
-        // KITCHEN KE LIYE (Default): Sirf active orders bhejo (Jo Dispatch nahi hue)
-        $query = "SELECT * FROM orders WHERE status NOT IN ('Delivered', 'Completed', 'Dispatched') ORDER BY id DESC";
+        $query = "SELECT o.*, 
+                         COALESCE(p.status, 'Pending') as payment_status, 
+                         COALESCE(p.method, 'Cash') as payment_method,
+                         DATE_FORMAT(o.created_at, '%h:%i %p') as time,
+                         DATE_FORMAT(o.created_at, '%d/%m/%Y') as date
+                  FROM orders o 
+                  LEFT JOIN payments p ON o.id = p.order_id 
+                  WHERE o.status NOT IN ('Delivered', 'Completed', 'Dispatched', 'Cancelled', 'Declined') 
+                  ORDER BY o.id DESC";
     }
     
     $stmt = $db->prepare($query);
@@ -30,17 +54,19 @@ try {
     $final_orders = [];
 
     foreach ($orders as $order) {
-        $itemQuery = "SELECT title as name, size, note, qty, price FROM order_items WHERE order_id = :oid";
+        $itemQuery = "SELECT id, title as name, size, note, qty, price FROM order_items WHERE order_id = :oid";
         $itemStmt = $db->prepare($itemQuery);
         $itemStmt->execute([':oid' => $order['id']]);
         
         $order['items'] = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+        $order['cart'] = $order['items'];
         
         $final_orders[] = $order;
     }
 
-    echo json_encode($final_orders ?: []);
+    echo json_encode($final_orders);
 } catch (PDOException $e) {
-    echo json_encode(["error" => "SQL Error: " . $e->getMessage()]);
+    http_response_code(500);
+    echo json_encode(["success" => false, "message" => "SQL Error: " . $e->getMessage(), "data" => []]);
 }
 ?>

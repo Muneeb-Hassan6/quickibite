@@ -11,38 +11,49 @@ const InventoryControls = ({
   const tabs = ["All", "In Stock", "Low Stock", "Out of Stock"];
 
   return (
-    <div className="flex justify-between items-center mb-[25px] gap-[15px] bg-[var(--admin-panel)] p-[12px_20px] rounded-[16px] flex-wrap shadow-[0_4px_6px_rgba(0,0,0,0.1)] max-md:flex-col max-md:items-stretch">
-      {/* Tabs */}
-      <div className="flex gap-[5px] bg-[var(--admin-bg)] p-[5px] rounded-[10px] ">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            className={`bg-transparent p-[8px_16px] rounded-[8px] text-[13px] font-bold text-[var(--admin-muted)] cursor-pointer transition-all duration-300 ease uppercase hover:text-[var(--admin-text)] ${activeTab === tab ? "bg-[var(--admin-orange)] text-white" : ""}`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab}
-          </button>
-        ))}
+    <div className="admin-card-surface flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-5 p-3 sm:p-4 rounded-2xl shadow-sm">
+      {/* Status Filter Tabs */}
+      <div className="bg-slate-100 dark:bg-[#202020] p-1 rounded-full border border-slate-200/80 dark:border-white/[0.06] flex items-center gap-1 overflow-x-auto">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab;
+          return (
+            <button
+              key={tab}
+              type="button"
+              className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider cursor-pointer transition-all whitespace-nowrap border-none ${
+                isActive
+                  ? "bg-amber-500/90 dark:bg-amber-500 text-neutral-900 shadow-sm"
+                  : "bg-transparent text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Search & Add Button */}
-      <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-        <div className="relative w-[280px] max-md:w-full">
-          <FaSearch className="absolute left-[14px] top-1/2 -translate-y-1/2 text-[var(--admin-muted)]" />
+      {/* Search Bar & Add Button */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1 sm:w-64">
+          <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-neutral-500 text-xs" />
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder="Search ingredients..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full p-[10px_10px_10px_40px] rounded-[10px] outline-none bg-[var(--admin-bg)] text-[var(--admin-text)] text-[14px] transition-all duration-300 "
+            className="w-full pl-9 pr-3.5 py-2 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
           />
         </div>
+
         <button
-          className="btn-save bg-[var(--brand-yellow)] rounded px-3 py-2 flex items-center gap-2"
-          style={{ flex: "none", margin: 0, width: "auto" }}
+          type="button"
           onClick={onAddClick}
+          className="bg-amber-500/90 hover:bg-amber-500 dark:bg-amber-500 dark:hover:bg-amber-400 text-neutral-900 font-bold px-4 py-2.5 rounded-xl shadow-sm transition-all duration-200 text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer border-none shrink-0 active:scale-95"
         >
-          <FaPlus /> <span className="max-md:hidden">Add Product</span>
+          <FaPlus className="text-xs" />
+          <span className="hidden sm:inline">Add Ingredient</span>
+          <span className="sm:hidden">Add</span>
         </button>
       </div>
     </div>

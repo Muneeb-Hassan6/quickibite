@@ -1,6 +1,33 @@
 import React, { useState, useEffect } from "react";
-import { FaClock, FaSun, FaMoon, FaCoffee, FaCog } from "react-icons/fa";
+import { FaSun, FaCloudSun, FaMoon, FaGear } from "react-icons/fa6";
 import Swal from "sweetalert2";
+
+const renderShiftBadge = (shiftName) => {
+  switch (shiftName) {
+    case "Evening":
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-orange-500/10 text-orange-700 dark:text-orange-400 border border-orange-500/20">
+          <FaCloudSun className="w-3.5 h-3.5 text-orange-500" />
+          <span>Evening</span>
+        </span>
+      );
+    case "Night":
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20">
+          <FaMoon className="w-3.5 h-3.5 text-indigo-400" />
+          <span>Night</span>
+        </span>
+      );
+    case "Morning":
+    default:
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+          <FaSun className="w-3.5 h-3.5 text-amber-500" />
+          <span>Morning</span>
+        </span>
+      );
+  }
+};
 
 const ShiftManager = () => {
   const [employees, setEmployees] = useState([]);
@@ -11,7 +38,7 @@ const ShiftManager = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🔥 Fetch Staff and Timings
+  // Fetch Staff and Timings
   const fetchShifts = async () => {
     try {
       const response = await fetch(
@@ -19,7 +46,7 @@ const ShiftManager = () => {
       );
       const result = await response.json();
       if (result.success) {
-        setEmployees(result.data);
+        setEmployees(result.data || []);
         if (result.timings) setShiftTimings(result.timings);
       }
     } catch (error) {
@@ -33,7 +60,7 @@ const ShiftManager = () => {
     fetchShifts();
   }, []);
 
-  // 🔥 Update Individual Staff Shift
+  // Update Individual Staff Shift
   const handleShiftChange = async (id, newShift) => {
     const updatedEmployees = employees.map((emp) =>
       emp.id === id ? { ...emp, shift: newShift } : emp,
@@ -56,9 +83,11 @@ const ShiftManager = () => {
           toast: true,
           position: "top-end",
           icon: "success",
-          title: "Shift Updated",
+          title: `Shift Updated to ${newShift}`,
           showConfirmButton: false,
           timer: 1500,
+          background: "#171717",
+          color: "#fff",
         });
       } else {
         Swal.fire("Error", result.message, "error");
@@ -70,27 +99,29 @@ const ShiftManager = () => {
     }
   };
 
-  // 🔥 ADMIN FEATURE: Set Global Shift Timings
+  // Set Global Shift Timings
   const handleSetTimings = () => {
     Swal.fire({
-      title: "Set Shift Timings",
+      title: "Configure Global Shift Hours",
       html: `
-        <div style="text-align: left; margin-bottom: 10px;">
-          <label style="font-size: 13px; color: #888; font-weight: bold;">☀️ Morning Shift</label>
-          <input id="swal-morning" class="swal2-input" value="${shiftTimings.Morning}" style="width: 80%; margin-top: 5px;">
+        <div style="text-align: left; margin-bottom: 12px;">
+          <label style="font-size: 12px; color: #f59e0b; font-weight: bold;">Morning Shift</label>
+          <input id="swal-morning" class="swal2-input" value="${shiftTimings.Morning}" style="width: 100%; margin-top: 4px; background: #222; color: #fff;">
         </div>
-        <div style="text-align: left; margin-bottom: 10px;">
-          <label style="font-size: 13px; color: #888; font-weight: bold;">🌤️ Evening Shift</label>
-          <input id="swal-evening" class="swal2-input" value="${shiftTimings.Evening}" style="width: 80%; margin-top: 5px;">
+        <div style="text-align: left; margin-bottom: 12px;">
+          <label style="font-size: 12px; color: #fb923c; font-weight: bold;">Evening Shift</label>
+          <input id="swal-evening" class="swal2-input" value="${shiftTimings.Evening}" style="width: 100%; margin-top: 4px; background: #222; color: #fff;">
         </div>
-        <div style="text-align: left; margin-bottom: 10px;">
-          <label style="font-size: 13px; color: #888; font-weight: bold;">🌙 Night Shift</label>
-          <input id="swal-night" class="swal2-input" value="${shiftTimings.Night}" style="width: 80%; margin-top: 5px;">
+        <div style="text-align: left; margin-bottom: 12px;">
+          <label style="font-size: 12px; color: #818cf8; font-weight: bold;">Night Shift</label>
+          <input id="swal-night" class="swal2-input" value="${shiftTimings.Night}" style="width: 100%; margin-top: 4px; background: #222; color: #fff;">
         </div>
       `,
       showCancelButton: true,
-      confirmButtonText: "Save Timings",
-      confirmButtonColor: "#10b981",
+      confirmButtonText: "Save Shift Hours",
+      confirmButtonColor: "#f59e0b",
+      background: "#171717",
+      color: "#fff",
       preConfirm: () => {
         return {
           Morning: document.getElementById("swal-morning").value,
@@ -109,139 +140,168 @@ const ShiftManager = () => {
               body: JSON.stringify(result.value),
             },
           );
-          const resData = await response.json();
-          if (resData.success) {
-            Swal.fire("Saved!", "Shift timings have been updated.", "success");
-            fetchShifts(); // Refresh data
-          } else {
-            Swal.fire("Error", resData.message, "error");
+          const data = await response.json();
+          if (data.success) {
+            setShiftTimings(result.value);
+            Swal.fire({
+              icon: "success",
+              title: "Saved!",
+              text: "Shift schedule timings updated.",
+              timer: 1500,
+              showConfirmButton: false,
+              background: "#171717",
+              color: "#fff",
+            });
           }
         } catch (error) {
-          Swal.fire("Error", "Could not connect to server.", "error");
+          Swal.fire("Error", "Could not save shift timings", "error");
         }
       }
     });
   };
 
-  // 🔥 Get details dynamically based on API timings
-  const getShiftDetails = (shift) => {
-    const currentShift = shift || "Morning";
-    if (currentShift === "Morning")
-      return {
-        icon: <FaCoffee />,
-        color: "#f59e0b",
-        time: shiftTimings.Morning,
-        bg: "rgba(245, 158, 11, 0.1)",
-      };
-    if (currentShift === "Evening")
-      return {
-        icon: <FaSun />,
-        color: "#3b82f6",
-        time: shiftTimings.Evening,
-        bg: "rgba(59, 130, 246, 0.1)",
-      };
-    return {
-      icon: <FaMoon />,
-      color: "#8b5cf6",
-      time: shiftTimings.Night,
-      bg: "rgba(139, 92, 246, 0.1)",
-    };
-  };
-
   if (isLoading)
-    return <div className="text-center p-[3.125rem] text-white">Loading Shift Data...</div>;
+    return (
+      <div className="py-20 text-center text-[var(--admin-muted,#888)] text-xs font-bold uppercase tracking-wider">
+        Loading Shift Roster...
+      </div>
+    );
 
   return (
-    <div className="bg-[var(--admin-bg,#141414)] rounded-[0.75rem] border border-[var(--admin-border,#222)] overflow-hidden shadow-[0_4px_15px_rgba(0,0,0,0.2)] animate-slide-up custom-scrollbar">
-      <div
-        className="flex justify-between items-center p-[0.938rem_1.25rem]  flex-wrap gap-[0.938rem]"
-      >
-        <div>
-          <h4 className="m-0 text-[var(--admin-text,#fff)] text-[1.125rem] font-bold">Shift Roster</h4>
-          <p className="text-[0.75rem] text-[var(--admin-muted,#888)] m-0 mt-[0.313rem]">Assign daily shifts to staff.</p>
-        </div>
-
-        <div className="flex gap-[0.938rem] items-center">
-          <div className="flex gap-[0.938rem] text-[0.75rem] font-semibold text-[var(--admin-muted,#888)] m-0">
-            <span className="text-[#f59e0b] mr-[0.938rem] flex items-center gap-[0.313rem]">
-              <FaCoffee /> Morning
-            </span>
-            <span className="text-[#3b82f6] mr-[0.938rem] flex items-center gap-[0.313rem]">
-              <FaSun /> Evening
-            </span>
-            <span className="text-[#8b5cf6] flex items-center gap-[0.313rem]">
-              <FaMoon /> Night
+    <div className="space-y-5 animate-slide-up">
+      {/* Shift Timing Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Morning Shift Card */}
+        <div className="admin-card-surface p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-white/[0.06] shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center text-xs font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+              <FaSun className="text-amber-500 w-4 h-4 inline mr-1.5" />
+              <span>Morning Shift</span>
+            </div>
+            <span className="text-sm font-black text-slate-900 dark:text-white font-mono block">
+              {shiftTimings.Morning}
             </span>
           </div>
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20">
+            <FaSun className="w-5 h-5" />
+          </div>
+        </div>
 
-          {/* 🔥 ADMIN BUTTON TO SET TIMINGS */}
-          <button
-            className="bg-[#333] text-white p-[0.5rem_0.938rem] rounded-[0.5rem] cursor-pointer font-bold flex items-center gap-[0.313rem] transition-colors duration-200 hover:bg-[#444]"
-            onClick={handleSetTimings}
-          >
-            <FaCog /> Setup Timings
-          </button>
+        {/* Evening Shift Card */}
+        <div className="admin-card-surface p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-white/[0.06] shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center text-xs font-extrabold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+              <FaCloudSun className="text-orange-500 w-4 h-4 inline mr-1.5" />
+              <span>Evening Shift</span>
+            </div>
+            <span className="text-sm font-black text-slate-900 dark:text-white font-mono block">
+              {shiftTimings.Evening}
+            </span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center border border-orange-500/20">
+            <FaCloudSun className="w-5 h-5" />
+          </div>
+        </div>
+
+        {/* Night Shift Card */}
+        <div className="admin-card-surface p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-white/[0.06] shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center text-xs font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+              <FaMoon className="text-indigo-400 w-4 h-4 inline mr-1.5" />
+              <span>Night Shift</span>
+            </div>
+            <span className="text-sm font-black text-slate-900 dark:text-white font-mono block">
+              {shiftTimings.Night}
+            </span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
+            <FaMoon className="w-5 h-5" />
+          </div>
         </div>
       </div>
 
-      <div className="overflow-x-auto w-full">
-        <table className="w-full border-collapse min-w-[37.5rem] text-[0.875rem]">
+      {/* Header & Adjust Timing Button */}
+      <div className="admin-card-surface flex justify-between items-center p-4 rounded-2xl shadow-sm">
+        <div className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
+          Staff Shift Allocations ({employees.length} Members)
+        </div>
+        <button
+          type="button"
+          onClick={handleSetTimings}
+          className="btn-brand-cta px-4 py-2 text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer border-none active:scale-95"
+        >
+          <FaGear className="w-3.5 h-3.5" />
+          <span>Configure Shift Hours</span>
+        </button>
+      </div>
+
+      {/* Shift Table */}
+      <div className="admin-card-surface rounded-2xl overflow-x-auto shadow-sm">
+        <table className="w-full border-collapse min-w-[680px] text-left text-xs">
           <thead>
-            <tr>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px] pl-[1.25rem]">Staff Member</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Current Shift Status</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Shift Timings</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Change Shift</th>
+            <tr className="border-b border-slate-200 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                Staff Member
+              </th>
+              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                Role
+              </th>
+              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                Current Shift
+              </th>
+              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider text-right">
+                Assign New Shift
+              </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-slate-200 dark:divide-white/[0.06]">
             {employees.length > 0 ? (
-              employees.map((emp) => {
-                const shiftInfo = getShiftDetails(emp.shift);
-                return (
-                  <tr key={emp.id} className=" transition-colors duration-200 hover:bg-[rgba(255,255,255,0.02)]">
-                    <td className="p-[1.25rem] align-middle pl-[1.25rem]">
-                      <div className="flex items-center gap-[0.75rem]">
-                        <div className="w-[2.5rem] h-[2.5rem] rounded-full bg-[rgba(255,255,255,0.05)] flex items-center justify-center font-bold text-[1rem] text-[var(--admin-orange,#f59e0b)] border border-[var(--admin-border,#333)]">
-                          {emp.name.charAt(0).toUpperCase()}
-                        </div>
-                        <span className="font-bold text-[var(--admin-text,#fff)] block">{emp.name}</span>
+              employees.map((emp) => (
+                <tr key={emp.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                  <td className="p-3.5 sm:p-4 align-middle">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
+                        {(emp.name || "U").charAt(0).toUpperCase()}
                       </div>
-                    </td>
-                    <td className="p-[1.25rem] align-middle">
-                      <div
-                        className="inline-flex items-center gap-[0.5rem] p-[0.375rem_0.75rem] rounded-[0.5rem] font-bold text-[0.813rem] uppercase"
-                        style={{
-                          color: shiftInfo.color,
-                          background: shiftInfo.bg,
-                        }}
-                      >
-                        {shiftInfo.icon} {emp.shift || "Morning"}
+                      <div className="min-w-0">
+                        <span className="font-extrabold text-sm text-slate-900 dark:text-white block truncate">
+                          {emp.name}
+                        </span>
+                        <span className="text-[10px] text-slate-500 dark:text-neutral-400 font-semibold block">
+                          ID: #{emp.id}
+                        </span>
                       </div>
-                    </td>
-                    <td className="p-[1.25rem] align-middle text-[0.938rem] font-bold text-[var(--admin-text,#fff)]">{shiftInfo.time}</td>
-                    <td className="p-[1.25rem] align-middle">
-                      <div className="relative w-[8.75rem]">
-                        <select
-                          className="p-[0.5rem_0.75rem] rounded-[0.5rem] border border-[var(--admin-border,#333)] bg-[var(--admin-bg,#000)] text-[var(--admin-text,#fff)] text-[0.813rem] font-semibold cursor-pointer outline-none w-[8.125rem] focus:border-[var(--admin-orange,#f59e0b)]"
-                          value={emp.shift || "Morning"}
-                          onChange={(e) =>
-                            handleShiftChange(emp.id, e.target.value)
-                          }
-                        >
-                          <option value="Morning">Morning</option>
-                          <option value="Evening">Evening</option>
-                          <option value="Night">Night</option>
-                        </select>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
+                    </div>
+                  </td>
+
+                  <td className="p-3.5 sm:p-4 align-middle font-semibold text-slate-700 dark:text-neutral-300">
+                    {emp.role}
+                  </td>
+
+                  <td className="p-3.5 sm:p-4 align-middle">
+                    {renderShiftBadge(emp.shift || "Morning")}
+                  </td>
+
+                  <td className="p-3.5 sm:p-4 align-middle text-right">
+                    <select
+                      value={emp.shift || "Morning"}
+                      onChange={(e) => handleShiftChange(emp.id, e.target.value)}
+                      className="admin-card-surface border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl px-3 py-1.5 text-xs font-semibold focus:border-amber-500 outline-none cursor-pointer"
+                    >
+                      <option className="bg-white dark:bg-[#171717]" value="Morning">Morning Shift</option>
+                      <option className="bg-white dark:bg-[#171717]" value="Evening">Evening Shift</option>
+                      <option className="bg-white dark:bg-[#171717]" value="Night">Night Shift</option>
+                    </select>
+                  </td>
+                </tr>
+              ))
             ) : (
               <tr>
-                <td colSpan="4" className="text-center p-[2.5rem] text-[gray]">
-                  No active staff found.
+                <td
+                  colSpan="4"
+                  className="text-center py-12 text-xs text-[var(--admin-muted,#888)] font-semibold"
+                >
+                  No staff members available for shift assignment.
                 </td>
               </tr>
             )}
