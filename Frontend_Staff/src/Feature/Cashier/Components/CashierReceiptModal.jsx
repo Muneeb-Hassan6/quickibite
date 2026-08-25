@@ -10,70 +10,90 @@ const CashierReceiptModal = ({ isOpen, onClose, order }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-[rgba(0,0,0,0.6)] flex items-center justify-center z-[999999] backdrop-blur-[6px]" onClick={onClose}>
-      <div className="bg-[#141417] text-white rounded-[24px] w-full max-w-[450px] shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-transparent max-h-[90vh] overflow-y-auto animate-slide-up" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay fixed inset-0 z-[999999] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="modal-surface w-full max-w-md p-6 sm:p-7 relative overflow-hidden text-slate-900 dark:text-white animate-slide-up max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         
-        <div className="bg-[rgba(239,68,68,0.05)] pt-[30px] px-[20px] pb-[20px] text-center border-b border-[var(--admin-border)] relative">
-          <button onClick={onClose} className="absolute top-[15px] right-[15px] bg-transparent border-none text-[var(--admin-muted)] text-[18px] cursor-pointer transition-colors duration-200 hover:text-[var(--text-main,#ffffff)]">
-            <FaTimes />
-          </button>
-          <div className="w-[65px] h-[65px] bg-[rgba(239,68,68,0.1)] text-[var(--brand-red)] rounded-full flex justify-center items-center text-[28px] mx-auto mb-[15px] border border-[rgba(239,68,68,0.2)]">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center border-none cursor-pointer transition-colors"
+        >
+          <FaTimes className="text-sm" />
+        </button>
+
+        {/* Header */}
+        <div className="text-center pb-2">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center mb-4 text-2xl shadow-sm">
             <FaPrint />
           </div>
-          <h3 className="m-0 font-oswald text-[24px] font-extrabold text-[var(--text-main,#ffffff)] uppercase">
+          <h3 className="m-0 text-xl font-black text-slate-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
             BigBite Receipt
           </h3>
+          <p className="m-0 mt-1 text-xs text-slate-500 dark:text-neutral-400 font-semibold">
+            Cashier Invoice Overview
+          </p>
         </div>
 
-        <div className="p-[25px]">
-          <div className="bg-[var(--admin-bg)] border border-dashed border-[#555] rounded-[12px] p-[20px] font-mono">
-            
-            <div className="flex justify-between mb-[15px] border-b border-dashed border-[#444] pb-[10px]">
-              <div>
-                <div className="text-[11px] text-[var(--admin-muted)] font-bold">ORDER ID</div>
-                <div className="text-[16px] font-black text-[var(--text-main,#ffffff)]">#{order.id}</div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div className="text-[11px] text-[var(--admin-muted)] font-bold">TABLE</div>
-                <div className="text-[16px] font-black text-[var(--brand-red)]">{order.table}</div>
-              </div>
+        {/* Digital Receipt Card */}
+        <div className="bg-slate-50 dark:bg-[#111111] border border-dashed border-slate-300 dark:border-white/10 rounded-2xl p-5 my-5 font-mono text-xs">
+          <div className="flex justify-between items-center pb-3 border-b border-dashed border-slate-300 dark:border-white/10 mb-3">
+            <div>
+              <div className="text-[10px] text-slate-500 dark:text-neutral-400 font-bold uppercase tracking-wider">ORDER ID</div>
+              <div className="text-sm font-black text-slate-900 dark:text-white font-mono">#{order.id}</div>
             </div>
-
-            <div className="mb-[15px] text-[#ccc] text-[13px]">
-              <strong>Date:</strong> {order.time} <br/>
-              <strong>Customer:</strong> {order.customerName || "Walk-In"}
+            <div className="text-right">
+              <div className="text-[10px] text-slate-500 dark:text-neutral-400 font-bold uppercase tracking-wider">TABLE</div>
+              <div className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase">{order.table || "Walk-In"}</div>
             </div>
+          </div>
 
-            <div className="border-t border-b border-dashed border-[#444] py-[10px] mb-[15px]">
-              <div className="flex justify-between text-[var(--admin-muted)] text-[11px] font-bold mb-[10px]">
-                <span>ITEM</span>
-                <span>SUBTOTAL</span>
-              </div>
-              
-              {order.items && order.items.length > 0 ? (
-                order.items.map((item, index) => (
-                  <div key={index} className="flex justify-between text-[var(--text-main,#ffffff)] text-[13px] mb-[8px]">
-                    <span>{item.qty}x {item.title || item.name}</span>
-                    <span>Rs {item.price * item.qty}</span>
-                  </div>
-                ))
-              ) : (
-                <div className="text-[13px] text-[#777] text-center">Items details not found</div>
-              )}
-            </div>
+          <div className="mb-3 text-slate-600 dark:text-neutral-300 text-xs">
+            <div><strong>Date:</strong> {order.time || new Date().toLocaleTimeString()}</div>
+            <div><strong>Customer:</strong> {order.customerName || "Walk-In"}</div>
+          </div>
 
-            <div className="flex justify-between items-center text-[18px] [&>span:first-child]:text-[var(--text-main,#ffffff)] [&>span:first-child]:font-black [&>span:last-child]:text-[var(--brand-red)] [&>span:last-child]:font-black">
-              <span>TOTAL BILL</span>
-              <span>Rs. {order.total}</span>
+          <div className="border-t border-b border-dashed border-slate-300 dark:border-white/10 py-3 mb-3">
+            <div className="flex justify-between text-slate-500 dark:text-neutral-400 text-[10px] font-bold uppercase tracking-wider mb-2">
+              <span>ITEM</span>
+              <span>SUBTOTAL</span>
             </div>
             
+            {order.items && order.items.length > 0 ? (
+              order.items.map((item, index) => (
+                <div key={index} className="flex justify-between items-center text-xs py-0.5">
+                  <span className="text-slate-800 dark:text-neutral-200 font-semibold">
+                    <span className="font-bold text-slate-900 dark:text-white mr-1.5">{item.qty}x</span>
+                    {item.title || item.name}
+                  </span>
+                  <span className="text-slate-900 dark:text-white font-mono font-bold">Rs. {item.price * item.qty}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-xs text-slate-400 dark:text-neutral-500 text-center py-2">Items details not found</div>
+            )}
+          </div>
+
+          <div className="flex justify-between items-center pt-1 text-sm font-bold">
+            <span className="text-slate-900 dark:text-white font-black uppercase">TOTAL BILL</span>
+            <span className="text-amber-600 dark:text-amber-400 font-black text-base font-mono">Rs. {order.total}</span>
           </div>
         </div>
 
-        <div className="py-[15px] px-[25px] bg-[rgba(0,0,0,0.2)] border-t border-[var(--admin-border)] flex gap-[12px]">
-          <button onClick={onClose} className="flex-1 p-[14px] bg-transparent border border-[var(--admin-border)] text-[var(--text-main,#ffffff)] rounded-[10px] font-bold cursor-pointer transition-colors duration-300 hover:bg-[rgba(255,255,255,0.05)] hover:border-[var(--text-main,#ffffff)]">Done</button>
-          <button onClick={executePrint} className="flex-[2] p-[14px] bg-[var(--brand-red)] border-none text-[var(--text-main,#ffffff)] rounded-[10px] font-black text-[15px] font-oswald uppercase flex justify-center items-center gap-[8px] cursor-pointer transition-all duration-300 hover:-translate-y-[2px] hover:shadow-[var(--shadow-glow)]">
-            <FaPrint /> Print Invoice
+        {/* Buttons */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-3 px-4 rounded-xl border border-slate-300 dark:border-white/10 bg-transparent hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-700 dark:text-neutral-300 font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer"
+          >
+            Done
+          </button>
+          <button
+            type="button"
+            onClick={executePrint}
+            className="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer border-none active:scale-95"
+          >
+            <FaPrint className="text-xs" />
+            <span>Print Invoice</span>
           </button>
         </div>
 

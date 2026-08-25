@@ -4,13 +4,15 @@ import {
   FaShoppingBag,
   FaChartLine,
   FaBan,
+  FaFire,
+  FaClock,
+  FaCalendarAlt,
 } from "react-icons/fa";
 
 // Import Components
 import SummaryCards from "./Components/SummaryCards";
 import SalesChart from "./Components/SalesChart";
 import TopCategories from "./Components/TopCategories";
-import { FaFire, FaClock, FaCalendarAlt } from "react-icons/fa";
 
 const AnalyticsPanel = () => {
   const [statsFilter, setStatsFilter] = useState("weekly");
@@ -20,7 +22,7 @@ const AnalyticsPanel = () => {
   const [allOrders, setAllOrders] = useState([]);
   const [menuMap, setMenuMap] = useState({});
 
-  // 🔥 DYNAMIC STATES
+  // Dynamic Metrics
   const [metrics, setMetrics] = useState({
     totalRevenue: 0,
     totalOrders: 0,
@@ -29,7 +31,7 @@ const AnalyticsPanel = () => {
     mostSoldItem: { name: "N/A", qty: 0 },
     peakHour: "N/A",
   });
-  
+
   const [topCategoriesData, setTopCategoriesData] = useState([]);
 
   const [chartData, setChartData] = useState([
@@ -42,7 +44,7 @@ const AnalyticsPanel = () => {
     { day: "Sun", value: 0, amount: "Rs 0" },
   ]);
 
-  // 🔥 FETCH DATA FROM DATABASE ONCE
+  // Fetch orders and menu catalog
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -74,7 +76,7 @@ const AnalyticsPanel = () => {
     fetchData();
   }, []);
 
-  // Compute metrics whenever filter or data changes
+  // Compute metrics
   useEffect(() => {
     if (!allOrders || allOrders.length === 0) return;
 
@@ -96,118 +98,111 @@ const AnalyticsPanel = () => {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     allOrders.forEach((order) => {
-      const orderDateStr = order.created_at; // Real date field from DB
+      const orderDateStr = order.created_at || order.date;
       if (!orderDateStr) return;
 
       const orderDate = new Date(orderDateStr);
-      
-      // Filter Logic
+      if (isNaN(orderDate.getTime())) return;
+
       let isIncluded = false;
-      if (statsFilter === "all") {
-        isIncluded = true;
-      } else if (statsFilter === "custom") {
-        if (startDate && endDate) {
-          const from = new Date(startDate);
-          from.setHours(0, 0, 0, 0);
-          const to = new Date(endDate);
-          to.setHours(23, 59, 59, 999);
-          if (orderDate >= from && orderDate <= to) isIncluded = true;
-        } else {
-          isIncluded = true; // Agar dates set nahi hain to sab show karo
-        }
-      } else if (statsFilter === "daily") {
-        const orderDay = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate());
-        if (orderDay.getTime() === today.getTime()) isIncluded = true;
+
+      if (statsFilter === "daily") {
+        if (orderDate.toDateString() === today.toDateString()) isIncluded = true;
       } else if (statsFilter === "weekly") {
         const diffTime = Math.abs(now - orderDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        if(diffDays <= 7) isIncluded = true;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays <= 7) isIncluded = true;
       } else if (statsFilter === "monthly") {
-        if(orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear) isIncluded = true;
+        if (orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear) isIncluded = true;
       } else if (statsFilter === "yearly") {
-        if(orderDate.getFullYear() === currentYear) isIncluded = true;
+        if (orderDate.getFullYear() === currentYear) isIncluded = true;
+      } else if (statsFilter === "all") {
+        isIncluded = true;
+      } else if (statsFilter === "custom" && startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59);
+        if (orderDate >= start && orderDate <= end) isIncluded = true;
       }
 
-      if (!isIncluded) return; // Skip if not in selected filter
+      if (isIncluded) {
+        const isCancelled = order.status && ["cancelled", "declined"].includes(order.status.toLowerCase());
 
-      const total = parseFloat(order.total || 0);
-      const status = order.status ? order.status.toLowerCase() : "";
+        if (isCancelled) {
+          cancelled++;
+        } else {
+          const orderTotal = parseFloat(order.total) || 0;
+          revenue += orderTotal;
+          ordersCount++;
 
-      ordersCount += 1;
+          const daysMap = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+          const dayName = daysMap[orderDate.getDay()];
+          if (dailyRevenue[dayName] !== undefined) {
+            dailyRevenue[dayName] += orderTotal;
+          }
 
-      if (status === "cancelled") {
-        cancelled += 1;
-      } else {
-        revenue += total;
+          const hour = orderDate.getHours();
+          hourCounts[hour] = (hourCounts[hour] || 0) + 1;
 
-        // Populate Chart Data (Days of the Week)
-        const dayName = orderDate.toLocaleDateString("en-US", { weekday: "short" });
-        if (dailyRevenue[dayName] !== undefined) {
-          dailyRevenue[dayName] += total;
-        }
-        
-        // Peak Hour Logic
-        const hour = orderDate.getHours();
-        hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+          let items = [];
+          if (typeof order.items === "string") {
+            try { items = JSON.parse(order.items); } catch (e) {}
+          } else if (Array.isArray(order.items)) {
+            items = order.items;
+          }
 
-        // Top Products & Categories Logic
-        if(order.items && Array.isArray(order.items)) {
-            order.items.forEach(item => {
-                const qty = parseInt(item.qty || 1);
-                const itemName = item.name || item.title || "Unknown";
-                itemCounts[itemName] = (itemCounts[itemName] || 0) + qty;
-                
-                const cat = menuMap[itemName] || "Uncategorized";
-                categorySales[cat] = (categorySales[cat] || 0) + qty;
+          if (Array.isArray(items)) {
+            items.forEach((item) => {
+              const name = item.name || item.title || "Unknown";
+              const qty = parseInt(item.qty) || 1;
+              itemCounts[name] = (itemCounts[name] || 0) + qty;
+
+              const category = menuMap[name] || "Specialty";
+              categorySales[category] = (categorySales[category] || 0) + qty;
             });
+          }
         }
       }
     });
 
-    // Average Order Value
-    const avgValue = ordersCount > 0 ? revenue / ordersCount : 0;
-    
-    // Find Most Sold Item
+    const avgValue = ordersCount > 0 ? Math.round(revenue / ordersCount) : 0;
+
     let topItem = { name: "N/A", qty: 0 };
-    for (let name in itemCounts) {
-       if(itemCounts[name] > topItem.qty) {
-           topItem = { name, qty: itemCounts[name] };
-       }
+    Object.keys(itemCounts).forEach((name) => {
+      if (itemCounts[name] > topItem.qty) {
+        topItem = { name, qty: itemCounts[name] };
+      }
+    });
+
+    let maxHour = -1;
+    let maxHourCount = 0;
+    Object.keys(hourCounts).forEach((h) => {
+      if (hourCounts[h] > maxHourCount) {
+        maxHourCount = hourCounts[h];
+        maxHour = parseInt(h);
+      }
+    });
+
+    let peakHourStr = "N/A";
+    if (maxHour !== -1) {
+      const nextH = (maxHour + 1) % 24;
+      const formatH = (h) => {
+        const ampm = h >= 12 ? "PM" : "AM";
+        const h12 = h % 12 || 12;
+        return `${h12}${ampm}`;
+      };
+      peakHourStr = `${formatH(maxHour)} - ${formatH(nextH)}`;
     }
 
-    // Find Peak Hour
-    let peakH = null;
-    let maxCount = 0;
-    for (let h in hourCounts) {
-        if(hourCounts[h] > maxCount) {
-           maxCount = hourCounts[h];
-           peakH = h;
-        }
-    }
-    let peakHourStr = "N/A";
-    if(peakH !== null) {
-        let p = parseInt(peakH);
-        let pNext = (p + 1) % 24;
-        let ampm = p >= 12 ? 'PM' : 'AM';
-        let ampmNext = pNext >= 12 ? 'PM' : 'AM';
-        let p12 = p % 12 || 12;
-        let pNext12 = pNext % 12 || 12;
-        peakHourStr = `${p12} ${ampm} - ${pNext12} ${ampmNext}`;
-    }
-    
-    // Calculate Top Categories
-    let totalCatQty = Object.values(categorySales).reduce((a, b) => a + b, 0);
+    const totalCatQty = Object.values(categorySales).reduce((a, b) => a + b, 0);
     let catArr = Object.keys(categorySales).map(cat => ({
-        name: cat,
-        qty: categorySales[cat],
-        percent: totalCatQty > 0 ? Math.round((categorySales[cat] / totalCatQty) * 100) : 0
+      name: cat,
+      qty: categorySales[cat],
+      percent: totalCatQty > 0 ? Math.round((categorySales[cat] / totalCatQty) * 100) : 0
     })).sort((a,b) => b.qty - a.qty).slice(0, 4);
 
-    const colors = ["fill-red", "fill-orange", "fill-yellow", "fill-green"];
-    catArr = catArr.map((c, i) => ({...c, colorClass: colors[i % colors.length]}));
     setTopCategoriesData(catArr);
 
-    // Update Metrics
     setMetrics({
       totalRevenue: revenue,
       totalOrders: ordersCount,
@@ -217,19 +212,17 @@ const AnalyticsPanel = () => {
       peakHour: peakHourStr,
     });
 
-    // Chart data format
     const maxRevenue = Math.max(...Object.values(dailyRevenue));
-    const formattedChartData = Object.keys(dailyRevenue).map((day) => {
-      const dayTotal = dailyRevenue[day];
+    const formattedChartData = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => {
+      const dayTotal = dailyRevenue[day] || 0;
       return {
         day: day,
         value: maxRevenue > 0 ? Math.round((dayTotal / maxRevenue) * 100) : 0,
-        amount: `Rs ${dayTotal >= 1000 ? (dayTotal / 1000).toFixed(1) + "k" : dayTotal}`,
+        amount: `Rs. ${dayTotal.toLocaleString()}`,
       };
     });
 
     setChartData(formattedChartData);
-
   }, [allOrders, statsFilter, menuMap, startDate, endDate]);
 
   const getTrendLabel = () => {
@@ -242,27 +235,26 @@ const AnalyticsPanel = () => {
       case "custom": return startDate && endDate ? `${startDate} to ${endDate}` : "Custom Range";
       default: return "Selected Period";
     }
-  }
+  };
 
-  // 🔥 TOP SUMMARY CARDS (Dynamic Data Mapped)
   const analyticsMetrics = [
     {
-      title: "Total Revenue",
-      value: `Rs ${metrics.totalRevenue.toLocaleString()}`,
+      title: "Gross Revenue",
+      value: `Rs. ${metrics.totalRevenue.toLocaleString()}`,
       icon: <FaDollarSign />,
       trend: getTrendLabel(),
       isUp: true,
     },
     {
-      title: "Total Orders",
+      title: "Completed Orders",
       value: metrics.totalOrders.toLocaleString(),
       icon: <FaShoppingBag />,
       trend: getTrendLabel(),
       isUp: true,
     },
     {
-      title: "Avg. Order Value",
-      value: `Rs ${Math.round(metrics.avgOrderValue).toLocaleString()}`,
+      title: "Avg. Ticket Size",
+      value: `Rs. ${metrics.avgOrderValue.toLocaleString()}`,
       icon: <FaChartLine />,
       trend: getTrendLabel(),
       isUp: true,
@@ -275,81 +267,78 @@ const AnalyticsPanel = () => {
       isUp: false,
     },
     {
-      title: "Most Sold Product",
+      title: "Top Product",
       value: metrics.mostSoldItem.name,
       icon: <FaFire />,
-      trend: `${metrics.mostSoldItem.qty} units sold`,
+      trend: `${metrics.mostSoldItem.qty} sold`,
       isUp: true,
     },
     {
-      title: "Peak Rush Hour",
+      title: "Peak Rush Time",
       value: metrics.peakHour,
       icon: <FaClock />,
-      trend: "Busiest time",
+      trend: "Peak traffic",
       isUp: true,
     },
   ];
 
   return (
-    <div className="animate-slide-up">
+    <div className="space-y-5 animate-slide-up">
       {/* Header */}
-      <div style={{ marginBottom: "25px" }}>
-        <h2 className="section-header">Analytics Overview</h2>
-        <p
-          style={{
-            color: "var(--admin-muted)",
-            fontSize: "14px",
-            marginTop: "5px",
-          }}
-        >
-          Real-time performance metrics
-        </p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-2 border-b border-[var(--admin-border,rgba(255,255,255,0.06))]">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-4 bg-red-600 rounded-full shrink-0" />
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-[var(--admin-text,#fff)] m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
+              Analytics & Sales Overview
+            </h2>
+          </div>
+          <p className="text-xs text-[var(--admin-muted,#888)] m-0 mt-0.5 font-sans">
+            Real-time business performance metrics, volume patterns, and product trends.
+          </p>
+        </div>
       </div>
 
-      {/* 🔥 Custom Date Range Picker */}
+      {/* Custom Date Range Bar */}
       {statsFilter === "custom" && (
-        <div className="analytics-date-range-bar">
-          <FaCalendarAlt className="date-range-icon" />
-          <div className="date-range-group">
-            <label>From:</label>
+        <div className="flex items-center gap-3 bg-[var(--admin-panel,#171717)] p-3 rounded-2xl border border-amber-500/20 flex-wrap">
+          <FaCalendarAlt className="text-amber-400 text-xs" />
+          <div className="flex items-center gap-2 text-xs text-neutral-300">
+            <span>From:</span>
             <input
               type="date"
-              className="analytics-date-input"
+              className="bg-black/40 text-white border border-white/10 rounded-xl px-2.5 py-1 text-xs [color-scheme:dark]"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
           </div>
-          <div className="date-range-group">
-            <label>To:</label>
+          <div className="flex items-center gap-2 text-xs text-neutral-300">
+            <span>To:</span>
             <input
               type="date"
-              className="analytics-date-input"
+              className="bg-black/40 text-white border border-white/10 rounded-xl px-2.5 py-1 text-xs [color-scheme:dark]"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
             />
           </div>
-          {startDate && endDate && (
-            <span className="date-range-badge">
-              Showing data from <b>{startDate}</b> to <b>{endDate}</b>
-            </span>
-          )}
         </div>
       )}
 
-      {/* 1. Summary Cards Component */}
+      {/* 1. Metric Summary Cards */}
       <SummaryCards metrics={analyticsMetrics} />
 
-      {/* 2. Grid Layout for Charts */}
-      <div className="analytics-grid">
-        {/* Left Side: Sales Bar Chart (Dynamic Data Passed) */}
-        <SalesChart
-          chartData={chartData}
-          filter={statsFilter}
-          setFilter={setStatsFilter}
-        />
-
-        {/* Right Side: Top Categories Progress */}
-        <TopCategories data={topCategoriesData} />
+      {/* 2. Grid for Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div className="lg:col-span-8">
+          <SalesChart
+            chartData={chartData}
+            filter={statsFilter}
+            setFilter={setStatsFilter}
+          />
+        </div>
+        <div className="lg:col-span-4">
+          <TopCategories data={topCategoriesData} />
+        </div>
       </div>
     </div>
   );

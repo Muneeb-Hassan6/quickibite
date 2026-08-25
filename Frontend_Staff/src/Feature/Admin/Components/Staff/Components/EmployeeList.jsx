@@ -1,13 +1,34 @@
 import React, { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FaEdit, FaTrash, FaPhone, FaTimes } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPhone, FaSearch, FaUserShield } from "react-icons/fa";
 import Swal from "sweetalert2";
+
+const getRoleBadge = (roleName) => {
+  const role = (roleName || "").toLowerCase();
+  switch (role) {
+    case "manager":
+      return "bg-purple-500/15 text-purple-400 border border-purple-500/30";
+    case "chef":
+      return "bg-amber-500/15 text-amber-400 border border-amber-500/30";
+    case "rider":
+      return "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30";
+    case "cashier":
+      return "bg-blue-500/15 text-blue-400 border border-blue-500/30";
+    case "waiter":
+      return "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30";
+    case "dispatcher":
+      return "bg-pink-500/15 text-pink-400 border border-pink-500/30";
+    default:
+      return "bg-neutral-500/15 text-neutral-400 border border-neutral-500/30";
+  }
+};
 
 const EmployeeList = () => {
   const queryClient = useQueryClient();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingEmp, setEditingEmp] = useState(null);
   const [phoneError, setPhoneError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['staff'],
@@ -18,15 +39,17 @@ const EmployeeList = () => {
     }
   });
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, name) => {
     Swal.fire({
-      title: "Are you sure?",
-      text: "You want to remove this employee from the system?",
+      title: `Delete ${name}?`,
+      text: "This employee record and history will be removed from the system.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#333",
-      confirmButtonText: "Yes, Delete!",
+      cancelButtonColor: "#71717a",
+      confirmButtonText: "Yes, Delete",
+      background: "#171717",
+      color: "#fff",
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
@@ -40,7 +63,15 @@ const EmployeeList = () => {
           );
           const resData = await response.json();
           if (resData.success) {
-            Swal.fire("Deleted!", "Employee has been removed.", "success");
+            Swal.fire({
+              icon: "success",
+              title: "Deleted!",
+              text: "Employee has been removed.",
+              timer: 1500,
+              showConfirmButton: false,
+              background: "#171717",
+              color: "#fff",
+            });
             queryClient.invalidateQueries({ queryKey: ['staff'] });
           } else {
             Swal.fire("Error!", resData.message, "error");
@@ -71,7 +102,8 @@ const EmployeeList = () => {
         icon: "error",
         title: "Invalid Mobile Number",
         text: "Please enter exactly 11 digits starting with 03 (e.g. 03001234567).",
-        confirmButtonColor: "#ef4444",
+        background: "#171717",
+        color: "#fff",
       });
       return;
     }
@@ -94,127 +126,158 @@ const EmployeeList = () => {
           text: "Employee details updated.",
           timer: 1500,
           showConfirmButton: false,
+          background: "#171717",
+          color: "#fff",
         });
         setIsEditModalOpen(false);
         queryClient.invalidateQueries({ queryKey: ['staff'] });
       } else {
-        Swal.fire({ icon: "error", title: "Oops!", text: result.message });
+        Swal.fire("Error", result.message, "error");
       }
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to connect to server.",
-      });
+      Swal.fire("Error", "Server error.", "error");
     }
   };
 
-  const getRoleClass = (roleName) => {
-    const role = (roleName || "").toLowerCase();
-    const knownRoles = [
-      "manager",
-      "chef",
-      "cashier",
-      "dispatcher",
-      "waiter",
-      "rider",
-    ];
-
-    if (knownRoles.includes(role)) {
-      switch (role) {
-        case "manager":
-          return "bg-[rgba(108,92,231,0.15)] text-[#a29bfe]";
-        case "chef":
-          return "bg-[rgba(245,158,11,0.15)] text-[#fbbf24]";
-        case "rider":
-          return "bg-[rgba(16,185,129,0.15)] text-[#34d399]";
-        case "waiter":
-          return "bg-[rgba(239,68,68,0.15)] text-[#f87171]";
-        case "cashier":
-          return "bg-[rgba(59,130,246,0.15)] text-[#60a5fa]";
-        case "dispatcher":
-          return "bg-[rgba(236,72,153,0.15)] text-[#f472b6]";
-        default:
-          return "bg-[rgba(156,163,175,0.15)] text-[#9ca3af]";
-      }
-    }
-    // Agar koi naya role hy toh default VIP gray class milegi
-    return "bg-[rgba(156,163,175,0.15)] text-[#9ca3af]";
-  };
+  const filteredEmployees = employees.filter(
+    (emp) =>
+      (emp.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (emp.role || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (emp.phone || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (isLoading)
-    return <div className="text-center p-[3.125rem] text-white">Loading Staff Data...</div>;
+    return (
+      <div className="py-20 text-center text-[var(--admin-muted,#888)] text-xs font-bold uppercase tracking-wider">
+        Loading Staff Directory...
+      </div>
+    );
 
   return (
-    <>
-      <div className="bg-[var(--admin-bg,#141414)] rounded-[0.75rem] overflow-x-auto shadow-[0_4px_15px_rgba(0,0,0,0.2)] animate-slide-up custom-scrollbar">
-        <table className="w-full border-collapse min-w-[37.5rem] text-[0.875rem]">
+    <div className="space-y-4 animate-slide-up">
+      {/* Search and Filters Bar */}
+      <div className="admin-card-surface flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 p-3 sm:p-4 rounded-2xl shadow-sm">
+        <div className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
+          Staff Roster ({filteredEmployees.length} Members)
+        </div>
+        <div className="flex items-center bg-slate-50 dark:bg-[#111111] px-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 focus-within:border-amber-500 transition-colors w-full sm:w-80">
+          <FaSearch className="text-slate-400 dark:text-neutral-500 text-xs mr-2 shrink-0" />
+          <input
+            type="text"
+            placeholder="Search by name, role, or phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="bg-transparent border-none text-slate-900 dark:text-white text-xs outline-none w-full placeholder-slate-400 dark:placeholder-neutral-500 font-medium"
+          />
+        </div>
+      </div>
+
+      {/* Staff Table */}
+      <div className="admin-card-surface rounded-2xl overflow-x-auto shadow-sm">
+        <table className="w-full border-collapse min-w-[680px] text-left text-xs">
           <thead>
-            <tr>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Name</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Role</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Phone</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Salary</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Status</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold border-b border-[var(--admin-border,#333)] text-[0.813rem] uppercase tracking-[0.5px]">Actions</th>
+            <tr className="border-b border-slate-200 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                Staff Member
+              </th>
+              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                Designation
+              </th>
+              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                Phone Contact
+              </th>
+              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                Monthly Salary
+              </th>
+              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                Status
+              </th>
+              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider text-right">
+                Actions
+              </th>
             </tr>
           </thead>
-          <tbody>
-            {employees.length > 0 ? (
-              employees.map((emp) => (
-                <tr key={emp.id} className="transition-colors duration-200 hover:bg-[rgba(255,255,255,0.02)]">
-                  <td className="p-[1.25rem] align-middle">
-                    <div className="flex items-center gap-[0.75rem]">
-                      <div className="w-[2.5rem] h-[2.5rem] rounded-full bg-[rgba(255,255,255,0.05)] flex items-center justify-center font-bold text-[1rem] text-[var(--admin-orange,#f59e0b)]">
+          <tbody className="divide-y divide-slate-200 dark:divide-white/[0.06]">
+            {filteredEmployees.length > 0 ? (
+              filteredEmployees.map((emp) => (
+                <tr
+                  key={emp.id}
+                  className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
+                >
+                  <td className="p-3.5 sm:p-4 align-middle">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
                         {(emp.name || "U").charAt(0).toUpperCase()}
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-[var(--admin-text,#fff)] block">{emp.name}</span>
-                        <span className="text-[0.75rem] text-[var(--admin-muted,#888)]">ID: #{emp.id}</span>
+                      <div className="min-w-0">
+                        <span className="font-extrabold text-sm text-slate-900 dark:text-white block truncate">
+                          {emp.name}
+                        </span>
+                        <span className="text-[10px] text-slate-500 dark:text-neutral-400 font-semibold block">
+                          ID: #{emp.id}
+                        </span>
                       </div>
                     </div>
                   </td>
-                  <td className="p-[1.25rem] align-middle">
-                    {/* 🔥 Pure CSS class based on dynamic role */}
-                    <span className={`px-[0.75rem] py-[0.313rem] rounded-[0.375rem] text-[0.688rem] font-extrabold uppercase tracking-[0.5px] inline-block ${getRoleClass(emp.role)}`}>
+                  <td className="p-3.5 sm:p-4 align-middle">
+                    <span
+                      className={`!rounded-full px-3 py-0.5 text-xs font-bold uppercase tracking-wider inline-block ${getRoleBadge(
+                        emp.role
+                      )}`}
+                    >
                       {emp.role || "Unassigned"}
                     </span>
                   </td>
-                  <td className="p-[1.25rem] align-middle">
-                    <div className="flex items-center gap-[0.5rem] text-[var(--admin-muted,#888)] text-[0.813rem]">
-                      <FaPhone className="text-[0.625rem]" /> {emp.phone}
+                  <td className="p-3.5 sm:p-4 align-middle font-medium text-slate-600 dark:text-neutral-400">
+                    <div className="flex items-center gap-1.5">
+                      <FaPhone className="text-[10px] text-slate-400 dark:text-neutral-500" />
+                      <span>{emp.phone || "--"}</span>
                     </div>
                   </td>
-                  <td className="p-[1.25rem] align-middle font-bold text-[var(--admin-text,#fff)]">
+                  <td className="p-3.5 sm:p-4 align-middle font-black text-amber-600 dark:text-amber-400 font-mono">
                     Rs. {Number(emp.salary || 0).toLocaleString()}
                   </td>
-                  <td className="p-[1.25rem] align-middle">
+                  <td className="p-3.5 sm:p-4 align-middle">
                     <span
-                      className={`px-[0.625rem] py-[0.25rem] rounded-[0.25rem] text-[0.75rem] font-bold uppercase tracking-[0.5px] ${emp.status === "Active" ? "bg-[rgba(16,185,129,0.15)] text-[#34d399]" : "bg-[rgba(245,158,11,0.15)] text-[#f59e0b]"}`}
+                      className={`px-3 py-0.5 !rounded-full text-xs font-bold uppercase tracking-wider inline-block ${
+                        emp.status === "Active"
+                          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                          : "bg-neutral-500/15 text-neutral-500 dark:text-neutral-400 border border-neutral-500/30"
+                      }`}
                     >
                       {emp.status}
                     </span>
                   </td>
-                  <td className="p-[1.25rem] align-middle">
-                    <button
-                      className="bg-[rgba(255,255,255,0.05)] text-white p-[0.375rem_0.75rem] rounded-[0.375rem] cursor-pointer text-[0.75rem] font-bold flex items-center justify-center gap-[0.313rem] transition-all duration-200 mr-[0.313rem] inline-flex hover:bg-[rgba(59,130,246,0.1)]  hover:-translate-y-[2px]"
-                      onClick={() => handleEditClick(emp)}
-                    >
-                      <FaEdit /> Edit
-                    </button>
-                    <button
-                      className="bg-[rgba(255,255,255,0.05)] text-white p-[0.375rem_0.75rem] rounded-[0.375rem] cursor-pointer text-[0.75rem] font-bold flex items-center justify-center gap-[0.313rem] transition-all duration-200 inline-flex hover:bg-[rgba(239,68,68,0.1)] hover:text-[#ef4444] hover:-translate-y-[2px]"
-                      onClick={() => handleDelete(emp.id)}
-                    >
-                      <FaTrash />
-                    </button>
+                  <td className="p-3.5 sm:p-4 align-middle text-right">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleEditClick(emp)}
+                        className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-amber-500 hover:text-neutral-950 dark:bg-white/5 dark:hover:bg-amber-500 dark:hover:text-neutral-950 text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-white/10 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-sm"
+                        title="Edit Details"
+                      >
+                        <FaEdit className="text-[11px]" />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(emp.id, emp.name)}
+                        className="w-8 h-8 rounded-xl bg-rose-500/10 hover:bg-rose-600 text-rose-600 dark:text-rose-400 hover:text-white border border-rose-500/20 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-sm"
+                        title="Delete Record"
+                      >
+                        <FaTrash className="text-xs" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="text-center p-[2.5rem] text-[gray]">
-                  No employees found in the database.
+                <td
+                  colSpan="6"
+                  className="p-8 text-center text-xs text-slate-500 dark:text-neutral-400 font-bold uppercase tracking-wider"
+                >
+                  No staff members found matching criteria.
                 </td>
               </tr>
             )}
@@ -222,116 +285,116 @@ const EmployeeList = () => {
         </table>
       </div>
 
-      {/* EDIT MODAL */}
+      {/* Edit Employee Modal */}
       {isEditModalOpen && editingEmp && (
-        <div className="fixed top-0 left-0 right-0 bottom-0 bg-[rgba(0,0,0,0.6)] backdrop-blur-[6px] flex justify-center items-center z-[99999]">
-          <div className="w-[90%] max-w-[37.5rem] bg-[var(--admin-bg,#141414)] rounded-[1rem] p-[1.563rem] shadow-[0_10px_30px_rgba(0,0,0,0.5)] relative animate-slide-up">
-            <div className="flex justify-between items-center mb-[1.25rem] w-full">
-              <h3 className="uppercase flex items-center gap-[0.625rem] text-white m-0 text-[1.25rem] font-black">EDIT EMPLOYEE</h3>
-              <button
-                className="bg-transparent text-[#949191] text-[1.25rem] cursor-pointer transition-colors duration-300 hover:text-[var(--admin-text)] static !m-0"
-                onClick={() => setIsEditModalOpen(false)}
-              >
-                <FaTimes />
-              </button>
+        <div
+          className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setIsEditModalOpen(false)}
+        >
+          <div
+            className="modal-surface w-full max-w-md p-6 relative max-h-[90vh] overflow-y-auto space-y-4 animate-slide-up text-slate-900 dark:text-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-white/[0.06]">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
+              <h3 className="m-0 text-base font-black font-['Oswald',sans-serif] uppercase tracking-wide">
+                Edit Staff Member
+              </h3>
             </div>
 
-            <form onSubmit={handleSave}>
-              <div className="mb-[0.938rem]">
-                <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Full Name</label>
+            <form onSubmit={handleSave} className="space-y-4">
+              <div>
+                <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+                  Full Name
+                </label>
                 <input
                   type="text"
                   name="name"
-                  className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
-                  value={editingEmp.name}
+                  value={editingEmp.name || ""}
                   onChange={handleChange}
                   required
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
                 />
               </div>
 
-              <div className="flex gap-[0.938rem] mt-[0.938rem] w-full flex-col md:flex-row">
-                <div className="mb-[0.938rem] flex-1 min-w-0">
-                  <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Role</label>
-                  <select
-                    name="role"
-                    className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem]  text-[0.938rem] font-medium transition-all duration-300 focus:bg-[var(--admin-bg)]"
-                    value={editingEmp.role}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Manager">Manager</option>
-                    <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Chef">Chef</option>
-                    <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Cashier">Cashier</option>
-                    <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Waiter">Waiter</option>
-                    <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Rider">Rider</option>
-                    <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Dispatcher">Dispatcher</option>
-                  </select>
-                </div>
-                <div className="mb-[0.938rem] flex-1 min-w-0">
-                  <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Status</label>
-                  <select
-                    name="status"
-                    className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
-                    value={editingEmp.status}
-                    onChange={handleChange}
-                  >
-                    <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Active">Active</option>
-                    <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Inactive">Inactive</option>
-                  </select>
-                </div>
+              <div>
+                <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+                  Role / Designation
+                </label>
+                <select
+                  name="role"
+                  value={editingEmp.role || ""}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
+                >
+                  <option className="bg-white dark:bg-[#171717]" value="Chef">Chef</option>
+                  <option className="bg-white dark:bg-[#171717]" value="Rider">Rider</option>
+                  <option className="bg-white dark:bg-[#171717]" value="Cashier">Cashier</option>
+                  <option className="bg-white dark:bg-[#171717]" value="Waiter">Waiter</option>
+                  <option className="bg-white dark:bg-[#171717]" value="Dispatcher">Dispatcher</option>
+                  <option className="bg-white dark:bg-[#171717]" value="Manager">Manager</option>
+                </select>
               </div>
 
-              <div className="flex gap-[0.938rem] mt-[0.938rem] w-full flex-col md:flex-row">
-                <div className="mb-[0.938rem] flex-1 min-w-0">
-                  <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Phone Number</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    maxLength="11"
-                    className={`w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-[var(--admin-bg)] ${phoneError ? "!border-red-500" : ""}`}
-                    value={editingEmp.phone}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9]/g, "");
-                      setEditingEmp({ ...editingEmp, phone: val });
-
-                      if (val.length > 0 && val.length < 11) {
-                        setPhoneError("Please enter all 11 digits.");
-                      } else if (val.length === 11 && !/^03\d{9}$/.test(val)) {
-                        setPhoneError("Number must start with 03 (e.g. 03001234567).");
-                      } else {
-                        setPhoneError("");
-                      }
-                    }}
-                    required
-                  />
-                  {phoneError && (
-                    <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">
-                      {phoneError}
-                    </span>
-                  )}
-                </div>
-                <div className="mb-[0.938rem] flex-1 min-w-0">
-                  <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Salary (Rs.)</label>
-                  <input
-                    type="number"
-                    name="salary"
-                    className="w-full bg-[var(--admin-bg)]  text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-[var(--admin-bg)]"
-                    value={editingEmp.salary}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
+              <div>
+                <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+                  Mobile Number
+                </label>
+                <input
+                  type="text"
+                  name="phone"
+                  value={editingEmp.phone || ""}
+                  onChange={handleChange}
+                  required
+                  placeholder="03001234567"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
+                />
+                {phoneError && (
+                  <p className="text-rose-500 text-[11px] font-bold mt-1">{phoneError}</p>
+                )}
               </div>
 
-              <div className="mt-[1.875rem] border-t border-[var(--admin-border)] pt-[1.25rem] flex justify-end gap-[0.938rem] w-full">
+              <div>
+                <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+                  Monthly Base Salary (PKR)
+                </label>
+                <input
+                  type="number"
+                  name="salary"
+                  value={editingEmp.salary || ""}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-bold focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+                  Status
+                </label>
+                <select
+                  name="status"
+                  value={editingEmp.status || "Active"}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
+                >
+                  <option className="bg-white dark:bg-[#171717]" value="Active">Active</option>
+                  <option className="bg-white dark:bg-[#171717]" value="Inactive">Inactive</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-white/[0.06]">
                 <button
                   type="button"
-                  className="bg-[rgba(255,255,255,0.05)] text-white p-[0.75rem_1.563rem] rounded cursor-pointer font-bold transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]"
                   onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-white/10 text-xs font-bold uppercase tracking-wider cursor-pointer"
                 >
                   Cancel
                 </button>
-                <button type="submit" className="bg-[var(--admin-orange)] text-white border-none p-[0.75rem_1.563rem] rounded cursor-pointer font-bold shadow-[var(--shadow-glow)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[var(--shadow-glow)] flex items-center justify-center">
+                <button
+                  type="submit"
+                  className="btn-brand-cta px-5 py-2.5 text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer border-none active:scale-95"
+                >
                   Save Changes
                 </button>
               </div>
@@ -339,7 +402,7 @@ const EmployeeList = () => {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 

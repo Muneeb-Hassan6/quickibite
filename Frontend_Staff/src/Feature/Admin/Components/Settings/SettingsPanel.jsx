@@ -29,36 +29,44 @@ const SettingsPanel = () => {
   ];
 
   return (
-    <div>
-      <div className="mb-[1.875rem]">
-        <h2 className="text-[1.375rem] font-bold text-[var(--admin-text)] flex items-center gap-[0.5rem] mb-[0.313rem]">
-          System Settings
-        </h2>
-        <p className="text-[var(--admin-muted)] text-[0.875rem] m-0">
-          Configure your restaurant operations, delivery rules, and legal content.
-        </p>
+    <div className="animate-slide-up space-y-5">
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-2 border-b border-slate-200 dark:border-white/[0.06]">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-4 bg-red-600 rounded-full shrink-0" />
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
+              Store Configuration & System Settings
+            </h2>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-neutral-400 m-0 mt-0.5 font-sans">
+            Configure restaurant identity, operating hours, delivery parameters, tax rates, and legal policies.
+          </p>
+        </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-[1.875rem] max-w-[68.75rem] mx-auto pb-[5rem] items-start">
-        {/* Left Sub-Navigation */}
-        <div className="w-full md:w-[15.625rem] bg-[var(--admin-panel)] rounded-[1rem] p-[0.938rem] flex flex-col gap-[0.5rem] md:sticky md:top-[1.25rem]">
+      <div className="flex flex-col md:flex-row gap-6 items-start w-full pb-16">
+        {/* Left Vertical Sub-Sidebar */}
+        <div className="w-full md:w-64 shrink-0 admin-card-surface bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] rounded-2xl p-3 flex flex-col gap-1.5 md:sticky md:top-4 shadow-sm">
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              className={`bg-transparent border-none p-[0.875rem_1.25rem] rounded-[0.625rem] text-[0.875rem] font-semibold text-left flex items-center gap-[0.75rem] cursor-pointer transition-all duration-300 whitespace-nowrap md:whitespace-normal ${
-                activeTab === tab.id
-                  ? "bg-[var(--admin-orange)] text-white shadow-[var(--shadow-glow)]"
-                  : "text-[var(--admin-muted)] hover:bg-[rgba(255,255,255,0.03)] hover:text-[var(--admin-text)]"
-              }`}
+              type="button"
               onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-bold text-sm text-left transition-all border-none cursor-pointer ${
+                activeTab === tab.id
+                  ? "btn-brand-cta"
+                  : "text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] bg-transparent"
+              }`}
             >
-              <span className="text-[1.125rem]">{tab.icon}</span> {tab.label}
+              <span className="text-base shrink-0">{tab.icon}</span>
+              <span className="truncate">{tab.label}</span>
             </button>
           ))}
         </div>
 
-        {/* Right Content Area */}
-        <div className="flex-1 flex flex-col gap-[1.563rem] w-full">
+        {/* Right Active Content Panel */}
+        <div className="flex-1 w-full min-w-0">
           {activeTab === "general" && <GeneralSettings />}
           {activeTab === "operations" && <OperationalSettings />}
           {activeTab === "finance" && <FinancialSettings />}

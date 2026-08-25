@@ -9,17 +9,16 @@ import {
   FaCloudUploadAlt,
   FaClock,
   FaSave,
-  FaEdit,
   FaUtensils,
   FaSlidersH,
   FaImage,
+  FaPercent,
+  FaLayerGroup,
+  FaEye,
 } from "react-icons/fa";
-import { useTheme } from "../../../../Context/ThemeContext";
+import { resolveImageUrl } from "../../../../utils/imageOptimizer";
 
 const DealMaker = ({ editDeal, onSuccess }) => {
-  const { theme } = useTheme();
-  const isDarkMode = theme === "dark";
-
   const [dealForm, setDealForm] = useState({
     title: "",
     description: "",
@@ -55,8 +54,8 @@ const DealMaker = ({ editDeal, onSuccess }) => {
     },
   ]);
 
-  const CLOUD_NAME = "dovuegkwa";
-  const UPLOAD_PRESET = "ml_default";
+  const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dovuegkwa";
+  const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "ml_default";
 
   // Fetch Menu items for quick auto-fill suggestions
   const { data: menuData = [] } = useQuery({
@@ -66,7 +65,7 @@ const DealMaker = ({ editDeal, onSuccess }) => {
         `${import.meta.env.VITE_API_BASE}/get_menu.php`
       );
       const data = await response.json();
-      return Array.isArray(data) ? data : [];
+      return Array.isArray(data) ? data : (data.data || []);
     },
   });
 
@@ -102,25 +101,16 @@ const DealMaker = ({ editDeal, onSuccess }) => {
       ) {
         setIncludedItems(
           editDeal.items.map((it) => ({
-            item_title: it.item_title || it.name || "",
-            quantity: it.quantity || it.qty || 1,
-            is_customizable: Boolean(it.is_customizable),
+            item_title: it.item_title || "",
+            quantity: it.quantity || 1,
+            is_customizable:
+              it.is_customizable == 1 || it.is_customizable === true,
             choice_group_name: it.choice_group_name || "",
-            options_str: Array.isArray(it.options)
-              ? it.options.join(", ")
-              : it.options || "",
+            options_str:
+              it.options_str ||
+              (it.options ? it.options.map((o) => o.option_name).join(", ") : ""),
           }))
         );
-      } else {
-        setIncludedItems([
-          {
-            item_title: "",
-            quantity: 1,
-            is_customizable: false,
-            choice_group_name: "",
-            options_str: "",
-          },
-        ]);
       }
     } else {
       setDealForm({
@@ -128,15 +118,17 @@ const DealMaker = ({ editDeal, onSuccess }) => {
         description: "",
         price: "",
         original_price: "",
-        badge_tag: "POPULAR",
+        badge_tag: "HOT DEAL",
       });
-      setLogoPreview("");
       setLogoFile(null);
-      setPromoBannerPreview("");
+      setLogoPreview("");
       setPromoBannerFile(null);
+      setPromoBannerPreview("");
       setIsFeaturedBanner(false);
       setBannerOrder(0);
       setIsPermanent(true);
+      setStartTime("12:00");
+      setEndTime("16:00");
       setIncludedItems([
         {
           item_title: "",
@@ -149,40 +141,24 @@ const DealMaker = ({ editDeal, onSuccess }) => {
     }
   }, [editDeal]);
 
-  const handleImageChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setLogoFile(e.target.files[0]);
-      setLogoPreview(URL.createObjectURL(e.target.files[0]));
+  // Image Upload Handlers
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLogoFile(file);
+      setLogoPreview(URL.createObjectURL(file));
     }
   };
 
   const handlePromoBannerChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setPromoBannerFile(e.target.files[0]);
-      setPromoBannerPreview(URL.createObjectURL(e.target.files[0]));
+    const file = e.target.files[0];
+    if (file) {
+      setPromoBannerFile(file);
+      setPromoBannerPreview(URL.createObjectURL(file));
     }
   };
 
-  const uploadToCloudinary = async (file) => {
-    if (!file) return null;
-    const options = {
-      maxSizeMB: 0.3,
-      maxWidthOrHeight: 800,
-      useWebWorker: true,
-    };
-    const compressedFile = await imageCompression(file, options);
-    const formData = new FormData();
-    formData.append("file", compressedFile);
-    formData.append("upload_preset", UPLOAD_PRESET);
-    const res = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-      { method: "POST", body: formData }
-    );
-    const data = await res.json();
-    return data.secure_url;
-  };
-
-  // Repeater item operations
+  // Repeater Management
   const handleAddItemRow = () => {
     setIncludedItems([
       ...includedItems,
@@ -197,19 +173,20 @@ const DealMaker = ({ editDeal, onSuccess }) => {
   };
 
   const handleRemoveItemRow = (index) => {
-    if (includedItems.length === 1) {
-      setIncludedItems([
-        {
-          item_title: "",
-          quantity: 1,
-          is_customizable: false,
-          choice_group_name: "",
-          options_str: "",
-        },
-      ]);
-      return;
-    }
-    setIncludedItems(includedItems.filter((_, i) => i !== index));
+    const updated = includedItems.filter((_, i) => i !== index);
+    setIncludedItems(
+      updated.length > 0
+        ? updated
+        : [
+            {
+              item_title: "",
+              quantity: 1,
+              is_customizable: false,
+              choice_group_name: "",
+              options_str: "",
+            },
+          ]
+    );
   };
 
   const handleItemChange = (index, field, value) => {
@@ -218,67 +195,77 @@ const DealMaker = ({ editDeal, onSuccess }) => {
     setIncludedItems(updated);
   };
 
-  // Quick pick from existing menu
   const handleQuickSelectMenu = (index, menuItemId) => {
-    if (!menuItemId) return;
-    const found = menuItems.find((m) => m.id == menuItemId);
-    if (found) {
-      const updated = [...includedItems];
-      updated[index].item_title = found.name || found.title;
-      setIncludedItems(updated);
-    }
+    const selected = menuItems.find((m) => m.id == menuItemId);
+    if (!selected) return;
+
+    const updated = [...includedItems];
+    updated[index].item_title = selected.name || selected.title;
+    setIncludedItems(updated);
   };
 
-  // Save / Update Deal
-  const handleSaveDeal = async () => {
-    if (!dealForm.title || !dealForm.price) {
-      return Swal.fire(
-        "Required",
-        "Deal Title and Price are required!",
-        "warning"
-      );
+  // Cloudinary Uploader
+  const uploadToCloudinary = async (file) => {
+    let fileToUpload = file;
+    try {
+      const options = {
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+      };
+      fileToUpload = await imageCompression(file, options);
+    } catch (err) {
+      console.warn("Compression warning:", err);
     }
 
-    const validItems = includedItems.filter(
-      (it) => it.item_title.trim() !== ""
+    const formData = new FormData();
+    formData.append("file", fileToUpload);
+    formData.append("upload_preset", UPLOAD_PRESET);
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
     );
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error?.message || "Image upload failed");
+    return data.secure_url;
+  };
+
+  // Save / Update Deal Submission
+  const handleSaveDeal = async () => {
+    if (!dealForm.title.trim()) {
+      return Swal.fire("Validation Error", "Please provide a deal title.", "warning");
+    }
+    if (!dealForm.price || isNaN(dealForm.price) || Number(dealForm.price) <= 0) {
+      return Swal.fire("Validation Error", "Please provide a valid deal price.", "warning");
+    }
+
+    const validItems = includedItems.filter((it) => it.item_title.trim() !== "");
     if (validItems.length === 0) {
       return Swal.fire(
-        "Required",
-        "Add at least one included item in the combo!",
+        "Validation Error",
+        "Please add at least 1 bundled item.",
         "warning"
       );
     }
 
     setIsSaving(true);
     try {
-      let imgUrl = logoPreview;
+      let finalImgUrl = logoPreview;
       if (logoFile) {
-        imgUrl = await uploadToCloudinary(logoFile);
+        finalImgUrl = await uploadToCloudinary(logoFile);
       }
 
-      let promoImgUrl = promoBannerPreview;
+      let finalPromoUrl = promoBannerPreview;
       if (promoBannerFile) {
-        promoImgUrl = await uploadToCloudinary(promoBannerFile);
+        finalPromoUrl = await uploadToCloudinary(promoBannerFile);
       }
-
-      // Format items with parsed options array
-      const formattedItems = validItems.map((it) => ({
-        item_title: it.item_title.trim(),
-        quantity: parseInt(it.quantity) || 1,
-        is_customizable: it.is_customizable ? 1 : 0,
-        choice_group_name: it.choice_group_name ? it.choice_group_name.trim() : null,
-        options:
-          it.is_customizable && it.options_str
-            ? it.options_str
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean)
-            : [],
-      }));
 
       const payload = {
-        id: editDeal ? editDeal.id : null,
+        id: editDeal ? editDeal.id : undefined,
         title: dealForm.title.trim(),
         description: dealForm.description.trim(),
         price: parseFloat(dealForm.price),
@@ -286,439 +273,289 @@ const DealMaker = ({ editDeal, onSuccess }) => {
           ? parseFloat(dealForm.original_price)
           : null,
         badge_tag: dealForm.badge_tag.trim(),
-        img: imgUrl,
-        promo_banner_image: promoImgUrl,
-        is_featured_banner: isFeaturedBanner ? 1 : 0,
-        banner_order: parseInt(bannerOrder) || 0,
+        img: finalImgUrl,
         is_permanent: isPermanent ? 1 : 0,
-        start_time: startTime,
-        end_time: endTime,
-        items: formattedItems,
+        start_time: isPermanent ? null : startTime,
+        end_time: isPermanent ? null : endTime,
+        is_featured_banner: isFeaturedBanner ? 1 : 0,
+        promo_banner_image: isFeaturedBanner ? finalPromoUrl : null,
+        banner_order: isFeaturedBanner ? parseInt(bannerOrder) || 0 : 0,
+        items: validItems.map((it) => ({
+          item_title: it.item_title.trim(),
+          quantity: parseInt(it.quantity) || 1,
+          is_customizable: it.is_customizable ? 1 : 0,
+          choice_group_name: it.is_customizable ? it.choice_group_name.trim() : null,
+          options_str: it.is_customizable ? it.options_str.trim() : null,
+        })),
       };
 
-      const apiUrl = editDeal
-        ? `${import.meta.env.VITE_API_BASE}/update_deal.php`
-        : `${import.meta.env.VITE_API_BASE}/save_deal.php`;
+      const endpoint = editDeal ? "update_deal.php" : "save_deal.php";
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE}/${endpoint}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
-      const res = await fetch(apiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const result = await res.json();
-
-      if (result.success) {
+      const result = await response.json();
+      if (response.ok && result.success) {
         Swal.fire({
-          toast: true,
-          position: "top-end",
           icon: "success",
-          title: editDeal
-            ? "Deal Updated Successfully!"
-            : "Deal Created Successfully!",
-          showConfirmButton: false,
+          title: "Deal Published!",
+          text: editDeal
+            ? "Deal has been updated."
+            : "New deal bundle added to live menu.",
           timer: 1500,
-          background: isDarkMode ? "#141414" : "#ffffff",
-          color: isDarkMode ? "#fff" : "#111",
+          showConfirmButton: false,
+          background: "#171717",
+          color: "#fff",
         });
         if (onSuccess) onSuccess();
       } else {
-        Swal.fire("Error", result.message || "Failed to save deal", "error");
+        throw new Error(result.message || "Failed to save deal");
       }
     } catch (error) {
-      Swal.fire("Error", "Server connection failed while saving deal", "error");
+      Swal.fire("Error", error.message || "Network Error", "error");
     } finally {
       setIsSaving(false);
     }
   };
 
+  const dealPrice = parseFloat(dealForm.price) || 0;
+  const origPrice = parseFloat(dealForm.original_price) || 0;
+  const discountPercent =
+    origPrice > dealPrice
+      ? Math.round(((origPrice - dealPrice) / origPrice) * 100)
+      : 0;
+
   return (
-    <div
-      className={`rounded-3xl p-6 shadow-md transition-all ${
-        isDarkMode
-          ? "bg-[#18181b] border border-neutral-800 text-white"
-          : "bg-white border border-gray-200 text-gray-900"
-      }`}
-    >
-      {/* Header */}
-      <div
-        className={`flex items-center justify-between pb-5 mb-6 border-b ${
-          isDarkMode ? "border-neutral-800" : "border-gray-200"
-        }`}
-      >
-        <div className="flex items-center gap-3.5">
-          <div
-            className={`p-3 rounded-2xl ${
-              editDeal
-                ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
-                : "bg-amber-500/10 text-amber-500 border border-amber-500/20"
-            }`}
-          >
-            {editDeal ? (
-              <FaEdit className="text-xl" />
-            ) : (
-              <FaTag className="text-xl" />
-            )}
-          </div>
-          <div>
-            <h2
-              className={`text-xl font-black m-0 uppercase tracking-wide ${
-                isDarkMode ? "text-white" : "text-gray-900"
-              }`}
-            >
-              {editDeal ? `Edit Deal: ${editDeal.title}` : "Create Combo Deal"}
-            </h2>
-            <p
-              className={`text-xs m-0 mt-0.5 font-medium ${
-                isDarkMode ? "text-neutral-400" : "text-gray-500"
-              }`}
-            >
-              Configure bundled items, pricing, flavor options, and schedule settings
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* ═══════════════════════════════════════
-            LEFT COLUMN: GENERAL DEAL DETAILS
-        ═══════════════════════════════════════ */}
-        <div className="lg:col-span-5 space-y-5">
-          {/* 1. Image Dropzone */}
-          <div>
-            <label
-              className={`text-xs font-bold uppercase tracking-wider block mb-2 ${
-                isDarkMode ? "text-neutral-300" : "text-gray-700"
-              }`}
-            >
-              Combo Deal Image / Banner
-            </label>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className={`relative w-full h-48 rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden shadow-inner group p-6 text-center ${
-                isDarkMode
-                  ? "border-neutral-700 hover:border-amber-400 bg-neutral-950/50 hover:bg-neutral-900/40 text-neutral-400"
-                  : "border-gray-300 hover:border-amber-400 bg-gray-50 hover:bg-amber-50/30 text-gray-600"
-              }`}
-            >
-              <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={handleImageChange}
-              />
-              {logoPreview ? (
-                <>
-                  <img
-                    src={logoPreview}
-                    alt="Preview"
-                    className="w-full h-full object-contain p-3.5 transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-sm">
-                    <FaCloudUploadAlt className="text-2xl text-amber-400" />
-                    <span className="text-xs font-black uppercase tracking-wider">
-                      Change Image
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center gap-2 p-2 text-center">
-                  <div
-                    className={`w-12 h-12 rounded-2xl flex items-center justify-center border text-amber-500 ${
-                      isDarkMode
-                        ? "bg-neutral-900 border-neutral-800"
-                        : "bg-gray-100 border-gray-200"
-                    }`}
-                  >
-                    <FaImage className="text-xl" />
-                  </div>
-                  <span
-                    className={`text-xs font-bold ${
-                      isDarkMode ? "text-neutral-200" : "text-gray-800"
-                    }`}
-                  >
-                    Click to Upload Deal Banner
-                  </span>
-                  <span
-                    className={`text-[11px] ${
-                      isDarkMode ? "text-neutral-500" : "text-gray-400"
-                    }`}
-                  >
-                    Supports PNG, JPG, or WebP up to 2MB
-                  </span>
-                </div>
-              )}
+    <div className="space-y-6 animate-slide-up pb-8">
+      {/* 2-Column Master Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* ==================================================== */}
+        {/* LEFT COLUMN: FORM BUILDER & COMBO REPEATER           */}
+        {/* ==================================================== */}
+        <div className="lg:col-span-7 space-y-5">
+          {/* Card 1: Deal Information */}
+          <div className="admin-card-surface bg-white dark:bg-[#161616] p-5 rounded-2xl border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-white shadow-sm space-y-4">
+            <div className="flex items-center gap-2 pb-3 border-b border-slate-200 dark:border-white/[0.06]">
+              <FaTag className="text-amber-500 text-sm" />
+              <h3 className="m-0 text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white font-['Oswald',sans-serif]">
+                1. General Information & Pricing
+              </h3>
             </div>
-          </div>
 
-          {/* 2. Deal Title */}
-          <div>
-            <label
-              className={`text-xs font-bold uppercase tracking-wider block mb-1.5 ${
-                isDarkMode ? "text-neutral-300" : "text-gray-700"
-              }`}
-            >
-              Deal Title <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={dealForm.title}
-              onChange={(e) =>
-                setDealForm({ ...dealForm, title: e.target.value })
-              }
-              placeholder="e.g. Midnight Craver Deal"
-              className={`w-full rounded-xl px-4 py-3 focus:ring-2 focus:ring-amber-400 focus:outline-none transition-all text-xs font-bold ${
-                isDarkMode
-                  ? "bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500"
-                  : "bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400"
-              }`}
-            />
-          </div>
-
-          {/* 3. Description */}
-          <div>
-            <label
-              className={`text-xs font-bold uppercase tracking-wider block mb-1.5 ${
-                isDarkMode ? "text-neutral-300" : "text-gray-700"
-              }`}
-            >
-              Description / Included Summary
-            </label>
-            <textarea
-              rows={2}
-              value={dealForm.description}
-              onChange={(e) =>
-                setDealForm({ ...dealForm, description: e.target.value })
-              }
-              placeholder="e.g. 1 Zinger Burger + Plain Fries + 345ml Drink"
-              className={`w-full rounded-xl px-4 py-3 focus:ring-2 focus:ring-amber-400 focus:outline-none transition-all text-xs resize-none ${
-                isDarkMode
-                  ? "bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500"
-                  : "bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400"
-              }`}
-            />
-          </div>
-
-          {/* 4. Pricing Row */}
-          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label
-                className={`text-xs font-bold uppercase tracking-wider block mb-1.5 ${
-                  isDarkMode ? "text-neutral-300" : "text-gray-700"
-                }`}
-              >
-                Deal Price (Rs.) <span className="text-red-500">*</span>
+              <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider mb-1.5 block">
+                Deal Title *
               </label>
               <input
-                type="number"
-                value={dealForm.price}
+                type="text"
+                value={dealForm.title}
                 onChange={(e) =>
-                  setDealForm({ ...dealForm, price: e.target.value })
+                  setDealForm({ ...dealForm, title: e.target.value })
                 }
-                placeholder="e.g. 720"
-                className={`w-full rounded-xl px-4 py-3 text-amber-500 font-black text-sm focus:ring-2 focus:ring-amber-400 focus:outline-none transition-all ${
-                  isDarkMode
-                    ? "bg-neutral-950 border border-neutral-800 placeholder-neutral-600"
-                    : "bg-gray-50 border border-gray-300 placeholder-gray-400"
-                }`}
+                placeholder="e.g. Midnight Feast Combo, Family Mega Saver"
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
               />
             </div>
+
             <div>
-              <label
-                className={`text-xs font-bold uppercase tracking-wider block mb-1.5 ${
-                  isDarkMode ? "text-neutral-300" : "text-gray-700"
-                }`}
-              >
-                Original Price (Rs.)
+              <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider mb-1.5 block">
+                Description (Optional)
               </label>
-              <input
-                type="number"
-                value={dealForm.original_price}
+              <textarea
+                rows={2}
+                value={dealForm.description}
                 onChange={(e) =>
-                  setDealForm({ ...dealForm, original_price: e.target.value })
+                  setDealForm({ ...dealForm, description: e.target.value })
                 }
-                placeholder="e.g. 850"
-                className={`w-full rounded-xl px-4 py-3 font-bold text-sm focus:ring-2 focus:ring-amber-400 focus:outline-none transition-all ${
-                  isDarkMode
-                    ? "bg-neutral-950 border border-neutral-800 text-neutral-400 placeholder-neutral-600"
-                    : "bg-gray-50 border border-gray-300 text-gray-500 placeholder-gray-400"
-                }`}
+                placeholder="Details, included servings, drinks, dipping sauces..."
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs resize-none focus:outline-none focus:border-amber-500"
               />
             </div>
-          </div>
 
-          {/* 5. Badge Tag */}
-          <div>
-            <label
-              className={`text-xs font-bold uppercase tracking-wider block mb-1.5 ${
-                isDarkMode ? "text-neutral-300" : "text-gray-700"
-              }`}
-            >
-              Badge Tag (Floating Ribbon)
-            </label>
-            <input
-              type="text"
-              value={dealForm.badge_tag}
-              onChange={(e) =>
-                setDealForm({ ...dealForm, badge_tag: e.target.value })
-              }
-              placeholder="e.g. POPULAR, HOT DEAL, MEGA SAVER"
-              className={`w-full rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-amber-400 focus:outline-none transition-all text-xs font-black uppercase tracking-wider ${
-                isDarkMode
-                  ? "bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500"
-                  : "bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400"
-              }`}
-            />
-            {/* Tag Quick Presets */}
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {[
-                "POPULAR",
-                "HOT DEAL",
-                "MEGA SAVER",
-                "BEST VALUE",
-                "FAMILY PACK",
-                "CRUNCHY",
-              ].map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => setDealForm({ ...dealForm, badge_tag: tag })}
-                  className={`text-[10px] font-black px-2.5 py-1 rounded-lg cursor-pointer transition-all ${
-                    dealForm.badge_tag === tag
-                      ? "bg-amber-400 text-neutral-950 border border-amber-400 shadow-sm"
-                      : isDarkMode
-                      ? "bg-neutral-950 text-neutral-400 border border-neutral-800 hover:border-amber-400/50"
-                      : "bg-gray-100 text-gray-600 border border-gray-200 hover:border-amber-400/50"
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 6. Schedule Type */}
-          <div
-            className={`p-4 rounded-2xl space-y-3 shadow-inner ${
-              isDarkMode
-                ? "bg-neutral-950/80 border border-neutral-800"
-                : "bg-gray-50 border border-gray-200"
-            }`}
-          >
-            <label className="flex items-center gap-2.5 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isPermanent}
-                onChange={(e) => setIsPermanent(e.target.checked)}
-                className="w-4 h-4 accent-amber-400 rounded cursor-pointer"
-              />
-              <span
-                className={`text-xs font-bold uppercase tracking-wider ${
-                  isDarkMode ? "text-white" : "text-gray-900"
-                }`}
-              >
-                Permanent Deal (Available 24/7)
-              </span>
-            </label>
-
-            {!isPermanent && (
-              <div
-                className={`grid grid-cols-2 gap-3 pt-2.5 border-t ${
-                  isDarkMode ? "border-neutral-800" : "border-gray-200"
-                }`}
-              >
-                <div>
-                  <label
-                    className={`text-[11px] font-bold flex items-center gap-1.5 mb-1.5 ${
-                      isDarkMode ? "text-neutral-400" : "text-gray-600"
-                    }`}
-                  >
-                    <FaClock className="text-amber-500" /> Start Time
-                  </label>
+            {/* Pricing Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider mb-1.5 block">
+                  Deal Price (Rs.) *
+                </label>
+                <div className="flex items-center bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 rounded-xl px-3 focus-within:border-amber-500">
+                  <span className="text-xs font-black text-amber-500 dark:text-amber-400 mr-1.5">Rs.</span>
                   <input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className={`w-full rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none ${
-                      isDarkMode
-                        ? "bg-neutral-900 border border-neutral-800 text-white"
-                        : "bg-white border border-gray-300 text-gray-900"
-                    }`}
-                  />
-                </div>
-                <div>
-                  <label
-                    className={`text-[11px] font-bold flex items-center gap-1.5 mb-1.5 ${
-                      isDarkMode ? "text-neutral-400" : "text-gray-600"
-                    }`}
-                  >
-                    <FaClock className="text-amber-500" /> End Time
-                  </label>
-                  <input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className={`w-full rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none ${
-                      isDarkMode
-                        ? "bg-neutral-900 border border-neutral-800 text-white"
-                        : "bg-white border border-gray-300 text-gray-900"
-                    }`}
+                    type="number"
+                    min="0"
+                    value={dealForm.price}
+                    onChange={(e) =>
+                      setDealForm({ ...dealForm, price: e.target.value })
+                    }
+                    placeholder="999"
+                    className="w-full py-2.5 bg-transparent text-slate-900 dark:text-white font-black text-xs outline-none"
                   />
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* 7. Homepage Promo Banner Integration */}
-          <div
-            className={`p-4 rounded-2xl space-y-3 shadow-inner ${
-              isDarkMode
-                ? "bg-neutral-950/80 border border-neutral-800"
-                : "bg-gray-50 border border-gray-200"
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2.5 cursor-pointer">
+              <div>
+                <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider mb-1.5 block">
+                  Original Price (Strikethrough)
+                </label>
+                <div className="flex items-center bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 rounded-xl px-3 focus-within:border-amber-500">
+                  <span className="text-xs font-bold text-slate-400 dark:text-neutral-500 mr-1.5">Rs.</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={dealForm.original_price}
+                    onChange={(e) =>
+                      setDealForm({ ...dealForm, original_price: e.target.value })
+                    }
+                    placeholder="1300"
+                    className="w-full py-2.5 bg-transparent text-slate-600 dark:text-neutral-400 font-semibold text-xs outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {discountPercent > 0 && (
+              <div className="flex items-center gap-2 p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                <FaPercent className="text-[10px]" />
+                <span>
+                  Customer saves {discountPercent}% (Rs. {(origPrice - dealPrice).toLocaleString()} Discount)
+                </span>
+              </div>
+            )}
+
+            {/* Badge Ribbon Tag */}
+            <div>
+              <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider mb-1.5 block">
+                Badge Ribbon Tag
+              </label>
+              <input
+                type="text"
+                value={dealForm.badge_tag}
+                onChange={(e) =>
+                  setDealForm({ ...dealForm, badge_tag: e.target.value })
+                }
+                placeholder="e.g. HOT DEAL, MEGA SAVER"
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-black uppercase tracking-wider focus:outline-none focus:border-amber-500 mb-2"
+              />
+              <div className="flex flex-wrap gap-1.5">
+                {["HOT DEAL", "POPULAR", "MEGA SAVER", "VALUE PACK", "FAMILY DEAL"].map(
+                  (tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setDealForm({ ...dealForm, badge_tag: tag })}
+                      className={`text-[10px] font-bold px-3 py-1 !rounded-full border cursor-pointer transition-all ${
+                        dealForm.badge_tag === tag
+                          ? "bg-amber-500 text-neutral-950 border-amber-500 shadow-sm"
+                          : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-white/5 hover:border-amber-500/40"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* Image Upload Dropzone */}
+            <div>
+              <label className="text-xs text-slate-600 dark:text-neutral-400 font-extrabold uppercase tracking-wider mb-1.5 block">
+                Deal Image
+              </label>
+              <div
+                className="border-2 border-dashed border-slate-300 dark:border-white/10 rounded-2xl h-40 flex flex-col justify-center items-center cursor-pointer overflow-hidden relative bg-slate-50 dark:bg-white/[0.02] hover:border-amber-500 hover:bg-amber-500/5 transition-all group shadow-inner"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={handleLogoChange}
+                />
+                {logoPreview ? (
+                  <>
+                    <img
+                      src={logoPreview}
+                      alt="Deal Preview"
+                      className="w-full h-full object-contain p-2"
+                    />
+                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col justify-center items-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                      <FaCloudUploadAlt size={28} className="text-amber-400" />
+                      <span className="text-xs font-bold mt-1.5">Change Image</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-slate-500 dark:text-neutral-400 p-3 text-center">
+                    <FaCloudUploadAlt className="text-2xl text-amber-500 dark:text-amber-400 mb-1 group-hover:scale-110 transition-transform" />
+                    <p className="m-0 font-bold text-xs text-slate-900 dark:text-white">Click to upload deal photo</p>
+                    <span className="text-[10px] mt-0.5 text-slate-500 dark:text-neutral-400">PNG or JPG up to 5MB</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Timing Schedule */}
+            <div className="p-3.5 bg-slate-50 dark:bg-white/[0.02] rounded-2xl border border-slate-200 dark:border-white/[0.06] space-y-2.5">
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-neutral-300">
+                <input
+                  type="checkbox"
+                  checked={isPermanent}
+                  onChange={(e) => setIsPermanent(e.target.checked)}
+                  className="w-4 h-4 accent-amber-500 cursor-pointer"
+                />
+                <span>Permanent Deal (Active 24/7)</span>
+              </label>
+
+              {!isPermanent && (
+                <div className="grid grid-cols-2 gap-3 pt-2.5 border-t border-slate-200 dark:border-white/5">
+                  <div>
+                    <label className="text-[10px] font-extrabold uppercase text-slate-600 dark:text-neutral-400 block mb-1">
+                      Start Time
+                    </label>
+                    <input
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      className="w-full p-2 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-extrabold uppercase text-slate-600 dark:text-neutral-400 block mb-1">
+                      End Time
+                    </label>
+                    <input
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className="w-full p-2 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-mono"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Promo Banner Feature */}
+            <div className="p-3.5 bg-slate-50 dark:bg-white/[0.02] rounded-2xl border border-slate-200 dark:border-white/[0.06] space-y-2.5">
+              <label className={`flex items-center gap-2 text-xs font-bold cursor-pointer ${isFeaturedBanner ? "text-amber-600 dark:text-amber-400" : "text-slate-600 dark:text-neutral-400"}`}>
                 <input
                   type="checkbox"
                   checked={isFeaturedBanner}
                   onChange={(e) => setIsFeaturedBanner(e.target.checked)}
-                  className="w-4 h-4 accent-amber-400 rounded cursor-pointer"
+                  className="w-4 h-4 accent-amber-500 cursor-pointer"
                 />
-                <span
-                  className={`text-xs font-bold uppercase tracking-wider ${
-                    isDarkMode ? "text-white" : "text-gray-900"
-                  }`}
-                >
-                  Show as Homepage Promo Banner
-                </span>
+                <span>Feature as Homepage Wide Promo Banner</span>
               </label>
-              <span className="text-[10px] px-2 py-0.5 rounded-md font-bold uppercase bg-amber-400/10 text-amber-500 border border-amber-400/30">
-                PROMO
-              </span>
-            </div>
 
-            {isFeaturedBanner && (
-              <div
-                className={`pt-3 border-t space-y-3 ${
-                  isDarkMode ? "border-neutral-800" : "border-gray-200"
-                }`}
-              >
-                <div>
-                  <label
-                    className={`text-[11px] font-bold block mb-1.5 ${
-                      isDarkMode ? "text-neutral-300" : "text-gray-700"
-                    }`}
-                  >
-                    Wide Promo Banner Image (Recommended 1200x500px)
-                  </label>
+              {isFeaturedBanner && (
+                <div className="pt-2.5 border-t border-slate-200 dark:border-white/5 space-y-2.5">
                   <div
                     onClick={() => promoFileInputRef.current?.click()}
-                    className={`relative w-full h-32 rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden group text-center p-3 ${
-                      isDarkMode
-                        ? "border-neutral-700 hover:border-amber-400 bg-neutral-900/60 text-neutral-400"
-                        : "border-gray-300 hover:border-amber-400 bg-white text-gray-600"
-                    }`}
+                    className="border-2 border-dashed border-slate-300 dark:border-white/10 rounded-xl h-24 flex flex-col justify-center items-center cursor-pointer overflow-hidden relative bg-white dark:bg-black/30 hover:border-amber-500 group"
                   >
                     <input
                       type="file"
@@ -728,131 +565,82 @@ const DealMaker = ({ editDeal, onSuccess }) => {
                       onChange={handlePromoBannerChange}
                     />
                     {promoBannerPreview ? (
-                      <>
-                        <img
-                          src={promoBannerPreview}
-                          alt="Promo Banner Preview"
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1 backdrop-blur-xs">
-                          <FaCloudUploadAlt className="text-xl text-amber-400" />
-                          <span className="text-[10px] font-black uppercase tracking-wider">
-                            Change Banner
-                          </span>
-                        </div>
-                      </>
+                      <img
+                        src={promoBannerPreview}
+                        alt="Promo Banner Preview"
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
-                      <div className="flex flex-col items-center gap-1">
-                        <FaImage className="text-lg text-amber-500" />
-                        <span className="text-xs font-bold text-neutral-300">
-                          Upload Wide Banner
-                        </span>
-                        <span className="text-[10px] text-neutral-500">
-                          Leaves empty to use standard deal image
+                      <div className="text-center p-2">
+                        <FaImage className="text-lg text-amber-500 dark:text-amber-400 mx-auto mb-1" />
+                        <span className="text-[10px] font-bold text-slate-600 dark:text-neutral-300 block">
+                          Upload 1200x500 Wide Banner
                         </span>
                       </div>
                     )}
                   </div>
-                </div>
 
-                <div>
-                  <label
-                    className={`text-[11px] font-bold block mb-1 ${
-                      isDarkMode ? "text-neutral-400" : "text-gray-600"
-                    }`}
-                  >
-                    Banner Display Order (0 = First)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={bannerOrder}
-                    onChange={(e) => setBannerOrder(e.target.value)}
-                    className={`w-full rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none ${
-                      isDarkMode
-                        ? "bg-neutral-900 border border-neutral-800 text-white"
-                        : "bg-white border border-gray-300 text-gray-900"
-                    }`}
-                  />
+                  <div>
+                    <label className="text-[10px] font-extrabold uppercase text-slate-600 dark:text-neutral-400 block mb-1">
+                      Banner Sort Order (0 = First)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={bannerOrder}
+                      onChange={(e) => setBannerOrder(e.target.value)}
+                      className="w-full p-2 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* ═══════════════════════════════════════
-            RIGHT COLUMN: INCLUDED ITEMS & CHOICES
-        ═══════════════════════════════════════ */}
-        <div className="lg:col-span-7 flex flex-col justify-between">
-          <div className="space-y-4">
-            <div
-              className={`flex items-center justify-between border-b pb-3 ${
-                isDarkMode ? "border-neutral-800" : "border-gray-200"
-              }`}
-            >
+          {/* Card 2: Combo Bundled Items Repeater */}
+          <div className="admin-card-surface bg-white dark:bg-[#161616] p-5 rounded-2xl border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-white shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/[0.06]">
               <div className="flex items-center gap-2">
                 <FaUtensils className="text-amber-500 text-sm" />
-                <h3
-                  className={`text-sm font-black uppercase tracking-wide m-0 ${
-                    isDarkMode ? "text-white" : "text-gray-900"
-                  }`}
-                >
-                  Included Items & Flavor Choices ({includedItems.length})
+                <h3 className="m-0 text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white font-['Oswald',sans-serif]">
+                  2. Bundled Food Items ({includedItems.length})
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={handleAddItemRow}
-                className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-500 text-neutral-950 text-xs font-black px-3.5 py-2 rounded-xl border-none cursor-pointer transition-all active:scale-95 shadow-md uppercase tracking-wider"
+                className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer border-none shadow-sm transition-all active:scale-95"
               >
-                <FaPlus className="text-[10px]" /> Add Included Item
+                <FaPlus className="text-[10px]" />
+                <span>Add Item</span>
               </button>
             </div>
 
-            {/* Repeater Rows */}
-            <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+            {/* Repeater List */}
+            <div className="space-y-3">
               {includedItems.map((item, idx) => (
                 <div
                   key={idx}
-                  className={`rounded-2xl p-4 mb-3 space-y-3 transition-all ${
-                    isDarkMode
-                      ? "bg-neutral-950/80 border border-neutral-800 hover:border-neutral-700"
-                      : "bg-gray-50 border border-gray-200 hover:border-gray-300"
-                  }`}
+                  className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 space-y-3 hover:border-amber-500/30 transition-all"
                 >
-                  {/* Row 1: Title, Qty, Quick Pick & Delete */}
-                  <div className="grid grid-cols-12 gap-2.5 items-center">
-                    {/* Item Title Input */}
-                    <div className="col-span-12 sm:col-span-6">
-                      <label
-                        className={`text-[10px] font-bold uppercase tracking-wider block mb-1 ${
-                          isDarkMode ? "text-neutral-400" : "text-gray-600"
-                        }`}
-                      >
-                        Item Name <span className="text-red-500">*</span>
+                  <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
+                    <div className="flex-1 min-w-0">
+                      <label className="text-[10px] font-extrabold uppercase text-slate-600 dark:text-neutral-400 block mb-1">
+                        Item Title *
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. Large Special Pizza, Zinger Burger"
+                        placeholder="e.g. 1 Large Pizza, Zinger Burger"
                         value={item.item_title}
                         onChange={(e) =>
                           handleItemChange(idx, "item_title", e.target.value)
                         }
-                        className={`w-full rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all font-semibold ${
-                          isDarkMode
-                            ? "bg-neutral-900 border border-neutral-800 text-white placeholder-neutral-500"
-                            : "bg-white border border-gray-300 text-gray-900 placeholder-gray-400"
-                        }`}
+                        className="w-full px-3 py-2 bg-white dark:bg-black/40 text-slate-900 dark:text-white rounded-xl border border-slate-300 dark:border-white/10 text-xs font-semibold focus:outline-none focus:border-amber-500"
                       />
                     </div>
 
-                    {/* Quantity */}
-                    <div className="col-span-4 sm:col-span-2">
-                      <label
-                        className={`text-[10px] font-bold uppercase tracking-wider block mb-1 ${
-                          isDarkMode ? "text-neutral-400" : "text-gray-600"
-                        }`}
-                      >
+                    <div className="w-full sm:w-20">
+                      <label className="text-[10px] font-extrabold uppercase text-slate-600 dark:text-neutral-400 block mb-1 text-center">
                         Qty
                       </label>
                       <input
@@ -862,53 +650,35 @@ const DealMaker = ({ editDeal, onSuccess }) => {
                         onChange={(e) =>
                           handleItemChange(idx, "quantity", e.target.value)
                         }
-                        className={`w-full rounded-xl px-2 py-2.5 text-xs font-black text-center text-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all ${
-                          isDarkMode
-                            ? "bg-neutral-900 border border-neutral-800"
-                            : "bg-white border border-gray-300"
-                        }`}
+                        className="w-full p-2 bg-white dark:bg-black/40 text-amber-600 dark:text-amber-400 text-center font-black rounded-xl border border-slate-300 dark:border-white/10 text-xs focus:outline-none focus:border-amber-500"
                       />
                     </div>
 
-                    {/* Quick Pick from Menu Dropdown */}
-                    <div className="col-span-6 sm:col-span-3">
-                      <label
-                        className={`text-[10px] font-bold uppercase tracking-wider block mb-1 ${
-                          isDarkMode ? "text-neutral-400" : "text-gray-600"
-                        }`}
-                      >
-                        Quick Pick
+                    <div className="w-full sm:w-44">
+                      <label className="text-[10px] font-extrabold uppercase text-slate-600 dark:text-neutral-400 block mb-1">
+                        Auto-fill from Menu
                       </label>
                       <select
                         onChange={(e) =>
                           handleQuickSelectMenu(idx, e.target.value)
                         }
                         defaultValue=""
-                        className={`w-full rounded-xl px-2.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all cursor-pointer ${
-                          isDarkMode
-                            ? "bg-neutral-900 border border-neutral-800 text-neutral-300"
-                            : "bg-white border border-gray-300 text-gray-800"
-                        }`}
+                        className="w-full p-2 bg-white dark:bg-black/40 text-slate-900 dark:text-neutral-300 rounded-xl border border-slate-300 dark:border-white/10 text-xs focus:outline-none focus:border-amber-500 cursor-pointer"
                       >
-                        <option value="">-- Menu Item --</option>
+                        <option className="bg-white dark:bg-[#171717]" value="">-- Pick Product --</option>
                         {menuItems.map((m) => (
-                          <option key={m.id} value={m.id}>
+                          <option className="bg-white dark:bg-[#171717]" key={m.id} value={m.id}>
                             {m.name || m.title}
                           </option>
                         ))}
                       </select>
                     </div>
 
-                    {/* Delete Item Row */}
-                    <div className="col-span-2 sm:col-span-1 flex justify-end pt-4 sm:pt-0">
+                    <div className="self-end sm:self-center pt-2 sm:pt-4">
                       <button
                         type="button"
                         onClick={() => handleRemoveItemRow(idx)}
-                        className={`p-2.5 rounded-xl cursor-pointer transition-all active:scale-95 shadow-xs ${
-                          isDarkMode
-                            ? "bg-neutral-800 text-neutral-400 hover:text-red-400 border border-neutral-800 hover:bg-red-500/20 hover:border-red-500/30"
-                            : "bg-gray-100 text-gray-500 hover:text-red-500 border border-gray-200 hover:bg-red-50 hover:border-red-300"
-                        }`}
+                        className="w-8 h-8 rounded-xl bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white flex items-center justify-center border-none cursor-pointer transition-colors"
                         title="Remove Item"
                       >
                         <FaTrash className="text-xs" />
@@ -916,13 +686,9 @@ const DealMaker = ({ editDeal, onSuccess }) => {
                     </div>
                   </div>
 
-                  {/* Row 2: Customizable Toggle & Options Input */}
-                  <div
-                    className={`pt-2.5 border-t ${
-                      isDarkMode ? "border-neutral-800" : "border-gray-200"
-                    }`}
-                  >
-                    <label className="flex items-center gap-2 cursor-pointer mb-2">
+                  {/* Customizable Flavor Choices */}
+                  <div className="pt-2 border-t border-slate-200 dark:border-white/5 space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-amber-600 dark:text-amber-400">
                       <input
                         type="checkbox"
                         checked={item.is_customizable}
@@ -933,33 +699,23 @@ const DealMaker = ({ editDeal, onSuccess }) => {
                             e.target.checked
                           )
                         }
-                        className="w-3.5 h-3.5 accent-amber-400 rounded cursor-pointer"
+                        className="w-3.5 h-3.5 accent-amber-500 cursor-pointer"
                       />
-                      <span className="text-xs font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1.5">
-                        <FaSlidersH className="text-[10px]" /> Customer Can Choose Flavor / Variation
+                      <span className="flex items-center gap-1.5">
+                        <FaSlidersH className="text-[10px]" /> Customer Can Choose Flavor / Drink
                       </span>
                     </label>
 
                     {item.is_customizable && (
-                      <div
-                        className={`grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3.5 rounded-xl ${
-                          isDarkMode
-                            ? "bg-neutral-900 border border-neutral-800"
-                            : "bg-white border border-gray-200"
-                        }`}
-                      >
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3 bg-slate-100 dark:bg-black/40 rounded-xl border border-slate-200 dark:border-white/5">
                         <div>
-                          <label
-                            className={`text-[10px] font-bold uppercase tracking-wider block mb-1 ${
-                              isDarkMode ? "text-neutral-400" : "text-gray-600"
-                            }`}
-                          >
+                          <label className="text-[10px] font-bold text-slate-600 dark:text-neutral-400 block mb-1">
                             Choice Group Label
                           </label>
                           <input
                             type="text"
-                            placeholder="e.g. Choose Pizza Flavor, Choose Drink"
-                            value={item.choice_group_name}
+                            placeholder="e.g. Select Pizza Flavor"
+                            value={item.choice_group_name || ""}
                             onChange={(e) =>
                               handleItemChange(
                                 idx,
@@ -967,25 +723,17 @@ const DealMaker = ({ editDeal, onSuccess }) => {
                                 e.target.value
                               )
                             }
-                            className={`w-full rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium ${
-                              isDarkMode
-                                ? "bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500"
-                                : "bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400"
-                            }`}
+                            className="w-full p-2 bg-white dark:bg-black/50 text-slate-900 dark:text-white rounded-lg border border-slate-300 dark:border-white/10 text-xs focus:outline-none focus:border-amber-500"
                           />
                         </div>
                         <div>
-                          <label
-                            className={`text-[10px] font-bold uppercase tracking-wider block mb-1 ${
-                              isDarkMode ? "text-neutral-400" : "text-gray-600"
-                            }`}
-                          >
-                            Flavor Options (Comma Separated)
+                          <label className="text-[10px] font-bold text-slate-600 dark:text-neutral-400 block mb-1">
+                            Comma-Separated Options
                           </label>
                           <input
                             type="text"
-                            placeholder="e.g. Chicken Tikka, Fajita, Peri Peri, Supreme"
-                            value={item.options_str}
+                            placeholder="Fajita, Tikka, Pepperoni, Veggie"
+                            value={item.options_str || ""}
                             onChange={(e) =>
                               handleItemChange(
                                 idx,
@@ -993,11 +741,7 @@ const DealMaker = ({ editDeal, onSuccess }) => {
                                 e.target.value
                               )
                             }
-                            className={`w-full rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium ${
-                              isDarkMode
-                                ? "bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500"
-                                : "bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400"
-                            }`}
+                            className="w-full p-2 bg-white dark:bg-black/50 text-slate-900 dark:text-white rounded-lg border border-slate-300 dark:border-white/10 text-xs focus:outline-none focus:border-amber-500"
                           />
                         </div>
                       </div>
@@ -1008,29 +752,125 @@ const DealMaker = ({ editDeal, onSuccess }) => {
             </div>
           </div>
 
-          {/* Primary CTA Button */}
-          <div
-            className={`pt-6 border-t mt-6 ${
-              isDarkMode ? "border-neutral-800" : "border-gray-200"
-            }`}
-          >
+          {/* Submit Action Bar */}
+          <div className="admin-card-surface flex justify-end gap-3 p-4 bg-white dark:bg-[#161616] rounded-2xl border border-slate-200 dark:border-white/[0.06] shadow-sm">
             <button
               type="button"
-              onClick={handleSaveDeal}
               disabled={isSaving}
-              className={`w-full py-4 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-neutral-950 font-black text-base uppercase tracking-wider shadow-lg shadow-amber-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 border-none cursor-pointer ${
-                isSaving ? "opacity-60 cursor-not-allowed" : ""
-              }`}
+              onClick={handleSaveDeal}
+              className="bg-amber-500/90 hover:bg-amber-500 dark:bg-amber-500 dark:hover:bg-amber-400 text-neutral-900 font-bold px-6 py-2.5 rounded-xl shadow-sm transition-all duration-200 text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer border-none disabled:opacity-50 active:scale-95"
             >
-              <FaSave className="text-base" />
-              <span>
-                {isSaving
-                  ? "Processing & Saving Deal..."
-                  : editDeal
-                  ? "Update Combo Deal"
-                  : "Save & Launch Combo Deal"}
-              </span>
+              <FaSave className="text-xs" />
+              <span>{isSaving ? "Saving Deal..." : editDeal ? "Update Deal" : "Publish Deal to Menu"}</span>
             </button>
+          </div>
+        </div>
+
+        {/* ==================================================== */}
+        {/* RIGHT COLUMN: STICKY LIVE CUSTOMER CARD PREVIEW      */}
+        {/* ==================================================== */}
+        <div className="lg:col-span-5 sticky top-20 space-y-4">
+          <div className="flex items-center gap-2 px-1">
+            <FaEye className="text-amber-500 text-xs" />
+            <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-neutral-400">
+              Live Customer Portal Preview
+            </span>
+          </div>
+
+          {/* Live Preview Card */}
+          <div className="admin-card-surface bg-white dark:bg-[#161616] rounded-3xl border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white overflow-hidden shadow-2xl flex flex-col justify-between">
+            <div>
+              {/* Media Banner */}
+              <div className="relative h-52 bg-slate-100 dark:bg-black/60 flex items-center justify-center p-3">
+                {logoPreview ? (
+                  <img
+                    src={logoPreview}
+                    alt="Preview"
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="text-center text-slate-400 dark:text-neutral-600">
+                    <FaImage className="text-4xl mx-auto mb-2 opacity-50" />
+                    <span className="text-xs font-bold">No Image Uploaded</span>
+                  </div>
+                )}
+
+                {/* Ribbon Tag */}
+                <div className="absolute top-3.5 left-3.5 bg-amber-100/80 dark:bg-amber-500/15 text-amber-800 dark:text-amber-400 border border-amber-300/60 dark:border-amber-500/20 text-xs font-bold uppercase tracking-wider px-3 py-0.5 !rounded-full shadow-sm flex items-center gap-1 backdrop-blur-sm">
+                  <FaTag className="text-[10px]" />
+                  <span>{dealForm.badge_tag || "HOT DEAL"}</span>
+                </div>
+
+                {/* Discount Badge */}
+                {discountPercent > 0 && (
+                  <div className="absolute bottom-3.5 left-3.5 bg-emerald-500 text-neutral-950 text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 !rounded-full shadow-md flex items-center gap-1">
+                    <FaPercent className="text-[9px]" />
+                    <span>{discountPercent}% OFF</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Body Content */}
+              <div className="p-5 space-y-4">
+                <div>
+                  <h4 className="m-0 text-lg font-black text-slate-900 dark:text-white uppercase tracking-wide font-['Oswald',sans-serif]">
+                    {dealForm.title || "Your Deal Title"}
+                  </h4>
+                  <p className="m-0 mt-1 text-xs text-slate-500 dark:text-neutral-400 line-clamp-2">
+                    {dealForm.description || "Deal description and servings will appear here."}
+                  </p>
+                </div>
+
+                {/* Price & Schedule */}
+                <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-white/10">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-black text-amber-600 dark:text-amber-400">
+                      Rs. {dealPrice > 0 ? dealPrice.toLocaleString() : "0"}
+                    </span>
+                    {origPrice > 0 && (
+                      <span className="text-xs text-slate-400 dark:text-neutral-500 line-through">
+                        Rs. {origPrice.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="text-[10px] font-bold text-slate-600 dark:text-neutral-400 flex items-center gap-1 bg-slate-100 dark:bg-white/5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/5">
+                    <FaClock className="text-amber-500 dark:text-amber-400 text-[10px]" />
+                    <span>{isPermanent ? "24/7" : `${startTime} - ${endTime}`}</span>
+                  </div>
+                </div>
+
+                {/* Bundled Items Preview */}
+                <div className="p-3.5 bg-slate-50 dark:bg-white/[0.02] rounded-2xl border border-slate-200 dark:border-white/5 space-y-2">
+                  <div className="text-[10px] uppercase font-extrabold text-slate-600 dark:text-neutral-400 flex items-center gap-1">
+                    <FaLayerGroup className="text-amber-500 dark:text-amber-400 text-[10px]" />
+                    <span>Includes {includedItems.filter(i => i.item_title.trim()).length} Items:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {includedItems.filter(i => i.item_title.trim()).length > 0 ? (
+                      includedItems
+                        .filter(i => i.item_title.trim())
+                        .map((it, idx) => (
+                          <span
+                            key={idx}
+                            className="text-[11px] font-medium bg-slate-200 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-800 dark:text-neutral-300 px-2 py-0.5 rounded-lg flex items-center gap-1"
+                          >
+                            <span className="text-amber-600 dark:text-amber-400 font-bold">{it.quantity}x</span>
+                            <span className="truncate max-w-[120px]">{it.item_title}</span>
+                            {it.is_customizable && (
+                              <span className="text-[9px] text-amber-600 dark:text-amber-400 font-black bg-amber-500/15 px-1 rounded">
+                                Choice
+                              </span>
+                            )}
+                          </span>
+                        ))
+                    ) : (
+                      <span className="text-xs text-slate-400 dark:text-neutral-500 italic">No bundled items configured yet.</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

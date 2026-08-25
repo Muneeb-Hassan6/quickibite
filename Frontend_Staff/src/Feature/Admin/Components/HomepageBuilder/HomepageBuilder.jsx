@@ -3,7 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Swal from 'sweetalert2';
 import toast from 'react-hot-toast';
-import { FaTrash, FaPlus, FaSave, FaImage, FaListUl, FaEdit, FaCog, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+import {
+  FaTrash as IconTrash,
+  FaPlus as IconPlus,
+  FaSave as IconSave,
+  FaImage as IconImage,
+  FaListUl as IconListUl,
+  FaEdit as IconEdit,
+  FaCog as IconCog,
+  FaToggleOn as IconToggleOn,
+  FaToggleOff as IconToggleOff,
+  FaTimes as IconTimes,
+  FaSpinner as IconSpinner,
+} from 'react-icons/fa';
+
+import HeroTextSettings from './HeroTextSettings';
 import FooterSettings from '../Settings/Components/FooterSettings';
 
 const HomepageBuilder = () => {
@@ -53,6 +67,8 @@ const HomepageBuilder = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState('section'); // 'section' or 'hero'
   const [editId, setEditId] = useState(null); // Track if editing
+  const [isSavingComponent, setIsSavingComponent] = useState(false);
+
   const [formData, setFormData] = useState({
     section_type: 'product_slider',
     title: '',
@@ -61,12 +77,13 @@ const HomepageBuilder = () => {
     link_url: '',
     content_data: 'filter:best_sellers',
     slider_type: 'regular',
-    sort_order: 10
+    sort_order: 10,
+    file: null
   });
   
   const [bannerSlides, setBannerSlides] = useState([{ title: '', subtitle: '', link_url: '', file: null, image_url: '' }]);
 
-  // Use React Query for homepage data (fetch all including inactive for admin)
+  // Use React Query for homepage data
   const { data: homepageData = {}, isLoading } = useQuery({
     queryKey: ['homepage_data'],
     queryFn: async () => {
@@ -165,8 +182,16 @@ const HomepageBuilder = () => {
       }
       const result = await response.json();
       if (result.success) {
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Saved successfully!', showConfirmButton: false, timer: 1500 });
-        setIsModalOpen(false);
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Global Settings Saved!',
+          showConfirmButton: false,
+          timer: 1500,
+          background: '#171717',
+          color: '#fff'
+        });
         queryClient.invalidateQueries({ queryKey: ['homepage_data'] });
       } else {
         if (result.code === 401 || result.message === 'Unauthorized' || result.message === 'Access denied') {
@@ -176,7 +201,6 @@ const HomepageBuilder = () => {
         Swal.fire("Error", result.message, "error");
       }
     } catch (err) {
-      console.error(err);
       Swal.fire("Error", "Could not connect to server.", "error");
     } finally {
       setIsSavingGlobal(false);
@@ -211,7 +235,6 @@ const HomepageBuilder = () => {
         toast.error(result.message || "Failed to update status");
       }
     } catch (err) {
-      console.error(err);
       toast.error("Network error while updating status.");
     }
   };
@@ -262,12 +285,14 @@ const HomepageBuilder = () => {
   const handleDelete = async (id, type) => {
     const result = await Swal.fire({
       title: 'Are you sure?',
-      text: "You won't be able to revert this!",
+      text: "This item will be removed from your homepage layout.",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, delete it!'
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#71717a',
+      confirmButtonText: 'Yes, Delete',
+      background: '#171717',
+      color: '#fff'
     });
 
     if (result.isConfirmed) {
@@ -286,7 +311,15 @@ const HomepageBuilder = () => {
 
         const resultData = await response.json();
         if (resultData.success) {
-          Swal.fire('Deleted!', 'The item has been deleted.', 'success');
+          Swal.fire({
+            icon: 'success',
+            title: 'Deleted!',
+            text: 'Item has been removed.',
+            timer: 1500,
+            showConfirmButton: false,
+            background: '#171717',
+            color: '#fff'
+          });
           queryClient.invalidateQueries({ queryKey: ['homepage_data'] });
         } else {
           if (resultData.code === 401 || resultData.message === 'Unauthorized' || resultData.message === 'Access denied') {
@@ -303,7 +336,7 @@ const HomepageBuilder = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSavingComponent(true);
 
     try {
       let finalImageUrl = formData.image_url;
@@ -345,8 +378,14 @@ const HomepageBuilder = () => {
       if (formData.section_type === 'product_slider') {
         if (formData.content_data === 'custom_selection') {
           if (selectedProductIds.length === 0) {
-            Swal.fire('Error', 'Please select at least one product for custom selection.', 'error');
-            setIsLoading(false);
+            Swal.fire({
+              icon: 'error',
+              title: 'Validation Error',
+              text: 'Please select at least one product for custom selection.',
+              background: '#171717',
+              color: '#fff'
+            });
+            setIsSavingComponent(false);
             return;
           }
           finalContentData = `custom:${selectedProductIds.join(',')}`;
@@ -355,7 +394,7 @@ const HomepageBuilder = () => {
 
       const payload = {
         action,
-        id: editId, // Include ID if editing
+        id: editId,
         ...formData,
         content_data: finalContentData,
         image_url: finalImageUrl
@@ -374,7 +413,15 @@ const HomepageBuilder = () => {
 
       const res = await response.json();
       if (res.success) {
-        Swal.fire('Saved!', editId ? 'Item updated successfully' : 'New item added successfully', 'success');
+        Swal.fire({
+          icon: 'success',
+          title: 'Saved!',
+          text: editId ? 'Component updated successfully.' : 'New component added.',
+          timer: 1500,
+          showConfirmButton: false,
+          background: '#171717',
+          color: '#fff'
+        });
         setIsModalOpen(false);
         queryClient.invalidateQueries({ queryKey: ['homepage_data'] });
       } else {
@@ -385,10 +432,9 @@ const HomepageBuilder = () => {
         Swal.fire('Error', res.message || 'Failed to save component', 'error');
       }
     } catch (err) {
-      console.error(err);
       Swal.fire('Error', 'Something went wrong: ' + err.message, 'error');
     } finally {
-      setIsLoading(false);
+      setIsSavingComponent(false);
     }
   };
 
@@ -481,23 +527,24 @@ const HomepageBuilder = () => {
   const renderLinkInput = (value, onChange, isSmall = false) => {
     const parsed = parseLink(value);
     return (
-      <div style={{ display: 'flex', gap: '10px', marginTop: isSmall ? '4px' : '5px' }}>
+      <div className={`flex gap-2 ${isSmall ? 'mt-1' : 'mt-1.5'}`}>
         <select 
           value={parsed.type} 
           onChange={e => onChange(buildLink(e.target.value, ''))}
-          style={{ flex: 1, padding: isSmall ? '8px' : '10px', borderRadius: '4px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
+          className="p-2 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
         >
-          <option value="url">Standard URL</option>
-          <option value="product">Link to Product</option>
-          <option value="deal">Link to Deal</option>
+          <option className="bg-white dark:bg-[#171717]" value="url">Standard URL</option>
+          <option className="bg-white dark:bg-[#171717]" value="product">Link to Product</option>
+          <option className="bg-white dark:bg-[#171717]" value="deal">Link to Deal</option>
         </select>
         
         {parsed.type === 'url' && (
           <input 
-            type="text" placeholder="/menu"
+            type="text" 
+            placeholder="/menu"
             value={parsed.value} 
             onChange={e => onChange(e.target.value)}
-            style={{ flex: 2, padding: isSmall ? '8px' : '10px', borderRadius: '4px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
+            className="flex-1 p-2 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
           />
         )}
         
@@ -505,10 +552,10 @@ const HomepageBuilder = () => {
           <select 
             value={parsed.id || ''} 
             onChange={e => onChange(buildLink('product', e.target.value))}
-            style={{ flex: 2, padding: isSmall ? '8px' : '10px', borderRadius: '4px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
+            className="flex-1 p-2 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
           >
-            <option value="">Select a Product...</option>
-            {menuItems.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+            <option className="bg-white dark:bg-[#171717]" value="">Select a Product...</option>
+            {menuItems.map(item => <option className="bg-white dark:bg-[#171717]" key={item.id} value={item.id}>{item.name}</option>)}
           </select>
         )}
 
@@ -516,10 +563,10 @@ const HomepageBuilder = () => {
           <select 
             value={parsed.id || ''} 
             onChange={e => onChange(buildLink('deal', e.target.value))}
-            style={{ flex: 2, padding: isSmall ? '8px' : '10px', borderRadius: '4px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
+            className="flex-1 p-2 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
           >
-            <option value="">Select a Deal...</option>
-            {deals.map(deal => <option key={deal.id} value={deal.id}>{deal.title}</option>)}
+            <option className="bg-white dark:bg-[#171717]" value="">Select a Deal...</option>
+            {deals.map(deal => <option className="bg-white dark:bg-[#171717]" key={deal.id} value={deal.id}>{deal.title}</option>)}
           </select>
         )}
       </div>
@@ -527,516 +574,522 @@ const HomepageBuilder = () => {
   };
 
   return (
-    <div className="admin-panel-content">
-      <style>{`
-        .styled-file-input {
-          width: 100%;
-          margin-top: 4px;
-          color: var(--admin-text, #fff);
-          background: var(--admin-bg, #1a1a1a);
-          border: 1px solid var(--admin-border, #333);
-          border-radius: 4px;
-          padding: 6px;
-          font-size: 13px;
-        }
-        .styled-file-input::file-selector-button {
-          background: #333;
-          color: #fff;
-          border: none;
-          padding: 6px 12px;
-          border-radius: 4px;
-          cursor: pointer;
-          margin-right: 10px;
-          font-weight: 500;
-          transition: background 0.3s;
-        }
-        .styled-file-input::file-selector-button:hover {
-          background: #ef4444; /* brand red */
-        }
-        /* Custom Scrollbar for modal */
-        .modal-content::-webkit-scrollbar {
-          width: 8px;
-        }
-        .modal-content::-webkit-scrollbar-track {
-          background: var(--admin-bg, #1a1a1a);
-          border-radius: 4px;
-        }
-        .modal-content::-webkit-scrollbar-thumb {
-          background: #444;
-          border-radius: 4px;
-        }
-        .modal-content::-webkit-scrollbar-thumb:hover {
-          background: #666;
-        }
-      `}</style>
-      <div className="panel-header">
+    <div className="space-y-6 animate-slide-up">
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-2 border-b border-slate-200 dark:border-white/[0.06]">
         <div>
-          <h2 className="panel-title">Homepage Builder</h2>
-          <p className="panel-subtitle">Manage your dynamic homepage layout, banners, and sliders</p>
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-4 bg-red-600 rounded-full shrink-0" />
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
+              Homepage Layout & Dynamic Content Builder
+            </h2>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-neutral-400 m-0 mt-0.5 font-sans">
+            Customize hero banners, promotional sliders, deal carousels, and footer brand identity.
+          </p>
         </div>
       </div>
 
-      {isLoading && <div className="loading-spinner" style={{textAlign:'center', padding:'2rem'}}>Loading...</div>}
+      {isLoading && (
+        <div className="py-12 text-center text-xs text-slate-500 dark:text-neutral-400 font-bold uppercase tracking-wider">
+          Loading Dynamic Homepage Layout...
+        </div>
+      )}
 
-      {/* Changed layout to Flex Column to prevent width mismatch and scrollbars */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', marginTop: '20px' }}>
-        
-        {/* GLOBAL HOMEPAGE SETTINGS */}
-        <div style={{ background: 'var(--admin-panel)', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: '1px solid var(--admin-border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <h3><FaCog /> Global Homepage Settings</h3>
-            <button onClick={handleSaveGlobalSettings} disabled={isSavingGlobal} style={{ padding: '8px 12px', fontSize: '12px', background: 'var(--admin-orange)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <FaSave /> {isSavingGlobal ? 'Saving...' : 'Save Settings'}
-            </button>
+      {/* 1. Global Homepage Settings */}
+      <div className="admin-card-surface bg-white dark:bg-[#161616] p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-white shadow-sm space-y-4">
+        <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-white/[0.06]">
+          <div className="flex items-center gap-2">
+            <IconCog className="text-amber-500 text-sm" />
+            <h3 className="m-0 text-sm sm:text-base font-black text-slate-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
+              Global Homepage Settings
+            </h3>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px', color: 'var(--admin-muted)' }}>Empty Homepage Message</label>
-              <input 
-                type="text" 
-                value={globalSettings.empty_homepage_message} 
-                onChange={e => setGlobalSettings({...globalSettings, empty_homepage_message: e.target.value})}
-                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
-              />
-              <small style={{ color: 'var(--admin-muted)', display: 'block', marginTop: '4px' }}>Text to show if no sections are added.</small>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={handleSaveGlobalSettings}
+            disabled={isSavingGlobal}
+            className="btn-brand-cta px-4 py-2 text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer border-none disabled:opacity-50 active:scale-95"
+          >
+            {isSavingGlobal ? <IconSpinner className="animate-spin text-xs" /> : <IconSave className="text-xs" />}
+            <span>Save Settings</span>
+          </button>
         </div>
 
-        {/* HERO SLIDERS */}
-        <div style={{ background: 'var(--admin-panel)', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: '1px solid var(--admin-border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <h3><FaImage /> Hero Slides</h3>
-            <button onClick={() => openModal('hero')} style={{ padding: '8px 12px', fontSize: '12px', background: 'var(--admin-orange)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-              <FaPlus /> Add Slide
-            </button>
+        <div>
+          <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+            Empty Homepage Fallback Notice
+          </label>
+          <input
+            type="text"
+            value={globalSettings.empty_homepage_message}
+            onChange={(e) => setGlobalSettings({ ...globalSettings, empty_homepage_message: e.target.value })}
+            placeholder="No promotions currently active. Check back soon!"
+            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
+          />
+        </div>
+      </div>
+
+      {/* 2. Hero Static Content Settings */}
+      <HeroTextSettings />
+
+      {/* 3. Hero Carousel Slides */}
+      <div className="admin-card-surface bg-white dark:bg-[#161616] p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-white shadow-sm space-y-4">
+        <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-white/[0.06]">
+          <div className="flex items-center gap-2">
+            <IconImage className="text-amber-500 text-sm" />
+            <h3 className="m-0 text-sm sm:text-base font-black text-slate-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
+              Hero Carousel Slides ({heroSlides.length})
+            </h3>
           </div>
+          <button
+            type="button"
+            onClick={() => openModal('hero')}
+            className="btn-brand-cta px-4 py-2 text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer border-none active:scale-95"
+          >
+            <IconPlus className="text-xs" />
+            <span>Add Slide</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {heroSlides.map((slide) => {
             const isSlideActive = slide.is_active === undefined || Number(slide.is_active) === 1;
             return (
-              <div 
-                key={slide.id} 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '10px', 
-                  marginBottom: '10px', 
-                  border: '1px solid var(--admin-border)', 
-                  background: 'var(--admin-bg)', 
-                  padding: '10px', 
-                  borderRadius: '8px',
-                  opacity: isSlideActive ? 1 : 0.55,
-                  filter: isSlideActive ? 'none' : 'grayscale(40%)',
-                  transition: 'all 0.3s ease'
-                }}
+              <div
+                key={slide.id}
+                className={`admin-card-surface bg-slate-50 dark:bg-[#111111] p-4 rounded-2xl border transition-all flex flex-col justify-between gap-3 text-slate-900 dark:text-white ${
+                  isSlideActive ? 'border-slate-200 dark:border-white/10' : 'border-slate-200 dark:border-white/5 opacity-50'
+                }`}
               >
-                <img src={slide.image_url} alt="hero" style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
-                <div style={{ flex: 1, color: 'var(--admin-text)' }}>
-                  <strong style={{ display: 'block', fontSize: '14px' }}>{slide.title || 'No Title'}</strong>
-                  <small style={{ color: 'var(--admin-muted)' }}>Order: {slide.sort_order}</small>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <button
-                    onClick={() => handleToggleStatus(slide.id, 'hero', isSlideActive ? 1 : 0)}
-                    title={isSlideActive ? "Hide slide" : "Show slide"}
-                    style={{
-                      background: isSlideActive ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                      color: isSlideActive ? '#22c55e' : '#ef4444',
-                      border: `1px solid ${isSlideActive ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
-                      padding: '6px 10px',
-                      borderRadius: '16px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      fontSize: '11px',
-                      fontWeight: '600'
+                <div className="aspect-[21/9] w-full rounded-xl overflow-hidden bg-slate-200 dark:bg-black/60 border border-slate-300 dark:border-white/5 relative">
+                  <img
+                    src={slide.image_url}
+                    alt={slide.title || 'Slide'}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://placehold.co/800x350?text=Hero+Slide';
                     }}
-                  >
-                    {isSlideActive ? <FaToggleOn size={16} /> : <FaToggleOff size={16} />}
-                    <span>{isSlideActive ? 'Active' : 'Hidden'}</span>
-                  </button>
-                  <button onClick={() => handleEdit(slide, 'hero')} style={{ background: 'var(--admin-bg)', color: 'var(--admin-text)', border: '1px solid var(--admin-border)', padding: '8px', borderRadius: '4px', cursor: 'pointer' }}>
-                    <FaEdit />
-                  </button>
-                  <button onClick={() => handleDelete(slide.id, 'hero')} style={{ background: 'var(--admin-bg)', color: '#ef4444', border: '1px solid var(--admin-border)', padding: '8px', borderRadius: '4px', cursor: 'pointer' }}>
-                    <FaTrash />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* HOMEPAGE PROMO BANNERS MASTER CONTROL */}
-        <div style={{ background: 'var(--admin-panel)', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: '1px solid var(--admin-border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <div>
-              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--admin-text)' }}>
-                <FaImage /> Homepage Promo Banners Master Control
-              </h3>
-              <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--admin-muted)' }}>
-                Enable, disable, and order bottom wide promo banners across Deals and Menu Items in one centralized place.
-              </p>
-            </div>
-            <span style={{ fontSize: '11px', fontWeight: 'bold', padding: '4px 10px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-              {([...masterBanners.deals, ...masterBanners.products].filter(b => b.is_featured_banner).length)} Live on Home
-            </span>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '15px' }}>
-            {[...masterBanners.deals, ...masterBanners.products].map((item) => {
-              const isLive = item.is_featured_banner;
-              const bannerImg = item.promo_banner_image || item.img;
-
-              return (
-                <div
-                  key={`${item.type}-${item.id}`}
-                  style={{
-                    border: `1px solid ${isLive ? 'rgba(245, 158, 11, 0.5)' : 'var(--admin-border)'}`,
-                    background: isLive ? 'rgba(245, 158, 11, 0.04)' : 'var(--admin-bg)',
-                    borderRadius: '10px',
-                    padding: '12px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <img
-                      src={bannerImg}
-                      alt={item.name || item.title}
-                      style={{
-                        width: '90px',
-                        height: '55px',
-                        objectFit: 'cover',
-                        borderRadius: '6px',
-                        border: '1px solid var(--admin-border)',
-                        background: '#000'
-                      }}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = 'https://placehold.co/180x110?text=Banner';
-                      }}
-                    />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                        <span style={{
-                          fontSize: '9px',
-                          fontWeight: '800',
-                          padding: '1px 6px',
-                          borderRadius: '4px',
-                          textTransform: 'uppercase',
-                          background: item.type === 'deal' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)',
-                          color: item.type === 'deal' ? '#ef4444' : '#3b82f6'
-                        }}>
-                          {item.type.toUpperCase()}
-                        </span>
-                        <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--admin-orange)' }}>
-                          Rs. {parseFloat(item.price || 0).toLocaleString()}
-                        </span>
-                      </div>
-                      <strong style={{ display: 'block', fontSize: '13px', color: 'var(--admin-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {item.name || item.title}
-                      </strong>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid var(--admin-border)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <label style={{ fontSize: '11px', color: 'var(--admin-muted)', fontWeight: '600' }}>Order:</label>
-                      <input
-                        type="number"
-                        min="0"
-                        defaultValue={item.banner_order || 0}
-                        onBlur={(e) => handleUpdateMasterBannerOrder(item, item.type, e.target.value)}
-                        style={{
-                          width: '50px',
-                          padding: '3px 6px',
-                          fontSize: '11px',
-                          borderRadius: '4px',
-                          border: '1px solid var(--admin-border)',
-                          background: 'var(--admin-panel)',
-                          color: 'var(--admin-text)',
-                          textAlign: 'center'
-                        }}
-                      />
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleToggleMasterBanner(item, item.type)}
-                      style={{
-                        padding: '5px 12px',
-                        fontSize: '11px',
-                        fontWeight: '700',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        border: 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        background: isLive ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                        color: isLive ? '#22c55e' : 'var(--admin-muted)',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      {isLive ? <FaToggleOn size={16} /> : <FaToggleOff size={16} />}
-                      <span>{isLive ? 'Active on Home' : 'Disabled'}</span>
-                    </button>
+                  />
+                  <div className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-lg bg-black/80 backdrop-blur-md text-amber-400 border border-white/10 text-[10px] font-black font-mono">
+                    Order #{slide.sort_order}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* HOMEPAGE SECTIONS */}
-        <div style={{ background: 'var(--admin-panel)', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: '1px solid var(--admin-border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <h3><FaListUl /> Homepage Sections</h3>
-            <button onClick={() => openModal('section')} style={{ padding: '8px 12px', fontSize: '12px', background: 'var(--admin-orange)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-              <FaPlus /> Add Section
-            </button>
-          </div>
-          {sections.map((sec) => {
-            const isSecActive = sec.is_active === undefined || Number(sec.is_active) === 1;
-            return (
-              <div 
-                key={sec.id} 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '15px', 
-                  marginBottom: '10px', 
-                  border: '1px solid var(--admin-border)', 
-                  padding: '15px', 
-                  borderRadius: '8px', 
-                  background: 'var(--admin-bg)', 
-                  color: 'var(--admin-text)',
-                  opacity: isSecActive ? 1 : 0.55,
-                  filter: isSecActive ? 'none' : 'grayscale(40%)',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                <div style={{ background: isSecActive ? 'var(--admin-orange)' : '#64748b', color: '#fff', width: '30px', height: '30px', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: '50%', fontWeight: 'bold', flexShrink: 0 }}>
-                  {sec.sort_order}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <strong style={{ fontSize: '16px' }}>{sec.title || sec.section_type.toUpperCase()}</strong>
-                    {!isSecActive && (
-                      <span style={{ fontSize: '10px', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
-                        HIDDEN
+                <div className="flex justify-between items-center pt-2 border-t border-slate-200 dark:border-white/5">
+                  <div className="min-w-0 pr-2">
+                    <span className="font-extrabold text-sm text-slate-900 dark:text-white block truncate">
+                      {slide.title || 'Untitled Slide'}
+                    </span>
+                    {slide.subtitle && (
+                      <span className="text-[11px] text-slate-500 dark:text-neutral-400 block truncate">
+                        {slide.subtitle}
                       </span>
                     )}
                   </div>
-                  <span style={{ fontSize: '12px', background: 'var(--admin-panel)', padding: '2px 8px', borderRadius: '12px', color: 'var(--admin-muted)', border: '1px solid var(--admin-border)', display: 'inline-block', marginTop: '4px' }}>
-                    {sec.section_type} 
-                    {(() => {
-                      if (sec.section_type === 'banner' && sec.content_data && sec.content_data.startsWith('[')) {
-                        try {
-                          return ` (${JSON.parse(sec.content_data).length} Slides)`;
-                        } catch(e) {
-                          return ' (Dynamic Banner)';
-                        }
-                      }
-                      if (sec.content_data && sec.section_type === 'product_slider') {
-                        if (sec.content_data.startsWith('custom:')) {
-                          return ' (Custom Products)';
-                        }
-                        if (sec.content_data.startsWith('category:')) {
-                          return ` (${sec.content_data.split(':')[1]})`;
-                        }
-                        if (sec.content_data === 'filter:best_sellers') return ' (Best Sellers)';
-                        if (sec.content_data === 'filter:top_deals') return ' (Top Deals)';
-                        
-                        const dataStr = sec.content_data.length > 30 ? sec.content_data.substring(0, 30) + '...' : sec.content_data;
-                        return ` (${dataStr})`;
-                      }
-                    })()}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {/* Active/Inactive Toggle Switch */}
-                  <button
-                    onClick={() => handleToggleStatus(sec.id, 'section', isSecActive ? 1 : 0)}
-                    title={isSecActive ? "Hide section from homepage" : "Show section on homepage"}
-                    style={{
-                      background: isSecActive ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                      color: isSecActive ? '#22c55e' : '#ef4444',
-                      border: `1px solid ${isSecActive ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
-                      padding: '6px 12px',
-                      borderRadius: '20px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    {isSecActive ? <FaToggleOn size={18} /> : <FaToggleOff size={18} />}
-                    <span>{isSecActive ? 'Active' : 'Hidden'}</span>
-                  </button>
 
-                  <button onClick={() => handleEdit(sec, 'section')} style={{ background: 'var(--admin-bg)', color: 'var(--admin-text)', border: '1px solid var(--admin-border)', padding: '10px', borderRadius: '6px', cursor: 'pointer' }}>
-                    <FaEdit />
-                  </button>
-                  <button onClick={() => handleDelete(sec.id, 'section')} style={{ background: 'var(--admin-bg)', color: '#ef4444', border: '1px solid var(--admin-border)', padding: '10px', borderRadius: '6px', cursor: 'pointer' }}>
-                    <FaTrash />
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleStatus(slide.id, 'hero', isSlideActive ? 1 : 0)}
+                      className={`px-3 py-1 !rounded-full text-xs font-bold uppercase tracking-wider border cursor-pointer transition-all ${
+                        isSlideActive
+                          ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                          : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30'
+                      }`}
+                    >
+                      {isSlideActive ? 'Active' : 'Hidden'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(slide, 'hero')}
+                      className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white text-slate-700 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-neutral-950 border border-slate-300 dark:border-white/10 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-sm"
+                      title="Edit Slide"
+                    >
+                      <IconEdit className="text-xs" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(slide.id, 'hero')}
+                      className="w-8 h-8 rounded-xl bg-red-500/10 hover:bg-red-600 text-red-500 dark:text-red-400 hover:text-white border border-red-500/20 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-sm"
+                      title="Delete Slide"
+                    >
+                      <IconTrash className="text-xs" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 4. Homepage Promo Banners Master Control */}
+      <div className="admin-card-surface bg-white dark:bg-[#161616] p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-white shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-200 dark:border-white/[0.06]">
+          <div>
+            <div className="flex items-center gap-2">
+              <IconImage className="text-amber-500 text-sm" />
+              <h3 className="m-0 text-sm sm:text-base font-black text-slate-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
+                Homepage Promo Banners Master Control
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-neutral-400 m-0 mt-0.5">
+              Activate food item & combo cards as wide bottom promotional banners on homepage.
+            </p>
+          </div>
+
+          <span className="px-3 py-1 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-black text-xs">
+            {([...masterBanners.deals, ...masterBanners.products].filter((b) => b.is_featured_banner).length)} Live on Home
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[...masterBanners.deals, ...masterBanners.products].map((item) => {
+            const isLive = Boolean(item.is_featured_banner);
+            const bannerImg = item.promo_banner_image || item.img;
+
+            return (
+              <div
+                key={`${item.type}-${item.id}`}
+                className={`admin-card-surface bg-white dark:bg-[#161616] p-3.5 rounded-2xl border transition-all flex flex-col justify-between gap-3 text-slate-900 dark:text-white shadow-sm ${
+                  isLive ? 'border-amber-500/40 bg-amber-500/[0.03]' : 'border-slate-200 dark:border-white/5'
+                }`}
+              >
+                <div className="flex gap-3 items-center">
+                  <img
+                    src={bannerImg}
+                    alt={item.name || item.title}
+                    className="w-16 h-12 object-cover rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black shrink-0"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://placehold.co/180x110?text=Banner';
+                    }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span
+                        className={`text-[9px] font-black uppercase px-2.5 py-0.5 !rounded-full ${
+                          item.type === 'deal'
+                            ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30'
+                            : 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30'
+                        }`}
+                      >
+                        {item.type}
+                      </span>
+                      <span className="text-[11px] font-black text-amber-600 dark:text-amber-400">
+                        Rs. {parseFloat(item.price || 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <strong className="font-extrabold text-xs text-slate-900 dark:text-white block truncate">
+                      {item.name || item.title}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-2.5 border-t border-slate-200 dark:border-white/5">
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-neutral-400">
+                    <span className="text-[10px] font-bold">Order:</span>
+                    <input
+                      type="number"
+                      min="0"
+                      defaultValue={item.banner_order || 0}
+                      onBlur={(e) => handleUpdateMasterBannerOrder(item, item.type, e.target.value)}
+                      className="w-12 p-1 bg-slate-100 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-lg text-center text-xs font-mono"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleToggleMasterBanner(item, item.type)}
+                    className={`px-3 py-1 !rounded-full text-xs font-bold uppercase tracking-wider border cursor-pointer transition-all ${
+                      isLive
+                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                        : 'bg-slate-200 dark:bg-neutral-500/15 text-slate-600 dark:text-neutral-400 border-slate-300 dark:border-neutral-500/30'
+                    }`}
+                  >
+                    {isLive ? 'Active' : 'Disabled'}
                   </button>
                 </div>
               </div>
             );
           })}
         </div>
+      </div>
 
-        {/* FOOTER SETTINGS INTEGRATION */}
-        <div style={{ background: 'var(--admin-panel)', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: '1px solid var(--admin-border)' }}>
-          <FooterSettings />
+      {/* 5. Dynamic Homepage Sections */}
+      <div className="admin-card-surface bg-white dark:bg-[#161616] p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-white shadow-sm space-y-4">
+        <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-white/[0.06]">
+          <div className="flex items-center gap-2">
+            <IconListUl className="text-amber-500 text-sm" />
+            <h3 className="m-0 text-sm sm:text-base font-black text-slate-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
+              Homepage Dynamic Sections ({sections.length})
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={() => openModal('section')}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-md shadow-amber-500/20 border-none"
+          >
+            <IconPlus className="text-xs" />
+            <span>Add Section</span>
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {sections.map((sec) => {
+            const isSecActive = sec.is_active === undefined || Number(sec.is_active) === 1;
+            return (
+              <div
+                key={sec.id}
+                className={`admin-card-surface bg-slate-50 dark:bg-[#111111] p-4 rounded-2xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                  isSecActive ? 'border-slate-200 dark:border-white/10' : 'border-slate-200 dark:border-white/5 opacity-50'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center font-black text-xs shrink-0 font-mono">
+                    {sec.sort_order}
+                  </div>
+                  <div className="min-w-0">
+                    <span className="font-extrabold text-sm text-slate-900 dark:text-white block truncate">
+                      {sec.title || sec.section_type.toUpperCase()}
+                    </span>
+                    <span className="text-[10px] text-slate-500 dark:text-neutral-400 uppercase font-semibold block">
+                      Type: {sec.section_type}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleStatus(sec.id, 'section', isSecActive ? 1 : 0)}
+                    className={`px-3 py-1 !rounded-full text-xs font-bold uppercase tracking-wider border cursor-pointer transition-all ${
+                      isSecActive
+                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                        : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30'
+                    }`}
+                  >
+                    {isSecActive ? 'Active' : 'Hidden'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(sec, 'section')}
+                    className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white text-slate-700 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-neutral-950 border border-slate-300 dark:border-white/10 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-sm"
+                    title="Edit Section"
+                  >
+                    <IconEdit className="text-xs" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(sec.id, 'section')}
+                    className="w-8 h-8 rounded-xl bg-red-500/10 hover:bg-red-600 text-red-500 dark:text-red-400 hover:text-white border border-red-500/20 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-sm"
+                    title="Delete Section"
+                  >
+                    <IconTrash className="text-xs" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* ADD MODAL */}
+      {/* 6. Footer Settings Integration */}
+      <FooterSettings />
+
+      {/* ADD / EDIT COMPONENT MODAL */}
       {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h3>{editId ? 'Edit' : 'Add'} {modalType === 'hero' ? 'Hero Slide' : 'Homepage Section'}</h3>
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
-              
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-md flex justify-center items-center p-3 sm:p-5 z-[99999]"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            className="admin-card-surface w-full max-w-lg bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-3xl p-5 sm:p-7 shadow-2xl relative animate-slide-up max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center pb-4 mb-5 border-b border-slate-200 dark:border-white/[0.06]">
+              <div className="flex items-center gap-2.5">
+                <span className="w-1.5 h-5 bg-amber-500 rounded-full" />
+                <h3 className="m-0 text-base sm:text-lg font-black text-slate-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
+                  {editId ? 'Edit' : 'Add'} {modalType === 'hero' ? 'Hero Slide' : 'Homepage Section'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center border-none cursor-pointer"
+                onClick={() => setIsModalOpen(false)}
+              >
+                <IconTimes className="text-sm" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSave} className="space-y-4">
               {modalType === 'section' && (
                 <div>
-                  <label>Section Type</label>
-                  <select 
-                    value={formData.section_type} 
-                    onChange={e => setFormData({...formData, section_type: e.target.value})}
-                    style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '5px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
+                  <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+                    Section Type *
+                  </label>
+                  <select
+                    value={formData.section_type}
+                    onChange={(e) => setFormData({ ...formData, section_type: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
                   >
-                    <option value="product_slider">Product Slider</option>
-                    <option value="banner">Promotional Banner</option>
-                    <option value="explore_menu">Explore Menu (Categories bubbles)</option>
-                    <option value="hero">Hero Slider Component</option>
+                    <option className="bg-white dark:bg-[#171717]" value="product_slider">Product Slider</option>
+                    <option className="bg-white dark:bg-[#171717]" value="banner">Promotional Banner</option>
+                    <option className="bg-white dark:bg-[#171717]" value="explore_menu">Explore Menu (Categories bubbles)</option>
+                    <option className="bg-white dark:bg-[#171717]" value="hero">Hero Slider Component</option>
                   </select>
                 </div>
               )}
 
               <div>
-                <label>Section Title (Heading on Website)</label>
-                <input 
-                  type="text" 
-                  value={formData.title} 
-                  onChange={e => setFormData({...formData, title: e.target.value})} 
-                  placeholder="e.g. TOP DEALS"
-                  style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '5px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
+                <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+                  Section Heading *
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="e.g. TOP DEALS, BEST SELLERS"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
                   required
                 />
               </div>
 
               {modalType === 'section' && formData.section_type !== 'banner' && (
                 <div>
-                  <label>Button Text / Subtitle (e.g. "VIEW ALL")</label>
-                  <input 
-                    type="text" 
-                    value={formData.subtitle} 
-                    onChange={e => setFormData({...formData, subtitle: e.target.value})} 
-                    placeholder="e.g. Explore All Deals"
-                    style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '5px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
+                  <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+                    Button Text / Subtitle
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.subtitle}
+                    onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                    placeholder="e.g. View All Deals"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
                   />
                 </div>
               )}
 
-              {/* Only show these fields if it's Hero Slide */}
               {modalType === 'hero' && (
                 <>
                   <div>
-                    <label>Subtitle</label>
-                    <input 
-                      type="text" 
-                      value={formData.subtitle} 
-                      onChange={e => setFormData({...formData, subtitle: e.target.value})} 
-                      style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '5px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                      <span>Image Upload {editId && <small> (Leave blank to keep existing image)</small>}</span>
-                      <span style={{ color: 'var(--admin-orange)', fontSize: '11px', fontStyle: 'italic' }}>(Recommended: 1920x600 or 28:9 Ratio)</span>
+                    <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+                      Subtitle / Tagline
                     </label>
-                    <input 
-                      type="file" 
-                      className="styled-file-input"
-                      onChange={e => setFormData({...formData, file: e.target.files[0]})} 
-                      required={!editId}
+                    <input
+                      type="text"
+                      value={formData.subtitle}
+                      onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                      placeholder="e.g. Hot & Fresh Pizza Bundles"
+                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
                     />
                   </div>
+
                   <div>
-                    <label>Link / Action</label>
-                    {renderLinkInput(formData.link_url, val => setFormData({...formData, link_url: val}))}
+                    <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+                      Banner Image {editId && <span className="text-[10px] text-slate-400 dark:text-neutral-500">(Leave blank to keep existing)</span>}
+                    </label>
+                    <input
+                      type="file"
+                      onChange={(e) => setFormData({ ...formData, file: e.target.files[0] })}
+                      required={!editId}
+                      className="w-full p-2.5 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+                      Link / Target Action
+                    </label>
+                    {renderLinkInput(formData.link_url, (val) => setFormData({ ...formData, link_url: val }))}
                   </div>
                 </>
               )}
 
               {/* Dynamic Slides for Banner Section */}
               {modalType === 'section' && formData.section_type === 'banner' && (
-                <div style={{ padding: '15px', border: '1px solid var(--admin-border)', borderRadius: '8px', background: 'var(--admin-panel)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <h4 style={{ margin: 0 }}>Banner Slides</h4>
-                    <button type="button" onClick={() => setBannerSlides([...bannerSlides, { title: '', subtitle: '', link_url: '', file: null, image_url: '' }])} style={{ padding: '6px 12px', fontSize: '12px', background: 'var(--admin-orange)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                      <FaPlus /> Add Slide
+                <div className="p-4 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/10 space-y-3">
+                  <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-white/10">
+                    <h4 className="text-xs font-bold uppercase text-slate-900 dark:text-white m-0">Banner Slides</h4>
+                    <button
+                      type="button"
+                      onClick={() => setBannerSlides([...bannerSlides, { title: '', subtitle: '', link_url: '', file: null, image_url: '' }])}
+                      className="btn-brand-cta px-3 py-1 text-[10px] uppercase tracking-wider cursor-pointer border-none"
+                    >
+                      + Add Slide
                     </button>
                   </div>
 
                   {bannerSlides.map((slide, index) => (
-                    <div key={index} style={{ marginBottom: '15px', padding: '15px', border: '1px dashed var(--admin-border)', borderRadius: '6px', position: 'relative' }}>
+                    <div key={index} className="p-3 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 space-y-2 relative shadow-sm">
                       {bannerSlides.length > 1 && (
-                        <button type="button" onClick={() => {
-                          const newSlides = [...bannerSlides];
-                          newSlides.splice(index, 1);
-                          setBannerSlides(newSlides);
-                        }} style={{ position: 'absolute', top: '10px', right: '10px', background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
-                          <FaTrash />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newSlides = [...bannerSlides];
+                            newSlides.splice(index, 1);
+                            setBannerSlides(newSlides);
+                          }}
+                          className="absolute top-2 right-2 text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 cursor-pointer bg-transparent border-none"
+                        >
+                          <IconTrash className="text-xs" />
                         </button>
                       )}
-                      
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
-                          <label style={{ fontSize: '12px' }}>Slide Title</label>
-                          <input type="text" value={slide.title} onChange={e => {
-                            const newSlides = [...bannerSlides];
-                            newSlides[index].title = e.target.value;
-                            setBannerSlides(newSlides);
-                          }} style={{ width: '100%', padding: '8px', marginTop: '4px', borderRadius: '4px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }} />
+                          <label className="text-[10px] font-bold text-slate-600 dark:text-neutral-400 block mb-1">Slide Title</label>
+                          <input
+                            type="text"
+                            value={slide.title}
+                            onChange={(e) => {
+                              const newSlides = [...bannerSlides];
+                              newSlides[index].title = e.target.value;
+                              setBannerSlides(newSlides);
+                            }}
+                            className="w-full p-2 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-lg text-xs"
+                          />
                         </div>
                         <div>
-                          <label style={{ fontSize: '12px' }}>Slide Subtitle</label>
-                          <input type="text" value={slide.subtitle} onChange={e => {
-                            const newSlides = [...bannerSlides];
-                            newSlides[index].subtitle = e.target.value;
-                            setBannerSlides(newSlides);
-                          }} style={{ width: '100%', padding: '8px', marginTop: '4px', borderRadius: '4px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }} />
+                          <label className="text-[10px] font-bold text-slate-600 dark:text-neutral-400 block mb-1">Slide Subtitle</label>
+                          <input
+                            type="text"
+                            value={slide.subtitle}
+                            onChange={(e) => {
+                              const newSlides = [...bannerSlides];
+                              newSlides[index].subtitle = e.target.value;
+                              setBannerSlides(newSlides);
+                            }}
+                            className="w-full p-2 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-lg text-xs"
+                          />
                         </div>
-                        <div style={{ gridColumn: '1 / span 2' }}>
-                          <label style={{ fontSize: '12px' }}>Link / Action</label>
-                          {renderLinkInput(slide.link_url, val => {
-                            const newSlides = [...bannerSlides];
-                            newSlides[index].link_url = val;
-                            setBannerSlides(newSlides);
-                          }, true)}
+                        <div className="sm:col-span-2">
+                          <label className="text-[10px] font-bold text-slate-600 dark:text-neutral-400 block mb-1">Target Action</label>
+                          {renderLinkInput(
+                            slide.link_url,
+                            (val) => {
+                              const newSlides = [...bannerSlides];
+                              newSlides[index].link_url = val;
+                              setBannerSlides(newSlides);
+                            },
+                            true
+                          )}
                         </div>
-                        <div style={{ gridColumn: '1 / span 2' }}>
-                          <label style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}>
-                            Image Upload
-                            <span style={{ color: 'var(--admin-orange)', fontStyle: 'italic' }}>(Recommended: 1920x800 or 24:9 Ratio)</span>
-                          </label>
-                          {slide.image_url && <small style={{ display: 'block', color: 'green', marginBottom: '2px' }}>Existing image active</small>}
-                          <input type="file" className="styled-file-input" onChange={e => {
-                            const newSlides = [...bannerSlides];
-                            newSlides[index].file = e.target.files[0];
-                            setBannerSlides(newSlides);
-                          }} required={!slide.image_url} />
+                        <div className="sm:col-span-2">
+                          <label className="text-[10px] font-bold text-slate-600 dark:text-neutral-400 block mb-1">Upload Slide Banner Image</label>
+                          <input
+                            type="file"
+                            onChange={(e) => {
+                              const newSlides = [...bannerSlides];
+                              newSlides[index].file = e.target.files[0];
+                              setBannerSlides(newSlides);
+                            }}
+                            required={!slide.image_url}
+                            className="w-full p-2 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-lg text-xs"
+                          />
                         </div>
                       </div>
                     </div>
@@ -1045,82 +1098,92 @@ const HomepageBuilder = () => {
               )}
 
               {modalType === 'section' && formData.section_type === 'product_slider' && (
-                <>
-                  <div>
-                    <label>Data Source (Content)</label>
-                  <select 
-                    value={formData.content_data} 
-                    onChange={e => setFormData({...formData, content_data: e.target.value})}
-                    style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '5px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
+                <div>
+                  <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+                    Data Source (Catalog Items)
+                  </label>
+                  <select
+                    value={formData.content_data}
+                    onChange={(e) => setFormData({ ...formData, content_data: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
                   >
-                    <option value="filter:best_sellers">Best Sellers</option>
-                    <option value="filter:top_deals">Top Deals & Combos</option>
-                    <option value="custom_selection">Custom Selection (Select Manually)</option>
-                    {categories.map(c => (
-                      <option key={c.id} value={`category:${c.name}`}>Category: {c.name}</option>
+                    <option className="bg-white dark:bg-[#171717]" value="filter:best_sellers">Best Sellers</option>
+                    <option className="bg-white dark:bg-[#171717]" value="filter:top_deals">Top Deals & Combos</option>
+                    <option className="bg-white dark:bg-[#171717]" value="custom_selection">Custom Selection (Select Manually)</option>
+                    {categories.map((c) => (
+                      <option className="bg-white dark:bg-[#171717]" key={c.id} value={`category:${c.name}`}>
+                        Category: {c.name}
+                      </option>
                     ))}
                   </select>
 
                   {formData.content_data === 'custom_selection' && (
-                    <div style={{ marginTop: '15px', background: 'var(--admin-bg)', border: '1px solid var(--admin-border)', borderRadius: '5px', padding: '10px', maxHeight: '200px', overflowY: 'auto' }}>
-                      <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Select Products for Slider:</label>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                        {menuItems.map(item => (
-                          <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
-                            <input 
-                              type="checkbox" 
-                              checked={selectedProductIds.includes(parseInt(item.id))}
-                              onChange={() => handleProductSelect(parseInt(item.id))}
-                            />
-                            {item.name}
-                          </label>
-                        ))}
+                    <div className="p-3 mt-2 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl space-y-2 max-h-48 overflow-y-auto">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase block">Check Items to Include:</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        {menuItems.map((item) => {
+                          const isSelected = selectedProductIds.includes(item.id);
+                          return (
+                            <label
+                              key={item.id}
+                              onClick={() => handleProductSelect(item.id)}
+                              className={`flex items-center gap-2 p-2 rounded-lg text-xs cursor-pointer border transition-colors ${
+                                isSelected
+                                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400 font-bold'
+                                  : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-700 dark:text-neutral-300'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {}}
+                                className="accent-amber-500"
+                              />
+                              <span className="truncate">{item.name}</span>
+                            </label>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
-                  </div>
-                </>
+                </div>
               )}
 
               <div>
-                <label>Sort Order</label>
-                <input 
-                  type="number" 
+                <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+                  Display Sort Order
+                </label>
+                <input
+                  type="number"
                   min="1"
-                  max={modalType === 'hero' ? Math.max(heroSlides.length + (editId ? 0 : 1), 1) : Math.max(sections.length + (editId ? 0 : 1), 1)}
-                  value={formData.sort_order} 
-                  onChange={e => {
-                    let val = parseInt(e.target.value);
-                    if (isNaN(val)) val = 1;
-                    if (val < 1) val = 1;
-                    
-                    const maxAllowed = modalType === 'hero' 
-                      ? Math.max(heroSlides.length + (editId ? 0 : 1), 1) 
-                      : Math.max(sections.length + (editId ? 0 : 1), 1);
-                      
-                    if (val > maxAllowed) val = maxAllowed;
-                    
-                    setFormData({...formData, sort_order: val});
-                  }} 
-                  style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '5px', border: '1px solid var(--admin-border)', background: 'var(--admin-bg)', color: 'var(--admin-text)' }}
+                  value={formData.sort_order}
+                  onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 1 })}
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-bold focus:outline-none focus:border-amber-500"
                   required
                 />
-                <small style={{ color: 'var(--admin-muted)', display: 'block', marginTop: '4px' }}>
-                  Position order (1 to {modalType === 'hero' ? Math.max(heroSlides.length + (editId ? 0 : 1), 1) : Math.max(sections.length + (editId ? 0 : 1), 1)})
-                </small>
               </div>
 
-              <div className="modal-actions" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                <button type="button" onClick={() => setIsModalOpen(false)} style={{ flex: 1, padding: '10px', background: 'var(--admin-panel)', color: 'var(--admin-text)', border: '1px solid var(--admin-border)', borderRadius: '4px', cursor: 'pointer' }}>Cancel</button>
-                <button type="submit" style={{ flex: 1, padding: '10px', background: 'var(--admin-orange)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }} disabled={isLoading}>
-                  {isLoading ? 'Saving...' : 'Save Component'}
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-white/[0.06]">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-white/10 text-xs font-bold uppercase tracking-wider cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingComponent}
+                  className="btn-brand-cta px-5 py-2.5 text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer border-none disabled:opacity-50 active:scale-95"
+                >
+                  {isSavingComponent ? <IconSpinner className="animate-spin text-xs" /> : <IconSave className="text-xs" />}
+                  <span>Save Component</span>
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
     </div>
   );
 };

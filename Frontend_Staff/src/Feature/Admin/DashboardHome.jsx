@@ -1,21 +1,38 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   FaDollarSign,
   FaShoppingBag,
   FaUtensils,
   FaUsers,
   FaEye,
+  FaClock,
 } from "react-icons/fa";
-
+import { useQuery } from "@tanstack/react-query";
 import OrderReceiptModal from "./Components/Orders/Components/OrderReceiptModal";
 
-import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+const getStatusBadge = (status) => {
+  const s = (status || "").toLowerCase();
+  switch (s) {
+    case "completed":
+    case "delivered":
+      return "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30";
+    case "pending":
+      return "bg-amber-500/15 text-amber-400 border border-amber-500/30";
+    case "cooking":
+    case "preparing":
+      return "bg-orange-500/15 text-orange-400 border border-orange-500/30";
+    case "ready":
+      return "bg-blue-500/15 text-blue-400 border border-blue-500/30";
+    case "cancelled":
+    case "declined":
+      return "bg-rose-500/15 text-rose-400 border border-rose-500/30";
+    default:
+      return "bg-neutral-500/15 text-neutral-400 border border-neutral-500/30";
+  }
+};
 
-// 🔥 Yahan humne setActiveTab ko receive kar liya hai
 const DashboardHome = ({ setActiveTab }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
-
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [selectedOrderToView, setSelectedOrderToView] = useState(null);
 
@@ -91,7 +108,6 @@ const DashboardHome = ({ setActiveTab }) => {
   }, [allOrders]);
 
   const recentOrders = sortedOrders.slice(0, 10);
-  const totalSales = useMemo(() => allOrders.reduce((sum, order) => sum + order.total, 0), [allOrders]);
   const totalCustomers = useMemo(() => new Set(allOrders.map(o => o.customerName.toLowerCase().trim())).size, [allOrders]);
   const menuItemsCount = menuData.length;
 
@@ -102,134 +118,186 @@ const DashboardHome = ({ setActiveTab }) => {
     return "Good Evening";
   };
 
-  // 🔥 Yahan string tab ka naam de diya hai jo aapke switch statement mein hai
   const statsData = [
     {
       title: "Today's Profit",
-      value: `Rs ${profitData.gross_profit.toLocaleString()}`,
+      value: `Rs. ${profitData.gross_profit.toLocaleString()}`,
       icon: <FaDollarSign />,
-      change: `Revenue: Rs ${profitData.revenue.toLocaleString()}`,
-      colorClass: "card-green",
-      iconClass: <FaDollarSign />,
-      tabName: "analytics",
+      change: `Revenue: Rs. ${profitData.revenue.toLocaleString()}`,
+      accent: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+      tabName: "profit",
     },
     {
       title: "Total Orders",
       value: allOrders.length.toLocaleString(),
       icon: <FaShoppingBag />,
-      change: "All time",
-      colorClass: "card-blue",
-      iconClass: <FaShoppingBag />,
-      tabName: "orders", // 👈 AdminDashboard ke switch case ka naam
+      change: "All-time volume",
+      accent: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+      tabName: "orders",
     },
     {
-      title: "Active Items",
+      title: "Active Products",
       value: menuItemsCount,
       icon: <FaUtensils />,
-      change: "Menu Products",
-      colorClass: "card-red",
-      iconClass: <FaUtensils />,
-      tabName: "menu", // 👈 AdminDashboard ke switch case ka naam
+      change: "Menu catalog",
+      accent: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+      tabName: "menu",
     },
     {
-      title: "Customers",
+      title: "Unique Customers",
       value: totalCustomers.toLocaleString(),
       icon: <FaUsers />,
-      change: "Unique buyers",
-      colorClass: "card-green",
-      iconClass: <FaUsers />,
-      tabName: "analytics", // 👈 AdminDashboard ke switch case ka naam
+      change: "Direct buyers",
+      accent: "text-purple-400 bg-purple-500/10 border-purple-500/20",
+      tabName: "staff",
     },
   ];
 
   return (
-    <>
-      <div className="bg-gradient-to-r from-red-500 to-[#b71c1c] p-[1.563rem] rounded-[1rem] flex flex-col md:flex-row justify-between items-start md:items-center mb-[1.875rem] relative overflow-hidden gap-[0.938rem] md:gap-0 before:content-[''] before:absolute before:left-0 before:top-0 before:w-[0.375rem] before:h-full before:bg-[var(--admin-yellow)]">
-        <div className="pl-[0.375rem]">
-          <h2 className="text-white m-0 text-[1.625rem]">{getGreeting()}, Admin! 👋</h2>
-          <p className="text-[#e0e0e0] mt-[0.313rem] mb-0">Here's what's happening in your restaurant today.</p>
-        </div>
-        <div className="text-left md:text-right">
-          <span className="text-[var(--admin-yellow)] font-bold text-[1.25rem] block">
-            {currentTime.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+    <div className="space-y-5 animate-slide-up">
+      {/* 1. Modern Welcome Hero Card */}
+      <div className="bg-[var(--panel-bg)] border border-[var(--border-subtle)] p-5 sm:p-6 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden shadow-sm">
+        <div className="relative z-10">
+          <span className="inline-block text-[11px] font-extrabold uppercase tracking-widest text-amber-500 bg-amber-500/10 px-3 py-1 rounded-full mb-2 border border-amber-500/20">
+            BigBite Restaurant Operations
           </span>
-          <span className="text-white block">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-[var(--text-primary)] m-0 font-['Oswald',sans-serif] tracking-wide">
+            {getGreeting()}, Admin! 👋
+          </h2>
+          <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 mb-0 font-sans">
+            Here's the live overview and operational activity for today.
+          </p>
+        </div>
+
+        <div className="text-left md:text-right relative z-10 p-3 rounded-xl bg-[var(--input-bg)] border border-[var(--border-subtle)]">
+          <div className="text-amber-500 font-black text-base sm:text-lg font-mono flex items-center md:justify-end gap-1.5">
+            <FaClock className="text-xs" />
+            <span>
+              {currentTime.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })}
+            </span>
+          </div>
+          <span className="text-xs text-[var(--text-secondary)] block font-semibold mt-0.5">
             {currentTime.toLocaleDateString(undefined, {
               weekday: "long",
               day: "numeric",
               month: "long",
+              year: "numeric",
             })}
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[1.25rem] mb-[1.875rem] animate-slide-up">
+      {/* 2. Key Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statsData.map((stat, index) => (
           <div
             key={index}
-            className="bg-[var(--admin-panel)] p-[1.25rem] rounded-[1rem] flex items-center gap-[1.25rem] transition-all duration-300 relative overflow-hidden shadow-[var(--shadow-glow)] hover:-translate-y-[5px] hover:border-[var(--admin-orange)] hover:shadow-[var(--shadow-glow)] group cursor-pointer"
-            onClick={() => setActiveTab(stat.tabName)} // 🔥 Yahan activeTab update ho raha hai
+            className="bg-[var(--panel-bg)] border border-[var(--border-subtle)] p-4 sm:p-5 rounded-2xl flex items-center gap-4 transition-all duration-200 hover:border-amber-500/40 hover:-translate-y-0.5 shadow-sm group cursor-pointer"
+            onClick={() => setActiveTab(stat.tabName)}
           >
-            <div className="w-[3.75rem] h-[3.75rem] bg-[rgba(239,68,68,0.1)] text-[var(--admin-orange)] rounded-[0.75rem] flex items-center justify-center text-[1.75rem] z-[2] shrink-0">{stat.icon}</div>
-            <div className="z-[2] relative">
-              <h3 className="m-0 mb-[0.313rem] text-[1.625rem] font-extrabold text-[var(--admin-text)] relative">{stat.value}</h3>
-              <p className="m-0 text-[#888] text-[0.875rem] font-semibold uppercase relative">{stat.title}</p>
-              <small className="text-[var(--admin-muted)] text-[0.75rem]">{stat.change}</small>
+            <div
+              className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg shrink-0 border ${stat.accent}`}
+            >
+              {stat.icon}
             </div>
-            <div className="absolute -right-[1.25rem] -bottom-[1.25rem] text-[6.25rem] opacity-5 text-[var(--admin-text)] -rotate-12 pointer-events-none z-[1]">{stat.iconClass}</div>
+            <div className="min-w-0">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--text-secondary)] block truncate">
+                {stat.title}
+              </span>
+              <h3 className="text-lg sm:text-xl font-black text-[var(--text-primary)] m-0 mt-0.5 font-mono truncate">
+                {stat.value}
+              </h3>
+              <span className="text-[10px] text-[var(--text-secondary)] block font-semibold mt-0.5 truncate">
+                {stat.change}
+              </span>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="animate-slide-up">
-        <div className="text-[1.25rem] font-bold mb-[0.938rem] border-l-4 border-red-500 pl-[0.625rem] text-[var(--admin-text)]">Recent Live Orders (Last 10)</div>
-        <div className="bg-[var(--admin-panel)] rounded-[1rem] p-[1.25rem] overflow-x-auto shadow-[var(--shadow-glow)]">
-          <table className="w-full border-collapse min-w-[37.5rem] text-left">
+      {/* 3. Recent Live Orders Table */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="w-1.5 h-4 bg-red-600 rounded-full shrink-0" />
+          <h3 className="text-base sm:text-lg font-black text-[var(--text-primary)] font-['Oswald',sans-serif] uppercase tracking-wide m-0">
+            Recent Live Orders (Last 10)
+          </h3>
+        </div>
+
+        <div className="bg-[var(--panel-bg)] border border-[var(--border-subtle)] rounded-2xl p-3 sm:p-4 overflow-x-auto shadow-sm">
+          <table className="w-full border-collapse min-w-[640px] text-left">
             <thead>
-              <tr className="bg-[rgba(255,255,255,0.05)] text-[var(--admin-text)] rounded-lg uppercase text-[0.875rem] tracking-[1px]">
-                <th className="p-[0.938rem]">ID</th>
-                <th className="p-[0.938rem]">Customer</th>
-                <th className="p-[0.938rem]">Items</th>
-                <th className="p-[0.938rem]">Total</th>
-                <th className="p-[0.938rem]">Status</th>
-                <th className="p-[0.938rem]">Action</th>
+              <tr className="border-b border-[var(--border-subtle)] bg-[var(--table-header-bg)]">
+                <th className="p-3 text-[var(--text-primary)] text-[11px] uppercase font-bold tracking-wider">
+                  Order ID
+                </th>
+                <th className="p-3 text-[var(--text-primary)] text-[11px] uppercase font-bold tracking-wider">
+                  Customer
+                </th>
+                <th className="p-3 text-[var(--text-primary)] text-[11px] uppercase font-bold tracking-wider">
+                  Items Summary
+                </th>
+                <th className="p-3 text-[var(--text-primary)] text-[11px] uppercase font-bold tracking-wider">
+                  Total
+                </th>
+                <th className="p-3 text-[var(--text-primary)] text-[11px] uppercase font-bold tracking-wider">
+                  Status
+                </th>
+                <th className="p-3 text-[var(--text-primary)] text-[11px] uppercase font-bold tracking-wider text-right">
+                  Action
+                </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-[var(--border-subtle)]">
               {recentOrders.length > 0 ? (
                 recentOrders.map((order) => (
-                  <tr key={order.id} className="border-b border-[var(--admin-border)] transition-colors duration-300 hover:bg-[rgba(255,255,255,0.02)]">
-                    <td className="p-[0.938rem]">
-                      <b className="text-[var(--admin-text)]">{order.id}</b>
+                  <tr
+                    key={order.id}
+                    className="hover:bg-[var(--table-row-hover)] transition-colors"
+                  >
+                    <td className="p-3 text-xs font-black text-amber-500 align-middle font-mono">
+                      {order.id}
                     </td>
-                    <td className="p-[0.938rem] text-[var(--admin-text)]">{order.customerName}</td>
-                    <td
-                      className="p-[0.938rem] text-[var(--admin-muted)] max-w-[12.5rem] whitespace-nowrap overflow-hidden text-ellipsis"
-                    >
-                      {order.items.map((i) => `${i.qty}x ${i.name}`).join(", ")}
+                    <td className="p-3 text-xs text-[var(--text-primary)] align-middle">
+                      <span className="font-extrabold block truncate max-w-[130px]">
+                        {order.customerName}
+                      </span>
+                      <span className="text-[10px] text-[var(--text-secondary)] uppercase font-semibold">
+                        {order.type}
+                      </span>
                     </td>
-                    <td
-                      className="p-[0.938rem] text-[var(--admin-orange)] font-bold"
-                    >
-                      Rs. {order.total}
+                    <td className="p-3 text-xs text-[var(--text-secondary)] align-middle max-w-[200px]">
+                      <span className="line-clamp-1">
+                        {order.items.map((i) => `${i.qty}x ${i.name}`).join(", ")}
+                      </span>
                     </td>
-                    <td className="p-[0.938rem]">
-                      <span className={`inline-block px-[0.625rem] py-[0.25rem] rounded-[1.25rem] text-[0.75rem] font-bold uppercase tracking-[1px] ${order.status === 'completed' ? 'bg-[rgba(34,197,94,0.15)] text-green-500' : order.status === 'pending' ? 'bg-[rgba(234,179,8,0.15)] text-yellow-500' : 'bg-[rgba(59,130,246,0.15)] text-blue-500'}`}>
+                    <td className="p-3 text-xs font-black text-[var(--text-primary)] align-middle font-mono">
+                      Rs. {order.total.toLocaleString()}
+                    </td>
+                    <td className="p-3 align-middle">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider inline-block ${getStatusBadge(
+                          order.status
+                        )}`}
+                      >
                         {order.status}
                       </span>
                     </td>
-                    <td className="p-[0.938rem]">
+                    <td className="p-3 align-middle text-right">
                       <button
-                        className="bg-transparent text-[var(--admin-text)] px-[0.938rem] py-[0.375rem] rounded-[0.313rem] cursor-pointer transition-all duration-300 flex items-center gap-[0.313rem] text-[0.875rem] hover:bg-white hover:text-black"
+                        type="button"
+                        className="px-3 py-1.5 rounded-xl bg-[var(--input-bg)] hover:bg-amber-500 hover:text-neutral-950 text-[var(--text-primary)] border border-[var(--border-subtle)] text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
                         onClick={() => {
                           setSelectedOrderToView(order);
                           setIsReceiptModalOpen(true);
                         }}
                       >
-                        <FaEye /> View
+                        <FaEye className="text-[11px]" />
+                        <span>View</span>
                       </button>
                     </td>
                   </tr>
@@ -238,9 +306,9 @@ const DashboardHome = ({ setActiveTab }) => {
                 <tr>
                   <td
                     colSpan="6"
-                    className="text-center p-[1.25rem] text-[#888]"
+                    className="p-8 text-center text-xs text-[var(--text-secondary)] font-bold uppercase tracking-wider"
                   >
-                    No orders found.
+                    No recent orders found today.
                   </td>
                 </tr>
               )}
@@ -254,7 +322,7 @@ const DashboardHome = ({ setActiveTab }) => {
         order={selectedOrderToView}
         onClose={() => setIsReceiptModalOpen(false)}
       />
-    </>
+    </div>
   );
 };
 

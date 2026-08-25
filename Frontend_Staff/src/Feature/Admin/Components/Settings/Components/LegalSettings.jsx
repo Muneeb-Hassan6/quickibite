@@ -182,13 +182,13 @@ const LegalSettings = () => {
   return (
     <div className="flex flex-col gap-6">
       {/* ══ Header & Save Action Bar ══ */}
-      <div className="bg-[var(--admin-panel)] border border-[rgba(255,255,255,0.05)] rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="admin-card-surface bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] rounded-2xl shadow-sm p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-bold text-[var(--admin-text)] flex items-center gap-2.5 m-0">
-            <FaFileAlt className="text-[var(--admin-orange)]" />
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2.5 m-0 font-['Oswald',sans-serif] uppercase">
+            <FaFileAlt className="text-amber-500" />
             Legal & Content Manager
           </h3>
-          <p className="text-xs text-[var(--admin-muted)] mt-1 m-0">
+          <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1 m-0 font-sans">
             Configure 100% of the titles, descriptions, feature cards, and legal policies on the customer portal.
           </p>
         </div>
@@ -197,9 +197,9 @@ const LegalSettings = () => {
           type="button"
           onClick={handleSave}
           disabled={isSaving}
-          className="px-5 py-2.5 rounded-xl bg-[var(--admin-orange)] hover:opacity-90 text-white font-bold text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all active:scale-95 disabled:opacity-50 border-none shadow-md"
+          className="btn-brand-cta px-5 py-2.5 flex items-center gap-2 text-xs uppercase tracking-wider cursor-pointer border-none disabled:opacity-50 active:scale-95"
         >
-          <FaSave />
+          <FaSave className="text-xs" />
           <span>{isSaving ? "Saving..." : "Save Changes"}</span>
         </button>
       </div>
@@ -211,10 +211,10 @@ const LegalSettings = () => {
             key={tab.id}
             type="button"
             onClick={() => setActiveSection(tab.id)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all duration-200 border border-transparent ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all duration-200 border-none ${
               activeSection === tab.id
-                ? "bg-[var(--admin-orange)] text-white shadow-md"
-                : "bg-[var(--admin-panel)] text-[var(--admin-muted)] hover:text-[var(--admin-text)] hover:bg-[rgba(255,255,255,0.04)]"
+                ? "btn-brand-cta"
+                : "bg-slate-100 dark:bg-[#161616] text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/[0.06]"
             }`}
           >
             <span>{tab.icon}</span>
@@ -229,15 +229,15 @@ const LegalSettings = () => {
       {activeSection === "about" && (
         <div className="flex flex-col gap-6 animate-fade-in">
           {/* Hero Section Card */}
-          <div className="bg-[var(--admin-panel)] border border-[rgba(255,255,255,0.05)] rounded-2xl p-6 flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-[var(--admin-text)] m-0 uppercase tracking-wide flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-[var(--admin-orange)] rounded-full" />
+          <div className="admin-card-surface bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white m-0 uppercase tracking-wide flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
               1. Hero Header & Headline
             </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+                <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                   Top Pill Badge Tag
                 </label>
                 <input
@@ -246,12 +246,12 @@ const LegalSettings = () => {
                   value={settings.about_hero_badge}
                   onChange={handleChange}
                   placeholder="OUR STORY & PASSION"
-                  className="w-full p-3 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+                <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                   Main Page Heading
                 </label>
                 <input
@@ -260,13 +260,13 @@ const LegalSettings = () => {
                   value={settings.about_hero_title}
                   onChange={handleChange}
                   placeholder="ABOUT BIGBITE"
-                  className="w-full p-3 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
                 />
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                 Hero Subtitle Description
               </label>
               <textarea
@@ -275,20 +275,20 @@ const LegalSettings = () => {
                 value={settings.about_hero_subtitle}
                 onChange={handleChange}
                 placeholder="Crafting mouth-watering burgers, loaded fries, cheesy pizzas..."
-                className="w-full p-3 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)]"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
               />
             </div>
           </div>
 
           {/* Journey Section Card */}
-          <div className="bg-[var(--admin-panel)] border border-[rgba(255,255,255,0.05)] rounded-2xl p-6 flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-[var(--admin-text)] m-0 uppercase tracking-wide flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-[var(--admin-orange)] rounded-full" />
+          <div className="admin-card-surface bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white m-0 uppercase tracking-wide flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
               2. Our Journey Section
             </h4>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                 Section Heading
               </label>
               <input
@@ -297,12 +297,12 @@ const LegalSettings = () => {
                 value={settings.about_journey_title}
                 onChange={handleChange}
                 placeholder="Our Journey"
-                className="w-full p-3 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)]"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                 Journey Story Text
               </label>
               <textarea
@@ -311,29 +311,29 @@ const LegalSettings = () => {
                 value={settings.about_journey_text}
                 onChange={handleChange}
                 placeholder="Detail the founding story, recipes, and culinary vision..."
-                className="w-full p-3.5 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)] leading-relaxed"
+                className="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-amber-500 leading-relaxed"
               />
             </div>
           </div>
 
           {/* 3 Pillar Feature Cards */}
-          <div className="bg-[var(--admin-panel)] border border-[rgba(255,255,255,0.05)] rounded-2xl p-6 flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-[var(--admin-text)] m-0 uppercase tracking-wide flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-[var(--admin-orange)] rounded-full" />
+          <div className="admin-card-surface bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white m-0 uppercase tracking-wide flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
               3. Three Pillar Feature Cards
             </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Card 1 */}
-              <div className="p-4 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] flex flex-col gap-3">
-                <span className="text-xs font-bold text-[var(--admin-orange)] uppercase">Pillar Card #1</span>
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 flex flex-col gap-3">
+                <span className="text-xs font-bold text-amber-500 uppercase">Pillar Card #1</span>
                 <input
                   type="text"
                   name="about_card1_title"
                   value={settings.about_card1_title}
                   onChange={handleChange}
                   placeholder="Card Title (e.g. 100% Fresh)"
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold"
                 />
                 <textarea
                   name="about_card1_desc"
@@ -341,20 +341,20 @@ const LegalSettings = () => {
                   value={settings.about_card1_desc}
                   onChange={handleChange}
                   placeholder="Description..."
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-xs"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               {/* Card 2 */}
-              <div className="p-4 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] flex flex-col gap-3">
-                <span className="text-xs font-bold text-[var(--admin-orange)] uppercase">Pillar Card #2</span>
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 flex flex-col gap-3">
+                <span className="text-xs font-bold text-amber-500 uppercase">Pillar Card #2</span>
                 <input
                   type="text"
                   name="about_card2_title"
                   value={settings.about_card2_title}
                   onChange={handleChange}
                   placeholder="Card Title (e.g. Hot Delivery)"
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold"
                 />
                 <textarea
                   name="about_card2_desc"
@@ -362,20 +362,20 @@ const LegalSettings = () => {
                   value={settings.about_card2_desc}
                   onChange={handleChange}
                   placeholder="Description..."
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-xs"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               {/* Card 3 */}
-              <div className="p-4 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] flex flex-col gap-3">
-                <span className="text-xs font-bold text-[var(--admin-orange)] uppercase">Pillar Card #3</span>
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 flex flex-col gap-3">
+                <span className="text-xs font-bold text-amber-500 uppercase">Pillar Card #3</span>
                 <input
                   type="text"
                   name="about_card3_title"
                   value={settings.about_card3_title}
                   onChange={handleChange}
                   placeholder="Card Title (e.g. Hygiene Assured)"
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold"
                 />
                 <textarea
                   name="about_card3_desc"
@@ -383,21 +383,21 @@ const LegalSettings = () => {
                   value={settings.about_card3_desc}
                   onChange={handleChange}
                   placeholder="Description..."
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-xs"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs"
                 />
               </div>
             </div>
           </div>
 
           {/* Mission Section Card */}
-          <div className="bg-[var(--admin-panel)] border border-[rgba(255,255,255,0.05)] rounded-2xl p-6 flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-[var(--admin-text)] m-0 uppercase tracking-wide flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-[var(--admin-orange)] rounded-full" />
+          <div className="admin-card-surface bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white m-0 uppercase tracking-wide flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
               4. Our Mission Statement
             </h4>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                 Section Heading
               </label>
               <input
@@ -406,12 +406,12 @@ const LegalSettings = () => {
                 value={settings.about_mission_title}
                 onChange={handleChange}
                 placeholder="Our Mission"
-                className="w-full p-3 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)]"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                 Mission Statement
               </label>
               <textarea
@@ -420,7 +420,7 @@ const LegalSettings = () => {
                 value={settings.about_mission_text}
                 onChange={handleChange}
                 placeholder="Enter customer promise and dining vision..."
-                className="w-full p-3.5 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)] leading-relaxed"
+                className="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-amber-500 leading-relaxed"
               />
             </div>
           </div>
@@ -433,15 +433,15 @@ const LegalSettings = () => {
       {activeSection === "privacy" && (
         <div className="flex flex-col gap-6 animate-fade-in">
           {/* Hero Section Card */}
-          <div className="bg-[var(--admin-panel)] border border-[rgba(255,255,255,0.05)] rounded-2xl p-6 flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-[var(--admin-text)] m-0 uppercase tracking-wide flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-[var(--admin-orange)] rounded-full" />
+          <div className="admin-card-surface bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white m-0 uppercase tracking-wide flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
               1. Hero Header & Subtitle
             </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+                <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                   Top Pill Badge Tag
                 </label>
                 <input
@@ -450,12 +450,12 @@ const LegalSettings = () => {
                   value={settings.privacy_hero_badge}
                   onChange={handleChange}
                   placeholder="DATA SECURITY & TRUST"
-                  className="w-full p-3 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+                <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                   Main Page Heading
                 </label>
                 <input
@@ -464,13 +464,13 @@ const LegalSettings = () => {
                   value={settings.privacy_hero_title}
                   onChange={handleChange}
                   placeholder="PRIVACY POLICY"
-                  className="w-full p-3 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
                 />
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                 Hero Subtitle Description
               </label>
               <textarea
@@ -479,20 +479,20 @@ const LegalSettings = () => {
                 value={settings.privacy_hero_subtitle}
                 onChange={handleChange}
                 placeholder="How we protect, encrypt, and handle your information..."
-                className="w-full p-3 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)]"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
               />
             </div>
           </div>
 
           {/* Overview Statement Card */}
-          <div className="bg-[var(--admin-panel)] border border-[rgba(255,255,255,0.05)] rounded-2xl p-6 flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-[var(--admin-text)] m-0 uppercase tracking-wide flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-[var(--admin-orange)] rounded-full" />
+          <div className="admin-card-surface bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white m-0 uppercase tracking-wide flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
               2. Privacy Overview
             </h4>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                 Section Heading
               </label>
               <input
@@ -501,12 +501,12 @@ const LegalSettings = () => {
                 value={settings.privacy_overview_title}
                 onChange={handleChange}
                 placeholder="Privacy Overview"
-                className="w-full p-3 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)]"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                 Policy Statement
               </label>
               <textarea
@@ -515,29 +515,29 @@ const LegalSettings = () => {
                 value={settings.privacy_overview_text}
                 onChange={handleChange}
                 placeholder="Detail customer data collection, order coordinates, and encryption..."
-                className="w-full p-3.5 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)] leading-relaxed"
+                className="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-amber-500 leading-relaxed"
               />
             </div>
           </div>
 
           {/* 3 Safeguard Cards */}
-          <div className="bg-[var(--admin-panel)] border border-[rgba(255,255,255,0.05)] rounded-2xl p-6 flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-[var(--admin-text)] m-0 uppercase tracking-wide flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-[var(--admin-orange)] rounded-full" />
+          <div className="admin-card-surface bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white m-0 uppercase tracking-wide flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
               3. Three Data Safeguard Cards
             </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Card 1 */}
-              <div className="p-4 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] flex flex-col gap-3">
-                <span className="text-xs font-bold text-[var(--admin-orange)] uppercase">Safeguard #1</span>
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 flex flex-col gap-3">
+                <span className="text-xs font-bold text-amber-500 uppercase">Safeguard #1</span>
                 <input
                   type="text"
                   name="privacy_card1_title"
                   value={settings.privacy_card1_title}
                   onChange={handleChange}
                   placeholder="Card Title (e.g. Encrypted Data)"
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold"
                 />
                 <textarea
                   name="privacy_card1_desc"
@@ -545,20 +545,20 @@ const LegalSettings = () => {
                   value={settings.privacy_card1_desc}
                   onChange={handleChange}
                   placeholder="Description..."
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-xs"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               {/* Card 2 */}
-              <div className="p-4 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] flex flex-col gap-3">
-                <span className="text-xs font-bold text-[var(--admin-orange)] uppercase">Safeguard #2</span>
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 flex flex-col gap-3">
+                <span className="text-xs font-bold text-amber-500 uppercase">Safeguard #2</span>
                 <input
                   type="text"
                   name="privacy_card2_title"
                   value={settings.privacy_card2_title}
                   onChange={handleChange}
                   placeholder="Card Title (e.g. No Data Sharing)"
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold"
                 />
                 <textarea
                   name="privacy_card2_desc"
@@ -566,20 +566,20 @@ const LegalSettings = () => {
                   value={settings.privacy_card2_desc}
                   onChange={handleChange}
                   placeholder="Description..."
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-xs"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               {/* Card 3 */}
-              <div className="p-4 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] flex flex-col gap-3">
-                <span className="text-xs font-bold text-[var(--admin-orange)] uppercase">Safeguard #3</span>
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 flex flex-col gap-3">
+                <span className="text-xs font-bold text-amber-500 uppercase">Safeguard #3</span>
                 <input
                   type="text"
                   name="privacy_card3_title"
                   value={settings.privacy_card3_title}
                   onChange={handleChange}
                   placeholder="Card Title (e.g. Transparent Usage)"
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold"
                 />
                 <textarea
                   name="privacy_card3_desc"
@@ -587,21 +587,21 @@ const LegalSettings = () => {
                   value={settings.privacy_card3_desc}
                   onChange={handleChange}
                   placeholder="Description..."
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-xs"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs"
                 />
               </div>
             </div>
           </div>
 
           {/* Guarantee Section Card */}
-          <div className="bg-[var(--admin-panel)] border border-[rgba(255,255,255,0.05)] rounded-2xl p-6 flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-[var(--admin-text)] m-0 uppercase tracking-wide flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-[var(--admin-orange)] rounded-full" />
+          <div className="admin-card-surface bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white m-0 uppercase tracking-wide flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
               4. Data Protection Guarantee
             </h4>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                 Section Heading
               </label>
               <input
@@ -610,12 +610,12 @@ const LegalSettings = () => {
                 value={settings.privacy_guarantee_title}
                 onChange={handleChange}
                 placeholder="Data Protection Guarantee"
-                className="w-full p-3 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)]"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                 Guarantee Statement
               </label>
               <textarea
@@ -624,7 +624,7 @@ const LegalSettings = () => {
                 value={settings.privacy_guarantee_text}
                 onChange={handleChange}
                 placeholder="Enter physical, electronic, and administrative safeguards..."
-                className="w-full p-3.5 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)] leading-relaxed"
+                className="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-amber-500 leading-relaxed"
               />
             </div>
           </div>
@@ -637,15 +637,15 @@ const LegalSettings = () => {
       {activeSection === "terms" && (
         <div className="flex flex-col gap-6 animate-fade-in">
           {/* Hero Section Card */}
-          <div className="bg-[var(--admin-panel)] border border-[rgba(255,255,255,0.05)] rounded-2xl p-6 flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-[var(--admin-text)] m-0 uppercase tracking-wide flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-[var(--admin-orange)] rounded-full" />
+          <div className="admin-card-surface bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white m-0 uppercase tracking-wide flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
               1. Hero Header & Subtitle
             </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+                <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                   Top Pill Badge Tag
                 </label>
                 <input
@@ -654,12 +654,12 @@ const LegalSettings = () => {
                   value={settings.terms_hero_badge}
                   onChange={handleChange}
                   placeholder="TERMS OF SERVICE"
-                  className="w-full p-3 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+                <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                   Main Page Heading
                 </label>
                 <input
@@ -668,13 +668,13 @@ const LegalSettings = () => {
                   value={settings.terms_hero_title}
                   onChange={handleChange}
                   placeholder="TERMS & CONDITIONS"
-                  className="w-full p-3 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
                 />
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                 Hero Subtitle Description
               </label>
               <textarea
@@ -683,20 +683,20 @@ const LegalSettings = () => {
                 value={settings.terms_hero_subtitle}
                 onChange={handleChange}
                 placeholder="Please review the terms and ordering guidelines..."
-                className="w-full p-3 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)]"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
               />
             </div>
           </div>
 
           {/* Agreement Statement Card */}
-          <div className="bg-[var(--admin-panel)] border border-[rgba(255,255,255,0.05)] rounded-2xl p-6 flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-[var(--admin-text)] m-0 uppercase tracking-wide flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-[var(--admin-orange)] rounded-full" />
+          <div className="admin-card-surface bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white m-0 uppercase tracking-wide flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
               2. Ordering & Service Agreement
             </h4>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                 Section Heading
               </label>
               <input
@@ -705,12 +705,12 @@ const LegalSettings = () => {
                 value={settings.terms_agreement_title}
                 onChange={handleChange}
                 placeholder="Ordering & Service Agreement"
-                className="w-full p-3 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)]"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                 Agreement Terms Text
               </label>
               <textarea
@@ -719,29 +719,29 @@ const LegalSettings = () => {
                 value={settings.terms_agreement_text}
                 onChange={handleChange}
                 placeholder="Detail customer terms of service, kitchen preparation, and delivery commitments..."
-                className="w-full p-3.5 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)] leading-relaxed"
+                className="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-amber-500 leading-relaxed"
               />
             </div>
           </div>
 
           {/* 3 Terms Cards */}
-          <div className="bg-[var(--admin-panel)] border border-[rgba(255,255,255,0.05)] rounded-2xl p-6 flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-[var(--admin-text)] m-0 uppercase tracking-wide flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-[var(--admin-orange)] rounded-full" />
+          <div className="admin-card-surface bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white m-0 uppercase tracking-wide flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
               3. Three Policy Pillar Cards
             </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Card 1 */}
-              <div className="p-4 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] flex flex-col gap-3">
-                <span className="text-xs font-bold text-[var(--admin-orange)] uppercase">Policy #1</span>
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 flex flex-col gap-3">
+                <span className="text-xs font-bold text-amber-500 uppercase">Policy #1</span>
                 <input
                   type="text"
                   name="terms_card1_title"
                   value={settings.terms_card1_title}
                   onChange={handleChange}
                   placeholder="Card Title (e.g. Order Confirmation)"
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold"
                 />
                 <textarea
                   name="terms_card1_desc"
@@ -749,20 +749,20 @@ const LegalSettings = () => {
                   value={settings.terms_card1_desc}
                   onChange={handleChange}
                   placeholder="Description..."
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-xs"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               {/* Card 2 */}
-              <div className="p-4 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] flex flex-col gap-3">
-                <span className="text-xs font-bold text-[var(--admin-orange)] uppercase">Policy #2</span>
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 flex flex-col gap-3">
+                <span className="text-xs font-bold text-amber-500 uppercase">Policy #2</span>
                 <input
                   type="text"
                   name="terms_card2_title"
                   value={settings.terms_card2_title}
                   onChange={handleChange}
                   placeholder="Card Title (e.g. Payment Terms)"
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold"
                 />
                 <textarea
                   name="terms_card2_desc"
@@ -770,20 +770,20 @@ const LegalSettings = () => {
                   value={settings.terms_card2_desc}
                   onChange={handleChange}
                   placeholder="Description..."
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-xs"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               {/* Card 3 */}
-              <div className="p-4 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] flex flex-col gap-3">
-                <span className="text-xs font-bold text-[var(--admin-orange)] uppercase">Policy #3</span>
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 flex flex-col gap-3">
+                <span className="text-xs font-bold text-amber-500 uppercase">Policy #3</span>
                 <input
                   type="text"
                   name="terms_card3_title"
                   value={settings.terms_card3_title}
                   onChange={handleChange}
                   placeholder="Card Title (e.g. Delivery Schedule)"
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold"
                 />
                 <textarea
                   name="terms_card3_desc"
@@ -791,21 +791,21 @@ const LegalSettings = () => {
                   value={settings.terms_card3_desc}
                   onChange={handleChange}
                   placeholder="Description..."
-                  className="w-full p-2.5 rounded-lg bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-xs"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs"
                 />
               </div>
             </div>
           </div>
 
           {/* Refund Guidelines Card */}
-          <div className="bg-[var(--admin-panel)] border border-[rgba(255,255,255,0.05)] rounded-2xl p-6 flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-[var(--admin-text)] m-0 uppercase tracking-wide flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-[var(--admin-orange)] rounded-full" />
+          <div className="admin-card-surface bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white m-0 uppercase tracking-wide flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
               4. Cancellation & Refund Guidelines
             </h4>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                 Section Heading
               </label>
               <input
@@ -814,12 +814,12 @@ const LegalSettings = () => {
                 value={settings.terms_refund_title}
                 onChange={handleChange}
                 placeholder="Cancellation & Refund Guidelines"
-                className="w-full p-3 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)]"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[var(--admin-muted)] uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
                 Refund Rules Text
               </label>
               <textarea
@@ -828,14 +828,31 @@ const LegalSettings = () => {
                 value={settings.terms_refund_text}
                 onChange={handleChange}
                 placeholder="Enter cancellation windows, missing item claims, and store credit policies..."
-                className="w-full p-3.5 rounded-xl bg-[var(--admin-bg)] border border-[rgba(255,255,255,0.08)] text-[var(--admin-text)] text-sm focus:outline-none focus:border-[var(--admin-orange)] leading-relaxed"
+                className="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-amber-500 leading-relaxed"
               />
             </div>
           </div>
         </div>
       )}
+
+      {/* ══ Sticky Bottom Save Bar ══ */}
+      <div className="sticky bottom-4 z-20 p-3.5 bg-white/90 dark:bg-[#161616]/90 border border-slate-200 dark:border-white/[0.06] rounded-2xl shadow-xl flex items-center justify-between gap-4 backdrop-blur-md">
+        <div className="text-xs text-slate-500 dark:text-neutral-400 font-semibold hidden sm:block">
+          Unsaved changes will not reflect on customer legal pages until saved.
+        </div>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={isSaving}
+          className="w-full sm:w-auto btn-brand-cta px-6 py-2.5 text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 disabled:opacity-50 border-none"
+        >
+          <FaSave />
+          <span>{isSaving ? "Saving..." : "Save Legal Settings"}</span>
+        </button>
+      </div>
     </div>
   );
 };
 
 export default LegalSettings;
+

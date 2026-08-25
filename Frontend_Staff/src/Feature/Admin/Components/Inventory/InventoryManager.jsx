@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
+
 // Components
 import InventoryStats from "./Components/InventoryStats";
 import InventoryControls from "./Components/InventoryControls";
@@ -26,9 +27,8 @@ const InventoryManager = () => {
     threshold: "10",
   };
   const [form, setForm] = useState(defaultForm);
-  const [productsData, setProducts] = useState([]); // Will be overridden by useQuery data
 
-  const { data: products = [] } = useQuery({
+  const { data: products = [], isLoading } = useQuery({
     queryKey: ['inventory'],
     queryFn: async () => {
       const response = await fetch(`${import.meta.env.VITE_API_BASE}/inventory_api.php`);
@@ -38,9 +38,13 @@ const InventoryManager = () => {
   });
 
   const totalItems = products.length;
-  const lowStock = products.filter((p) => p.stock <= 10 && p.stock > 0).length;
+  const lowStock = products.filter((p) => {
+    const s = parseFloat(p.stock || 0);
+    const t = parseFloat(p.threshold || 10);
+    return s <= t && s > 0;
+  }).length;
   const totalValue = products
-    .reduce((acc, p) => acc + parseFloat(p.price) * p.stock, 0)
+    .reduce((acc, p) => acc + (parseFloat(p.price || 0) * parseFloat(p.stock || 0)), 0)
     .toFixed(2);
 
   const filteredProducts = products.filter((product) => {
@@ -49,10 +53,12 @@ const InventoryManager = () => {
       .includes(searchQuery.toLowerCase());
     if (!matchesSearch) return false;
 
-    if (activeTab === "In Stock") return product.stock > 10;
-    if (activeTab === "Low Stock")
-      return product.stock <= 10 && product.stock > 0;
-    if (activeTab === "Out of Stock") return product.stock == 0;
+    const s = parseFloat(product.stock || 0);
+    const t = parseFloat(product.threshold || 10);
+
+    if (activeTab === "In Stock") return s > t;
+    if (activeTab === "Low Stock") return s <= t && s > 0;
+    if (activeTab === "Out of Stock") return s === 0;
     return true;
   });
 
@@ -64,8 +70,8 @@ const InventoryManager = () => {
         let bValue = b[sortConfig.key];
 
         if (sortConfig.key === "price" || sortConfig.key === "stock") {
-          aValue = parseFloat(aValue);
-          bValue = parseFloat(bValue);
+          aValue = parseFloat(aValue || 0);
+          bValue = parseFloat(bValue || 0);
         } else {
           aValue = aValue ? aValue.toString().toLowerCase() : "";
           bValue = bValue ? bValue.toString().toLowerCase() : "";
@@ -103,15 +109,16 @@ const InventoryManager = () => {
     setIsModalOpen(true);
   };
 
-  // 🔥 2. DELETE FROM DATABASE
   const handleDelete = async (id) => {
     const result = await Swal.fire({
-      title: "Delete Item?",
-      text: "You won't be able to revert this!",
+      title: "Delete Ingredient?",
+      text: "This item will be permanently removed from raw inventory.",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Yes, delete it!",
-      background: "var(--admin-panel)",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#71717a",
+      confirmButtonText: "Yes, Delete",
+      background: "#171717",
       color: "#fff",
     });
 
@@ -123,13 +130,15 @@ const InventoryManager = () => {
             method: "DELETE",
           },
         );
-        queryClient.setQueryData(['inventory'], old => old ? old.filter(p => p.id !== id) : []);
+        queryClient.setQueryData(['inventory'], (old) =>
+          old ? old.filter((p) => p.id !== id) : []
+        );
         Swal.fire({
           icon: "success",
           title: "Deleted!",
           timer: 1500,
           showConfirmButton: false,
-          background: "var(--admin-panel)",
+          background: "#171717",
           color: "#fff",
         });
       } catch (error) {
@@ -138,14 +147,13 @@ const InventoryManager = () => {
     }
   };
 
-  // 🔥 3. SAVE / UPDATE IN DATABASE
   const handleSave = async () => {
     if (!form.name || !form.price || form.stock === "") {
       return Swal.fire({
         icon: "error",
         title: "Missing Fields",
         text: "Please fill all required fields.",
-        background: "var(--admin-panel)",
+        background: "#171717",
         color: "#fff",
       });
     }
@@ -174,15 +182,15 @@ const InventoryManager = () => {
           text: "Inventory updated successfully.",
           timer: 1500,
           showConfirmButton: false,
-          background: "var(--admin-panel)",
+          background: "#171717",
           color: "#fff",
         });
       } else {
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: "Failed to save to database.",
-          background: "var(--admin-panel)",
+          text: result.message || "Failed to save to database.",
+          background: "#171717",
           color: "#fff",
         });
       }
@@ -192,22 +200,36 @@ const InventoryManager = () => {
   };
 
   return (
-    <div style={{ paddingBottom: "50px" }}>
-      <div style={{ marginBottom: "25px" }}>
-        <h2 className="section-header" style={{ marginBottom: "5px" }}>
-          Inventory Management
-        </h2>
-        <p style={{ color: "var(--admin-muted)", fontSize: "14px", margin: 0 }}>
-          Manage your products, stock, and prices efficiently.
-        </p>
+    <div className="space-y-6 animate-slide-up pb-12">
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-2 border-b border-[var(--admin-border,rgba(255,255,255,0.06))]">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-4 bg-red-600 rounded-full shrink-0" />
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-[var(--admin-text,#fff)] m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
+              Raw Inventory & Stock Valuation
+            </h2>
+          </div>
+          <p className="text-xs text-[var(--admin-muted,#888)] m-0 mt-0.5 font-sans">
+            Track ingredients, unit costs, low-stock alerts, and raw material quantities in real-time.
+          </p>
+        </div>
       </div>
 
+      {isLoading && (
+        <div className="py-12 text-center text-xs text-[var(--admin-muted,#888)] font-bold uppercase tracking-wider">
+          Loading Raw Inventory...
+        </div>
+      )}
+
+      {/* KPI Stats */}
       <InventoryStats
         totalItems={totalItems}
         lowStock={lowStock}
         totalValue={totalValue}
       />
 
+      {/* Filter Tabs & Search */}
       <InventoryControls
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -216,6 +238,7 @@ const InventoryManager = () => {
         onAddClick={handleAddClick}
       />
 
+      {/* Inventory Table */}
       <InventoryTable
         products={sortedAndFilteredProducts}
         onEdit={handleEditClick}
@@ -224,6 +247,7 @@ const InventoryManager = () => {
         sortConfig={sortConfig}
       />
 
+      {/* Modal */}
       <InventoryModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

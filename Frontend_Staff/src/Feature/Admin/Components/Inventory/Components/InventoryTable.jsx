@@ -8,98 +8,145 @@ const InventoryTable = ({
   requestSort,
   sortConfig,
 }) => {
-  // Sorting icon dikhane ke liye helper function
   const getSortIcon = (key) => {
     if (!sortConfig || sortConfig.key !== key)
-      return <FaSort className="opacity-30" />;
-    return sortConfig.direction === "asc" ? <FaSortUp /> : <FaSortDown />;
+      return <FaSort className="opacity-30 text-[10px]" />;
+    return sortConfig.direction === "asc" ? <FaSortUp className="text-amber-400 text-[10px]" /> : <FaSortDown className="text-amber-400 text-[10px]" />;
   };
 
   return (
-    <div className="w-full overflow-x-auto bg-[var(--admin-panel)] rounded-[12px]  shadow-[0_4px_6px_-1px_rgba(0,0,0,0.2)] animate-slide-up">
-      <table className="w-full border-collapse text-left">
-        <thead>
-          <tr>
-            <th className="p-[16px_20px] bg-[rgba(255,255,255,0.03)] text-[var(--admin-muted)] font-semibold text-[13px] uppercase border-b border-[var(--admin-border)] whitespace-nowrap select-none cursor-pointer hover:text-[var(--admin-text)] hover:bg-[rgba(255,255,255,0.05)]" onClick={() => requestSort("name")}>
-              Product {getSortIcon("name")}
-            </th>
-            <th
-              className="p-[16px_20px] bg-[rgba(255,255,255,0.03)] text-[var(--admin-muted)] font-semibold text-[13px] uppercase border-b border-[var(--admin-border)] whitespace-nowrap select-none cursor-pointer hover:text-[var(--admin-text)] hover:bg-[rgba(255,255,255,0.05)]"
-              onClick={() => requestSort("price")}
-            >
-              Price {getSortIcon("price")}
-            </th>
-            <th
-              className="p-[16px_20px] bg-[rgba(255,255,255,0.03)] text-[var(--admin-muted)] font-semibold text-[13px] uppercase border-b border-[var(--admin-border)] whitespace-nowrap select-none cursor-pointer hover:text-[var(--admin-text)] hover:bg-[rgba(255,255,255,0.05)]"
-              onClick={() => requestSort("stock")}
-            >
-              Stock {getSortIcon("stock")}
-            </th>
-            <th className="p-[16px_20px] bg-[rgba(255,255,255,0.03)] text-[var(--admin-muted)] font-semibold text-[13px] uppercase border-b border-[var(--admin-border)] whitespace-nowrap select-none hover:text-[var(--admin-text)] hover:bg-[rgba(255,255,255,0.05)]">Status</th>
-            <th className="p-[16px_20px] bg-[rgba(255,255,255,0.03)] text-[var(--admin-muted)] font-semibold text-[13px] uppercase border-b border-[var(--admin-border)] whitespace-nowrap select-none text-right hover:text-[var(--admin-text)] hover:bg-[rgba(255,255,255,0.05)]">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {products.length > 0 ? (
-            products.map((product) => {
-              // Badge Logic
-              let badgeClass = "bg-[#10b981]";
-              let statusText = "In Stock";
-              if (product.stock === 0) {
-                badgeClass = "bg-[#ef4444]";
-                statusText = "Out of Stock";
-              } else if (product.stock <= 10) {
-                badgeClass = "bg-[#f59e0b]";
-                statusText = "Low Stock";
-              }
-
-              return (
-                <tr key={product.id} className="transition-colors duration-200 hover:bg-[rgba(255,255,255,0.02)]">
-                  <td className="p-[16px_20px] border-b border-[var(--admin-border)] text-[var(--admin-text)] text-[14px] align-middle">
-                    <div className="flex items-center gap-[15px]">
-                      <span className="font-bold text-[15px]">{product.name}</span>
-                    </div>
-                  </td>
-                  <td className="p-[16px_20px] border-b border-[var(--admin-border)] text-[var(--admin-text)] text-[14px] align-middle font-bold">
-                    ${parseFloat(product.price).toFixed(2)}
-                  </td>
-                  <td className="p-[16px_20px] border-b border-[var(--admin-border)] text-[var(--admin-text)] text-[14px] align-middle font-bold">{product.stock}</td>
-                  <td className="p-[16px_20px] border-b border-[var(--admin-border)] text-[var(--admin-text)] text-[14px] align-middle">
-                    <span className={`p-[6px_12px] rounded-[20px] text-[11px] font-bold text-white uppercase inline-block ${badgeClass}`}>
-                      {statusText}
-                    </span>
-                  </td>
-                  <td className="p-[16px_20px] border-b border-[var(--admin-border)] text-[var(--admin-text)] text-[14px] align-middle">
-                    <div className="flex gap-[10px] justify-end">
-                      <button
-                        className="w-[35px] h-[35px] rounded flex items-center justify-center cursor-pointer text-[14px] transition-all duration-200 ease bg-[var(--admin-bg)] text-[var(--admin-text)]"
-                        onClick={() => onEdit(product)}
-                        title="Edit"
-                      >
-                        <FaEdit />
-                      </button>
-                      <button
-                        className="w-[35px] h-[35px] rounded flex items-center justify-center cursor-pointer text-[14px] transition-all duration-200 ease bg-[rgba(239,68,68,0.1)] text-[#ef4444] hover:bg-[#ef4444] hover:text-white"
-                        onClick={() => onDelete(product.id)}
-                        title="Delete"
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })
-          ) : (
-            <tr>
-              {/* colSpan 5 kar diya hai kyunke ek column remove ho chuka hai */}
-              <td colSpan="5" className="text-center p-[40px] text-[var(--admin-muted)] border-b border-[var(--admin-border)]">
-                No products found matching your criteria.
-              </td>
+    <div className="w-full overflow-hidden bg-[var(--panel-bg)] rounded-2xl border border-[var(--border-subtle)] shadow-sm animate-slide-up">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-left text-xs">
+          <thead>
+            <tr className="border-b border-[var(--border-subtle)] bg-[var(--table-header-bg)]">
+              <th
+                className="p-3.5 sm:p-4 text-[var(--text-primary)] font-bold uppercase tracking-wider select-none cursor-pointer hover:text-amber-500"
+                onClick={() => requestSort("name")}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Ingredient</span>
+                  {getSortIcon("name")}
+                </div>
+              </th>
+              <th
+                className="p-3.5 sm:p-4 text-[var(--text-primary)] font-bold uppercase tracking-wider select-none cursor-pointer hover:text-amber-500"
+                onClick={() => requestSort("price")}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Unit Price</span>
+                  {getSortIcon("price")}
+                </div>
+              </th>
+              <th
+                className="p-3.5 sm:p-4 text-[var(--text-primary)] font-bold uppercase tracking-wider select-none cursor-pointer hover:text-amber-500"
+                onClick={() => requestSort("stock")}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Available Stock</span>
+                  {getSortIcon("stock")}
+                </div>
+              </th>
+              <th className="p-3.5 sm:p-4 text-[var(--text-primary)] font-bold uppercase tracking-wider select-none">
+                Stock Status
+              </th>
+              <th className="p-3.5 sm:p-4 text-[var(--text-primary)] font-bold uppercase tracking-wider select-none text-right">
+                Actions
+              </th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-[var(--border-subtle)]">
+            {products.length > 0 ? (
+              products.map((product) => {
+                const stockVal = parseFloat(product.stock || 0);
+                const threshold = parseFloat(product.threshold || 10);
+                
+                let badgeStyle = "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30";
+                let statusText = "In Stock";
+                let progressPercent = Math.min(100, (stockVal / (threshold * 3 || 30)) * 100);
+                let progressColor = "bg-emerald-500";
+
+                if (stockVal === 0) {
+                  badgeStyle = "bg-rose-500/15 text-rose-500 border border-rose-500/30";
+                  statusText = "Out of Stock";
+                  progressPercent = 0;
+                  progressColor = "bg-rose-500";
+                } else if (stockVal <= threshold) {
+                  badgeStyle = "bg-amber-500/15 text-amber-500 border border-amber-500/30";
+                  statusText = "Low Stock";
+                  progressPercent = Math.max(10, Math.min(40, (stockVal / threshold) * 40));
+                  progressColor = "bg-amber-500";
+                }
+
+                return (
+                  <tr
+                    key={product.id}
+                    className="hover:bg-[var(--table-row-hover)] transition-colors"
+                  >
+                    <td className="p-3.5 sm:p-4 text-[var(--text-primary)] font-bold">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-[var(--text-primary)]">{product.name}</span>
+                      </div>
+                    </td>
+                    <td className="p-3.5 sm:p-4 font-mono font-bold text-amber-500">
+                      Rs. {parseFloat(product.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="p-3.5 sm:p-4">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-[var(--text-primary)] text-xs">
+                            {stockVal}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded bg-[var(--input-bg)] text-[10px] font-bold text-[var(--text-secondary)] font-mono border border-[var(--border-subtle)]">
+                            {product.unit || 'kg'}
+                          </span>
+                        </div>
+                        <div className="w-24 h-1.5 rounded-full bg-black/20 dark:bg-black/50 overflow-hidden">
+                          <div
+                            className={`h-full ${progressColor} transition-all duration-300`}
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-3.5 sm:p-4">
+                      <span className={`px-3 py-1 !rounded-full text-xs font-bold uppercase tracking-wider border inline-block ${badgeStyle}`}>
+                        {statusText}
+                      </span>
+                    </td>
+                    <td className="p-3.5 sm:p-4">
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          type="button"
+                          className="w-8 h-8 rounded-xl bg-[var(--input-bg)] hover:bg-amber-500 hover:text-neutral-950 text-[var(--text-primary)] border border-[var(--border-subtle)] flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-sm"
+                          onClick={() => onEdit(product)}
+                          title="Edit Ingredient"
+                        >
+                          <FaEdit className="text-xs" />
+                        </button>
+                        <button
+                          type="button"
+                          className="w-8 h-8 rounded-xl bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white border border-red-500/20 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-sm"
+                          onClick={() => onDelete(product.id)}
+                          title="Delete Ingredient"
+                        >
+                          <FaTrash className="text-xs" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan="5" className="text-center py-12 text-neutral-400 font-semibold">
+                  No inventory ingredients found matching your criteria.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

@@ -120,41 +120,40 @@ const FooterSettings = () => {
   }
 
   return (
-    <div className="bg-[var(--admin-panel)] rounded-[1rem] p-[1.875rem] shadow-[0_4px_10px_rgba(0,0,0,0.1)] animate-slide-up">
-      <div className="flex justify-between items-center mb-[1.563rem] pb-[0.938rem] border-b border-[var(--admin-border)]">
-        <div className="flex items-center gap-[0.75rem] text-[1.125rem] font-bold text-[var(--admin-text)]">
-          Footer Settings
+    <div className="admin-card-surface bg-white dark:bg-[#161616] rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-white shadow-sm space-y-6 animate-slide-up">
+      <div className="flex justify-between items-center pb-4 border-b border-slate-200 dark:border-white/[0.06]">
+        <div className="flex items-center gap-2.5 text-sm sm:text-base font-black text-slate-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
+          Footer Branding & Social Links
         </div>
 
         <button 
-          className="bg-[var(--admin-orange)] text-white border-none p-[0.75rem_1.25rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[var(--shadow-glow)] transition-all duration-200 hover:-translate-y-[2px] flex items-center w-auto m-0"
+          className="btn-brand-cta px-5 py-2.5 flex items-center gap-2 text-xs uppercase tracking-wider cursor-pointer border-none disabled:opacity-50 active:scale-95"
           onClick={handleSave}
           disabled={isSaving}
         >
-          <FaSave className="mr-[0.5rem]" />
-          {isSaving ? "Saving..." : "Save Changes"}
+          <FaSave className="text-xs" />
+          <span>{isSaving ? "Saving..." : "Save Changes"}</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-[1.25rem]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
-          <label className="block text-[0.75rem] font-bold mb-[0.5rem] text-[var(--admin-muted)] uppercase tracking-[0.5px]">Footer Tagline</label>
+          <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">Footer Tagline</label>
           <textarea
-            className="w-full p-[0.875rem_0.938rem] bg-[var(--admin-bg)] rounded-[0.625rem] text-[var(--admin-text)] text-[0.875rem] font-medium outline-none transition-all duration-300 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)]"
+            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 resize-y"
             name="footer_tagline"
             value={settings.footer_tagline}
             onChange={handleChange}
             placeholder="E.g. Fresh Food, Delivered Hot & Fast..."
             rows="3"
-            style={{ resize: "vertical" }}
           ></textarea>
         </div>
 
         <div>
-          <label className="block text-[0.75rem] font-bold mb-[0.5rem] text-[var(--admin-muted)] uppercase tracking-[0.5px]">Contact Phone</label>
+          <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">Contact Phone</label>
           <input
             type="text"
-            className={`w-full p-[0.875rem_0.938rem] bg-[var(--admin-bg)] rounded-[0.625rem] text-[var(--admin-text)] text-[0.875rem] font-medium outline-none transition-all duration-300 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)] ${errors.footer_phone ? "border border-red-500" : ""}`}
+            className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${errors.footer_phone ? "border-red-500" : "border-slate-300 dark:border-white/10"}`}
             name="footer_phone"
             value={settings.footer_phone}
             onChange={(e) => {
@@ -163,72 +162,72 @@ const FooterSettings = () => {
             }}
             placeholder="+1 234 567 8900"
           />
-          {errors.footer_phone && <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">{errors.footer_phone}</span>}
+          {errors.footer_phone && <span className="text-rose-500 text-xs mt-1 block font-bold">{errors.footer_phone}</span>}
         </div>
 
         <div>
-          <label className="block text-[0.75rem] font-bold mb-[0.5rem] text-[var(--admin-muted)] uppercase tracking-[0.5px]">Contact Email</label>
+          <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">Contact Email</label>
           <input
             type="email"
-            className={`w-full p-[0.875rem_0.938rem] bg-[var(--admin-bg)] rounded-[0.625rem] text-[var(--admin-text)] text-[0.875rem] font-medium outline-none transition-all duration-300 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)] ${errors.footer_email ? "border border-red-500" : ""}`}
+            className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${errors.footer_email ? "border-red-500" : "border-slate-300 dark:border-white/10"}`}
             name="footer_email"
             value={settings.footer_email}
             onChange={handleChange}
             placeholder="support@bigbite.com"
           />
-          {errors.footer_email && <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">{errors.footer_email}</span>}
+          {errors.footer_email && <span className="text-rose-500 text-xs mt-1 block font-bold">{errors.footer_email}</span>}
         </div>
 
         <div>
-          <label className="block text-[0.75rem] font-bold mb-[0.5rem] text-[var(--admin-muted)] uppercase tracking-[0.5px]">Facebook URL</label>
+          <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">Facebook URL</label>
           <input
             type="text"
-            className={`w-full p-[0.875rem_0.938rem] bg-[var(--admin-bg)] rounded-[0.625rem] text-[var(--admin-text)] text-[0.875rem] font-medium outline-none transition-all duration-300 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)] ${errors.footer_facebook ? "border border-red-500" : ""}`}
+            className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${errors.footer_facebook ? "border-red-500" : "border-slate-300 dark:border-white/10"}`}
             name="footer_facebook"
             value={settings.footer_facebook}
             onChange={handleChange}
             placeholder="https://facebook.com/..."
           />
-          {errors.footer_facebook && <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">{errors.footer_facebook}</span>}
+          {errors.footer_facebook && <span className="text-rose-500 text-xs mt-1 block font-bold">{errors.footer_facebook}</span>}
         </div>
 
         <div>
-          <label className="block text-[0.75rem] font-bold mb-[0.5rem] text-[var(--admin-muted)] uppercase tracking-[0.5px]">Twitter URL</label>
+          <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">Twitter URL</label>
           <input
             type="text"
-            className={`w-full p-[0.875rem_0.938rem] bg-[var(--admin-bg)] rounded-[0.625rem] text-[var(--admin-text)] text-[0.875rem] font-medium outline-none transition-all duration-300 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)] ${errors.footer_twitter ? "border border-red-500" : ""}`}
+            className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${errors.footer_twitter ? "border-red-500" : "border-slate-300 dark:border-white/10"}`}
             name="footer_twitter"
             value={settings.footer_twitter}
             onChange={handleChange}
             placeholder="https://twitter.com/..."
           />
-          {errors.footer_twitter && <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">{errors.footer_twitter}</span>}
+          {errors.footer_twitter && <span className="text-rose-500 text-xs mt-1 block font-bold">{errors.footer_twitter}</span>}
         </div>
 
         <div>
-          <label className="block text-[0.75rem] font-bold mb-[0.5rem] text-[var(--admin-muted)] uppercase tracking-[0.5px]">Instagram URL</label>
+          <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">Instagram URL</label>
           <input
             type="text"
-            className={`w-full p-[0.875rem_0.938rem] bg-[var(--admin-bg)] rounded-[0.625rem] text-[var(--admin-text)] text-[0.875rem] font-medium outline-none transition-all duration-300 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)] ${errors.footer_instagram ? "border border-red-500" : ""}`}
+            className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${errors.footer_instagram ? "border-red-500" : "border-slate-300 dark:border-white/10"}`}
             name="footer_instagram"
             value={settings.footer_instagram}
             onChange={handleChange}
             placeholder="https://instagram.com/..."
           />
-          {errors.footer_instagram && <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">{errors.footer_instagram}</span>}
+          {errors.footer_instagram && <span className="text-rose-500 text-xs mt-1 block font-bold">{errors.footer_instagram}</span>}
         </div>
 
         <div>
-          <label className="block text-[0.75rem] font-bold mb-[0.5rem] text-[var(--admin-muted)] uppercase tracking-[0.5px]">YouTube URL</label>
+          <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">YouTube URL</label>
           <input
             type="text"
-            className={`w-full p-[0.875rem_0.938rem] bg-[var(--admin-bg)] rounded-[0.625rem] text-[var(--admin-text)] text-[0.875rem] font-medium outline-none transition-all duration-300 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)] ${errors.footer_youtube ? "border border-red-500" : ""}`}
+            className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${errors.footer_youtube ? "border-red-500" : "border-slate-300 dark:border-white/10"}`}
             name="footer_youtube"
             value={settings.footer_youtube}
             onChange={handleChange}
             placeholder="https://youtube.com/..."
           />
-          {errors.footer_youtube && <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">{errors.footer_youtube}</span>}
+          {errors.footer_youtube && <span className="text-rose-500 text-xs mt-1 block font-bold">{errors.footer_youtube}</span>}
         </div>
       </div>
     </div>

@@ -106,7 +106,12 @@ const OrdersManager = () => {
 
   return (
     <div className="bg-transparent p-0 border-none w-full animate-slide-up">
-      <div className="text-[1.25rem] font-bold mb-[0.938rem] border-l-4 border-red-500 pl-[0.625rem] text-[var(--admin-text)]">Orders Management</div>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="w-1.5 h-4 bg-red-600 rounded-full shrink-0" />
+        <h2 className="text-base sm:text-lg md:text-xl font-black text-[var(--admin-text,#fff)] m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
+          Orders Management
+        </h2>
+      </div>
 
       <OrderFilterBar
         filterStatus={filterStatus}

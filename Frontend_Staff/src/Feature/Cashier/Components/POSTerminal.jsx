@@ -551,15 +551,14 @@ const POSTerminal = ({ onPlaceOrder, terminalResetTrigger, setIsMobileSidebarOpe
                 <span className="text-[var(--brand-red,#ef4444)] font-extrabold text-[14px]">Rs {item.price}</span>
                 <div className="flex items-center justify-center">
                   <button
-                    className="bg-[#FFDD00] text-[#1a1a1a] border-none w-[34px] h-[34px] rounded-[10px] flex justify-center items-center cursor-pointer text-[14px] transition-all duration-200 shadow-[0_2px_6px_rgba(255,221,0,0.3)] hover:bg-[#E5C700] hover:scale-110 hover:shadow-[0_4px_10px_rgba(255,221,0,0.5)] active:scale-95"
-                    style={{ borderRadius: "10px", border: "none", outline: "none" }}
+                    className="bg-amber-500/90 hover:bg-amber-500 text-neutral-900 border-none w-8 h-8 rounded-xl flex justify-center items-center cursor-pointer text-xs transition-all duration-200 shadow-sm active:scale-95"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleItemClick(item);
                     }}
                     title="Quick Add"
                   >
-                    <FaPlus />
+                    <FaPlus className="text-[11px]" />
                   </button>
                 </div>
               </div>
@@ -568,46 +567,36 @@ const POSTerminal = ({ onPlaceOrder, terminalResetTrigger, setIsMobileSidebarOpe
         </div>
       </div>
 
-      {/* Mobile Cart Overlay */}
-      {isMobileCartOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 z-[140] min-[901px]:hidden"
-          onClick={() => setIsMobileCartOpen(false)}
-        ></div>
-      )}
-
-      {/* Cart Container */}
-      <div className={`flex-1 min-w-[320px] max-w-[380px] bg-[var(--pos-panel)] border-l border-[var(--admin-border)] rounded-[24px] flex flex-col overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.5)] 
-        max-[900px]:fixed max-[900px]:right-0 max-[900px]:top-0 max-[900px]:h-full max-[900px]:z-[150] max-[900px]:rounded-none max-[900px]:transition-transform max-[900px]:duration-300 max-[900px]:w-[320px] 
-        ${isMobileCartOpen ? 'max-[900px]:translate-x-0' : 'max-[900px]:translate-x-full'}`}>
-        <div className="p-[20px] bg-[rgba(255,221,0,0.05)] border-b border-[var(--admin-border)] flex justify-between items-center border-t-[4px] border-t-[#FFDD00]">
-          <h3 className="m-0 font-oswald text-[18px] text-[var(--admin-text)] font-extrabold tracking-[1px]">CURRENT ORDER</h3>
+      {/* RIGHT: BILLING PANEL */}
+      <div className={`w-[360px] bg-[var(--pos-panel)] border-l border-[var(--admin-border)] flex flex-col justify-between h-full fixed top-0 right-0 z-[1000] md:relative md:top-auto md:right-auto md:h-auto shadow-[-5px_0_20px_rgba(0,0,0,0.1)] transition-transform duration-300 ${isMobileCartOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"}`}>
+        <div className="flex justify-between items-center p-[15px] border-b border-[var(--admin-border)] md:hidden">
+          <h3 className="m-0 font-oswald text-[18px] text-[var(--admin-text)] uppercase font-black">Current Order</h3>
           <button 
-            className="hidden max-[900px]:flex bg-transparent border-none text-[var(--admin-muted)] text-[20px] cursor-pointer hover:text-[var(--brand-red)]"
+            className="bg-transparent border-none text-[var(--admin-muted)] text-[18px] cursor-pointer"
             onClick={() => setIsMobileCartOpen(false)}
           >
             <FaTimes />
           </button>
         </div>
         <div className="p-[15px] border-b border-transparent">
-          <div className="flex bg-[var(--bg-body)] border border-[var(--admin-border)] rounded-[8px] p-[4px] mb-[15px]" style={{ borderRadius: "8px" }}>
+          <div className="bg-slate-100 dark:bg-[#202020] p-1 rounded-full border border-slate-200/80 dark:border-white/[0.06] flex items-center gap-1 mb-3.5">
             <button
-              className={`flex-1 py-[8px] px-0 border-none font-bold text-[13px] rounded-[6px] cursor-pointer transition-all duration-300 uppercase ${orderType === "Dine-In" ? "bg-[#FFDD00] text-[#1a1a1a]" : "bg-transparent text-[var(--admin-muted)]"}`}
-              style={{ borderRadius: "6px", border: "none" }}
+              type="button"
+              className={`flex-1 py-1.5 px-0 border-none font-bold text-xs rounded-full cursor-pointer transition-all duration-200 uppercase tracking-wider ${orderType === "Dine-In" ? "bg-amber-500/90 dark:bg-amber-500 text-neutral-900 shadow-sm" : "bg-transparent text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"}`}
               onClick={() => setOrderType("Dine-In")}
             >
               Dine-In
             </button>
             <button
-              className={`flex-1 py-[8px] px-0 border-none font-bold text-[13px] rounded-[6px] cursor-pointer transition-all duration-300 uppercase ${orderType === "Takeaway" ? "bg-[#FFDD00] text-[#1a1a1a]" : "bg-transparent text-[var(--admin-muted)]"}`}
-              style={{ borderRadius: "6px", border: "none" }}
+              type="button"
+              className={`flex-1 py-1.5 px-0 border-none font-bold text-xs rounded-full cursor-pointer transition-all duration-200 uppercase tracking-wider ${orderType === "Takeaway" ? "bg-amber-500/90 dark:bg-amber-500 text-neutral-900 shadow-sm" : "bg-transparent text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"}`}
               onClick={() => setOrderType("Takeaway")}
             >
               Takeaway
             </button>
             <button
-              className={`flex-1 py-[8px] px-0 border-none font-bold text-[13px] rounded-[6px] cursor-pointer transition-all duration-300 uppercase ${orderType === "Delivery" ? "bg-[#FFDD00] text-[#1a1a1a]" : "bg-transparent text-[var(--admin-muted)]"}`}
-              style={{ borderRadius: "6px", border: "none" }}
+              type="button"
+              className={`flex-1 py-1.5 px-0 border-none font-bold text-xs rounded-full cursor-pointer transition-all duration-200 uppercase tracking-wider ${orderType === "Delivery" ? "bg-amber-500/90 dark:bg-amber-500 text-neutral-900 shadow-sm" : "bg-transparent text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"}`}
               onClick={() => setOrderType("Delivery")}
             >
               Delivery

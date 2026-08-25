@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // 🔥 Navigate import kiya
-import Swal from "sweetalert2"; // 🔥 Premium Alerts ke liye Swal import kiya
-import { useTheme } from "../../Context/ThemeContext"; // 🔥 Global Theme Context
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import { useTheme } from "../../Context/ThemeContext";
+
 // Components Import
 import AdminSidebar from "./Components/SharedComponents/AdminSidebar";
 import AdminHeader from "./Components/SharedComponents/AdminHeader";
@@ -12,24 +13,22 @@ import InventoryDashboard from "./Components/Inventory/InventoryManager";
 import StaffDashboard from "./Components/Staff/StaffDashboard";
 import AnalyticsPanel from "./Components/Analytics/AnalyticsPanel";
 import SettingsPanel from "./Components/Settings/SettingsPanel";
-import DealsDashboard from "./Components/Deals/DealsDashboard"; // 🔥 Deals Dashboard Import
-import HomepageBuilder from "./Components/HomepageBuilder/HomepageBuilder"; // 🔥 Homepage Builder Import
-import TableManager from "./Components/Tables/TableManager"; // 🔥 Table Manager Import
-import ProductProfitTab from "./Components/ProductProfitTab/ProductProfitTab"; // 🔥 Product Profit Import
+import DealsDashboard from "./Components/Deals/DealsDashboard";
+import HomepageBuilder from "./Components/HomepageBuilder/HomepageBuilder";
+import TableManager from "./Components/Tables/TableManager";
+import ProductProfitTab from "./Components/ProductProfitTab/ProductProfitTab";
 
 const AdminDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme(); // 🔥 Global theme (defaults to "dark")
+  const { theme, toggleTheme } = useTheme();
   const isDarkMode = theme === "dark";
-  const navigate = useNavigate(); // 🔥 Hook initialize kiya
+  const navigate = useNavigate();
 
-  // 1. Initial state ab localStorage se aayegi
   const [activeTab, setActiveTab] = useState(() => {
     const savedTab = localStorage.getItem("adminActiveTab");
     return savedTab ? savedTab : "dashboard";
   });
 
-  // 2. Jab bhi tab change ho, usey localStorage mein save kar lo
   useEffect(() => {
     localStorage.setItem("adminActiveTab", activeTab);
   }, [activeTab]);
@@ -37,22 +36,22 @@ const AdminDashboard = () => {
   const handleLogout = () => {
     Swal.fire({
       title: "Logout?",
-      text: "Are you sure you want to end your session?",
+      text: "Are you sure you want to end your executive session?",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#333",
-      confirmButtonText: "Yes, Logout",
+      confirmButtonText: "Yes, Sign Out",
+      cancelButtonText: "Stay Logged In",
+      customClass: {
+        popup: "swal2-popup",
+        confirmButton: "swal2-confirm",
+        cancelButton: "swal2-cancel",
+      },
     }).then((result) => {
       if (result.isConfirmed) {
-        // 1. Dono Sessions ko jarr se khatam karein (Unified Auth wale)
         sessionStorage.removeItem("staff_session");
         sessionStorage.removeItem("user");
-
-        // 2. Active tab ka data bhi remove karein taake agla banda fresh start kare
+        sessionStorage.removeItem("auth_token");
         sessionStorage.removeItem("adminActiveTab");
-
-        // 3. Wapis Login page par bhej dein (replace: true se browser history clear ho jayegi)
         navigate("/login", { replace: true });
       }
     });
@@ -89,8 +88,8 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-[var(--admin-bg)] text-[var(--admin-text)] font-['Oswald','Inter',sans-serif] overflow-auto md:overflow-hidden transition-colors duration-300">
-      {/* Sidebar Component */}
+    <div className="admin-scope h-screen w-full overflow-hidden flex bg-[var(--admin-bg,#0D0D0D)] text-[var(--admin-text,#FFFFFF)] font-['Inter',sans-serif]">
+      {/* 1. Fixed Sidebar Navigation */}
       <AdminSidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -99,8 +98,9 @@ const AdminDashboard = () => {
         handleLogout={handleLogout}
       />
 
-      <div className="flex-1 overflow-y-auto p-[1.563rem]">
-        {/* Header Component */}
+      {/* 2. Main App-Shell Column */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
+        {/* Fixed Top Header (Never Scrolls Away) */}
         <AdminHeader
           activeTab={activeTab}
           setIsSidebarOpen={setIsSidebarOpen}
@@ -108,8 +108,12 @@ const AdminDashboard = () => {
           toggleTheme={toggleTheme}
         />
 
-        {/* Dynamic Content */}
-        {renderContent()}
+        {/* Independent Scrollable Content Body */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="max-w-[1600px] mx-auto pb-12">
+            {renderContent()}
+          </div>
+        </main>
       </div>
     </div>
   );

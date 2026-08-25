@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaTimes, FaSave, FaUserLock, FaKey } from "react-icons/fa";
+import { FaTimes, FaSave, FaUserLock, FaKey, FaUserPlus, FaMotorcycle, FaIdCard, FaSpinner } from "react-icons/fa";
 import Swal from "sweetalert2";
 
 const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
@@ -33,7 +33,8 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
         icon: "error",
         title: "Invalid Mobile Number",
         text: "Please enter exactly 11 digits starting with 03 (e.g. 03001234567).",
-        confirmButtonColor: "#ef4444",
+        background: "#171717",
+        color: "#fff",
       });
       return;
     }
@@ -52,21 +53,19 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
 
       const result = await response.json();
 
-      // 🔥 DEEP DEBUGGING: Browser Console me check karein ke Backend se kya aaya
-      console.log("Backend Response:", result);
-
       if (result.success) {
         Swal.fire({
           icon: "success",
-          title: "Hired!",
-          text: result.message,
+          title: "Staff Enrolled!",
+          text: result.message || "New staff member added.",
           timer: 1500,
           showConfirmButton: false,
+          background: "#171717",
+          color: "#fff",
         });
 
-        if (onSave) onSave(); // Parent ko refresh karega
+        if (onSave) onSave();
 
-        // Reset Form
         setFormData({
           name: "",
           role: "Waiter",
@@ -74,24 +73,26 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
           salary: "",
           username: "",
           password: "",
-          bike_number: "", // 🔥 Reset here
+          bike_number: "",
           license_number: "",
         });
         onClose();
       } else {
-        // Agar masla aaye toh proper message dikhayega
         Swal.fire({
           icon: "error",
           title: "Action Failed",
           text: result.message,
+          background: "#171717",
+          color: "#fff",
         });
       }
     } catch (error) {
-      console.error("Fetch Error:", error);
       Swal.fire({
         icon: "error",
         title: "System Error",
-        text: "Failed to read response from server. Check console.",
+        text: "Failed to connect with server.",
+        background: "#171717",
+        color: "#fff",
       });
     } finally {
       setIsSubmitting(false);
@@ -99,70 +100,89 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 bottom-0 bg-[rgba(0,0,0,0.6)] backdrop-blur-[6px] flex justify-center items-center z-[99999]" onClick={onClose}>
+    <div
+      className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
       <div
-        className="w-[90%] max-w-[37.5rem] bg-[var(--admin-bg,#141414)] rounded-[1rem] p-[1.563rem] shadow-[0_10px_30px_rgba(0,0,0,0.5)] relative animate-slide-up max-h-[90vh] overflow-y-auto custom-scrollbar"
+        className="modal-surface w-full max-w-lg md:max-w-xl p-5 sm:p-7 relative max-h-[90vh] overflow-y-auto space-y-4 animate-slide-up text-slate-900 dark:text-white"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-[1.25rem] w-full">
-          <h3 className="uppercase flex items-center gap-[0.625rem] text-white m-0 text-[1.25rem] font-black">Add New Employee</h3>
+        {/* Header */}
+        <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-white/[0.06]">
+          <div className="flex items-center gap-2.5">
+            <span className="w-1.5 h-5 bg-amber-500 rounded-full" />
+            <h3 className="m-0 text-base sm:text-lg font-black font-['Oswald',sans-serif] uppercase tracking-wide">
+              Enroll New Staff Member
+            </h3>
+          </div>
           <button
             type="button"
-            className="bg-transparent border-none text-[#949191] text-[1.25rem] cursor-pointer transition-colors duration-300 hover:text-[var(--admin-text)] static !m-0"
+            className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center border-none cursor-pointer transition-all active:scale-90"
             onClick={onClose}
           >
-            <FaTimes />
+            <FaTimes className="text-sm" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-[0.938rem]">
-            <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Full Name</label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+              Full Legal Name *
+            </label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
-              placeholder="e.g. Ali Khan"
+              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
+              placeholder="e.g. Muhammad Ali"
             />
           </div>
 
-          <div className="flex gap-[0.938rem] mt-[0.938rem] w-full flex-col md:flex-row">
-            <div className="mb-[0.938rem] flex-1 min-w-0">
-              <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Role</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+                Staff Role *
+              </label>
               <select
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
               >
-                <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Admin">Admin</option>
-                <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Cashier">Cashier</option>
-                <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Chef">Chef</option>
-                <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Manager">Manager</option>
-                <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Rider">Rider</option>
-                <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Waiter">Waiter</option>
-                <option className="bg-[var(--admin-bg)] text-[var(--admin-text)]" value="Dispatcher">Dispatcher</option>
+                <option className="bg-white dark:bg-[#171717]" value="Admin">Admin</option>
+                <option className="bg-white dark:bg-[#171717]" value="Manager">Manager</option>
+                <option className="bg-white dark:bg-[#171717]" value="Chef">Chef</option>
+                <option className="bg-white dark:bg-[#171717]" value="Cashier">Cashier</option>
+                <option className="bg-white dark:bg-[#171717]" value="Rider">Rider</option>
+                <option className="bg-white dark:bg-[#171717]" value="Waiter">Waiter</option>
+                <option className="bg-white dark:bg-[#171717]" value="Dispatcher">Dispatcher</option>
               </select>
             </div>
-            <div className="mb-[0.938rem] flex-1 min-w-0">
-              <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Monthly Salary (Rs)</label>
+
+            <div>
+              <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+                Monthly Salary (Rs.) *
+              </label>
               <input
                 type="number"
                 name="salary"
                 value={formData.salary}
                 onChange={handleChange}
                 required
-                className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
-                placeholder="e.g. 30000"
+                min="0"
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-bold focus:outline-none focus:border-amber-500"
+                placeholder="e.g. 45000"
               />
             </div>
           </div>
 
-          <div className="mb-[0.938rem]">
-            <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Phone Number</label>
+          <div>
+            <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+              Mobile Contact (11 Digits) *
+            </label>
             <input
               type="tel"
               name="phone"
@@ -171,7 +191,6 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
               onChange={(e) => {
                 const val = e.target.value.replace(/[^0-9]/g, "");
                 setFormData({ ...formData, phone: val });
-                
                 if (val.length > 0 && val.length < 11) {
                   setPhoneError("Please enter all 11 digits.");
                 } else if (val.length === 11 && !/^03\d{9}$/.test(val)) {
@@ -181,92 +200,99 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
                 }
               }}
               required
-              className={`w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:border-[#ef4444] focus:bg-[var(--admin-bg)] ${phoneError ? "!border-red-500" : ""}`}
+              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
               placeholder="e.g. 03001234567"
             />
             {phoneError && (
-              <span className="text-[#ef4444] text-[0.75rem] mt-[0.313rem] inline-block">
+              <span className="text-[10px] text-rose-500 font-bold block mt-1">
                 {phoneError}
               </span>
             )}
           </div>
 
-          <hr className="border-none bg-[var(--admin-border,#222)] h-[1px] my-[1.25rem]" />
-
-          <p className="text-[var(--admin-orange)] text-[0.75rem] mt-0 font-bold">
-            System Access Credentials (Required)
-          </p>
-          {/* 🔥 CONDITIONAL RENDERING: Sirf tab dikhega jab role 'Rider' hoga */}
+          {/* Rider Specific Details */}
           {formData.role === "Rider" && (
-            <>
-              <hr className="border-none bg-[var(--admin-border,#222)] h-[1px] my-[1.25rem]" />
-              <p className="text-[var(--brand-yellow,#eab308)] text-[0.75rem] mt-0 font-bold">
-                Rider Details (Required)
-              </p>
-
-              <div className="flex gap-[0.938rem] mt-[0.938rem] w-full flex-col md:flex-row animate-slide-up">
-                <div className="mb-[0.938rem] flex-1 min-w-0">
-                  <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">Bike Number</label>
+            <div className="p-3.5 bg-slate-50 dark:bg-black/40 rounded-2xl border border-amber-500/20 space-y-3 animate-slide-up">
+              <div className="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                <FaMotorcycle />
+                <span>Rider Vehicle & License Details</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 block mb-1">
+                    Bike Plate Number *
+                  </label>
                   <input
                     type="text"
                     name="bike_number"
                     value={formData.bike_number}
                     onChange={handleChange}
-                    required={formData.role === "Rider"} // Rider ke liye lazmi
-                    className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
+                    required={formData.role === "Rider"}
+                    className="w-full px-3 py-2 bg-white dark:bg-black/50 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
                     placeholder="e.g. LEB-1234"
                   />
                 </div>
-                <div className="mb-[0.938rem] flex-1 min-w-0">
-                  <label className="block text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">License Number</label>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 block mb-1">
+                    License Number *
+                  </label>
                   <input
                     type="text"
                     name="license_number"
                     value={formData.license_number}
                     onChange={handleChange}
-                    required={formData.role === "Rider"} // Rider ke liye lazmi
-                    className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
+                    required={formData.role === "Rider"}
+                    className="w-full px-3 py-2 bg-white dark:bg-black/50 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
                     placeholder="e.g. DL-9876543"
                   />
                 </div>
               </div>
-            </>
-          )}
-          <div className="flex gap-[0.938rem] mt-[0.938rem] w-full flex-col md:flex-row">
-            <div className="mb-[0.938rem] flex-1 min-w-0">
-              <label className="flex items-center text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">
-                <FaUserLock className="mr-[0.313rem]" /> Username
-              </label>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
-                placeholder="e.g. ali_cashier"
-              />
             </div>
-            <div className="mb-[0.938rem] flex-1 min-w-0">
-              <label className="flex items-center text-[#888] text-[0.75rem] font-extrabold mb-[0.5rem] uppercase">
-                <FaKey className="mr-[0.313rem]" /> Password
-              </label>
-              <input
-                type="text"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                className="w-full bg-[var(--admin-bg)] text-[var(--admin-text)] p-[0.875rem_0.938rem] rounded-[0.5rem] text-[0.938rem] font-medium outline-none transition-all duration-300 focus:bg-[var(--admin-bg)]"
-                placeholder="Enter password"
-              />
+          )}
+
+          {/* Portal Credentials */}
+          <div className="p-3.5 bg-slate-50 dark:bg-white/[0.02] rounded-2xl border border-slate-200 dark:border-white/5 space-y-3">
+            <div className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-neutral-400 flex items-center gap-1.5">
+              <FaUserLock className="text-amber-500" />
+              <span>Portal Login Credentials</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 block mb-1">
+                  Username *
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
+                  placeholder="e.g. ali_staff"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 block mb-1">
+                  Password *
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
+                  placeholder="••••••••"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="mt-[1.875rem] border-t border-[var(--admin-border)] pt-[1.25rem] flex justify-end gap-[0.938rem] w-full">
+          {/* Footer Actions */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-white/[0.06]">
             <button
               type="button"
-              className="bg-[rgba(255,255,255,0.05)] text-white p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]"
+              className="px-5 py-2.5 rounded-xl bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-white/10 text-xs font-bold uppercase tracking-wider cursor-pointer"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -274,11 +300,15 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
             </button>
             <button
               type="submit"
-              className="bg-[var(--admin-orange)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[var(--shadow-glow)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[var(--shadow-glow)] flex items-center justify-center disabled:opacity-50"
+              className="btn-brand-cta px-6 py-2.5 text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer border-none active:scale-95 disabled:opacity-50"
               disabled={isSubmitting}
             >
-              <FaSave className="mr-[0.313rem]" />{" "}
-              {isSubmitting ? "Saving..." : "Hire Staff"}
+              {isSubmitting ? (
+                <FaSpinner className="animate-spin text-xs" />
+              ) : (
+                <FaUserPlus className="text-xs" />
+              )}
+              <span>Enroll Staff</span>
             </button>
           </div>
         </form>

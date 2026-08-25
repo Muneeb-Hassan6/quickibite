@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-
 import {
   FaUsers,
   FaCalendarCheck,
@@ -9,7 +8,6 @@ import {
   FaClock,
   FaHistory,
 } from "react-icons/fa";
-import Swal from "sweetalert2";
 
 // Components Imports
 import EmployeeList from "./Components/EmployeeList";
@@ -40,145 +38,102 @@ const StaffDashboard = () => {
     };
   }, [staffData]);
 
-  // ==========================================
-  // ⚙️ ADD NEW EMPLOYEE (API POST)
-  // ==========================================
-  // const handleAddEmployee = async (newEmp) => {
-  //   try {
-  //     const response = await fetch(
-  //       `${import.meta.env.VITE_API_BASE}/add_staff.php`,
-  //       {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify(newEmp),
-  //       },
-  //     );
-  //     const result = await response.json();
-
-  //     if (result.success) {
-  //       Swal.fire({
-  //         toast: true,
-  //         position: "top-end",
-  //         icon: "success",
-  //         title: "Staff Added Successfully",
-  //         showConfirmButton: false,
-  //         timer: 1500,
-  //       });
-  //       setIsModalOpen(false);
-  //       setRefreshKey((prev) => prev + 1); // 🔥 Is trick se neechay wala table foran update hoga
-  //     } else {
-  //       Swal.fire("Error", result.message, "error");
-  //     }
-  //   } catch (error) {
-  //     Swal.fire(
-  //       "Error",
-  //       "Network error. Could not connect to backend.",
-  //       "error",
-  //     );
-  //   }
-  // };
   const handleEmployeeAdded = () => {
     setIsModalOpen(false);
     queryClient.invalidateQueries({ queryKey: ['staff'] });
   };
+
+  const tabs = [
+    { id: "employees", label: "Employee List", icon: <FaUsers /> },
+    { id: "attendance", label: "Daily Attendance", icon: <FaCalendarCheck /> },
+    { id: "payroll", label: "Payroll", icon: <FaMoneyBillWave /> },
+    { id: "shifts", label: "Shift Roster", icon: <FaClock /> },
+    { id: "history", label: "Attendance History", icon: <FaHistory /> },
+  ];
+
   return (
-    <div className="pb-[3.125rem]">
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-[1.563rem]">
+    <div className="space-y-5 animate-slide-up pb-8">
+      {/* Header & Add Action */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-[var(--admin-text)] m-0 mb-[0.313rem] text-[1.5rem] font-bold tracking-[0.5px] uppercase">Staff & HR Management</h2>
-          <p className="text-[var(--admin-muted,#888)] text-[0.875rem] m-0">Manage HR, Payroll & Attendance.</p>
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-4 bg-red-600 rounded-full shrink-0" />
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-[var(--admin-text,#fff)] m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
+              Staff & HR Management
+            </h2>
+          </div>
+          <p className="text-xs text-[var(--admin-muted,#888)] m-0 mt-0.5 font-sans">
+            Manage employee records, daily attendance, payroll calculations, and shifts.
+          </p>
         </div>
 
         {activeTab === "employees" && (
           <button
-            className="bg-[var(--admin-orange)] text-white border-none p-[0.75rem_1.563rem] rounded cursor-pointer font-bold shadow-[var(--shadow-glow)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[var(--shadow-glow)] flex-none w-auto m-0 flex items-center gap-[0.5rem]"
+            type="button"
+            className="btn-brand-cta px-5 py-2.5 flex items-center gap-2 text-xs uppercase tracking-wider cursor-pointer border-none shrink-0 active:scale-95"
             onClick={() => setIsModalOpen(true)}
           >
-            <FaUserPlus /> Add New Staff
+            <FaUserPlus className="text-xs" />
+            <span>Add New Staff</span>
           </button>
         )}
       </div>
 
-      {/* PREMIUM STATS CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[1.25rem] mb-[1.875rem]">
-        <div className="bg-[var(--admin-panel)] rounded-[1rem] p-[1.563rem] flex items-center relative overflow-hidden transition-all duration-300 hover:-translate-y-[5px] hover:shadow-[0_10px_20px_rgba(0,0,0,0.1)] group">
-          <div className="w-[3.75rem] h-[3.75rem] rounded-[0.75rem] flex justify-center items-center text-[1.5rem] mr-[1.25rem] relative z-[2] text-[#3b82f6] bg-[rgba(59,130,246,0.1)]">
-            <FaUsers />
-          </div>
+      {/* Overview Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="admin-card-surface p-4 sm:p-5 rounded-2xl flex items-center justify-between border border-slate-200/80 dark:border-white/[0.06] shadow-sm">
           <div>
-            <h3 className="m-0 text-[1.5rem] font-black text-[var(--admin-text)] relative z-[2]">{stats.total}</h3>
-            <p className="m-0 text-[0.813rem] font-bold text-[var(--admin-muted)] uppercase tracking-[1px] relative z-[2]">Total Staff</p>
+            <p className="m-0 text-[11px] font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider mb-1">Total Registered Staff</p>
+            <h3 className="m-0 text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">{stats.total}</h3>
           </div>
-          <div className="absolute -right-[0.625rem] -bottom-[0.625rem] text-[5rem] text-[rgba(255,255,255,0.02)] z-[1] transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-[10deg]">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg shrink-0 text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20">
             <FaUsers />
           </div>
         </div>
 
-        <div className="bg-[var(--admin-panel)] rounded-[1rem] p-[1.563rem] flex items-center relative overflow-hidden transition-all duration-300 hover:-translate-y-[5px] hover:shadow-[0_10px_20px_rgba(0,0,0,0.1)] group">
-          <div className="w-[3.75rem] h-[3.75rem] rounded-[0.75rem] flex justify-center items-center text-[1.5rem] mr-[1.25rem] relative z-[2] text-[#10b981] bg-[rgba(16,185,129,0.1)]">
-            <FaCalendarCheck />
-          </div>
+        <div className="admin-card-surface p-4 sm:p-5 rounded-2xl flex items-center justify-between border border-slate-200/80 dark:border-white/[0.06] shadow-sm">
           <div>
-            <h3 className="m-0 text-[1.5rem] font-black text-[var(--admin-text)] relative z-[2]">{stats.active}</h3>
-            <p className="m-0 text-[0.813rem] font-bold text-[var(--admin-muted)] uppercase tracking-[1px] relative z-[2]">Active Now</p>
+            <p className="m-0 text-[11px] font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider mb-1">Active on Shift</p>
+            <h3 className="m-0 text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">{stats.active}</h3>
           </div>
-          <div className="absolute -right-[0.625rem] -bottom-[0.625rem] text-[5rem] text-[rgba(255,255,255,0.02)] z-[1] transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-[10deg]">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg shrink-0 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
             <FaCalendarCheck />
           </div>
         </div>
       </div>
 
-      {/* TABS NAVIGATION */}
-      <div className="flex gap-[0.938rem] mb-[1.563rem] border-b border-[var(--admin-border,#222)] pb-[0.125rem] overflow-x-auto custom-scrollbar">
-        <button
-          className={`bg-transparent border-none p-[0.75rem_1.25rem] text-[0.875rem] font-semibold text-[var(--admin-muted,#888)] cursor-pointer flex items-center gap-[0.5rem] border-b-[3px] border-transparent transition-all duration-300 whitespace-nowrap hover:text-[var(--admin-text,#fff)] hover:bg-[rgba(255,255,255,0.02)] hover:rounded-t-[0.5rem] ${activeTab === "employees" ? "!text-[var(--admin-orange,#f59e0b)] !border-b-[var(--admin-orange,#f59e0b)]" : ""}`}
-          onClick={() => setActiveTab("employees")}
-        >
-          <FaUsers /> Employee List
-        </button>
-        <button
-          className={`bg-transparent border-none p-[0.75rem_1.25rem] text-[0.875rem] font-semibold text-[var(--admin-muted,#888)] cursor-pointer flex items-center gap-[0.5rem] border-b-[3px] border-transparent transition-all duration-300 whitespace-nowrap hover:text-[var(--admin-text,#fff)] hover:bg-[rgba(255,255,255,0.02)] hover:rounded-t-[0.5rem] ${activeTab === "attendance" ? "!text-[var(--admin-orange,#f59e0b)] !border-b-[var(--admin-orange,#f59e0b)]" : ""}`}
-          onClick={() => setActiveTab("attendance")}
-        >
-          <FaCalendarCheck /> Daily Attendance
-        </button>
-        <button
-          className={`bg-transparent border-none p-[0.75rem_1.25rem] text-[0.875rem] font-semibold text-[var(--admin-muted,#888)] cursor-pointer flex items-center gap-[0.5rem] border-b-[3px] border-transparent transition-all duration-300 whitespace-nowrap hover:text-[var(--admin-text,#fff)] hover:bg-[rgba(255,255,255,0.02)] hover:rounded-t-[0.5rem] ${activeTab === "payroll" ? "!text-[var(--admin-orange,#f59e0b)] !border-b-[var(--admin-orange,#f59e0b)]" : ""}`}
-          onClick={() => setActiveTab("payroll")}
-        >
-          <FaMoneyBillWave /> Payroll
-        </button>
-        <button
-          className={`bg-transparent border-none p-[0.75rem_1.25rem] text-[0.875rem] font-semibold text-[var(--admin-muted,#888)] cursor-pointer flex items-center gap-[0.5rem] border-b-[3px] border-transparent transition-all duration-300 whitespace-nowrap hover:text-[var(--admin-text,#fff)] hover:bg-[rgba(255,255,255,0.02)] hover:rounded-t-[0.5rem] ${activeTab === "shifts" ? "!text-[var(--admin-orange,#f59e0b)] !border-b-[var(--admin-orange,#f59e0b)]" : ""}`}
-          onClick={() => setActiveTab("shifts")}
-        >
-          <FaClock /> Shift Roster
-        </button>
-        <button
-          className={`bg-transparent border-none p-[0.75rem_1.25rem] text-[0.875rem] font-semibold text-[var(--admin-muted,#888)] cursor-pointer flex items-center gap-[0.5rem] border-b-[3px] border-transparent transition-all duration-300 whitespace-nowrap hover:text-[var(--admin-text,#fff)] hover:bg-[rgba(255,255,255,0.02)] hover:rounded-t-[0.5rem] ${activeTab === "history" ? "!text-[var(--admin-orange,#f59e0b)] !border-b-[var(--admin-orange,#f59e0b)]" : ""}`}
-          onClick={() => setActiveTab("history")}
-        >
-          <FaHistory /> History
-        </button>
+      {/* Tabs Navigation Strip */}
+      <div className="flex items-center gap-2 flex-wrap py-2 border-b border-slate-200 dark:border-white/[0.06]">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              className={`flex items-center gap-2 cursor-pointer transition-all border-none ${
+                isActive
+                  ? "btn-brand-cta !rounded-full px-5 py-2 text-xs font-bold shadow-sm"
+                  : "text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/[0.04] hover:bg-slate-200 dark:hover:bg-white/[0.08] px-5 py-2 rounded-full text-xs font-semibold border border-slate-200/60 dark:border-white/[0.06]"
+              }`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span>{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* DYNAMIC CONTENT (Child components ab khud data handle karte hain, inhein props nahi chahiye) */}
+      {/* Active Tab View */}
       <div>
-        {activeTab === "employees" && (
-          <EmployeeList />
-        )}
-        {activeTab === "attendance" && (
-          <AttendanceSheet />
-        )}
+        {activeTab === "employees" && <EmployeeList />}
+        {activeTab === "attendance" && <AttendanceSheet />}
         {activeTab === "payroll" && <Payroll />}
         {activeTab === "shifts" && <ShiftManager />}
-        {activeTab === "history" && (
-          <AttendanceHistory />
-        )}
+        {activeTab === "history" && <AttendanceHistory />}
       </div>
 
-      {/* ADD MODAL */}
+      {/* Add Employee Modal */}
       <AddEmployeeModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

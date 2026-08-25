@@ -6,8 +6,29 @@ import {
   FaUserClock,
   FaUserSlash,
   FaUserCheck,
+  FaSpinner,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
+
+const getRoleBadge = (roleName) => {
+  const role = (roleName || "").toLowerCase();
+  switch (role) {
+    case "manager":
+      return "bg-purple-500/15 text-purple-400 border border-purple-500/30";
+    case "chef":
+      return "bg-amber-500/15 text-amber-400 border border-amber-500/30";
+    case "rider":
+      return "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30";
+    case "cashier":
+      return "bg-blue-500/15 text-blue-400 border border-blue-500/30";
+    case "waiter":
+      return "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30";
+    case "dispatcher":
+      return "bg-pink-500/15 text-pink-400 border border-pink-500/30";
+    default:
+      return "bg-neutral-500/15 text-neutral-400 border border-neutral-500/30";
+  }
+};
 
 const AttendanceSheet = () => {
   const [employees, setEmployees] = useState([]);
@@ -97,178 +118,225 @@ const AttendanceSheet = () => {
       if (result.success) {
         Swal.fire({
           icon: "success",
-          title: "Saved!",
-          text: `Attendance for ${selectedDate} saved.`,
+          title: "Attendance Saved!",
+          text: `Attendance recorded for ${selectedDate}.`,
           timer: 1500,
           showConfirmButton: false,
+          background: "#171717",
+          color: "#fff",
         });
       } else {
-        Swal.fire({ icon: "error", title: "Oops!", text: result.message });
+        Swal.fire("Error", result.message || "Failed to save attendance.", "error");
       }
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Network Error",
-        text: "Failed to connect to server.",
-      });
+      Swal.fire("Error", "Server error.", "error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const getRoleClass = (roleName) => {
-    const role = (roleName || "").toLowerCase();
-    const knownRoles = [
-      "manager",
-      "chef",
-      "cashier",
-      "dispatcher",
-      "waiter",
-      "rider",
-    ];
-
-    if (knownRoles.includes(role)) {
-      switch (role) {
-        case "manager":
-          return "bg-[rgba(108,92,231,0.15)] text-[#a29bfe] border border-[rgba(108,92,231,0.3)]";
-        case "chef":
-          return "bg-[rgba(245,158,11,0.15)] text-[#fbbf24] border border-[rgba(245,158,11,0.3)]";
-        case "rider":
-          return "bg-[rgba(16,185,129,0.15)] text-[#34d399] border border-[rgba(16,185,129,0.3)]";
-        case "waiter":
-          return "bg-[rgba(239,68,68,0.15)] text-[#f87171] border border-[rgba(239,68,68,0.3)]";
-        case "cashier":
-          return "bg-[rgba(59,130,246,0.15)] text-[#60a5fa] border border-[rgba(59,130,246,0.3)]";
-        case "dispatcher":
-          return "bg-[rgba(236,72,153,0.15)] text-[#f472b6] border border-[rgba(236,72,153,0.3)]";
-        default:
-          return "bg-[rgba(156,163,175,0.15)] text-[#9ca3af] border border-[rgba(156,163,175,0.3)]";
-      }
-    }
-    return "bg-[rgba(156,163,175,0.15)] text-[#9ca3af] border border-[rgba(156,163,175,0.3)]";
-  };
-
   const stats = {
-    present: Object.values(attendanceData).filter((x) => x.status === "Present")
-      .length,
-    absent: Object.values(attendanceData).filter((x) => x.status === "Absent")
-      .length,
-    late: Object.values(attendanceData).filter((x) => x.status === "Late")
-      .length,
+    present: Object.values(attendanceData).filter((x) => x.status === "Present").length,
+    absent: Object.values(attendanceData).filter((x) => x.status === "Absent").length,
+    late: Object.values(attendanceData).filter((x) => x.status === "Late").length,
   };
 
   if (isLoading)
     return (
-      <div className="text-center p-[3.125rem] text-white">Loading Attendance Sheet...</div>
+      <div className="py-20 text-center text-[var(--admin-muted,#888)] text-xs font-bold uppercase tracking-wider">
+        Loading Daily Attendance Sheet...
+      </div>
     );
 
   return (
-    <div className="bg-[var(--admin-bg,#141414)] rounded-[0.75rem] border border-[var(--admin-border,#222)] overflow-hidden shadow-[0_4px_15px_rgba(0,0,0,0.2)] animate-slide-up custom-scrollbar">
-      <div className="flex justify-between items-center p-[0.938rem_1.25rem]  flex-wrap gap-[0.938rem]">
-        <div className="flex items-center gap-[0.625rem] font-semibold text-[var(--admin-muted,#888)]">
-          <FaCalendarAlt /> Select Date:
+    <div className="space-y-4 animate-slide-up">
+      {/* Top Header & Actions */}
+      <div className="admin-card-surface flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 p-4 rounded-2xl shadow-sm">
+        {/* Date Selector */}
+        <div className="flex items-center gap-2.5 text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
+          <FaCalendarAlt className="text-amber-500 text-sm" />
+          <span>Attendance Date:</span>
           <input
             type="date"
-            className="bg-[#111111] text-white border border-[#333333] rounded-[0.5rem] outline-none focus:border-[#ef4444] w-auto p-[0.5rem_0.75rem] [&::-webkit-calendar-picker-indicator]:invert-[1] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-80 [color-scheme:dark]"
+            className="bg-slate-50 dark:bg-[#111111] text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs font-bold outline-none focus:border-amber-500 cursor-pointer"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
           />
         </div>
-        <div className="flex gap-[0.625rem]">
-          <button className="bg-transparent text-white border border-[#333] p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)] flex items-center gap-[0.5rem]" onClick={markAllPresent}>
-            <FaCheckDouble /> Mark All Present
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-neutral-200 border border-slate-200 dark:border-white/10 text-xs font-bold uppercase tracking-wider cursor-pointer flex items-center gap-2 transition-all active:scale-95 shadow-sm"
+            onClick={markAllPresent}
+          >
+            <FaCheckDouble className="text-amber-500 text-xs" />
+            <span>Mark All Present</span>
           </button>
           <button
-            className="bg-[var(--admin-orange)] text-white border-none p-[0.75rem_1.563rem] rounded-[0.5rem] cursor-pointer font-bold shadow-[0_4px_15px_rgba(239,68,68,0.4)] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.6)] flex items-center gap-[0.5rem] disabled:opacity-50 !w-auto !m-0"
+            type="button"
+            className="btn-brand-cta px-4 py-2 text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer border-none active:scale-95 disabled:opacity-50"
             onClick={handleSave}
             disabled={isSubmitting}
           >
-            <FaSave /> {isSubmitting ? "Saving..." : "Save Sheet"}
+            {isSubmitting ? (
+              <FaSpinner className="animate-spin text-xs" />
+            ) : (
+              <FaSave className="text-xs" />
+            )}
+            <span>Save Sheet</span>
           </button>
         </div>
       </div>
 
-      <div className="flex gap-[1.25rem] p-[0.938rem_1.25rem] bg-[var(--admin-bg,#000)]  overflow-x-auto">
-        <div className="flex items-center gap-[0.5rem] text-[0.813rem] font-semibold p-[0.5rem_0.938rem] rounded-[0.5rem] bg-[var(--admin-panel,#141414)] border text-[#10b981] border-[rgba(16,185,129,0.3)]">
-          <FaUserCheck /> Present: <strong className="text-[1rem] ml-[0.313rem]">{stats.present}</strong>
+      {/* Summary KPI Pills */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="admin-card-surface p-4 sm:p-5 rounded-2xl flex items-center justify-between border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm">
+          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider">
+            <FaUserCheck className="text-sm" />
+            <span>Present Today</span>
+          </div>
+          <span className="font-bold text-2xl tracking-tight font-mono">{stats.present}</span>
         </div>
-        <div className="flex items-center gap-[0.5rem] text-[0.813rem] font-semibold p-[0.5rem_0.938rem] rounded-[0.5rem] bg-[var(--admin-panel,#141414)] border text-[#ef4444] border-[rgba(239,68,68,0.3)]">
-          <FaUserSlash /> Absent: <strong className="text-[1rem] ml-[0.313rem]">{stats.absent}</strong>
+
+        <div className="admin-card-surface p-4 sm:p-5 rounded-2xl flex items-center justify-between border border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400 shadow-sm">
+          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider">
+            <FaUserSlash className="text-sm" />
+            <span>Absent Staff</span>
+          </div>
+          <span className="font-bold text-2xl tracking-tight font-mono">{stats.absent}</span>
         </div>
-        <div className="flex items-center gap-[0.5rem] text-[0.813rem] font-semibold p-[0.5rem_0.938rem] rounded-[0.5rem] bg-[var(--admin-panel,#141414)] border text-[#f59e0b] border-[rgba(245,158,11,0.3)]">
-          <FaUserClock /> Late: <strong className="text-[1rem] ml-[0.313rem]">{stats.late}</strong>
+
+        <div className="admin-card-surface p-4 sm:p-5 rounded-2xl flex items-center justify-between border border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400 shadow-sm">
+          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider">
+            <FaUserClock className="text-sm" />
+            <span>Late Check-in</span>
+          </div>
+          <span className="font-bold text-2xl tracking-tight font-mono">{stats.late}</span>
         </div>
       </div>
 
-      <div className="overflow-x-auto w-full">
-        <table className="w-full border-collapse min-w-[37.5rem] text-[0.875rem]">
+      {/* Table Container */}
+      <div className="admin-card-surface rounded-2xl overflow-x-auto shadow-sm">
+        <table className="w-full border-collapse min-w-[680px] text-left text-xs">
           <thead>
-            <tr>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px] pl-[1.25rem]">Employee Name</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Role</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Mark Status</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Check-In Time</th>
-              <th className="p-[1.25rem] text-left text-[var(--admin-muted,#888)] font-semibold  text-[0.813rem] uppercase tracking-[0.5px]">Remarks</th>
+            <tr className="border-b border-slate-200 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                Employee
+              </th>
+              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                Role
+              </th>
+              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                Mark Status (P / A / L)
+              </th>
+              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                Check-In Time
+              </th>
+              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider text-right">
+                Status Summary
+              </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-slate-200 dark:divide-white/[0.06]">
             {employees.length > 0 ? (
               employees.map((emp) => {
                 const currentStatus = attendanceData[emp.id]?.status || "Present";
                 const isAbsent = currentStatus === "Absent";
+
                 return (
-                  <tr key={emp.id} className={` transition-colors duration-200 hover:bg-[rgba(255,255,255,0.02)] ${isAbsent ? "!bg-[rgba(239,68,68,0.05)]" : ""}`}>
-                    <td className="p-[1.25rem] align-middle pl-[1.25rem]">
-                      <div className="flex items-center gap-[0.75rem]">
-                        <div className="w-[2.5rem] h-[2.5rem] rounded-full bg-[rgba(255,255,255,0.05)] flex items-center justify-center font-bold text-[1rem] text-[var(--admin-orange,#f59e0b)] border border-[var(--admin-border,#333)]">
+                  <tr
+                    key={emp.id}
+                    className={`hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors ${
+                      isAbsent ? "bg-rose-500/[0.03]" : ""
+                    }`}
+                  >
+                    <td className="p-3.5 sm:p-4 align-middle">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
                           {emp.name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="flex flex-col">
-                          <span className="font-bold text-[var(--admin-text,#fff)] block">{emp.name}</span>
-                          <span className="text-[0.75rem] text-[var(--admin-muted,#888)]">ID: #{emp.id}</span>
+                        <div className="min-w-0">
+                          <span className="font-extrabold text-sm text-slate-900 dark:text-white block truncate">
+                            {emp.name}
+                          </span>
+                          <span className="text-[10px] text-slate-500 dark:text-neutral-400 font-semibold block">
+                            ID: #{emp.id}
+                          </span>
                         </div>
                       </div>
                     </td>
-                    <td className="p-[1.25rem] align-middle">
-                      {/* Role badge fix */}
-                      <span className={`px-[0.75rem] py-[0.313rem] rounded-[0.375rem] text-[0.688rem] font-extrabold uppercase tracking-[0.5px] inline-block ${getRoleClass(emp.role)}`}>
+                    <td className="p-3.5 sm:p-4 align-middle">
+                      <span
+                        className={`!rounded-full px-3 py-0.5 text-xs font-bold uppercase tracking-wider inline-block ${getRoleBadge(
+                          emp.role
+                        )}`}
+                      >
                         {emp.role}
                       </span>
                     </td>
-                    <td className="p-[1.25rem] align-middle">
-                      <div className="bg-[var(--admin-bg,#000)] p-[0.313rem] rounded-[0.5rem] inline-flex gap-[0.313rem] border border-[var(--admin-border,#333)]">
+                    <td className="p-3.5 sm:p-4 align-middle">
+                      {/* Segmented Modern P / A / L Pills */}
+                      <div className="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-white/[0.05] border border-slate-200/80 dark:border-white/[0.06] gap-1">
                         <button
-                          className={`w-[2rem] h-[2rem] flex items-center justify-center rounded-[0.375rem] border border-transparent font-extrabold text-[0.813rem] cursor-pointer transition-all duration-200 bg-transparent text-[var(--admin-muted,#888)] hover:bg-[rgba(16,185,129,0.2)] hover:text-[#10b981] hover:border-[#10b981] ${currentStatus === "Present" ? "!bg-[rgba(16,185,129,0.2)] !text-[#10b981] !border-[#10b981]" : ""}`}
+                          type="button"
+                          className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all border-none ${
+                            currentStatus === "Present"
+                              ? "bg-emerald-500 text-white shadow-sm"
+                              : "bg-transparent text-slate-400 dark:text-neutral-500 hover:bg-slate-200/60 dark:hover:bg-white/10"
+                          }`}
                           onClick={() => handleStatusChange(emp.id, "Present")}
+                          title="Mark Present"
                         >
                           P
                         </button>
                         <button
-                          className={`w-[2rem] h-[2rem] flex items-center justify-center rounded-[0.375rem] border border-transparent font-extrabold text-[0.813rem] cursor-pointer transition-all duration-200 bg-transparent text-[var(--admin-muted,#888)] hover:bg-[rgba(239,68,68,0.2)] hover:text-[#ef4444] hover:border-[#ef4444] ${currentStatus === "Absent" ? "!bg-[rgba(239,68,68,0.2)] !text-[#ef4444] !border-[#ef4444]" : ""}`}
+                          type="button"
+                          className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all border-none ${
+                            currentStatus === "Absent"
+                              ? "bg-rose-500 text-white shadow-sm"
+                              : "bg-transparent text-slate-400 dark:text-neutral-500 hover:bg-slate-200/60 dark:hover:bg-white/10"
+                          }`}
                           onClick={() => handleStatusChange(emp.id, "Absent")}
+                          title="Mark Absent"
                         >
                           A
                         </button>
                         <button
-                          className={`w-[2rem] h-[2rem] flex items-center justify-center rounded-[0.375rem] border border-transparent font-extrabold text-[0.813rem] cursor-pointer transition-all duration-200 bg-transparent text-[var(--admin-muted,#888)] hover:bg-[rgba(245,158,11,0.2)] hover:text-[#f59e0b] hover:border-[#f59e0b] ${currentStatus === "Late" ? "!bg-[rgba(245,158,11,0.2)] !text-[#f59e0b] !border-[#f59e0b]" : ""}`}
+                          type="button"
+                          className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all border-none ${
+                            currentStatus === "Late"
+                              ? "bg-amber-500 text-neutral-950 shadow-sm"
+                              : "bg-transparent text-slate-400 dark:text-neutral-500 hover:bg-slate-200/60 dark:hover:bg-white/10"
+                          }`}
                           onClick={() => handleStatusChange(emp.id, "Late")}
+                          title="Mark Late"
                         >
                           L
                         </button>
                       </div>
                     </td>
-                    <td className="p-[1.25rem] align-middle">
+                    <td className="p-3.5 sm:p-4 align-middle">
                       <input
                         type="time"
                         value={attendanceData[emp.id]?.time || "09:00"}
                         onChange={(e) => handleTimeChange(emp.id, e.target.value)}
-                        className={`bg-[#111111] text-white border border-[#333333] rounded-[0.5rem] outline-none focus:border-[#ef4444] w-[8.125rem] p-[0.625rem] transition-all duration-300 [&::-webkit-calendar-picker-indicator]:invert-[1] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-80 [color-scheme:dark] ${isAbsent ? "!opacity-30 !cursor-not-allowed !bg-[#0a0a0a]" : ""}`}
+                        className={`bg-slate-50 dark:bg-[#111111] text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs font-mono outline-none focus:border-amber-500 transition-all ${
+                          isAbsent ? "opacity-30 cursor-not-allowed" : ""
+                        }`}
                         disabled={isAbsent}
                       />
                     </td>
-                    <td className="p-[1.25rem] align-middle">
+                    <td className="p-3.5 sm:p-4 align-middle text-right">
                       <span
-                        className={`text-[0.75rem] font-bold uppercase ${currentStatus === "Present" ? "text-[#10b981]" : currentStatus === "Absent" ? "text-[#ef4444]" : "text-[#f59e0b]"}`}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-block ${
+                          currentStatus === "Present"
+                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                            : currentStatus === "Absent"
+                            ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                            : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                        }`}
                       >
                         {currentStatus === "Present" ? "On Time" : currentStatus}
                       </span>
@@ -278,7 +346,10 @@ const AttendanceSheet = () => {
               })
             ) : (
               <tr>
-                <td colSpan="5" className="text-center p-[2.5rem] text-[gray]">
+                <td
+                  colSpan="5"
+                  className="text-center py-12 text-xs text-[var(--admin-muted,#888)] font-semibold"
+                >
                   No active staff found to mark attendance.
                 </td>
               </tr>
