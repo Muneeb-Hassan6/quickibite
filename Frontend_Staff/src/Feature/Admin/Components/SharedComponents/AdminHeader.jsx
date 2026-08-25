@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { FaBars, FaSun, FaMoon, FaClock } from "react-icons/fa";
+import { FaSun, FaMoon, FaClock } from "react-icons/fa";
+import { HiBars3BottomLeft } from "react-icons/hi2";
 import { useTheme } from "../../../../Context/ThemeContext";
 
 const TAB_DESCRIPTIONS = {
@@ -41,16 +42,16 @@ const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
-    <header className="w-full px-4 sm:px-6 lg:px-8 py-3.5 bg-[var(--admin-panel,#171717)]/95 backdrop-blur-md border-b border-[var(--admin-border,rgba(255,255,255,0.06))] flex items-center justify-between gap-4 shrink-0 z-20">
+    <header className="w-full px-4 sm:px-6 lg:px-8 py-3.5 bg-[var(--admin-panel,#171717)]/95 backdrop-blur-md border-b border-[var(--admin-border,rgba(255,255,255,0.06))] flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 sm:gap-4 shrink-0 z-20">
       {/* Left: Mobile Toggle & Page Title */}
       <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
-          className="md:hidden w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 text-[var(--admin-text,#fff)] flex items-center justify-center border border-white/10 cursor-pointer transition-all shrink-0"
+          className="lg:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-slate-700 dark:text-white flex items-center justify-center border border-slate-200 dark:border-white/10 cursor-pointer transition-all shrink-0 active:scale-95"
           onClick={() => setIsSidebarOpen(true)}
           aria-label="Open Navigation"
         >
-          <FaBars className="text-sm" />
+          <HiBars3BottomLeft className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
 
         <div className="min-w-0">
@@ -84,13 +85,13 @@ const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
         <button
           type="button"
           onClick={toggleTheme}
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/[0.03] hover:bg-white/10 text-[var(--admin-text,#fff)] border border-[var(--admin-border,rgba(255,255,255,0.08))] flex items-center justify-center cursor-pointer transition-all shadow-sm"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/[0.03] hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-[var(--admin-text,#fff)] border border-slate-200 dark:border-[var(--admin-border,rgba(255,255,255,0.08))] flex items-center justify-center cursor-pointer transition-all shadow-sm group"
           title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
         >
           {theme === "dark" ? (
-            <FaSun className="text-amber-400 text-xs sm:text-sm" />
+            <FaSun className="theme-toggle-icon text-amber-400 text-xs sm:text-sm group-hover:rotate-45 group-active:scale-125" />
           ) : (
-            <FaMoon className="text-neutral-700 text-xs sm:text-sm" />
+            <FaMoon className="theme-toggle-icon text-neutral-700 text-xs sm:text-sm group-hover:-rotate-12 group-active:scale-125" />
           )}
         </button>
       </div>

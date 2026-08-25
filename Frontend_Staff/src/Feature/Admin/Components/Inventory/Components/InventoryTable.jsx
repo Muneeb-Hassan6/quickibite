@@ -15,9 +15,9 @@ const InventoryTable = ({
   };
 
   return (
-    <div className="w-full overflow-hidden bg-[var(--panel-bg)] rounded-2xl border border-[var(--border-subtle)] shadow-sm animate-slide-up">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-left text-xs">
+    <div className="admin-card-surface rounded-2xl shadow-sm animate-slide-up overflow-hidden">
+      <div className="table-responsive-container">
+        <table className="min-w-[760px] lg:min-w-full w-full border-collapse text-left text-xs">
           <thead>
             <tr className="border-b border-[var(--border-subtle)] bg-[var(--table-header-bg)]">
               <th

@@ -81,107 +81,109 @@ const AttendanceHistory = () => {
       </div>
 
       {/* History Table */}
-      <div className="admin-card-surface rounded-2xl overflow-x-auto shadow-sm">
-        <table className="w-full border-collapse min-w-[680px] text-left text-xs">
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
-              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
-                Staff Member
-              </th>
-              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
-                Working Days
-              </th>
-              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
-                Present
-              </th>
-              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
-                Absent
-              </th>
-              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
-                Late
-              </th>
-              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
-                Performance Rating
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-white/[0.06]">
-            {attendanceData.length > 0 ? (
-              attendanceData.map((emp) => {
-                const present = parseInt(emp.present) || 0;
-                const absent = parseInt(emp.absent) || 0;
-                const late = parseInt(emp.late) || 0;
-                const workingDays = 26;
-                let percentage = Math.min(100, Math.round((present / workingDays) * 100));
+      <div className="admin-card-surface rounded-2xl overflow-hidden shadow-sm">
+        <div className="table-responsive-container">
+          <table className="min-w-[760px] lg:min-w-full w-full border-collapse text-left text-xs">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                  Staff Member
+                </th>
+                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                  Working Days
+                </th>
+                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                  Present
+                </th>
+                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                  Absent
+                </th>
+                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                  Late
+                </th>
+                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                  Performance Rating
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-white/[0.06]">
+              {attendanceData.length > 0 ? (
+                attendanceData.map((emp) => {
+                  const present = parseInt(emp.present) || 0;
+                  const absent = parseInt(emp.absent) || 0;
+                  const late = parseInt(emp.late) || 0;
+                  const workingDays = 26;
+                  let percentage = Math.min(100, Math.round((present / workingDays) * 100));
 
-                const barColor =
-                  percentage >= 85
-                    ? "bg-emerald-500"
-                    : percentage >= 50
-                    ? "bg-amber-500"
-                    : "bg-rose-500";
+                  const barColor =
+                    percentage >= 85
+                      ? "bg-emerald-500"
+                      : percentage >= 50
+                      ? "bg-amber-500"
+                      : "bg-rose-500";
 
-                const textColor =
-                  percentage >= 85
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : percentage >= 50
-                    ? "text-amber-700 dark:text-amber-400"
-                    : "text-rose-600 dark:text-rose-400";
+                  const textColor =
+                    percentage >= 85
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : percentage >= 50
+                      ? "text-amber-700 dark:text-amber-400"
+                      : "text-rose-600 dark:text-rose-400";
 
-                return (
-                  <tr key={emp.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
-                    <td className="p-3.5 sm:p-4 align-middle">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
-                          {(emp.name || "U").charAt(0).toUpperCase()}
+                  return (
+                    <tr key={emp.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                      <td className="p-3.5 sm:p-4 align-middle">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
+                            {(emp.name || "U").charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="font-extrabold text-sm text-slate-900 dark:text-white block truncate">
+                              {emp.name}
+                            </span>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <span className="font-extrabold text-sm text-slate-900 dark:text-white block truncate">
-                            {emp.name}
+                      </td>
+                      <td className="p-3.5 sm:p-4 align-middle text-slate-500 dark:text-neutral-400 font-medium">
+                        {workingDays} Days
+                      </td>
+                      <td className="p-3.5 sm:p-4 align-middle text-emerald-600 dark:text-emerald-400 font-black font-mono">
+                        {present} Days
+                      </td>
+                      <td className="p-3.5 sm:p-4 align-middle text-rose-600 dark:text-rose-400 font-bold font-mono">
+                        {absent} Days
+                      </td>
+                      <td className="p-3.5 sm:p-4 align-middle text-amber-700 dark:text-amber-400 font-bold font-mono">
+                        {late} Days
+                      </td>
+                      <td className="p-3.5 sm:p-4 align-middle">
+                        <div className="flex items-center gap-3">
+                          <div className="w-28 h-2 bg-slate-200 dark:bg-black/50 rounded-full overflow-hidden border border-slate-300 dark:border-white/5">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                          <span className={`font-black text-xs font-mono ${textColor}`}>
+                            {percentage}%
                           </span>
                         </div>
-                      </div>
-                    </td>
-                    <td className="p-3.5 sm:p-4 align-middle text-slate-500 dark:text-neutral-400 font-medium">
-                      {workingDays} Days
-                    </td>
-                    <td className="p-3.5 sm:p-4 align-middle text-emerald-600 dark:text-emerald-400 font-black font-mono">
-                      {present} Days
-                    </td>
-                    <td className="p-3.5 sm:p-4 align-middle text-rose-600 dark:text-rose-400 font-bold font-mono">
-                      {absent} Days
-                    </td>
-                    <td className="p-3.5 sm:p-4 align-middle text-amber-700 dark:text-amber-400 font-bold font-mono">
-                      {late} Days
-                    </td>
-                    <td className="p-3.5 sm:p-4 align-middle">
-                      <div className="flex items-center gap-3">
-                        <div className="w-28 h-2 bg-slate-200 dark:bg-black/50 rounded-full overflow-hidden border border-slate-300 dark:border-white/5">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${barColor}`}
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                        <span className={`font-black text-xs font-mono ${textColor}`}>
-                          {percentage}%
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td
-                  colSpan="6"
-                  className="text-center py-12 text-xs text-[var(--admin-muted,#888)] font-semibold"
-                >
-                  No staff attendance records found for this period.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td
+                    colSpan="6"
+                    className="text-center py-12 text-xs text-[var(--admin-muted,#888)] font-semibold"
+                  >
+                    No staff attendance records found for this period.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

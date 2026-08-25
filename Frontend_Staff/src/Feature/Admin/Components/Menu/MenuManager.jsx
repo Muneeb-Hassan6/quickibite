@@ -7,6 +7,7 @@ import {
   FaTrash,
   FaCheckCircle,
   FaExclamationCircle,
+  FaLayerGroup,
 } from "react-icons/fa";
 import imageCompression from "browser-image-compression";
 
@@ -178,13 +179,13 @@ const MenuManager = () => {
         finalPromoBannerUrl = await uploadToCloudinary(menuForm.promo_banner_image);
       }
 
-      const payload = { 
-        ...menuForm, 
-        img: finalImgUrl || "", 
+      const payload = {
+        ...menuForm,
+        img: finalImgUrl || "",
         promo_banner_image: finalPromoBannerUrl || "",
         is_featured_banner: menuForm.is_featured_banner ? 1 : 0,
         banner_order: parseInt(menuForm.banner_order || 0),
-        auth_token: sessionStorage.getItem("auth_token") 
+        auth_token: sessionStorage.getItem("auth_token")
       };
       const url = editingItem
         ? `${import.meta.env.VITE_API_BASE}/update_menu.php`
@@ -414,37 +415,42 @@ const MenuManager = () => {
               Menu Management
             </h2>
           </div>
-          <div className="inline-flex bg-slate-100 dark:bg-[#202020] border border-slate-200/80 dark:border-white/[0.06] rounded-full p-1 gap-1 shadow-sm mt-3">
-            <button
-              type="button"
-              className={`py-1.5 px-4 rounded-full cursor-pointer flex items-center gap-2 font-bold transition-all text-xs border-none ${
-                activeTab === "items"
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 no-scrollbar w-full sm:w-auto mt-3">
+            <div className="inline-flex bg-slate-100 dark:bg-[#202020] border border-slate-200/80 dark:border-white/[0.06] rounded-full p-1 gap-1 shadow-sm">
+              <button
+                type="button"
+                className={`py-1.5 px-4 rounded-full cursor-pointer flex items-center gap-2 font-bold transition-all text-xs border-none whitespace-nowrap shrink-0 ${activeTab === "items"
                   ? "btn-brand-cta !rounded-full"
                   : "bg-transparent text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-              onClick={() => setActiveTab("items")}
-            >
-              <FaHamburger className="text-xs" />
-              <span>Menu Items</span>
-            </button>
-            <button
-              type="button"
-              className={`py-1.5 px-4 rounded-full cursor-pointer flex items-center gap-2 font-bold transition-all text-xs border-none ${
-                activeTab === "categories"
+                  }`}
+                onClick={() => setActiveTab("items")}
+              >
+                <FaHamburger className="text-xs" />
+                <span>Menu Items</span>
+              </button>
+              <button
+                type="button"
+                className={`py-1.5 px-4 rounded-full cursor-pointer flex items-center gap-2 font-bold transition-all text-xs border-none whitespace-nowrap shrink-0 ${activeTab === "categories"
                   ? "btn-brand-cta !rounded-full"
                   : "bg-transparent text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-              onClick={() => setActiveTab("categories")}
-            >
-              <FaList className="text-xs" />
-              <span>Explore Categories</span>
-            </button>
-            <button
-              className={`bg-transparent text-[var(--admin-muted)] border-none py-[0.625rem] px-[1.5rem] rounded-[1.875rem] cursor-pointer flex items-center gap-[0.5rem] font-bold transition-all duration-300 text-[0.875rem] hover:text-[var(--admin-text)] ${activeTab === "addongroups" ? "bg-[var(--admin-orange)] text-white hover:text-white" : ""}`}
-              onClick={() => setActiveTab("addongroups")}
-            >
-              <FaPlus /> Addon Groups
-            </button>
+                  }`}
+                onClick={() => setActiveTab("categories")}
+              >
+                <FaList className="text-xs" />
+                <span>Explore Categories</span>
+              </button>
+              <button
+                type="button"
+                className={`py-1.5 px-4 rounded-full cursor-pointer flex items-center gap-2 font-bold transition-all text-xs border-none whitespace-nowrap shrink-0 ${activeTab === "addongroups"
+                  ? "btn-brand-cta !rounded-full"
+                  : "bg-transparent text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                onClick={() => setActiveTab("addongroups")}
+              >
+                <FaLayerGroup className="text-xs" />
+                <span>Addon Groups</span>
+              </button>
+            </div>
           </div>
         </div>
         {activeTab === "items" && (

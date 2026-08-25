@@ -220,13 +220,14 @@ const Payroll = () => {
       </div>
 
       {/* Payroll Table */}
-      <div className="admin-card-surface rounded-2xl overflow-x-auto shadow-sm">
-        <table className="w-full border-collapse min-w-[720px] text-left text-xs">
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
-              <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
-                Employee
-              </th>
+      <div className="admin-card-surface rounded-2xl overflow-hidden shadow-sm">
+        <div className="table-responsive-container">
+          <table className="min-w-[760px] lg:min-w-full w-full border-collapse text-left text-xs">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                  Employee
+                </th>
               <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
                 Basic Salary
               </th>
@@ -364,6 +365,7 @@ const Payroll = () => {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

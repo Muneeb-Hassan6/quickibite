@@ -89,7 +89,7 @@ const CashierSidebar = ({ activeTab, setActiveTab, handleLogout, onResetTerminal
           onClick={toggleTheme}
           title={theme === "dark" ? "Light Mode" : "Dark Mode"}
         >
-          {theme === "dark" ? <FaSun className="text-[20px]" /> : <FaMoon className="text-[20px]" />}
+          {theme === "dark" ? <FaSun className="theme-toggle-icon text-[20px]" /> : <FaMoon className="theme-toggle-icon text-[20px]" />}
         </button>
 
         <button

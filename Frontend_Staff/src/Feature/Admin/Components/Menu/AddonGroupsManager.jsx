@@ -167,30 +167,35 @@ const AddonGroupsManager = () => {
               <div>
                 <strong className="text-white text-sm mb-2 block">Available Addon Categories:</strong>
                 {mapGroup.addons.length > 0 ? (
-                    <div className="flex flex-col gap-2">
-                        {mapGroup.addons.map((a, i) => (
-                            <React.Fragment key={i}>
-                            <div className="bg-[#222] border border-[#444] p-2 rounded text-sm flex justify-between items-center">
-                                <span className="font-bold text-white">{a.addon_category}</span>
-                                <div className="text-xs text-gray-400 text-right">
-                                    <span className={a.is_required ? "text-red-400" : ""}>{a.is_required ? "Required" : "Optional"}</span>
-                                    <br/>
-                                    <span>{a.selection_type === 'single_choice' ? 'Single Choice' : 'Multiple Choice'}</span>
-                                </div>
-                            </div>
-                            {a.custom_label && <div className="text-xs text-gray-500 mt-1 italic pl-2 border-l-2 border-[#555]">Label: {a.custom_label}</div>}
-                        </React.Fragment>
-                    </div>
+                  <div className="flex flex-col gap-2">
+                    {mapGroup.addons.map((a, i) => (
+                      <React.Fragment key={i}>
+                        <div className="bg-[#222] border border-[#444] p-2 rounded text-sm flex justify-between items-center">
+                          <span className="font-bold text-white">{a.addon_category}</span>
+                          <div className="text-xs text-gray-400 text-right">
+                            <span className={a.is_required ? "text-red-400" : ""}>{a.is_required ? "Required" : "Optional"}</span>
+                            <br/>
+                            <span>{a.selection_type === 'single_choice' ? 'Single Choice' : 'Multiple Choice'}</span>
+                          </div>
+                        </div>
+                        {a.custom_label && (
+                          <div className="text-xs text-gray-500 mt-1 italic pl-2 border-l-2 border-[#555]">
+                            Label: {a.custom_label}
+                          </div>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
                 ) : (
-                    <span className="text-gray-500 text-sm">No addons mapped.</span>
+                  <span className="text-gray-500 text-sm">No addons mapped.</span>
                 )}
               </div>
             </div>
           ))}
           {mappings.length === 0 && (
-              <div className="col-span-full text-center py-10 text-gray-500 bg-[#1a1a1a] rounded-lg border border-dashed border-[#333]">
-                  No category mappings found. Create one to get started.
-              </div>
+            <div className="col-span-full text-center py-10 text-gray-500 bg-[#1a1a1a] rounded-lg border border-dashed border-[#333]">
+              No category mappings found. Create one to get started.
+            </div>
           )}
         </div>
       )}

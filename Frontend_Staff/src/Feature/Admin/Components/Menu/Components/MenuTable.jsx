@@ -62,132 +62,125 @@ const MenuTable = ({
       </div>
 
       {/* Table Container */}
-      <div className="bg-[var(--panel-bg)] rounded-2xl border border-[var(--border-subtle)] overflow-x-auto shadow-sm">
+      <div className="admin-card-surface rounded-2xl overflow-hidden shadow-sm">
         {filteredMenuItems.length > 0 ? (
-          <table className="w-full border-collapse text-left text-[var(--text-primary)] min-w-[660px]">
-            <thead>
-              <tr className="border-b border-[var(--border-subtle)] bg-[var(--table-header-bg)]">
-                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-[var(--text-primary)] font-bold tracking-wider">
-                  Product
-                </th>
-                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-[var(--text-primary)] font-bold tracking-wider">
-                  Category
-                </th>
-                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-[var(--text-primary)] font-bold tracking-wider">
-                  Base Price
-                </th>
-                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-[var(--text-primary)] font-bold tracking-wider">
-                  Stock Status
-                </th>
-                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-[var(--text-primary)] font-bold tracking-wider text-right">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--border-subtle)]">
-              {filteredMenuItems.map((item) => {
-                const displayPrice = item.price ?? item.variants?.[0]?.price ?? 0;
-                return (
-                  <tr
-                    key={item.id}
-                    className="hover:bg-[var(--table-row-hover)] transition-all group"
-                  >
-                    <td className="p-3.5 sm:p-4 align-middle">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-black/10 dark:bg-black/40 border border-[var(--border-subtle)] p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
-                          <img
-                            src={resolveImageUrl(item.img, 100)}
-                            alt={item.name}
-                            className="w-full h-full object-contain group-hover:scale-105 transition-transform"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = "https://placehold.co/100x100?text=No+Img";
-                            }}
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <span className="font-extrabold text-sm text-[var(--text-primary)] block truncate">
-                            {item.name}
-                          </span>
-                          {item.variants && item.variants.length > 1 ? (
-                            <span className="text-[10px] text-amber-500 font-bold block mt-0.5">
-                              {item.variants.length} Variants Available
+          <div className="table-responsive-container">
+            <table className="min-w-[760px] lg:min-w-full w-full border-collapse text-left text-[var(--text-primary)]">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+                  <th className="p-3.5 sm:p-4 text-[11px] uppercase text-[var(--text-primary)] font-bold tracking-wider">
+                    Product
+                  </th>
+                  <th className="p-3.5 sm:p-4 text-[11px] uppercase text-[var(--text-primary)] font-bold tracking-wider">
+                    Category
+                  </th>
+                  <th className="p-3.5 sm:p-4 text-[11px] uppercase text-[var(--text-primary)] font-bold tracking-wider">
+                    Base Price
+                  </th>
+                  <th className="p-3.5 sm:p-4 text-[11px] uppercase text-[var(--text-primary)] font-bold tracking-wider">
+                    Stock Status
+                  </th>
+                  <th className="p-3.5 sm:p-4 text-[11px] uppercase text-[var(--text-primary)] font-bold tracking-wider text-right">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-white/[0.06]">
+                {filteredMenuItems.map((item) => {
+                  const displayPrice = item.price ?? item.variants?.[0]?.price ?? 0;
+                  return (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all group"
+                    >
+                      <td className="p-3.5 sm:p-4 align-middle">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-black/10 dark:bg-black/40 border border-slate-200 dark:border-white/10 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
+                            <img
+                              src={resolveImageUrl(item.img, 100)}
+                              alt={item.name}
+                              className="w-full h-full object-cover rounded-lg"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = "https://placehold.co/100x100?text=Food";
+                              }}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="font-bold text-sm text-[var(--text-primary)] block truncate">
+                              {item.name}
                             </span>
-                          ) : (
-                            <span className="text-[10px] text-[var(--text-secondary)] font-semibold block mt-0.5">
-                              ID: #{item.id}
+                            <span className="text-[11px] text-[var(--text-muted)] block truncate max-w-[200px]">
+                              {item.description || "No description provided"}
                             </span>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="p-3.5 sm:p-4 align-middle text-xs sm:text-sm font-semibold">
-                      <span className="px-2.5 py-1 rounded-lg bg-[var(--input-bg)] border border-[var(--border-subtle)] text-[var(--text-secondary)] text-xs">
-                        {item.category || "Uncategorized"}
-                      </span>
-                    </td>
-                    <td className="p-3.5 sm:p-4 align-middle text-xs sm:text-sm font-black text-amber-500 font-mono">
-                      Rs. {Number(displayPrice).toLocaleString()}
-                    </td>
-                    <td className="p-3.5 sm:p-4 align-middle">
-                      <span
-                        className={`px-3 py-1 !rounded-full text-xs font-bold uppercase tracking-wider inline-block ${
-                          item.isAvailable
-                            ? "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30"
-                            : "bg-rose-500/15 text-rose-500 border border-rose-500/30"
-                        }`}
-                      >
-                        {item.isAvailable ? "In Stock" : "Out of Stock"}
-                      </span>
-                    </td>
-                    <td className="p-3.5 sm:p-4 align-middle text-right">
-                      <div className="flex justify-end gap-2">
-                        {/* Add-ons Button */}
-                        <button
-                          type="button"
-                          className="w-8 h-8 rounded-xl flex justify-center items-center cursor-pointer transition-all bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-neutral-950 border border-amber-500/20 shadow-sm active:scale-90"
-                          title="Manage Add-on Groups"
-                          onClick={() => onAddOns(item)}
-                        >
-                          <FaLayerGroup className="text-xs" />
-                        </button>
+                      </td>
 
-                        {/* Recipe Button */}
-                        <button
-                          type="button"
-                          className="w-8 h-8 rounded-xl flex justify-center items-center cursor-pointer transition-all bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white border border-emerald-500/20 shadow-sm active:scale-90"
-                          title="Inventory Recipe & Portions"
-                          onClick={() => onSetRecipe(item)}
-                        >
-                          <FaUtensils className="text-xs" />
-                        </button>
+                      <td className="p-3.5 sm:p-4 align-middle">
+                        <span className="bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-white/10 px-2.5 py-1 rounded-lg text-xs font-semibold">
+                          {item.category || "Unassigned"}
+                        </span>
+                      </td>
 
-                        {/* Edit Button */}
-                        <button
-                          type="button"
-                          className="w-8 h-8 rounded-xl flex justify-center items-center cursor-pointer transition-all bg-[var(--input-bg)] hover:bg-amber-500 hover:text-neutral-950 text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-sm active:scale-90"
-                          title="Edit Item"
-                          onClick={() => onEdit(item)}
-                        >
-                          <FaEdit className="text-xs" />
-                        </button>
+                      <td className="p-3.5 sm:p-4 align-middle font-black text-amber-600 dark:text-amber-400 font-mono">
+                        Rs. {Number(displayPrice).toLocaleString()}
+                      </td>
 
-                        {/* Delete Button */}
-                        <button
-                          type="button"
-                          className="w-8 h-8 rounded-xl flex justify-center items-center cursor-pointer transition-all bg-red-500/10 text-red-500 hover:bg-red-600 hover:text-white border border-red-500/20 shadow-sm active:scale-90"
-                          title="Delete Item"
-                          onClick={() => onDelete(item.id)}
+                      <td className="p-3.5 sm:p-4 align-middle">
+                        <span
+                          className={`!rounded-full px-3 py-0.5 text-xs font-bold uppercase tracking-wider inline-block ${
+                            item.isAvailable
+                              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                              : "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30"
+                          }`}
                         >
-                          <FaTrash className="text-xs" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                          {item.isAvailable ? "In Stock" : "Out of Stock"}
+                        </span>
+                      </td>
+
+                      <td className="p-3.5 sm:p-4 align-middle text-right">
+                        <div className="flex justify-end gap-1.5">
+                          <button
+                            type="button"
+                            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-white/10 cursor-pointer transition-all shadow-sm"
+                            title="Manage Recipe"
+                            onClick={() => onSetRecipe(item)}
+                          >
+                            <FaBookOpen className="text-xs" />
+                          </button>
+                          <button
+                            type="button"
+                            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-white/10 cursor-pointer transition-all shadow-sm"
+                            title="Manage Addons"
+                            onClick={() => onAddOns(item)}
+                          >
+                            <FaLayerGroup className="text-xs" />
+                          </button>
+                          <button
+                            type="button"
+                            className="p-2 rounded-xl bg-blue-500/10 hover:bg-blue-600 text-blue-600 dark:text-blue-400 hover:text-white border border-blue-500/20 cursor-pointer transition-all shadow-sm"
+                            title="Edit Item"
+                            onClick={() => onEdit(item)}
+                          >
+                            <FaEdit className="text-xs" />
+                          </button>
+                          <button
+                            type="button"
+                            className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-600 text-rose-600 dark:text-rose-400 hover:text-white border border-rose-500/20 cursor-pointer transition-all shadow-sm"
+                            title="Delete Item"
+                            onClick={() => onDelete(item.id)}
+                          >
+                            <FaTrash className="text-xs" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <div className="p-12 text-center text-[var(--text-secondary)]">
             <p className="text-sm font-semibold">No products found matching your search.</p>
