@@ -1,31 +1,32 @@
 <?php
-include_once __DIR__ . '/../config/cors_headers.php';
-include_once __DIR__ . '/../config/auth_middleware.php';
-require_role(['Admin', 'Manager']);
-include_once __DIR__ . '/../config/Database.php';
-
-$database = new Database();
-$db = $database->getConnection();
-
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(["success" => false, "message" => "Database connection failed"]);
-    exit();
+if (!ob_get_level()) {
+    ob_start();
 }
 
-$data = json_decode(file_get_contents("php://input"));
+include_once __DIR__ . '/../config/cors_headers.php';
+include_once __DIR__ . '/../config/Database.php';
 
-if (!empty($data->menu_item_id) && isset($data->addons)) {
-    try {
+try {
+    $database = new Database();
+    $db = $database->getConnection();
+
+    if (!$db) {
+        throw new Exception("Database connection failed");
+    }
+
+    $rawInput = file_get_contents("php://input");
+    $data = json_decode($rawInput);
+
+    if (!empty($data->menu_item_id) && isset($data->addons)) {
         $db->beginTransaction();
 
         $menu_item_id = intval($data->menu_item_id);
 
-        // 1. Purane Add-ons delete karein
+        // 1. Delete old add-ons
         $del = $db->prepare("DELETE FROM menu_addons WHERE menu_item_id = ?");
         $del->execute([$menu_item_id]);
 
-        // 2. Naye Add-ons insert karein
+        // 2. Insert new add-ons
         $ins = $db->prepare("INSERT INTO menu_addons (menu_item_id, addon_name, addon_price, inventory_id, qty_to_deduct) VALUES (?, ?, ?, ?, ?)");
 
         foreach ($data->addons as $addon) {
@@ -46,25 +47,26 @@ if (!empty($data->menu_item_id) && isset($data->addons)) {
         }
 
         $db->commit();
+        if (ob_get_level()) ob_clean();
         echo json_encode([
             "success" => true,
-            "status" => "success", // Backward compatibility
+            "status" => "success",
             "message" => "Add-ons saved successfully"
         ]);
-    } catch (Exception $e) {
-        $db->rollBack();
-        http_response_code(500);
-        echo json_encode([
-            "success" => false,
-            "status" => "error", // Backward compatibility
-            "message" => "Database error: " . $e->getMessage()
-        ]);
+        exit();
+    } else {
+        throw new Exception("Incomplete data. menu_item_id and addons are required.");
     }
-} else {
-    http_response_code(400);
+} catch (Exception $e) {
+    if (isset($db) && $db && $db->inTransaction()) {
+        $db->rollBack();
+    }
+    if (ob_get_level()) ob_clean();
     echo json_encode([
         "success" => false,
-        "message" => "Incomplete data. menu_item_id and addons required."
+        "status" => "error",
+        "message" => $e->getMessage()
     ]);
+    exit();
 }
 ?>

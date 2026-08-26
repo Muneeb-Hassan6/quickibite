@@ -61,6 +61,7 @@ try {
     $deal['is_deal'] = true;
     $deal['price'] = floatval($deal['price']);
     $deal['original_price'] = !empty($deal['original_price']) ? floatval($deal['original_price']) : null;
+    $deal['addon_categories'] = !empty($deal['addon_categories']) ? $deal['addon_categories'] : 'drinks,Potato Corner,Sauses,Grilled Wings';
 
     echo json_encode([
         "success" => true,

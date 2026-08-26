@@ -30,7 +30,7 @@ const DealsSidebar = ({
     categories.map((cat) => {
       const isActive = activeCategory === cat;
 
-      const desktopBtnClass = `flex items-center gap-3.5 w-full px-4.5 py-3.5 text-[15px] rounded-2xl cursor-pointer transition-all duration-200 text-left border-none ${
+      const desktopBtnClass = `flex items-center gap-2.5 w-full px-3 py-2 text-sm rounded-xl cursor-pointer transition-all duration-200 text-left border-none ${
         isActive
           ? "bg-amber-100/90 dark:bg-amber-500/20 text-amber-800 dark:text-amber-400 font-bold border-l-4 border-amber-400 shadow-xs"
           : "bg-transparent text-gray-700 dark:text-neutral-300 hover:text-gray-950 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800/60 font-medium"
@@ -63,7 +63,7 @@ const DealsSidebar = ({
           >
             {getDealCategoryIcon(cat)}
           </span>
-          <span className="truncate tracking-wide font-['Oswald',sans-serif] uppercase text-sm sm:text-base">
+          <span className="truncate tracking-wide font-['Oswald',sans-serif] uppercase text-xs sm:text-sm">
             {cat}
           </span>
         </button>
@@ -124,13 +124,13 @@ const DealsSidebar = ({
 
   // 🖥️ Desktop Sidebar View
   return (
-    <div className="w-full bg-white dark:bg-neutral-900 rounded-3xl p-5 border border-gray-100 dark:border-neutral-800 shadow-sm">
-      <div className="pb-3.5 mb-3.5 border-b border-gray-100 dark:border-neutral-800/80">
+    <div className="w-full bg-white dark:bg-neutral-900 rounded-2xl p-3.5 sm:p-4 border border-gray-200 dark:border-neutral-800 shadow-xs">
+      <div className="pb-2.5 mb-2.5 border-b border-gray-100 dark:border-neutral-800/80">
         <h4 className="text-xs font-black text-gray-400 dark:text-neutral-500 tracking-wider uppercase m-0">
           CATEGORIES
         </h4>
       </div>
-      <nav className="space-y-1.5">{renderList(false)}</nav>
+      <nav className="space-y-1">{renderList(false)}</nav>
     </div>
   );
 };

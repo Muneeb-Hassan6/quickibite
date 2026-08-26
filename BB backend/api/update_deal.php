@@ -32,6 +32,9 @@ if (!empty($data->id) && !empty($data->title) && isset($data->price) && $data->p
         $isPermanent = !empty($data->is_permanent) ? 1 : 0;
         $startTime = ($isPermanent || empty($data->start_time)) ? null : trim($data->start_time);
         $endTime = ($isPermanent || empty($data->end_time)) ? null : trim($data->end_time);
+        $addonCategories = isset($data->addon_categories) 
+            ? (is_array($data->addon_categories) ? implode(',', $data->addon_categories) : trim($data->addon_categories)) 
+            : 'drinks,Potato Corner,Sauses,Grilled Wings';
 
         // 1. Update deal master row
         $query = "UPDATE deals SET 
@@ -47,7 +50,8 @@ if (!empty($data->id) && !empty($data->title) && isset($data->price) && $data->p
                   banner_order = :b_order,
                   is_permanent = :is_p, 
                   start_time = :s_time, 
-                  end_time = :e_time 
+                  end_time = :e_time,
+                  addon_categories = :addon_cats
                   WHERE id = :id";
 
         $stmt = $db->prepare($query);
@@ -65,6 +69,7 @@ if (!empty($data->id) && !empty($data->title) && isset($data->price) && $data->p
             ':is_p'  => $isPermanent,
             ':s_time'=> $startTime,
             ':e_time'=> $endTime,
+            ':addon_cats' => $addonCategories,
             ':id'    => $id
         ]);
 

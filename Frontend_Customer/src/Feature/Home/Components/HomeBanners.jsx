@@ -30,7 +30,7 @@ const HomeBanners = ({ banners, onBannerClick }) => {
                   onBannerClick(banner);
                 }
               }}
-              className="group relative rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:scale-[1.01] cursor-pointer border border-neutral-200/80 dark:border-neutral-800/80 bg-neutral-900"
+              className="group relative rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:scale-[1.01] cursor-pointer border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-[#141414] text-zinc-900 dark:text-white"
             >
               <img
                 src={bannerSrc}
@@ -38,12 +38,12 @@ const HomeBanners = ({ banners, onBannerClick }) => {
                 className="w-full h-auto object-cover aspect-[2.3/1] max-h-[320px] group-hover:scale-105 transition-transform duration-500 pointer-events-none"
               />
 
-              {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity pointer-events-none" />
+              {/* Gradient Overlay for Text Legibility */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent opacity-75 group-hover:opacity-90 transition-opacity pointer-events-none" />
 
               {banner.badge_tag && (
                 <div className="absolute top-4 left-4 z-10">
-                  <span className="px-3.5 py-1 rounded-xl text-xs font-black uppercase tracking-wider bg-amber-400 text-neutral-950 shadow-md">
+                  <span className="px-3.5 py-1 rounded-xl text-xs font-black uppercase tracking-wider bg-orange-500 text-white shadow-md">
                     {banner.badge_tag}
                   </span>
                 </div>
@@ -60,7 +60,7 @@ const HomeBanners = ({ banners, onBannerClick }) => {
                         Rs. {parseFloat(banner.price).toLocaleString()}
                       </span>
                       {banner.original_price && (
-                        <span className="text-neutral-400 text-xs line-through">
+                        <span className="text-zinc-300 dark:text-neutral-400 text-xs line-through">
                           Rs. {parseFloat(banner.original_price).toLocaleString()}
                         </span>
                       )}

@@ -60,7 +60,7 @@ const ProductCard = ({
   return (
     <>
       <div
-        className="group relative bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between hover:border-amber-500/40 transition-all duration-300 shadow-md cursor-pointer select-none"
+        className="group relative w-full bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between hover:border-amber-500/40 transition-all duration-300 shadow-md cursor-pointer select-none"
         onClick={openPopup}
       >
         {/* 📸 IMAGE CONTAINER WITH BOTTOM-TO-TOP RICH AMBER FILL */}

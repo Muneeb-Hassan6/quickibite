@@ -7,16 +7,7 @@
  * After including this file, the variable $auth_user will be available
  * containing the decoded token payload (user_id, role, name).
  */
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With, X-Auth-Token");
-
-// central CORS preflight handling for authenticated routes
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
+include_once __DIR__ . '/cors_headers.php';
 include_once __DIR__ . '/JwtHelper.php';
 
 $auth_user = null;
@@ -37,6 +28,7 @@ if (!$authHeader && isset($_SERVER['HTTP_X_AUTH_TOKEN'])) {
 
 if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
     http_response_code(401);
+    if (ob_get_level()) ob_clean();
     echo json_encode([
         "success" => false, 
         "message" => "Access denied. No authentication token provided.",
@@ -52,6 +44,7 @@ $decoded = JwtHelper::verifyToken($token);
 
 if (!$decoded) {
     http_response_code(401);
+    if (ob_get_level()) ob_clean();
     echo json_encode([
         "success" => false, 
         "message" => "Invalid or expired token. Please login again.",

@@ -164,17 +164,17 @@ const DealsPage = () => {
       {/* ═════════════════════════════════════════════════════════
           2. STICKY SIDEBAR + DYNAMIC ADAPTIVE DEALS GRID
       ═════════════════════════════════════════════════════════ */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-6 sm:pt-8">
-        <div className="flex items-start">
-          {/* Left Categories Sidebar (Desktop Smooth Transition) */}
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-6 sm:pt-8 relative">
+        <div className="flex items-start w-full relative transition-all duration-300">
+          {/* Left Categories Sidebar (Desktop Smooth Slide-and-Fade Transition) */}
           <aside
-            className={`hidden lg:block sticky top-24 self-start w-72 lg:w-80 shrink-0 max-h-[calc(100vh-7rem)] overflow-y-auto z-30 pr-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden transition-all duration-300 ease-in-out flex-shrink-0 ${
+            className={`hidden lg:block shrink-0 lg:sticky lg:top-24 lg:self-start overflow-hidden transition-all duration-300 ease-in-out z-20 ${
               isDesktopSidebarVisible
-                ? "opacity-100 translate-x-0 mr-6"
-                : "w-0 opacity-0 -translate-x-10 mr-0 pointer-events-none overflow-hidden"
+                ? "w-56 lg:w-64 opacity-100 translate-x-0 mr-6"
+                : "w-0 opacity-0 -translate-x-6 mr-0 pointer-events-none"
             }`}
           >
-            <div className="w-72 lg:w-80">
+            <div className="w-56 lg:w-64 max-h-[calc(100vh-120px)] overflow-y-auto z-30 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <DealsSidebar
                 categories={dynamicCategories}
                 activeCategory={activeCategory}
@@ -184,7 +184,7 @@ const DealsPage = () => {
           </aside>
 
           {/* Right Deals Content Area */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 w-full transition-all duration-300 ease-in-out">
             {/* Header / Active Category Bar */}
             <div className="flex items-center justify-between pb-3 sm:pb-4 mb-4 sm:mb-6 border-b border-gray-200/80 dark:border-neutral-800/80">
               <div className="flex items-center gap-2.5 sm:gap-3">
@@ -246,12 +246,12 @@ const DealsPage = () => {
                 </button>
               </div>
             ) : (
-              /* Elevated Deals Grid with Dynamic 2-Column Mobile Baseline */
+              /* Elevated Deals Grid with Dynamic 2-Column Mobile Baseline and 4-Column Expanded Desktop */
               <div
-                className={`grid gap-2.5 sm:gap-4 md:gap-6 transition-all duration-300 ${
+                className={`grid gap-3 sm:gap-4 md:gap-6 w-full transition-all duration-300 ${
                   isDesktopSidebarVisible
-                    ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3"
-                    : "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                    ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
+                    : "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4"
                 }`}
               >
                 {filteredDeals.map((deal, idx) => (

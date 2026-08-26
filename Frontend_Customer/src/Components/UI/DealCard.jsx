@@ -40,7 +40,7 @@ const DealCard = ({ deal }) => {
     <>
       <div
         onClick={openPopup}
-        className="group relative bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between hover:border-amber-500/40 transition-all duration-300 shadow-md cursor-pointer select-none"
+        className="group relative w-full bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between hover:border-amber-500/40 transition-all duration-300 shadow-md cursor-pointer select-none"
       >
         {/* 📸 IMAGE CONTAINER */}
         <div className="w-full h-28 min-[400px]:h-32 sm:h-40 md:h-44 flex items-center justify-center overflow-hidden my-1 relative rounded-lg sm:rounded-xl bg-gray-50 dark:bg-neutral-800/60 transition-colors duration-300 group-hover:bg-amber-400/10 dark:group-hover:bg-amber-400/5">
@@ -53,11 +53,6 @@ const DealCard = ({ deal }) => {
               <FaFire className="text-[8px] text-amber-300" />
               {deal.badge_tag || deal.tag || "DEAL"}
             </span>
-            {savings > 0 && (
-              <span className="inline-flex items-center backdrop-blur-md bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded-md">
-                -{savingsPct}%
-              </span>
-            )}
           </div>
 
           {/* Food Cutout Image */}

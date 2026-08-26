@@ -9,8 +9,8 @@ const MenuContent = ({ searchTerm, searchResults, categories, menuItems, isExpan
   // With Sidebar (isExpanded === false): 2 cols on mobile/tablet -> 3 cols on desktop
   // Without Sidebar (isExpanded === true): 2 cols on mobile/tablet -> 3 cols on md -> 4 cols on lg
   const gridClasses = isExpanded
-    ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6 transition-all duration-300"
-    : "grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-2.5 sm:gap-4 md:gap-6 transition-all duration-300";
+    ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 w-full transition-all duration-300"
+    : "grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6 w-full transition-all duration-300";
 
   if (searchTerm) {
     return (

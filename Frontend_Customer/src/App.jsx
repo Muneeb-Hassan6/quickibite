@@ -89,7 +89,7 @@ const MainContent = () => {
 
   return (
     <div
-      className="App w-full max-w-full overflow-x-hidden min-h-screen relative"
+      className="App w-full min-h-screen relative overflow-x-clip"
       style={{
         backgroundColor: "var(--bg-body, #0a0a0a)",
         transition: "0.3s",

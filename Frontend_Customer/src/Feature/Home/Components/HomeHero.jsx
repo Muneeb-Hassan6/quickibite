@@ -55,8 +55,10 @@ export default function HomeHero({ slides = [], onBannerClick }) {
         setOrbitRadius(155);
       } else if (w < 1024) {
         setOrbitRadius(195);
+      } else if (w < 1280) {
+        setOrbitRadius(245);
       } else {
-        setOrbitRadius(230);
+        setOrbitRadius(280);
       }
     };
     updateRadius();
@@ -244,14 +246,14 @@ export default function HomeHero({ slides = [], onBannerClick }) {
       `}</style>
 
       {/* ── FULL-WIDTH HERO CANVAS (Clamped & Zero Excess Top Space) ── */}
-      <div className="w-full max-w-full min-h-[420px] sm:min-h-[500px] md:min-h-[560px] px-3.5 sm:px-8 lg:px-12 py-4 sm:py-6 md:py-8 flex flex-col md:flex-row items-center justify-between bg-gradient-to-br from-amber-50/80 via-white to-orange-50/40 dark:from-neutral-900 dark:via-[#141416] dark:to-neutral-950 border-b border-amber-200/50 dark:border-neutral-800 shadow-xs select-none relative overflow-hidden transition-colors duration-500">
+      <div className="w-full max-w-full min-h-[420px] sm:min-h-[500px] md:min-h-[560px] lg:min-h-[600px] xl:min-h-[640px] px-3.5 sm:px-8 lg:px-12 xl:px-16 py-4 sm:py-6 md:py-8 lg:py-10 flex flex-col md:flex-row items-center justify-between bg-gradient-to-br from-amber-50/80 via-white to-orange-50/40 dark:from-neutral-900 dark:via-[#141416] dark:to-neutral-950 border-b border-amber-200/50 dark:border-neutral-800 shadow-xs select-none relative overflow-hidden transition-colors duration-500">
         {/* Ambient glows */}
-        <div className="absolute -top-20 right-20 w-[320px] sm:w-[420px] h-[320px] sm:h-[420px] rounded-full bg-radial from-amber-400/20 via-amber-500/10 to-transparent blur-[85px] pointer-events-none" />
-        <div className="absolute -bottom-14 left-14 w-48 sm:w-60 h-48 sm:h-60 rounded-full bg-radial from-amber-400/15 to-transparent blur-[65px] pointer-events-none" />
+        <div className="absolute -top-20 right-20 w-[320px] sm:w-[420px] lg:w-[500px] h-[320px] sm:h-[420px] lg:h-[500px] rounded-full bg-radial from-amber-400/20 via-amber-500/10 to-transparent blur-[85px] pointer-events-none" />
+        <div className="absolute -bottom-14 left-14 w-48 sm:w-60 lg:w-80 h-48 sm:h-60 lg:h-80 rounded-full bg-radial from-amber-400/15 to-transparent blur-[65px] pointer-events-none" />
 
         {/* ══ LEFT / TOP TYPOGRAPHY: "FLAVORS THAT" ══ */}
-        <div className="w-full md:w-auto shrink-0 text-center md:text-left select-none z-10 pl-0 md:pl-2 lg:pl-6 mb-2 md:mb-0">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black font-['Oswald',sans-serif] uppercase tracking-tight text-neutral-950 dark:text-white leading-none m-0">
+        <div className="w-full md:w-auto shrink-0 text-center md:text-left select-none z-10 pl-0 md:pl-2 lg:pl-6 xl:pl-8 mb-2 md:mb-0">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black font-['Oswald',sans-serif] uppercase tracking-tight text-neutral-950 dark:text-white leading-none m-0">
             FLAVORS<br className="hidden md:inline" /><span className="md:hidden"> </span>THAT
           </h1>
         </div>
@@ -260,15 +262,15 @@ export default function HomeHero({ slides = [], onBannerClick }) {
         <div
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className="relative w-[280px] h-[280px] sm:w-[380px] sm:h-[380px] md:w-[480px] md:h-[480px] lg:w-[540px] lg:h-[540px] flex items-center justify-center overflow-visible select-none my-2 sm:my-4 md:my-0 mx-auto shrink-0"
+          className="relative w-[280px] h-[280px] sm:w-[380px] sm:h-[380px] md:w-[480px] md:h-[480px] lg:w-[560px] lg:h-[560px] xl:w-[640px] xl:h-[640px] flex items-center justify-center overflow-visible select-none my-2 sm:my-4 md:my-0 mx-auto shrink-0"
         >
-          <div className="absolute w-56 h-56 sm:w-72 sm:h-72 md:w-88 md:h-88 rounded-full bg-amber-400/20 dark:bg-amber-500/12 blur-[70px] pointer-events-none transition-all duration-700" />
+          <div className="absolute w-56 h-56 sm:w-72 sm:h-72 md:w-88 md:h-88 lg:w-104 lg:h-104 xl:w-120 xl:h-120 rounded-full bg-amber-400/20 dark:bg-amber-500/12 blur-[80px] pointer-events-none transition-all duration-700" />
 
           {/* ACTIVE CENTER STAGE (z-20) */}
           <div
             key={activeFood.id}
             onClick={() => navigate(`/menu?category=${activeFood.category}`)}
-            className="relative z-20 w-36 h-36 sm:w-52 sm:h-52 md:w-64 md:h-64 lg:w-72 lg:h-72 flex items-center justify-center p-2 group cursor-pointer stage-in pointer-events-auto"
+            className="relative z-20 w-36 h-36 sm:w-52 sm:h-52 md:w-64 md:h-64 lg:w-80 lg:h-80 xl:w-96 xl:h-96 flex items-center justify-center p-2 group cursor-pointer stage-in pointer-events-auto"
           >
             <img
               src={activeFood.image}
@@ -300,7 +302,7 @@ export default function HomeHero({ slides = [], onBannerClick }) {
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="w-8 h-8 sm:w-11 sm:h-11 md:w-14 md:h-14 lg:w-16 lg:h-16 object-contain drop-shadow-md transition-transform duration-200 hover:scale-115 opacity-90 hover:opacity-100"
+                        className="w-8 h-8 sm:w-11 sm:h-11 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 object-contain drop-shadow-md transition-transform duration-200 hover:scale-125 opacity-90 hover:opacity-100"
                       />
                     </div>
                   </div>
@@ -311,8 +313,8 @@ export default function HomeHero({ slides = [], onBannerClick }) {
         </div>
 
         {/* ══ RIGHT / BOTTOM TYPOGRAPHY: "HIT DIFFERENT" ══ */}
-        <div className="w-full md:w-auto shrink-0 text-center md:text-right select-none z-10 pr-0 md:pr-2 lg:pr-6 mt-2 md:mt-0">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black font-['Oswald',sans-serif] uppercase tracking-tight bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 bg-clip-text text-transparent leading-none m-0">
+        <div className="w-full md:w-auto shrink-0 text-center md:text-right select-none z-10 pr-0 md:pr-2 lg:pr-6 xl:pl-8 mt-2 md:mt-0">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black font-['Oswald',sans-serif] uppercase tracking-tight bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 bg-clip-text text-transparent leading-none m-0">
             HIT<br className="hidden md:inline" /><span className="md:hidden"> </span>DIFFERENT
           </h1>
         </div>

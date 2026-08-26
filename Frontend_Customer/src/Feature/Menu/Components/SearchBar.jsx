@@ -14,7 +14,7 @@ const SearchBar = ({
   isFilterActive,
 }) => {
   return (
-    <div className="sticky top-20 md:top-21 z-40 w-full backdrop-blur-md bg-white/95 dark:bg-[#0a0a0c]/95 py-3 px-2 border-b border-gray-200/80 dark:border-neutral-800 shadow-sm transition-all">
+    <div className="sticky top-14 sm:top-16 z-40 w-full backdrop-blur-md bg-white/95 dark:bg-[#0a0a0c]/95 pt-3.5 pb-3 px-2 border-b border-gray-200/80 dark:border-neutral-800 shadow-sm transition-all">
       <div className="max-w-7xl mx-auto flex items-center gap-3 w-full px-2 sm:px-4">
         {/* ══ Restored FILTERS Button on the Left ══ */}
         <button
