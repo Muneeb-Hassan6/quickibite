@@ -161,7 +161,6 @@ export const CartProvider = ({ children }) => {
       );
 
       const result = await response.json();
-      console.log("DB Insert Response:", result);
 
       if (!result.success || !result.order_id) {
         toast.dismiss(loadingToast);

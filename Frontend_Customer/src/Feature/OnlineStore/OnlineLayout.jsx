@@ -1,7 +1,7 @@
 import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Header from "../../Components/Layout/Header";
-import CartPopup from "../Order/Components/CartPopup";
+import CartPopup from "./Components/CartPopup";
 import Footer from "./Components/Footer";
 
 const OnlineLayout = () => {

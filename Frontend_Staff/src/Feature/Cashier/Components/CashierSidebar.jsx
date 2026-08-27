@@ -1,42 +1,49 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import {
-  FaFire,
   FaCashRegister,
   FaHistory,
   FaChartPie,
   FaSignOutAlt,
   FaSun,
   FaMoon,
+  FaTimes,
 } from "react-icons/fa";
 import { useTheme } from "../../../Context/ThemeContext";
 import bigBiteLogo from "../../../assets/bigbite logo.png";
 
-const CashierSidebar = ({ activeTab, setActiveTab, handleLogout, onResetTerminal, isMobileSidebarOpen }) => {
+const CashierSidebar = ({
+  activeTab,
+  setActiveTab,
+  onResetTerminal,
+  onClose,
+}) => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
 
   const { data: settingsData } = useQuery({
-    queryKey: ['settings'],
+    queryKey: ["settings"],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE}/get_settings.php`
+      );
       const result = await response.json();
       return result.success ? result.data : {};
-    }
+    },
   });
 
   const storeLogo = settingsData?.store_logo || "";
 
   const handleSecureLogout = () => {
     Swal.fire({
-      title: "Logout?",
-      text: "Are you sure you want to end your session?",
+      title: "End Shift?",
+      text: "Are you sure you want to end your cashier session?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#333",
+      cancelButtonColor: "#71717a",
       confirmButtonText: "Yes, Logout",
     }).then((result) => {
       if (result.isConfirmed) {
@@ -47,61 +54,110 @@ const CashierSidebar = ({ activeTab, setActiveTab, handleLogout, onResetTerminal
     });
   };
 
+  const navItems = [
+    { id: "terminal", label: "POS Terminal", icon: FaCashRegister },
+    { id: "history", label: "History", icon: FaHistory },
+    { id: "shift", label: "Shift Report", icon: FaChartPie },
+  ];
+
   return (
-    <div className={`w-[90px] bg-[var(--pos-panel)] flex flex-col items-center py-[30px] z-[100] max-[900px]:fixed max-[900px]:left-0 max-[900px]:top-0 max-[900px]:h-full max-[900px]:transition-transform max-[900px]:duration-300 ${isMobileSidebarOpen ? 'max-[900px]:translate-x-0' : 'max-[900px]:-translate-x-full'}`}>
-      {/* 🔥 Header / Dynamic Logo */}
-      <div className="flex justify-center items-center mb-[30px] h-[65px] text-[32px] text-[var(--brand-red)] drop-shadow-[var(--shadow-glow)]">
-        {storeLogo ? (
-          <img src={storeLogo} alt="Logo" className="max-w-[65px] max-h-[65px] object-contain transition-transform duration-300 hover:scale-105" />
-        ) : (
-          <img src={bigBiteLogo} alt="Logo" className="max-w-[65px] max-h-[65px] object-contain transition-transform duration-300 hover:scale-105" />
+    <aside className="w-60 shrink-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-r border-zinc-200/80 dark:border-zinc-800/80 flex flex-col justify-between p-4 h-full select-none font-sans">
+      <div>
+        {/* Header Branding Section */}
+        <div className="flex items-center justify-between px-2 py-2 mb-4 border-b border-zinc-100 dark:border-zinc-800/60 pb-4">
+          <div className="flex items-center gap-3">
+            <img
+              src={storeLogo || bigBiteLogo}
+              alt="Logo"
+              className="w-9 h-9 object-contain drop-shadow"
+            />
+            <div>
+              <h2 className="text-sm font-black tracking-wider text-zinc-900 dark:text-white uppercase font-mono m-0">
+                QUICKBITE
+              </h2>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 tracking-wide uppercase">
+                  Station #1
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="lg:hidden p-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-zinc-900 dark:hover:text-white border-none cursor-pointer text-xs transition-colors"
+            >
+              <FaTimes />
+            </button>
+          )}
+        </div>
+
+        {/* Compact Nav Item Tabs */}
+        <div className="flex flex-col gap-1.5">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                className={`w-full px-3.5 py-2.5 rounded-xl flex items-center gap-3 cursor-pointer transition-all border-none ${
+                  isActive
+                    ? "bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 font-bold shadow-lg shadow-amber-500/25 scale-[1.02] text-xs"
+                    : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100/80 dark:hover:bg-zinc-800/50 bg-transparent text-xs font-medium"
+                }`}
+                onClick={() => {
+                  if (item.id === "terminal" && activeTab === "terminal" && onResetTerminal) {
+                    onResetTerminal();
+                  } else {
+                    setActiveTab(item.id);
+                  }
+                  if (onClose) onClose();
+                }}
+              >
+                <Icon className="text-base shrink-0" />
+                <span className="font-semibold tracking-wide">
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Bottom Controls (Appearance on Desktop + Logout) */}
+      <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800/60 flex flex-col gap-2">
+        {/* Appearance Toggle Pill - Desktop only, since mobile top navbar already contains theme toggle */}
+        {!onClose && (
+          <button
+            className="w-full px-3.5 py-2 rounded-xl bg-zinc-100/80 dark:bg-zinc-900/80 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white font-medium text-xs flex items-center justify-between border border-zinc-200/50 dark:border-zinc-800/50 cursor-pointer transition-all"
+            onClick={toggleTheme}
+          >
+            <span>Appearance</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-amber-500 font-semibold capitalize">
+                {theme}
+              </span>
+              {theme === "dark" ? (
+                <FaSun className="text-xs text-amber-400" />
+              ) : (
+                <FaMoon className="text-xs text-zinc-600" />
+              )}
+            </div>
+          </button>
         )}
-      </div>
 
-      <div className="flex flex-col gap-[20px] w-full items-center">
+        {/* End Shift / Logout Button */}
         <button
-          className={`w-[60px] h-[60px] flex flex-col items-center justify-center cursor-pointer transition-all duration-300 border-none ${activeTab === "terminal" ? "bg-[#FFDD00] text-[#1a1a1a] shadow-[0_4px_15px_rgba(255,221,0,0.4)] -translate-y-[2px]" : "bg-transparent text-[var(--admin-muted)] hover:text-[var(--admin-text)] hover:bg-[var(--admin-bg)]"}`}
-          style={{ borderRadius: "16px", border: "none", outline: "none" }}
-          onClick={() => {
-            if (activeTab === "terminal" && onResetTerminal) {
-              onResetTerminal();
-            } else {
-              setActiveTab("terminal");
-            }
-          }}
-        >
-          <FaCashRegister className="text-[22px] mb-[6px]" /> <span className="text-[9px] font-extrabold uppercase">POS</span>
-        </button>
-        <button
-          className={`w-[60px] h-[60px] flex flex-col items-center justify-center cursor-pointer transition-all duration-300 border-none ${activeTab === "history" ? "bg-[#FFDD00] text-[#1a1a1a] shadow-[0_4px_15px_rgba(255,221,0,0.4)] -translate-y-[2px]" : "bg-transparent text-[var(--admin-muted)] hover:text-[var(--admin-text)] hover:bg-[var(--admin-bg)]"}`}
-          style={{ borderRadius: "16px", border: "none", outline: "none" }}
-          onClick={() => setActiveTab("history")}
-        >
-          <FaHistory className="text-[22px] mb-[6px]" /> <span className="text-[9px] font-extrabold uppercase">History</span>
-        </button>
-      </div>
-
-      <div className="mt-auto flex flex-col gap-[15px] items-center">
-        {/* Settings Button */}
-        <button
-          className="w-[60px] h-[60px] bg-transparent text-[var(--admin-muted)] border-none flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:text-[var(--admin-text)] hover:bg-[var(--admin-bg)]"
-          style={{ borderRadius: "16px", border: "none", outline: "none" }}
-          onClick={toggleTheme}
-          title={theme === "dark" ? "Light Mode" : "Dark Mode"}
-        >
-          {theme === "dark" ? <FaSun className="theme-toggle-icon text-[20px]" /> : <FaMoon className="theme-toggle-icon text-[20px]" />}
-        </button>
-
-        <button
-          className="w-[50px] h-[50px] flex items-center justify-center text-[var(--text-main,#ffffff)] bg-transparent border-none cursor-pointer transition-all duration-300 text-[20px] hover:bg-[rgba(239,68,68,0.1)] hover:text-[var(--brand-red)] hover:scale-110"
-          style={{ borderRadius: "16px", border: "none", outline: "none" }}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-semibold text-xs border border-rose-500/20 transition-all active:scale-95 cursor-pointer"
           onClick={handleSecureLogout}
-          title="Logout"
         >
-          <FaSignOutAlt />
+          <FaSignOutAlt className="text-xs" />
+          <span>End Shift & Logout</span>
         </button>
       </div>
-    </div>
+    </aside>
   );
 };
 

@@ -9,11 +9,11 @@ import {
 } from "react-icons/fa";
 
 // Import All Tab Components
-import GeneralSettings from "./Components/GeneralSettings";
-import OperationalSettings from "./Components/OperationalSettings";
-import FinancialSettings from "./Components/FinancialSettings";
+import GeneralSettings from "./Components/General/GeneralSettings";
+import OperationalSettings from "./Components/General/OperationalSettings";
+import FinancialSettings from "./Components/General/FinancialSettings";
 import NotificationSettings from "./Components/NotificationSettings";
-import LegalSettings from "./Components/LegalSettings";
+import LegalSettings from "./Components/Legal/LegalSettings";
 import SecuritySettings from "./Components/SecuritySettings";
 
 const SettingsPanel = () => {

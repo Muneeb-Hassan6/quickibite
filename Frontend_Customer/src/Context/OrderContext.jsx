@@ -52,21 +52,19 @@ export const OrderProvider = ({ children }) => {
       customer_name: orderData.customer_name || "Online Customer",
     };
 
-    // 🕵️‍♂️ Debugging ke liye: Console mein check karein ke backend ko kya ja raha hai
-    console.log("Sending to Database:", safeOrderData);
-
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/create_order.php`,
+        `${import.meta.env.VITE_API_BASE}/insert_order.php`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(safeOrderData), // Ab safe data backend ko jayega
-        },
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(safeOrderData),
+        }
       );
 
       const result = await response.json();
-      console.log(result.message);
 
       // Order place hone ke baad list ko dobara fresh karo
       fetchOrders();

@@ -25,7 +25,6 @@ const HomeBanners = ({ banners, onBannerClick }) => {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log("Banner Clicked:", banner);
                 if (onBannerClick) {
                   onBannerClick(banner);
                 }
