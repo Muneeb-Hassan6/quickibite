@@ -1,7 +1,7 @@
 import React from "react";
 import { FaPrint, FaTimes } from "react-icons/fa";
 
-const PrintModal = ({ printOrder, onClose }) => {
+export default function PrintModal({ printOrder, onClose }) {
   if (!printOrder) return null;
 
   const executePrint = () => {
@@ -9,7 +9,7 @@ const PrintModal = ({ printOrder, onClose }) => {
     iframe.style.display = "none";
     document.body.appendChild(iframe);
 
-    // Thermal Printer HTML format (Isay bahar nahi le ja sakte)
+    // Thermal Printer Raw HTML format
     const content = `
       <html>
         <head>
@@ -41,13 +41,13 @@ const PrintModal = ({ printOrder, onClose }) => {
              <span>QTY x ITEM</span>
           </div>
           <div class="divider"></div>
-          ${printOrder.items.map((item) => `
+          ${(printOrder.items || []).map((item) => `
             <div class="item-row"><span>${item.qty}x ${item.name}</span></div>
             ${item.note ? `<div class="note">** Note: ${item.note}</div>` : ""}
           `).join("")}
           <div class="divider"></div>
           <div class="center" style="font-size: 16px; font-weight: bold; margin-top: 10px;">
-            TOTAL ITEMS: ${printOrder.items.reduce((a, b) => a + b.qty, 0)}
+            TOTAL ITEMS: ${(printOrder.items || []).reduce((a, b) => a + (b.qty || 1), 0)}
           </div>
           <div class="footer">*** END OF KOT ***</div>
         </body>
@@ -57,51 +57,105 @@ const PrintModal = ({ printOrder, onClose }) => {
     iframe.contentWindow.document.close();
     iframe.contentWindow.focus();
     iframe.contentWindow.print();
-    setTimeout(() => { document.body.removeChild(iframe); onClose(); }, 1000);
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+      onClose();
+    }, 1000);
   };
 
+  const totalItemsCount = (printOrder.items || []).reduce(
+    (a, b) => a + (b.qty || 1),
+    0
+  );
+
   return (
-    <div className="fixed top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.8)] flex items-center justify-center z-[9999] backdrop-blur-[6px]" onClick={onClose}>
-      <div className="w-full max-w-[400px] bg-[var(--k-panel)] border border-[var(--k-border)] rounded-[16px] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] animate-slide-up" onClick={(e) => e.stopPropagation()}>
-        <div className="bg-[rgba(239,68,68,0.05)] p-[25px_20px_15px] text-center border-b border-[var(--k-border)] relative">
-          <button onClick={onClose} className="absolute top-[15px] right-[15px] bg-transparent border-none text-[var(--k-muted)] text-[18px] cursor-pointer transition-colors duration-200 hover:text-[var(--text-main,#ffffff)]"><FaTimes /></button>
-          <div className="w-[60px] h-[60px] bg-[rgba(239,68,68,0.1)] text-[var(--brand-red)] rounded-full flex justify-center items-center text-[26px] mx-auto mb-[10px] border border-[rgba(239,68,68,0.3)]"><FaPrint /></div>
-          <h3 className="m-0 text-[22px] font-oswald text-[var(--text-main,#ffffff)] uppercase tracking-[1px]">Kitchen Ticket (KOT)</h3>
+    <div
+      className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div
+        className="w-[94%] sm:w-full max-w-md max-h-[90vh] flex flex-col bg-white dark:bg-neutral-900 border border-stone-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 text-stone-900 dark:text-neutral-100"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="bg-amber-500/10 p-4 sm:p-5 text-center border-b border-stone-200 dark:border-neutral-800 relative shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-transparent hover:bg-black/5 dark:hover:bg-white/10 text-stone-400 hover:text-stone-700 dark:text-neutral-400 dark:hover:text-white flex items-center justify-center text-sm cursor-pointer transition-colors border-none"
+            aria-label="Close"
+          >
+            <FaTimes />
+          </button>
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full flex justify-center items-center text-lg sm:text-xl mx-auto mb-2 border border-amber-500/30">
+            <FaPrint />
+          </div>
+          <h3 className="m-0 text-base sm:text-lg font-['Oswald',sans-serif] font-black text-stone-900 dark:text-white uppercase tracking-wider">
+            Kitchen Ticket (KOT)
+          </h3>
         </div>
 
-        <div className="p-[20px]">
-          <div className="bg-[var(--bg-body,#0a0a0a)] border border-dashed border-[var(--border-color,#333)] rounded-[8px] p-[15px] font-mono text-[var(--text-main,#ffffff)]">
-            <div style={{ textAlign: "center", marginBottom: "15px", borderBottom: "1px dashed #333", paddingBottom: "10px" }}>
-              <h4 style={{ margin: 0, color: "var(--brand-red)", fontSize: "18px" }}>BIG BITE</h4>
-              <span style={{ fontSize: "12px", color: "#888" }}>Order #{printOrder.id}</span>
+        {/* Modal Ticket Preview with Scroll */}
+        <div className="p-3.5 sm:p-5 overflow-y-auto flex-1 overscroll-contain">
+          <div className="bg-stone-50 dark:bg-neutral-950 border border-dashed border-stone-300 dark:border-neutral-700 rounded-xl p-3.5 sm:p-4 font-mono text-stone-900 dark:text-neutral-200 text-xs">
+            <div className="text-center mb-3 pb-2.5 border-b border-dashed border-stone-200 dark:border-neutral-800">
+              <h4 className="m-0 text-amber-600 dark:text-amber-400 text-sm sm:text-base font-bold">BIG BITE</h4>
+              <span className="text-stone-500 dark:text-neutral-500 text-[11px]">
+                Order #{printOrder.id}
+              </span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", fontSize: "13px", color: "#ccc" }}>
-              <span>Type: <strong style={{ color: "#fff" }}>{printOrder.type}</strong></span>
-              <span>Table: <strong style={{ color: "#fff" }}>{printOrder.table}</strong></span>
+
+            <div className="flex justify-between mb-2 text-stone-600 dark:text-neutral-400 text-[11px]">
+              <span>
+                Type: <strong className="text-stone-900 dark:text-white">{printOrder.type}</strong>
+              </span>
+              <span>
+                Table: <strong className="text-stone-900 dark:text-white">{printOrder.table}</strong>
+              </span>
             </div>
-            <div style={{ borderTop: "1px dashed #333", paddingTop: "10px", marginTop: "10px" }}>
-              {printOrder.items.map((item, idx) => (
-                <div key={idx} style={{ marginBottom: "8px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", fontWeight: "bold" }}>
-                    <span>{item.name}</span>
-                    <span style={{ color: "var(--brand-red)" }}>x{item.qty}</span>
+
+            <div className="border-t border-dashed border-stone-200 dark:border-neutral-800 pt-2.5 mt-2.5 space-y-2">
+              {(printOrder.items || []).map((item, idx) => (
+                <div key={idx} className="space-y-0.5">
+                  <div className="flex justify-between font-bold text-stone-900 dark:text-neutral-100">
+                    <span className="break-words mr-2">{item.name}</span>
+                    <span className="text-amber-600 dark:text-amber-400 shrink-0">x{item.qty}</span>
                   </div>
-                  {item.note && <div style={{ fontSize: "11px", color: "#888", fontStyle: "italic", marginTop: "2px" }}>- {item.note}</div>}
+                  {item.note && (
+                    <div className="text-[10px] text-stone-500 dark:text-neutral-500 italic">
+                      - {item.note}
+                    </div>
+                  )}
                 </div>
               ))}
+            </div>
+
+            <div className="border-t border-dashed border-stone-200 dark:border-neutral-800 pt-2 mt-3 flex justify-between text-stone-600 dark:text-neutral-400 font-bold">
+              <span>Total Items</span>
+              <span className="text-stone-900 dark:text-white">{totalItemsCount}</span>
             </div>
           </div>
         </div>
 
-        <div className="p-[15px_20px] bg-[rgba(0,0,0,0.2)] flex gap-[10px] border-t border-[var(--k-border)]">
-          <button onClick={onClose} className="flex-1 rounded p-[12px] bg-transparent border border-[var(--k-border)] text-[var(--text-main,#ffffff)]  font-bold cursor-pointer transition-colors duration-200 hover:bg-[rgba(255,255,255,0.05)]">Cancel</button>
-          <button onClick={executePrint} className="flex-[2] rounded p-[12px] bg-[var(--brand-yellow)] border-none text-[var(--text-main,#ffffff)]  font-black font-oswald text-[15px] uppercase tracking-[1px] cursor-pointer flex justify-center items-center gap-[8px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-[var(--shadow-glow)]">
-            <FaPrint /> Print
+        {/* Modal Actions */}
+        <div className="p-3.5 sm:p-4 bg-stone-100/60 dark:bg-neutral-950/60 flex gap-2.5 border-t border-stone-200 dark:border-neutral-800 shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl bg-transparent hover:bg-stone-200/60 dark:hover:bg-white/5 border border-stone-300 dark:border-neutral-700 text-stone-700 dark:text-neutral-300 font-bold text-xs uppercase cursor-pointer transition-all active:scale-95 min-h-[40px]"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={executePrint}
+            className="flex-[2] py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 border-none text-neutral-950 font-black font-['Oswald',sans-serif] text-xs uppercase tracking-wider cursor-pointer flex justify-center items-center gap-2 shadow-md transition-all min-h-[40px]"
+          >
+            <FaPrint className="text-xs" />
+            <span>Print KOT</span>
           </button>
         </div>
       </div>
     </div>
   );
-};
-
-export default PrintModal;
+}
