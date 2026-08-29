@@ -1,62 +1,83 @@
 import React from "react";
 import {
-  FaChartLine,
-  FaStopwatch,
+  FaClock,
   FaMotorcycle,
-  FaCheckDouble,
-  FaBoxOpen,
+  FaRoute,
+  FaCheckCircle,
 } from "react-icons/fa";
 
-const DispatchStats = ({
-  readyCount,
-  freeRiders,
-  avgDeliveryTime,
-  completedToday,
-}) => {
+export default function DispatchStats({
+  readyCount = 0,
+  freeRiders = 0,
+  avgDeliveryTime = 24,
+  completedToday = 0,
+}) {
+  const statCards = [
+    {
+      title: "Pending Dispatch",
+      value: readyCount,
+      unit: "Orders",
+      icon: <FaClock className="text-lg" />,
+      badgeClass: "bg-amber-500/10 text-amber-500 border border-amber-500/20",
+      valueColor: "text-amber-500 dark:text-amber-400",
+    },
+    {
+      title: "Available Riders",
+      value: freeRiders,
+      unit: "Free",
+      icon: <FaMotorcycle className="text-lg" />,
+      badgeClass: "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20",
+      valueColor: "text-emerald-500 dark:text-emerald-400",
+    },
+    {
+      title: "Avg. Delivery Time",
+      value: avgDeliveryTime,
+      unit: "Mins",
+      icon: <FaRoute className="text-lg" />,
+      badgeClass: "bg-sky-500/10 text-sky-500 border border-sky-500/20",
+      valueColor: "text-sky-500 dark:text-sky-400",
+    },
+    {
+      title: "Completed Today",
+      value: completedToday,
+      unit: "Delivered",
+      icon: <FaCheckCircle className="text-lg" />,
+      badgeClass: "bg-purple-500/10 text-purple-500 border border-purple-500/20",
+      valueColor: "text-purple-500 dark:text-purple-400",
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-4 gap-[20px] p-[15px_40px_0] max-w-full animate-slide-up">
-      <div className="bg-[var(--admin-panel)] rounded-[12px] p-[15px] flex items-center gap-[15px] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-        <div className="w-[45px] h-[45px] rounded-[10px] flex items-center justify-center text-[18px] text-white bg-gradient-to-br from-[#ef4444] to-[#b91c1c] shadow-[var(--shadow-glow)]">
-          <FaBoxOpen />
-        </div>
-        <div>
-          <span className="text-[11px] text-[var(--admin-muted)] uppercase font-bold">Pending Dispatch</span>
-          <h4 className="m-[2px_0_0_0] text-[18px] text-[var(--text-main,#ffffff)] font-oswald">{readyCount || 0} Orders</h4>
-        </div>
-      </div>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 px-4 sm:px-6 lg:px-8 py-3 max-w-full">
+      {statCards.map((card, idx) => (
+        <div
+          key={idx}
+          className="bg-white dark:bg-neutral-900 border border-stone-200 dark:border-neutral-800 rounded-xl p-4 shadow-xs hover:border-stone-300 dark:hover:border-neutral-700 transition-all flex items-center gap-3.5"
+        >
+          {/* Accent Themed Icon Badge */}
+          <div
+            className={`p-3 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${card.badgeClass}`}
+          >
+            {card.icon}
+          </div>
 
-      <div className="bg-[var(--admin-panel)] rounded-[12px] p-[15px] flex items-center gap-[15px] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-        <div className="w-[45px] h-[45px] rounded-[10px] flex items-center justify-center text-[18px] text-white bg-gradient-to-br from-[#10b981] to-[#047857] shadow-[0_4px_10px_rgba(16,185,129,0.3)]">
-          <FaMotorcycle />
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] text-stone-500 dark:text-neutral-400 uppercase font-bold tracking-wider truncate block">
+              {card.title}
+            </span>
+            <div className="flex items-baseline gap-1.5 mt-0.5">
+              <span
+                className={`text-2xl font-bold font-['Oswald',sans-serif] tracking-wide ${card.valueColor}`}
+              >
+                {card.value}
+              </span>
+              <span className="text-xs font-semibold text-stone-500 dark:text-neutral-400">
+                {card.unit}
+              </span>
+            </div>
+          </div>
         </div>
-        <div>
-          <span className="text-[11px] text-[var(--admin-muted)] uppercase font-bold">Available Riders</span>
-          <h4 className="m-[2px_0_0_0] text-[18px] text-[var(--text-main,#ffffff)] font-oswald">{freeRiders || 0} Free</h4>
-        </div>
-      </div>
-
-      <div className="bg-[var(--admin-panel)] rounded-[12px] p-[15px] flex items-center gap-[15px] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-        <div className="w-[45px] h-[45px] rounded-[10px] flex items-center justify-center text-[18px] text-white bg-gradient-to-br from-[#3b82f6] to-[#1d4ed8] shadow-[0_4px_10px_rgba(59,130,246,0.3)]">
-          <FaStopwatch />
-        </div>
-        <div>
-          <span className="text-[11px] text-[var(--admin-muted)] uppercase font-bold">Avg. Delivery Time</span>
-          {/* Yahan prop use kiya hai */}
-          <h4 className="m-[2px_0_0_0] text-[18px] text-[var(--text-main,#ffffff)] font-oswald">{avgDeliveryTime || 0} Mins</h4>
-        </div>
-      </div>
-
-      <div className="bg-[var(--admin-panel)] rounded-[12px] p-[15px] flex items-center gap-[15px] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-        <div className="w-[45px] h-[45px] rounded-[10px] flex items-center justify-center text-[18px] text-white bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] shadow-[0_4px_10px_rgba(139,92,246,0.3)]">
-          <FaCheckDouble />
-        </div>
-        <div>
-          <span className="text-[11px] text-[var(--admin-muted)] uppercase font-bold">Completed Today</span>
-          <h4 className="m-[2px_0_0_0] text-[18px] text-[var(--text-main,#ffffff)] font-oswald">{completedToday || 0} Orders</h4>
-        </div>
-      </div>
+      ))}
     </div>
   );
-};
-
-export default DispatchStats;
+}

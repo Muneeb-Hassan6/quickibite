@@ -15,9 +15,11 @@ if (!$db) {
 
 $data = json_decode(file_get_contents("php://input"));
 
-if (!empty($data->id) && !empty($data->status)) {
+$orderId = !empty($data->id) ? $data->id : (!empty($data->order_id) ? $data->order_id : null);
+
+if (!empty($orderId) && !empty($data->status)) {
     try {
-        $id = intval($data->id);
+        $id = intval($orderId);
         $rawStatus = trim($data->status);
 
         // Normalize status string (capitalized word for DB, lowercase for client)
