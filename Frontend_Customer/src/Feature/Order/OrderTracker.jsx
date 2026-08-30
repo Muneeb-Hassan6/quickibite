@@ -29,10 +29,16 @@ const OrderTracker = () => {
   const { data: storeSettings = {} } = useQuery({
     queryKey: ["store_settings"],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
-      const result = await response.json();
-      return result.success ? result.data : {};
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
+        const result = await response.json();
+        return result && result.success ? result.data : {};
+      } catch (err) {
+        console.warn("Could not fetch store settings in OrderTracker, using defaults:", err);
+        return {};
+      }
     },
+    staleTime: 60000,
   });
 
   const restaurantPhone =

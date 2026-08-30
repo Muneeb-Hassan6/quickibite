@@ -1,41 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
-const DeliveryHistory = ({ history }) => {
-    // Naya state jo toggle karega ki sab dikhana hai ya nahi
-    const [showAll, setShowAll] = useState(false);
+export default function DeliveryHistory({ history = [] }) {
+  const [showAll, setShowAll] = useState(false);
 
-    if (!history || history.length === 0) return null;
+  if (!history || history.length === 0) return null;
+  const displayHistory = showAll ? history : history.slice(0, 5);
 
-    // Agar showAll true hai to puri history, warna sirf aakhri 5
-    const displayHistory = showAll ? history : history.slice(0, 5);
+  return (
+    <div className="mt-4 space-y-3">
+      <div className="flex justify-between items-center">
+        <h3 className="text-stone-900 dark:text-white text-base font-black uppercase tracking-wide font-['Oswald',sans-serif] m-0">
+          {showAll ? "Full Delivery History" : "Recent Deliveries"}
+        </h3>
+        <span className="text-xs font-mono font-bold text-stone-500 dark:text-neutral-400">
+          Total: {history.length}
+        </span>
+      </div>
 
-    return (
-        <div className="mt-[25px] bg-[var(--admin-bg)] p-0 rounded-[16px] ">
-            <div className="flex justify-between items-center mb-[15px]">
-                <h3 className="text-[var(--admin-text)] text-[22px] pb-[5px] mb-[15px] mt-0 uppercase tracking-[1px] font-oswald" >
-                    {showAll ? "Full Delivery History" : "Recent Deliveries"}
-                </h3>
-                <span className="text-[12px] text-[var(--admin-muted)] font-semibold">Total: {history.length}</span>
+      <div className="space-y-2">
+        {displayHistory.map((item, index) => (
+          <div
+            key={index}
+            className="bg-white dark:bg-neutral-900 border border-stone-200 dark:border-neutral-800 flex justify-between items-center p-3.5 rounded-xl text-xs shadow-xs transition-colors"
+          >
+            <div className="min-w-0 flex-1">
+              <span className="text-stone-900 dark:text-white font-black font-['Oswald',sans-serif]">
+                #{item.id}
+              </span>{" "}
+              <span className="text-stone-700 dark:text-neutral-300 font-medium truncate">
+                — {item.customer}
+              </span>
+              <div className="text-[11px] font-mono text-stone-400 dark:text-neutral-500 mt-0.5">
+                {item.time}
+              </div>
             </div>
+            <div className="text-emerald-600 dark:text-emerald-400 font-black text-sm bg-emerald-500/10 px-2.5 py-1 rounded-lg font-['Oswald',sans-serif] shrink-0 ml-2">
+              +Rs {item.earnings}
+            </div>
+          </div>
+        ))}
+      </div>
 
-            {displayHistory.map((item, index) => (
-                <div key={index} className="bg-[var(--admin-panel)] flex justify-between items-center p-[15px] text-[14px]  rounded-[12px] mb-[10px] transition-all duration-300 ">
-                    <div>
-                        <span className="text-[var(--admin-text)] font-bold text-[14px] font-oswald tracking-[0.5px]">#{item.id}</span> - {item.customer}
-                        <div className="text-[12px] text-[var(--admin-muted)] mt-[4px]">{item.time}</div>
-                    </div>
-                    <div className="text-[var(--admin-text)] font-bold text-[16px] bg-[rgba(255,255,255,0.05)] p-[4px_10px] rounded-[8px] font-oswald">+Rs {item.earnings}</div>
-                </div>
-            ))}
-
-            {/* Ab ye button toggle ka kaam karega */}
-            {history.length > 5 && (
-                <div className="text-center mt-[15px] text-[var(--admin-orange)] text-[13px] cursor-pointer font-bold uppercase tracking-[0.5px]" onClick={() => setShowAll(!showAll)}>
-                    {showAll ? "Show Less" : "View All History"}
-                </div>
-            )}
-        </div>
-    );
-};
-
-export default DeliveryHistory;
+      {history.length > 5 && (
+        <button
+          type="button"
+          onClick={() => setShowAll(!showAll)}
+          className="w-full py-2.5 text-center text-amber-600 dark:text-amber-400 text-xs font-bold font-['Oswald',sans-serif] uppercase tracking-wider bg-transparent border-none cursor-pointer hover:underline active:scale-95"
+        >
+          {showAll ? "Show Less" : "View All History"}
+        </button>
+      )}
+    </div>
+  );
+}

@@ -129,12 +129,12 @@ export function useDispatcherData() {
 
         return {
           id: o.id,
-          customer: o.customer_name || "Unknown Customer",
-          address: o.customer_address || "No Address Provided",
+          customer: o.customer_name || o.customer || o.name || "Unknown Customer",
+          address: o.customer_address || o.address || "No Address Provided",
           targetLat:
-            parseFloat(o.lat) || 31.5204 + (Math.random() - 0.5) * 0.05,
+            parseFloat(o.customer_lat || o.latitude || o.lat) || 31.5102,
           targetLng:
-            parseFloat(o.lng) || 74.3587 + (Math.random() - 0.5) * 0.05,
+            parseFloat(o.customer_lng || o.longitude || o.lng) || 74.3440,
           items: `${rawItems?.length || 0} Items`,
           total: `Rs ${o.total}`,
           time: o.created_at
@@ -180,8 +180,8 @@ export function useDispatcherData() {
 
         return {
           id: o.id,
-          customer: o.customer_name || "Unknown Customer",
-          address: o.customer_address || "No Address",
+          customer: o.customer_name || o.customer || o.name || "Unknown Customer",
+          address: o.customer_address || o.address || "No Address",
           items: `${rawItems?.length || 0} Items`,
           total: `Rs ${o.total}`,
           time: o.created_at

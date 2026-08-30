@@ -86,6 +86,11 @@ const CheckoutPage = () => {
               availableTables={form.availableTables}
               errors={form.errors}
               setErrors={form.setErrors}
+              onUseCurrentLocation={form.handleUseCurrentLocation}
+              isDetectingGps={form.isDetectingGps}
+              hasExactGps={form.hasExactGps}
+              mapCoords={form.mapCoords}
+              onCoordinatesChange={form.handleMapCoordinatesChange}
             />
 
             <CustomerContactFields

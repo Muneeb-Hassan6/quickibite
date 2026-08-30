@@ -191,6 +191,9 @@ export const CartProvider = ({ children }) => {
       const newLocalOrder = {
         ...orderData,
         id: realOrderId, // Real MySQL DB ID
+        order_id: realOrderId,
+        orderId: realOrderId,
+        success: true,
         status: "Pending",
         time: new Date().toLocaleTimeString([], {
           hour: "2-digit",

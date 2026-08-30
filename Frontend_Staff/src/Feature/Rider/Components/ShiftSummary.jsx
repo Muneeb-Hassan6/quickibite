@@ -1,44 +1,74 @@
-import React from 'react';
-import { FaWallet, FaBullseye, FaMoneyBillWave, FaCreditCard } from 'react-icons/fa';
+import React from "react";
+import { FaWallet, FaBullseye, FaMoneyBillWave, FaCreditCard } from "react-icons/fa";
 
-const ShiftSummary = ({ stats }) => {
-    const target = 10;
-    const progress = (stats.deliveries / target) * 100;
+export default function ShiftSummary({ stats }) {
+  const target = 10;
+  const progress = Math.min((stats.deliveries / target) * 100, 100);
 
-    return (
-        <div className="mt-[25px] bg-[var(--admin-bg)] p-0 rounded-[16px] border-none">
-            <h3 className="text-[var(--admin-text)] text-[22px] pb-[5px] mb-[15px] mt-0 uppercase tracking-[1px] font-oswald">Shift Summary</h3>
+  return (
+    <div className="mt-4 space-y-3">
+      <h3 className="text-stone-900 dark:text-white text-base font-black uppercase tracking-wide font-['Oswald',sans-serif] m-0">
+        Shift Summary
+      </h3>
 
-            <div className="grid grid-cols-3 gap-[15px] mb-[20px]">
-                <div className="bg-[var(--admin-panel)] p-[15px] rounded-[16px] text-center  transition-all duration-300 hover:-translate-y-[5px] hover:border-[var(--admin-orange)] hover:shadow-[var(--shadow-glow)]">
-                    <div className="text-[var(--admin-muted)] text-[11px] font-bold flex items-center justify-center gap-[6px] uppercase tracking-[0.5px]"><FaMoneyBillWave /> Cash</div>
-                    <div className="text-[var(--admin-text)] text-[22px] mt-[8px] font-oswald">Rs. {stats.cashInHand}</div>
-                </div>
-                <div className="bg-[var(--admin-panel)] p-[15px] rounded-[16px] text-center  transition-all duration-300 hover:-translate-y-[5px] hover:border-[var(--admin-orange)] hover:shadow-[var(--shadow-glow)]">
-                    <div className="text-[var(--admin-muted)] text-[11px] font-bold flex items-center justify-center gap-[6px] uppercase tracking-[0.5px]"><FaCreditCard /> Online</div>
-                    <div className="text-[var(--admin-text)] text-[22px] mt-[8px] font-oswald">Rs. {stats.onlineCollected}</div>
-                </div>
-                <div className="bg-[var(--admin-panel)] p-[15px] rounded-[16px] text-center  transition-all duration-300 hover:-translate-y-[5px] hover:border-[var(--admin-orange)] hover:shadow-[var(--shadow-glow)]">
-                    <div className="text-[var(--admin-muted)] text-[11px] font-bold flex items-center justify-center gap-[6px] uppercase tracking-[0.5px]"><FaWallet /> Earning</div>
-                    <div className="text-[var(--admin-text)] text-[22px] mt-[8px] font-oswald">Rs. {stats.earnings}</div>
-                </div>
-            </div>
-
-            <div className="bg-[var(--admin-panel)] p-[20px] rounded-[16px] ">
-                <div className="flex justify-between text-[var(--admin-text)] text-[13px] font-semibold mb-[12px] uppercase">
-                    <span><FaBullseye color="#f59e0b" /> Daily Bonus Target</span>
-                    <span>{stats.deliveries} / {target}</span>
-                </div>
-                <div className="w-full bg-[var(--admin-bg)] rounded-[10px] h-[10px] overflow-hidden my-[10px] ">
-                    {/* Width dynamically calculate hoti hai isliye yeh sirf ek inline CSS zaroori hai */}
-                    <div className="bg-gradient-to-r from-[#ef4444] to-[#b71c1c] h-full transition-[width] duration-[600ms] ease-out" style={{ width: `${progress > 100 ? 100 : progress}%` }}></div>
-                </div>
-                <div className="text-[var(--admin-muted)] text-[12px] font-medium mt-[10px] text-center">
-                    {target - stats.deliveries > 0 ? `Complete ${target - stats.deliveries} more for Rs. 500 bonus!` : "🎉 You hit the daily bonus!"}
-                </div>
-            </div>
+      {/* 3 Metrics Cards */}
+      <div className="grid grid-cols-3 gap-2.5">
+        <div className="bg-white dark:bg-neutral-900 border border-stone-200 dark:border-neutral-800 p-3 rounded-2xl text-center shadow-xs transition-transform hover:-translate-y-0.5">
+          <div className="text-stone-500 dark:text-neutral-400 text-[10px] font-bold flex items-center justify-center gap-1 uppercase tracking-wider">
+            <FaMoneyBillWave className="text-amber-500" />
+            <span>Cash</span>
+          </div>
+          <div className="text-stone-900 dark:text-white text-lg sm:text-xl mt-1 font-['Oswald',sans-serif] font-black">
+            Rs. {stats.cashInHand}
+          </div>
         </div>
-    );
-};
 
-export default ShiftSummary;
+        <div className="bg-white dark:bg-neutral-900 border border-stone-200 dark:border-neutral-800 p-3 rounded-2xl text-center shadow-xs transition-transform hover:-translate-y-0.5">
+          <div className="text-stone-500 dark:text-neutral-400 text-[10px] font-bold flex items-center justify-center gap-1 uppercase tracking-wider">
+            <FaCreditCard className="text-blue-500" />
+            <span>Online</span>
+          </div>
+          <div className="text-stone-900 dark:text-white text-lg sm:text-xl mt-1 font-['Oswald',sans-serif] font-black">
+            Rs. {stats.onlineCollected}
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-neutral-900 border border-stone-200 dark:border-neutral-800 p-3 rounded-2xl text-center shadow-xs transition-transform hover:-translate-y-0.5">
+          <div className="text-stone-500 dark:text-neutral-400 text-[10px] font-bold flex items-center justify-center gap-1 uppercase tracking-wider">
+            <FaWallet className="text-emerald-500" />
+            <span>Earned</span>
+          </div>
+          <div className="text-stone-900 dark:text-white text-lg sm:text-xl mt-1 font-['Oswald',sans-serif] font-black">
+            Rs. {stats.earnings}
+          </div>
+        </div>
+      </div>
+
+      {/* Daily Bonus Target Card */}
+      <div className="bg-white dark:bg-neutral-900 border border-stone-200 dark:border-neutral-800 p-4 rounded-2xl shadow-xs">
+        <div className="flex justify-between items-center text-xs font-bold text-stone-800 dark:text-neutral-200 uppercase mb-2">
+          <span className="flex items-center gap-1.5">
+            <FaBullseye className="text-amber-500" />
+            <span>Daily Bonus Target</span>
+          </span>
+          <span className="font-mono text-amber-600 dark:text-amber-400">
+            {stats.deliveries} / {target}
+          </span>
+        </div>
+
+        <div className="w-full bg-stone-100 dark:bg-neutral-800 rounded-full h-2.5 overflow-hidden my-2 border border-stone-200/60 dark:border-neutral-700/60">
+          <div
+            className="bg-gradient-to-r from-amber-500 to-red-500 h-full rounded-full transition-all duration-500 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        <div className="text-stone-500 dark:text-neutral-400 text-[11px] font-medium text-center mt-1.5">
+          {target - stats.deliveries > 0
+            ? `Complete ${target - stats.deliveries} more deliveries for Rs. 500 bonus!`
+            : "🎉 Daily bonus target achieved!"}
+        </div>
+      </div>
+    </div>
+  );
+}

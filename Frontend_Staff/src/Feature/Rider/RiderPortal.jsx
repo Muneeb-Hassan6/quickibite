@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { io } from "socket.io-client"; // 🔥 SOCKET.IO IMPORT ADD KIYA HAI
 import { FaMotorcycle, FaCommentDots } from "react-icons/fa";
-import Swal from "sweetalert2";
-import "mapbox-gl/dist/mapbox-gl.css";
+import { useRiderData } from "./hooks/useRiderData";
 
 import NetworkStatus from "./Components/NetworkStatus";
 import RiderHeader from "./Components/RiderHeader";
@@ -17,560 +14,120 @@ import ActiveOrderCard from "./Components/ActiveOrderCard";
 import ShiftSummary from "./Components/ShiftSummary";
 import DeliveryHistory from "./Components/DeliveryHistory";
 import BottomStats from "./Components/BottomStats";
-import CustomAlert from "./Components/CustomAlert";
+import RiderGpsSimulator from "./Components/RiderGpsSimulator";
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
-
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371e3;
-  const toRad = (v) => (v * Math.PI) / 180;
-  const a =
-    Math.sin(toRad(lat2 - lat1) / 2) ** 2 +
-    Math.cos(toRad(lat1)) *
-    Math.cos(toRad(lat2)) *
-    Math.sin(toRad(lon2 - lon1) / 2) ** 2;
-  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-};
-
-// ==========================================
-// 🔥 MAIN RIDER PORTAL APP
-// ==========================================
-const RiderPortal = () => {
-  const queryClient = useQueryClient();
+export default function RiderPortal() {
   const navigate = useNavigate();
-
-  const [riderSession, setRiderSession] = useState(() => {
-    // 🔥 FIX: localStorage aur sessionStorage DONO mein check karega!
-    const saved =
-      localStorage.getItem("staff_session") ||
-      localStorage.getItem("user") ||
-      sessionStorage.getItem("staff_session") ||
-      sessionStorage.getItem("user");
-
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  const [isOnline, setIsOnline] = useState(
-    riderSession?.status === "Available" || riderSession?.shift_status === "Available" ? true : false
-  );
-  const [currentOrder, setCurrentOrder] = useState(null);
-  const [stats, setStats] = useState({
-    deliveries: 0,
-    earnings: 0,
-    cashInHand: 0,
-    onlineCollected: 0,
-  });
-  const [history, setHistory] = useState([]);
-
-  const [incomingOrderDetails, setIncomingOrderDetails] = useState(null);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [orderStatus, setOrderStatus] = useState("heading_to_customer");
-  const [deliveryPhoto, setDeliveryPhoto] = useState(null);
-
-  const [riderLocation, setRiderLocation] = useState({
-    lat: 31.5204,
-    lng: 74.3587,
-  });
-  const [distance, setDistance] = useState(null);
-  const [isArrived, setIsArrived] = useState(false);
-  const [aiData, setAiData] = useState({ eta: "...", roadDistance: "..." });
-  const [routePath, setRoutePath] = useState([]);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [rawRouteData, setRawRouteData] = useState({
-    distance: 0,
-    duration: 0,
-  });
-
-  const [viewState, setViewState] = useState({
-    longitude: 74.3587,
-    latitude: 31.5204,
-    zoom: 15,
-    pitch: 45,
-  });
-
-  const [alertConfig, setAlertConfig] = useState({
-    isOpen: false,
-    message: "",
-    type: "info",
-  });
-
-  // 🔥 NAYE STATES FOR SOCKET.IO
-  const [socketInstance, setSocketInstance] = useState(null);
-  const [fetchTrigger, setFetchTrigger] = useState(0);
-
-  // ==========================================
-  // 🔥 SOCKET.IO CONNECTION (Robust with auto-reconnect)
-  // ==========================================
-  useEffect(() => {
-    const socket = io(import.meta.env.VITE_SOCKET_URL, {
-      transports: ["websocket", "polling"],
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-    });
-
-    const joinRider = () => {
-      socket.emit("join_room", "rider");
-      console.log("🔌 Rider socket connected & joined room");
-    };
-
-    socket.on("connect", joinRider);
-    setSocketInstance(socket);
-
-    // Dispatcher naya order assign kare toh check karo
-    socket.on("refresh_rider", () => {
-      console.log("🔔 New order assigned! Checking for orders...");
-      queryClient.invalidateQueries({ queryKey: ['rider_assigned_order'] });
-    });
-
-    // Also listen on trigger_rider_assignment (server emits this too)
-    socket.on("trigger_rider_assignment", () => {
-      console.log("📬 Rider assignment trigger received!");
-      queryClient.invalidateQueries({ queryKey: ['rider_assigned_order'] });
-    });
-
-    socket.on("disconnect", (reason) => {
-      console.warn("⚠️ Rider socket disconnected:", reason);
-    });
-
-    return () => {
-      socket.off("connect", joinRider);
-      socket.off("refresh_rider");
-      socket.off("trigger_rider_assignment");
-      socket.disconnect();
-    };
-  }, []);
-
-  useEffect(() => {
-    const savedHistory = localStorage.getItem(`history_${riderSession?.id}`);
-    if (savedHistory) setHistory(JSON.parse(savedHistory));
-  }, [riderSession]);
-
-  // 🔥 1. LIVE STATUS UPDATE
-  const handleToggleStatus = async () => {
-    if (!riderSession) return;
-    const newStatus = !isOnline;
-    setIsOnline(newStatus);
-
-    try {
-      await fetch(`${import.meta.env.VITE_API_BASE}/update_rider_status.php`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: riderSession.id,
-          status: newStatus ? "Available" : "Offline",
-          lat: riderLocation.lat,
-          lng: riderLocation.lng,
-        }),
-      });
-
-      // 🔥 SOCKET EMIT: Dispatcher ko foran batao ke rider Online/Offline ho gaya hai
-      if (socketInstance) {
-        socketInstance.emit("rider_status_update");
-      }
-    } catch (error) {
-      console.error("Status update error:", error);
-    }
-  };
-
-  const { data: assignedOrderData } = useQuery({
-    queryKey: ['rider_assigned_order', riderSession?.id],
-    queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_assigned_order.php?rider_id=${riderSession.id}`);
-      return await res.json();
-    },
-    enabled: Boolean(isOnline && !currentOrder && !incomingOrderDetails && riderSession?.id),
-    refetchInterval: 10000,
-  });
-
-  useEffect(() => {
-    if (assignedOrderData && assignedOrderData.success && assignedOrderData.order) {
-      const o = assignedOrderData.order;
-      setIncomingOrderDetails({
-        id: o.id,
-        customer: o.customer_name || "Customer",
-        phone: o.customer_mobile || "N/A",
-        address: o.customer_address || "No Address Provided",
-        items: o.cart ? `${o.cart.length} Items` : "Items Details in DB",
-        total: `Rs ${o.total}`,
-        paymentType: o.payment_method || "COD",
-        time: "Just Now",
-        targetLat: parseFloat(o.latitude) || 31.525,
-        targetLng: parseFloat(o.longitude) || 74.36,
-      });
-      // Optionally play sound
-      // const audio = new Audio("https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg");
-      // audio.play().catch((e) => console.log("Audio blocked"));
-    }
-  }, [assignedOrderData]);
-
-  // Mapbox Path Finding
-  const fetchMapboxAI = async (startLat, startLng, endLat, endLng) => {
-    if (!MAPBOX_TOKEN) return;
-    try {
-      const res = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${startLng},${startLat};${endLng},${endLat}?geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`,
-      );
-      const data = await res.json();
-      if (data.routes && data.routes.length > 0) {
-        const route = data.routes[0];
-        setAiData({
-          eta: Math.round(route.duration / 60) + " mins",
-          roadDistance: (route.distance / 1000).toFixed(1) + " km",
-        });
-        setRawRouteData({ distance: route.distance, duration: route.duration });
-        setRoutePath(route.geometry.coordinates);
-        setCurrentStep(0);
-      }
-    } catch (error) {
-      console.error("API Error:", error);
-    }
-  };
-
-  // 🔥 LIVE LOCATION TRACKER (With Socket Emit)
-  useEffect(() => {
-    let watchId;
-    if (isOnline && riderSession) {
-      if ("geolocation" in navigator) {
-        watchId = navigator.geolocation.watchPosition(
-          async (pos) => {
-            if (orderStatus === "arrived" || orderStatus === "photo_captured")
-              return;
-            const { latitude, longitude } = pos.coords;
-            setRiderLocation({ lat: latitude, lng: longitude });
-            setViewState((prev) => ({ ...prev, latitude, longitude }));
-
-            // 1. Send live location to DB
-            try {
-              fetch(
-                `${import.meta.env.VITE_API_BASE}/update_rider_location.php`,
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    id: riderSession.id,
-                    lat: latitude,
-                    lng: longitude,
-                  }),
-                },
-              );
-            } catch (e) { }
-
-            // 🔥 2. SOCKET EMIT: Node Server ko batao taake wo Dispatcher ka map foran update kare
-            if (socketInstance) {
-              socketInstance.emit("rider_location_update");
-            }
-
-            if (currentOrder) {
-              const dist = calculateDistance(
-                latitude,
-                longitude,
-                currentOrder.targetLat,
-                currentOrder.targetLng,
-              );
-              setDistance(Math.round(dist));
-              if (dist < 50 && !isArrived) triggerArrival();
-            }
-          },
-          (err) => console.error(err),
-          { enableHighAccuracy: true },
-        );
-      }
-    } else {
-      if (watchId) navigator.geolocation.clearWatch(watchId);
-      setDistance(null);
-      setIsArrived(false);
-      setDeliveryPhoto(null);
-      setOrderStatus("heading_to_customer");
-    }
-    return () => {
-      if (watchId) navigator.geolocation.clearWatch(watchId);
-    };
-  }, [
-    isOnline,
-    currentOrder,
-    isArrived,
-    orderStatus,
+  const {
     riderSession,
-    socketInstance,
-  ]);
-
-  const acceptOrder = async () => {
-    const customerPhone = incomingOrderDetails?.phone;
-
-    // 1. Update local state immediately (fast UI)
-    setCurrentOrder(incomingOrderDetails);
-    setIncomingOrderDetails(null);
-    setIsArrived(false);
-    setDeliveryPhoto(null);
-    setOrderStatus("heading_to_customer");
-    setAiData({ eta: "...", roadDistance: "..." });
-    setRoutePath([]);
-    setViewState((prev) => ({
-      ...prev,
-      latitude: riderLocation.lat,
-      longitude: riderLocation.lng,
-    }));
-    const dist = calculateDistance(
-      riderLocation.lat,
-      riderLocation.lng,
-      incomingOrderDetails.targetLat,
-      incomingOrderDetails.targetLng,
-    );
-    setDistance(Math.round(dist));
-    fetchMapboxAI(
-      riderLocation.lat,
-      riderLocation.lng,
-      incomingOrderDetails.targetLat,
-      incomingOrderDetails.targetLng,
-    );
-
-    // 🔥 WhatsApp Trigger: Open link with details
-    if (customerPhone && customerPhone !== "N/A" && customerPhone.trim() !== "") {
-      let formattedPhone = customerPhone.replace(/\D/g, "");
-      if (formattedPhone.startsWith("0")) {
-        formattedPhone = "92" + formattedPhone.slice(1);
-      } else if (formattedPhone.length === 10 && formattedPhone.startsWith("3")) {
-        formattedPhone = "92" + formattedPhone;
-      }
-
-      const riderName = riderSession?.name || "Rider";
-      const riderPhone = riderSession?.phone || "";
-      const msg = `Hi! Your QuickBite order is accepted by our rider *${riderName}*. Rider Contact Number: ${riderPhone}. They are on their way to deliver your order!`;
-
-      const waUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(msg)}`;
-      window.open(waUrl, "_blank");
-    }
-
-    // 2. 🔥 Mark rider as Busy in DB so dispatcher can't reassign
-    try {
-      await fetch(`${import.meta.env.VITE_API_BASE}/update_rider_status.php`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: riderSession.id,
-          status: "Busy",
-          lat: riderLocation.lat,
-          lng: riderLocation.lng,
-        }),
-      });
-
-      // 3. 🔥 Notify dispatcher instantly via socket
-      if (socketInstance && socketInstance.connected) {
-        socketInstance.emit("rider_status_update");
-      }
-    } catch (err) {
-      console.warn("Could not update rider status on accept:", err);
-    }
-  };
-
-  const showAlert = (message, type = "info") => {
-    setAlertConfig({ isOpen: true, message, type });
-  };
-
-  const triggerArrival = () => {
-    setIsArrived(true);
-    setOrderStatus("arrived");
-    showAlert(
-      "GEOFENCE BREACH: You have arrived! Please take a Proof of Delivery photo.",
-      "warning",
-    );
-  };
-
-  const handlePhotoUpload = (e) => {
-    if (e.target.files[0]) {
-      setDeliveryPhoto(URL.createObjectURL(e.target.files[0]));
-      setOrderStatus("photo_captured");
-    }
-  };
-
-  // 🔥 3. LIVE DELIVERY COMPLETE
-  // 🔥 3. LIVE DELIVERY COMPLETE (UPDATED WITH STRICT CHECKS)
-  const completeDelivery = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/complete_order.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            order_id: currentOrder.id,
-            rider_id: riderSession.id,
-          }),
-        },
-      );
-
-      const data = await response.json();
-
-      // 🔥 AGAR DB MEIN FAIL HUA TOH ERROR DIKHAYEGA AUR ROKEGA
-      if (!data.success) {
-        Swal.fire({ icon: "error", title: "Error", text: data.message });
-        return;
-      }
-
-      // 🔥 SOCKET EMIT: Dispatcher ko foran batao delivery complete hua
-      // 'order_delivered' → server broadcasts refresh_kitchen (removes trip) + refresh_rider_list (rider Available)
-      if (socketInstance && socketInstance.connected) {
-        socketInstance.emit("order_delivered");
-      }
-
-      // Baki ka code same rahega
-      const isCash = currentOrder.paymentType === "Cash on Delivery";
-      const orderAmount = parseInt(currentOrder.total.replace(/\D/g, "")) || 0;
-
-      const newDelivery = {
-        id: currentOrder.id,
-        customer: currentOrder.customer,
-        earnings: 150,
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-
-      const updatedHistory = [newDelivery, ...history];
-      setHistory(updatedHistory);
-      localStorage.setItem(
-        `history_${riderSession.id}`,
-        JSON.stringify(updatedHistory),
-      );
-
-      setStats((prev) => ({
-        deliveries: prev.deliveries + 1,
-        earnings: prev.earnings + 150,
-        cashInHand: isCash ? prev.cashInHand + orderAmount : prev.cashInHand,
-        onlineCollected: !isCash
-          ? prev.onlineCollected + orderAmount
-          : prev.onlineCollected,
-      }));
-
-      setCurrentOrder(null);
-      setDistance(null);
-      setIsArrived(false);
-      setRoutePath([]);
-      setCurrentStep(0);
-      setDeliveryPhoto(null);
-      setOrderStatus("heading_to_customer");
-    } catch (error) {
-      console.error("Failed to complete order:", error);
-      Swal.fire({
-        icon: "error",
-        title: "System Error",
-        text: "Could not connect to server.",
-      });
-    }
-  };
-
-  // 🔥 4. CANCEL ORDER (Return to Dispatcher)
-  const cancelOrder = async (orderId) => {
-    const result = await Swal.fire({
-      title: "Cancel Order?",
-      text: "Are you sure you want to cancel and return this order to the dispatcher?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#6b7280",
-      confirmButtonText: "Yes, Cancel it"
-    });
-
-    if (!result.isConfirmed) return;
-
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/decline_order.php`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          order_id: orderId,
-          rider_id: riderSession.id,
-        }),
-      });
-
-      const data = await response.json();
-      if (!data.success) {
-        Swal.fire({ icon: "error", title: "Error", text: data.message });
-        return;
-      }
-
-      // 🔥 SOCKET EMIT: Dispatcher ko foran batao k rider available hai aur order wapis aagaya
-      if (socketInstance && socketInstance.connected) {
-        socketInstance.emit("rider_status_update");
-        socketInstance.emit("refresh_kitchen"); // Dispatcher panel refreshes order list
-        socketInstance.emit("order_status_changed");
-      }
-
-      // Reset UI state
-      setCurrentOrder(null);
-      setIncomingOrderDetails(null);
-      setDistance(null);
-      setIsArrived(false);
-      setRoutePath([]);
-      setCurrentStep(0);
-      setDeliveryPhoto(null);
-      setOrderStatus("heading_to_customer");
-
-      Swal.fire({ icon: "success", title: "Cancelled", text: "Order has been returned to the dispatcher." });
-    } catch (error) {
-      console.error("Failed to cancel order:", error);
-      Swal.fire({ icon: "error", title: "System Error", text: "Could not connect to server." });
-    }
-  };
+    isOnline,
+    handleToggleStatus,
+    isTogglingStatus,
+    currentOrder,
+    incomingOrderDetails,
+    acceptOrder,
+    declineOrder,
+    completeDelivery,
+    isCompletingDelivery,
+    stats,
+    history,
+    isChatOpen,
+    setIsChatOpen,
+    orderStatus,
+    deliveryPhoto,
+    handlePhotoUpload,
+    riderLocation,
+    setManualRiderLocation,
+    distance,
+    isArrived,
+    aiData,
+    routePath,
+    viewState,
+    setViewState,
+    MAPBOX_TOKEN,
+  } = useRiderData();
 
   const handleLogout = async () => {
     if (isOnline) {
-      await handleToggleStatus();
+      handleToggleStatus();
     }
-    // 🔥 FIX: localStorage aur sessionStorage DONO clear kar dein taake koi masla hi na rahay!
     localStorage.removeItem("staff_session");
     localStorage.removeItem("user");
     sessionStorage.removeItem("staff_session");
     sessionStorage.removeItem("user");
-
-    setRiderSession(null);
     navigate("/login");
   };
 
-  if (!riderSession) {
-    return null;
-  }
+  if (!riderSession) return null;
 
   return (
-    <div className="flex justify-center bg-[var(--panel-bg)] min-h-screen">
-      <div className="w-full max-w-[480px] bg-[var(--admin-bg)] text-[var(--admin-text)] font-inter flex flex-col relative overflow-hidden h-screen shadow-[0_0_20px_rgba(0,0,0,0.1)]">
+    <div className="flex justify-center bg-stone-100 dark:bg-neutral-950 min-h-screen text-stone-900 dark:text-neutral-100 font-sans transition-colors">
+      {/* Mobile Frame Container (Max 480px) */}
+      <div className="w-full max-w-[480px] bg-white dark:bg-neutral-900 border-x border-stone-200 dark:border-neutral-800 flex flex-col relative overflow-hidden h-screen shadow-xl">
+        {/* 1. Network Status Banner */}
         <NetworkStatus />
-        <RiderHeader riderName={riderSession.name} onLogout={handleLogout} />
-        <StatusToggle isOnline={isOnline} onToggle={handleToggleStatus} />
 
-        <div className="flex-1 overflow-y-auto p-[20px] pb-[95px] [&::-webkit-scrollbar]:w-0">
+        {/* 2. Top Navigation Bar */}
+        <RiderHeader
+          riderName={riderSession.name}
+          onLogout={handleLogout}
+        />
+
+        {/* 3. On-Duty Status Switcher */}
+        <StatusToggle
+          isOnline={isOnline}
+          onToggle={handleToggleStatus}
+          isToggling={isTogglingStatus}
+        />
+
+        {/* 4. Main Scrollable Content Area */}
+        <main className="flex-1 overflow-y-auto p-4 pb-20 overscroll-contain [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:w-0">
+          {/* OFFLINE EMPTY STATE */}
           {!isOnline && (
-            <div className="h-[60vh] flex flex-col items-center justify-center text-center text-[var(--admin-muted)]">
-              <FaMotorcycle
-                size={50}
-                style={{ opacity: 0.3, marginBottom: "15px" }}
-              />
-              <h2 className="text-[var(--admin-text)] tracking-[1px] mb-[5px] text-[26px]">Offline</h2>
-              <p>Toggle status to online to start your shift.</p>
+            <div className="h-[55vh] flex flex-col items-center justify-center text-center text-stone-400 dark:text-neutral-500">
+              <FaMotorcycle className="text-5xl opacity-30 mb-3 text-stone-400" />
+              <h2 className="text-xl font-bold font-['Oswald',sans-serif] uppercase tracking-wide text-stone-700 dark:text-neutral-300 m-0 mb-1">
+                You are Offline
+              </h2>
+              <p className="text-xs max-w-xs m-0">
+                Toggle your duty status to Online to start receiving delivery orders.
+              </p>
             </div>
           )}
 
+          {/* ONLINE & SEARCHING STATE */}
           {isOnline && !currentOrder && (
-            <div className="h-[60vh] flex flex-col items-center justify-center text-center text-[var(--admin-muted)]">
-              <div className=" rounded-[12px] mb-[20px] animate-pulse text-[var(--brand-yellow)]">
-                <FaMotorcycle size={50} className="text-green" />
+            <div className="space-y-4">
+              <div className="py-8 flex flex-col items-center justify-center text-center bg-stone-50 dark:bg-neutral-950/80 border border-stone-200 dark:border-neutral-800 rounded-2xl shadow-xs">
+                <div className="w-14 h-14 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-2xl mb-3 animate-pulse border border-emerald-500/30">
+                  <FaMotorcycle />
+                </div>
+                <h2 className="text-lg font-bold font-['Oswald',sans-serif] uppercase tracking-wide text-stone-900 dark:text-white m-0 mb-1">
+                  Searching for Orders...
+                </h2>
+                <p className="text-xs text-stone-500 dark:text-neutral-400 m-0">
+                  Listening for dispatch assignments in your area
+                </p>
               </div>
-              <h2 className="text-[var(--admin-text)] tracking-[1px] mb-[5px] text-[26px]">Searching...</h2>
-              <p>Listening for incoming orders...</p>
+
+              {/* Shift Summary & Delivery Logs */}
+              <ShiftSummary stats={stats} />
+              <DeliveryHistory history={history} />
             </div>
           )}
 
+          {/* ACTIVE DELIVERY VIEW */}
           {isOnline && currentOrder && (
-            <div>
-              <div className="map-and-chat-wrapper relative">
+            <div className="space-y-4 animate-in fade-in duration-200">
+              {/* Map View & Chat Overlay Button */}
+              <div className="relative">
                 <button
-                  className="absolute top-[15px] right-[15px] z-[99] bg-[var(--brand-red)] text-white w-[45px] h-[45px] rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110"
+                  type="button"
                   onClick={() => setIsChatOpen(true)}
+                  className="absolute top-3 right-3 z-30 bg-amber-500 hover:bg-amber-600 active:scale-95 text-neutral-950 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-transform border-none cursor-pointer text-sm"
+                  title="Chat with customer"
                 >
-                  <FaCommentDots size={20} />
+                  <FaCommentDots />
                 </button>
                 <MapView
                   viewState={viewState}
@@ -581,39 +138,38 @@ const RiderPortal = () => {
                   MAPBOX_TOKEN={MAPBOX_TOKEN}
                 />
               </div>
+
+              {/* Delivery Actions (AI ETA & Proof of Delivery) */}
               <DeliveryActions
                 isArrived={isArrived}
                 aiData={aiData}
                 distance={distance}
                 orderStatus={orderStatus}
-                simulateDriving={() => { }}
                 handlePhotoUpload={handlePhotoUpload}
                 deliveryPhoto={deliveryPhoto}
                 completeDelivery={completeDelivery}
               />
+
+              {/* Active Order Card */}
               <ActiveOrderCard
                 order={currentOrder}
                 onComplete={completeDelivery}
-                onCancel={() => cancelOrder(currentOrder.id)}
+                onCancel={() => declineOrder(currentOrder.id)}
+                isCompleting={isCompletingDelivery}
               />
             </div>
           )}
+        </main>
 
-          {!currentOrder && isOnline && (
-            <>
-              <ShiftSummary stats={stats} />
-              <DeliveryHistory history={history} />
-            </>
-          )}
-        </div>
-
+        {/* 5. Sticky Bottom Stats Bar */}
         <BottomStats stats={stats} />
 
+        {/* 6. Modals & Drawers */}
         {incomingOrderDetails && (
           <IncomingOrderModal
             order={incomingOrderDetails}
             onAccept={acceptOrder}
-            onDecline={() => cancelOrder(incomingOrderDetails.id)}
+            onDecline={() => declineOrder(incomingOrderDetails.id)}
           />
         )}
 
@@ -622,21 +178,29 @@ const RiderPortal = () => {
             isOpen={isChatOpen}
             onClose={() => setIsChatOpen(false)}
             customerName={currentOrder.customer}
-            showAlert={showAlert}
-          />
-        )}
-
-        {alertConfig.isOpen && (
-          <CustomAlert
-            isOpen={alertConfig.isOpen}
-            message={alertConfig.message}
-            type={alertConfig.type}
-            onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
           />
         )}
       </div>
+
+      {/* 7. Developer GPS Simulator Widget (Easily Removable) */}
+      <RiderGpsSimulator
+        currentLocation={riderLocation}
+        destination={
+          currentOrder
+            ? {
+                lat:
+                  currentOrder.targetLat ||
+                  currentOrder.customer_lat ||
+                  31.4826,
+                lng:
+                  currentOrder.targetLng ||
+                  currentOrder.customer_lng ||
+                  74.3256,
+              }
+            : { lat: 31.4826, lng: 74.3256 }
+        }
+        onLocationUpdate={setManualRiderLocation}
+      />
     </div>
   );
-};
-
-export default RiderPortal;
+}

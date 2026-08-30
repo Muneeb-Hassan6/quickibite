@@ -6,6 +6,7 @@ import {
 } from "react-icons/lu";
 import AddressInputFields from "./AddressInputFields";
 import DeliveryBranchSelector from "./DeliveryBranchSelector";
+import CheckoutMapPicker from "./CheckoutMapPicker";
 
 export default function DeliveryAddressForm({
   orderType = "delivery",
@@ -22,6 +23,11 @@ export default function DeliveryAddressForm({
   availableTables = [],
   errors = {},
   setErrors,
+  onUseCurrentLocation,
+  isDetectingGps = false,
+  hasExactGps = false,
+  mapCoords = { lat: 31.5204, lng: 74.3587 },
+  onCoordinatesChange,
 }) {
   return (
     <>
@@ -77,14 +83,29 @@ export default function DeliveryAddressForm({
         </div>
       </div>
 
-      {/* 3. Address Details (Delivery) */}
+      {/* 3. Address Details & Interactive Map (Delivery) */}
       {orderType === "delivery" && (
-        <div className="bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-neutral-800 rounded-3xl p-6 shadow-sm space-y-4 animate-fade-in">
-          <h3 className="font-['Oswald',sans-serif] font-bold text-lg uppercase tracking-wide text-neutral-900 dark:text-white m-0 flex items-center gap-2">
-            <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
-            3. Delivery Address
-          </h3>
+        <div className="bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-neutral-800 rounded-3xl p-4 sm:p-6 shadow-sm space-y-4 animate-fade-in">
+          <div className="flex items-center justify-between">
+            <h3 className="font-['Oswald',sans-serif] font-bold text-base sm:text-lg uppercase tracking-wide text-neutral-900 dark:text-white m-0 flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
+              3. Delivery Address & Pinpoint Location
+            </h3>
+            <span className="text-[10px] sm:text-xs font-mono text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full font-bold">
+              MAP PIN ENABLED
+            </span>
+          </div>
 
+          {/* Interactive Mapbox Pin Picker */}
+          <CheckoutMapPicker
+            coordinates={mapCoords}
+            onCoordinatesChange={onCoordinatesChange}
+            isDetectingGps={isDetectingGps}
+            onLocateMe={onUseCurrentLocation}
+            hasExactGps={hasExactGps}
+          />
+
+          {/* Address Text Inputs */}
           <AddressInputFields
             houseNo={houseNo}
             setHouseNo={setHouseNo}
@@ -94,6 +115,9 @@ export default function DeliveryAddressForm({
             setArea={setArea}
             errors={errors}
             setErrors={setErrors}
+            onUseCurrentLocation={onUseCurrentLocation}
+            isDetectingGps={isDetectingGps}
+            hasExactGps={hasExactGps}
           />
         </div>
       )}

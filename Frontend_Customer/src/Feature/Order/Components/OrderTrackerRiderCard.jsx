@@ -1,13 +1,42 @@
-import React from "react";
-import { FaPhoneAlt } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { FaPhoneAlt, FaMapMarkerAlt, FaExternalLinkAlt } from "react-icons/fa";
+import { resolveCoordinatesToAddress } from "../../../Utils/geoHydrator";
 
 export default function OrderTrackerRiderCard({ order, restaurantPhone }) {
+  const [hydratedAddress, setHydratedAddress] = useState(null);
+
+  const lat = order?.customer_lat || order?.latitude || order?.target_lat;
+  const lng = order?.customer_lng || order?.longitude || order?.target_lng;
+
+  useEffect(() => {
+    if (lat && lng) {
+      resolveCoordinatesToAddress(lat, lng, import.meta.env.VITE_MAPBOX_TOKEN).then(
+        (res) => {
+          if (res) setHydratedAddress(res);
+        }
+      );
+    }
+  }, [lat, lng]);
+
+  const house = order?.house_info || order?.house_no || "";
+  const displayAddress =
+    hydratedAddress && house
+      ? `${house}, ${hydratedAddress.street}, ${hydratedAddress.area}`
+      : order?.customer_address || (hydratedAddress ? `${hydratedAddress.street}, ${hydratedAddress.area}` : "Delivery Location");
+
   return (
     <div className="md:col-span-5 space-y-4">
       <div className="bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-3.5">
-        <h3 className="font-['Oswald',sans-serif] font-bold text-base sm:text-lg uppercase tracking-wide text-neutral-900 dark:text-white m-0 pb-2.5 border-b border-gray-100 dark:border-neutral-800">
-          Delivery Coordinates
-        </h3>
+        <div className="flex items-center justify-between pb-2.5 border-b border-gray-100 dark:border-neutral-800">
+          <h3 className="font-['Oswald',sans-serif] font-bold text-base sm:text-lg uppercase tracking-wide text-neutral-900 dark:text-white m-0">
+            Delivery Coordinates
+          </h3>
+          {lat && lng && (
+            <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+              <FaMapMarkerAlt className="text-[9px]" /> GPS PINNED
+            </span>
+          )}
+        </div>
 
         <div className="space-y-2.5 text-xs">
           <div>
@@ -31,14 +60,23 @@ export default function OrderTrackerRiderCard({ order, restaurantPhone }) {
             </p>
           </div>
 
-          {order.customer_address && (
-            <div>
-              <span className="text-neutral-400 uppercase font-semibold">Address / Notes:</span>
-              <p className="font-medium text-neutral-700 dark:text-neutral-300 m-0 mt-0.5 leading-relaxed">
-                {order.customer_address}
-              </p>
-            </div>
-          )}
+          <div>
+            <span className="text-neutral-400 uppercase font-semibold">Delivery Destination:</span>
+            <p className="font-medium text-neutral-700 dark:text-neutral-300 m-0 mt-0.5 leading-relaxed">
+              {displayAddress}
+            </p>
+            {lat && lng && (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-[11px] text-amber-500 hover:text-amber-400 mt-1 font-mono no-underline"
+              >
+                <span>{parseFloat(lat).toFixed(4)}, {parseFloat(lng).toFixed(4)}</span>
+                <FaExternalLinkAlt className="text-[9px]" />
+              </a>
+            )}
+          </div>
         </div>
       </div>
 

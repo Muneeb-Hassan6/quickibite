@@ -23,9 +23,16 @@ export default function CustomerContactFields({
           </label>
           <input
             type="text"
-            value={customerName}
-            onChange={handleNameChange}
-            placeholder="e.g. Faiz Ul Hassan"
+            value={
+              typeof customerName === "string"
+                ? customerName
+                : customerName?.target?.value || customerName?.value || ""
+            }
+            onChange={(e) => {
+              const cleanVal = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+              handleNameChange(cleanVal);
+            }}
+            placeholder="e.g. Muhammad Ali"
             className={`w-full p-3.5 rounded-xl bg-gray-50 dark:bg-neutral-800/80 border text-sm text-neutral-900 dark:text-white focus:outline-none focus:border-amber-500 transition-colors ${
               errors.name
                 ? "border-red-500 bg-red-50/10 ring-1 ring-red-500"
@@ -39,7 +46,7 @@ export default function CustomerContactFields({
             </span>
           ) : (
             <span className="text-[11px] text-neutral-400">
-              Letters and spaces only
+              Alphabets and spaces only
             </span>
           )}
         </div>
@@ -52,9 +59,16 @@ export default function CustomerContactFields({
           <input
             type="tel"
             maxLength={11}
-            value={customerMobile}
-            onChange={handleMobileChange}
-            placeholder="e.g. 0300 1234567"
+            value={
+              typeof customerMobile === "string"
+                ? customerMobile
+                : customerMobile?.target?.value || customerMobile?.value || ""
+            }
+            onChange={(e) => {
+              const cleanDigits = e.target.value.replace(/\D/g, "").slice(0, 11);
+              handleMobileChange(cleanDigits);
+            }}
+            placeholder="03001234567"
             className={`w-full p-3.5 rounded-xl bg-gray-50 dark:bg-neutral-800/80 border text-sm text-neutral-900 dark:text-white focus:outline-none focus:border-amber-500 transition-colors font-mono ${
               errors.mobile
                 ? "border-red-500 bg-red-50/10 ring-1 ring-red-500"

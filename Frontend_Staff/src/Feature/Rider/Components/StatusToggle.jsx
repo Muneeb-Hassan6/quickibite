@@ -1,15 +1,40 @@
 import React from "react";
 
-const StatusToggle = ({ isOnline, onToggle }) => {
-    return (
-        <div className="flex justify-between items-center p-[15px_20px] bg-[var(--admin-bg)] ">
-            <div className={`font-bold text-[15px] tracking-[0.5px] uppercase font-oswald ${isOnline ? 'text-[var(--rider-success)]' : 'text-[var(--admin-muted)]'}`}>
-                {isOnline ? "Duty: ONLINE" : "Duty: OFFLINE"}
-            </div>
-            <div className={`w-[54px] h-[30px] rounded-[30px] relative cursor-pointer transition-[background] duration-300 ease  ${isOnline ? 'bg-[var(--rider-success)]' : 'bg-[var(--admin-muted)]'}`} onClick={onToggle}>
-                <div className={`w-[22px] h-[22px] bg-white rounded-full absolute top-[3px] transition-[left] duration-300 ease-[cubic-bezier(0.68,-0.55,0.27,1.55)] shadow-[0_2px_4px_rgba(0,0,0,0.2)] ${isOnline ? 'left-[27px]' : 'left-[4px]'}`}></div>
-            </div>
-        </div>
-    );
-};
-export default StatusToggle;
+export default function StatusToggle({ isOnline, onToggle, isToggling }) {
+  return (
+    <div className="flex justify-between items-center px-4 py-3 bg-stone-50 dark:bg-neutral-950/80 border-b border-stone-200 dark:border-neutral-800 transition-colors">
+      <div className="flex items-center gap-2">
+        <span
+          className={`w-2.5 h-2.5 rounded-full ${
+            isOnline ? "bg-emerald-500 animate-pulse" : "bg-stone-400"
+          }`}
+        />
+        <span
+          className={`font-black text-xs tracking-wider uppercase font-['Oswald',sans-serif] ${
+            isOnline
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-stone-500 dark:text-neutral-400"
+          }`}
+        >
+          {isOnline ? "Duty Status: ONLINE" : "Duty Status: OFFLINE"}
+        </span>
+      </div>
+
+      <button
+        type="button"
+        disabled={isToggling}
+        onClick={onToggle}
+        className={`w-14 h-7 rounded-full relative cursor-pointer transition-colors duration-300 ease-in-out border-none p-0 focus:outline-hidden disabled:opacity-50 ${
+          isOnline ? "bg-emerald-500" : "bg-stone-300 dark:bg-neutral-700"
+        }`}
+        aria-label="Toggle duty status"
+      >
+        <span
+          className={`w-5 h-5 bg-white rounded-full absolute top-1 transition-all duration-300 ease-out shadow-sm block ${
+            isOnline ? "left-8" : "left-1"
+          }`}
+        />
+      </button>
+    </div>
+  );
+}

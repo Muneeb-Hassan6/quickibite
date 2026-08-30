@@ -5,7 +5,7 @@ include_once __DIR__ . '/../config/Database.php';
 $database = new Database();
 $db = $database->getConnection();
 
-// ─── AUTO-MIGRATE: Ensure payment_method & payment_status columns exist ───
+// ─── AUTO-MIGRATE: Ensure payment_method, payment_status, and coordinate columns exist ───
 try {
     $checkCol = $db->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
                                WHERE TABLE_SCHEMA = DATABASE() 
@@ -23,6 +23,51 @@ try {
     $checkCol2->execute();
     if ($checkCol2->fetchColumn() == 0) {
         $db->exec("ALTER TABLE `orders` ADD COLUMN `payment_status` VARCHAR(50) NOT NULL DEFAULT 'Pending' AFTER `payment_method`");
+    }
+
+    $checkLat = $db->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                               WHERE TABLE_SCHEMA = DATABASE() 
+                               AND TABLE_NAME = 'orders' 
+                               AND COLUMN_NAME = 'customer_lat'");
+    $checkLat->execute();
+    if ($checkLat->fetchColumn() == 0) {
+        $db->exec("ALTER TABLE `orders` ADD COLUMN `customer_lat` DECIMAL(10, 8) NULL DEFAULT NULL AFTER `customer_address`");
+    }
+
+    $checkLng = $db->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                               WHERE TABLE_SCHEMA = DATABASE() 
+                               AND TABLE_NAME = 'orders' 
+                               AND COLUMN_NAME = 'customer_lng'");
+    $checkLng->execute();
+    if ($checkLng->fetchColumn() == 0) {
+        $db->exec("ALTER TABLE `orders` ADD COLUMN `customer_lng` DECIMAL(11, 8) NULL DEFAULT NULL AFTER `customer_lat`");
+    }
+
+    $checkLat2 = $db->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                                WHERE TABLE_SCHEMA = DATABASE() 
+                                AND TABLE_NAME = 'orders' 
+                                AND COLUMN_NAME = 'latitude'");
+    $checkLat2->execute();
+    if ($checkLat2->fetchColumn() == 0) {
+        $db->exec("ALTER TABLE `orders` ADD COLUMN `latitude` DECIMAL(10, 8) NULL DEFAULT NULL AFTER `customer_lng`");
+    }
+
+    $checkLng2 = $db->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                                 WHERE TABLE_SCHEMA = DATABASE() 
+                                 AND TABLE_NAME = 'orders' 
+                                 AND COLUMN_NAME = 'longitude'");
+    $checkLng2->execute();
+    if ($checkLng2->fetchColumn() == 0) {
+        $db->exec("ALTER TABLE `orders` ADD COLUMN `longitude` DECIMAL(11, 8) NULL DEFAULT NULL AFTER `latitude`");
+    }
+
+    $checkHouse = $db->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                                 WHERE TABLE_SCHEMA = DATABASE() 
+                                 AND TABLE_NAME = 'orders' 
+                                 AND COLUMN_NAME = 'house_info'");
+    $checkHouse->execute();
+    if ($checkHouse->fetchColumn() == 0) {
+        $db->exec("ALTER TABLE `orders` ADD COLUMN `house_info` VARCHAR(255) NULL DEFAULT NULL AFTER `house_no`");
     }
 } catch (PDOException $migErr) {
     // Silently continue — migration may have already been applied
@@ -78,8 +123,11 @@ $order_total = 0;
 $addon_ids = [];
 $menu_item_ids = [];
 
-if (!empty($data->cart) && is_array($data->cart)) {
-    foreach($data->cart as $item) {
+// Safely extract cart items from either 'cart' or 'items'
+$cart_items = !empty($data->cart) && is_array($data->cart) ? $data->cart : (!empty($data->items) && is_array($data->items) ? $data->items : []);
+
+if (!empty($cart_items)) {
+    foreach($cart_items as $item) {
         if (!empty($item->is_addon) && !empty($item->addon_data)) {
             $addon_id = intval($item->addon_data->id ?? 0);
             if ($addon_id > 0) $addon_ids[] = $addon_id;
@@ -123,8 +171,8 @@ if (!empty($menu_item_ids)) {
 }
 
 // CALCULATE TOTAL
-if (!empty($data->cart) && is_array($data->cart)) {
-    foreach($data->cart as $item) {
+if (!empty($cart_items)) {
+    foreach($cart_items as $item) {
         $order_qty = intval($item->qty ?? 1);
         if (!empty($item->is_addon) && !empty($item->addon_data)) {
             $addon_id = intval($item->addon_data->id ?? 0);
@@ -157,39 +205,84 @@ if (!empty($data->cart) && is_array($data->cart)) {
     }
 }
 
-$order_type = !empty($data->order_type) ? $data->order_type : (!empty($data->orderType) ? $data->orderType : "Takeaway");
-if (strtolower($order_type) === 'delivery') {
-    $order_total += 150;
+// Fallback to client total if server calculation was 0 but client sent a valid total
+if ($order_total <= 0 && !empty($data->total)) {
+    $order_total = floatval($data->total);
 }
 
-if(!empty($data->cart) && $order_total > 0) {
+$raw_order_type = !empty($data->order_type) ? $data->order_type : (!empty($data->orderType) ? $data->orderType : (!empty($data->type) ? $data->type : "Takeaway"));
+if (strtolower($raw_order_type) === 'delivery') {
+    $order_type = "Delivery";
+    // Only add delivery fee if not already accounted for
+    if (empty($data->deliveryFee) && empty($data->delivery_fee)) {
+        $order_total += 150;
+    }
+} elseif (strtolower($raw_order_type) === 'dine_in' || strtolower($raw_order_type) === 'dine-in') {
+    $order_type = "Dine-In";
+} else {
+    $order_type = "Takeaway";
+}
+
+if(!empty($cart_items) && $order_total > 0) {
     try {
         $db->beginTransaction();
 
-        $customer_name   = !empty($data->customer_name) ? $data->customer_name : (!empty($data->customerName) ? $data->customerName : "Walk-in");
-        $customer_mobile = !empty($data->customer_mobile) ? $data->customer_mobile : (!empty($data->customerMobile) ? $data->customerMobile : null);
-        $table_num       = !empty($data->table_number) ? $data->table_number : (!empty($data->tableNumber) ? $data->tableNumber : null);
-        $cust_addr = !empty($data->customer_address) ? $data->customer_address : (!empty($data->customerAddress) ? $data->customerAddress : "");
+        $customer_name = !empty($data->customer_name) ? trim($data->customer_name) : 
+                         (!empty($data->customerName) ? trim($data->customerName) : 
+                         (!empty($data->name) ? trim($data->name) : 
+                         (!empty($data->fullName) ? trim($data->fullName) : "Walk-in")));
+
+        $customer_mobile = !empty($data->customer_mobile) ? trim($data->customer_mobile) : 
+                           (!empty($data->customerMobile) ? trim($data->customerMobile) : 
+                           (!empty($data->mobile) ? trim($data->mobile) : 
+                           (!empty($data->phone) ? trim($data->phone) : 
+                           (!empty($data->contact) ? trim($data->contact) : null))));
+
+        $table_num = !empty($data->table_number) ? trim($data->table_number) : 
+                     (!empty($data->tableNumber) ? trim($data->tableNumber) : null);
+
+        $cust_addr = !empty($data->customer_address) ? trim($data->customer_address) : 
+                     (!empty($data->customerAddress) ? trim($data->customerAddress) : 
+                     (!empty($data->address) ? trim($data->address) : 
+                     (!empty($data->street_address) ? trim($data->street_address) : "")));
+
         $full_addr = $cust_addr ? $cust_addr : trim(($data->house_no ?? "")." ".($data->street ?? "")." ".($data->area ?? ""));
 
         $payment_method = !empty($data->paymentMethod) ? $data->paymentMethod : (!empty($data->payment_method) ? $data->payment_method : "Cash on Delivery");
         $payment_status = !empty($data->paymentStatus) ? $data->paymentStatus : (!empty($data->payment_status) ? $data->payment_status : "Pending");
 
-        $query = "INSERT INTO orders (order_type, customer_name, customer_mobile, customer_address, house_no, street, area, table_number, total, status, payment_method, payment_status) 
-                  VALUES (:type, :name, :mobile, :address, :house, :street, :area, :table, :total, 'Pending', :pmethod, :pstatus)";
+        $cust_lat = !empty($data->customer_lat) ? floatval($data->customer_lat) : 
+                    (!empty($data->target_lat) ? floatval($data->target_lat) : 
+                    (!empty($data->latitude) ? floatval($data->latitude) : 
+                    (!empty($data->lat) ? floatval($data->lat) : null)));
+
+        $cust_lng = !empty($data->customer_lng) ? floatval($data->customer_lng) : 
+                    (!empty($data->target_lng) ? floatval($data->target_lng) : 
+                    (!empty($data->longitude) ? floatval($data->longitude) : 
+                    (!empty($data->lng) ? floatval($data->lng) : null)));
+
+        $house_val = !empty($data->house_info) ? trim($data->house_info) : (!empty($data->house_no) ? trim($data->house_no) : null);
+
+        $query = "INSERT INTO orders (order_type, customer_name, customer_mobile, customer_address, customer_lat, customer_lng, latitude, longitude, house_no, house_info, street, area, table_number, total, status, payment_method, payment_status) 
+                  VALUES (:type, :name, :mobile, :address, :cust_lat, :cust_lng, :lat, :lng, :house, :house_info, :street, :area, :table, :total, 'Pending', :pmethod, :pstatus)";
         $stmt = $db->prepare($query);
         $stmt->execute([
-            ':type'    => $order_type,
-            ':name'    => $customer_name,
-            ':mobile'  => $customer_mobile,
-            ':address' => $full_addr,
-            ':house'   => $data->house_no ?? null,
-            ':street'  => $data->street ?? null,
-            ':area'    => $data->area ?? null,
-            ':table'   => $table_num,
-            ':total'   => $order_total,
-            ':pmethod' => $payment_method,
-            ':pstatus' => $payment_status
+            ':type'       => $order_type,
+            ':name'       => $customer_name,
+            ':mobile'     => $customer_mobile,
+            ':address'    => $full_addr,
+            ':cust_lat'   => $cust_lat,
+            ':cust_lng'   => $cust_lng,
+            ':lat'        => $cust_lat,
+            ':lng'        => $cust_lng,
+            ':house'      => $house_val,
+            ':house_info' => $house_val,
+            ':street'     => $data->street ?? null,
+            ':area'       => $data->area ?? null,
+            ':table'      => $table_num,
+            ':total'      => $order_total,
+            ':pmethod'    => $payment_method,
+            ':pstatus'    => $payment_status
         ]);
         $order_id = $db->lastInsertId();
 
@@ -211,7 +304,7 @@ if(!empty($data->cart) && $order_total > 0) {
 
         // FETCH ALL INVENTORY PRICES
         $needed_inv_ids = [];
-        foreach($data->cart as $item) {
+        foreach($cart_items as $item) {
             if (!empty($item->is_addon) && !empty($item->addon_data)) {
                 $addon_inv_id = intval($item->addon_data->inventory_id ?? 0);
                 if ($addon_inv_id > 0) $needed_inv_ids[$addon_inv_id] = true;
@@ -249,7 +342,7 @@ if(!empty($data->cart) && $order_total > 0) {
         $inventory_deductions = [];
         $cost_updates = [];
 
-        foreach($data->cart as $item) {
+        foreach($cart_items as $item) {
             $itemStmt->execute([
                 ':oid'   => $order_id,
                 ':title' => $item->name ?? ($item->title ?? 'Unknown Item'),

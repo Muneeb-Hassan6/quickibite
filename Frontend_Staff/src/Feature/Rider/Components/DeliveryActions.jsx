@@ -1,43 +1,86 @@
-import React from 'react';
+import React from "react";
 import { FaBrain, FaRoute, FaCamera, FaCheckCircle } from "react-icons/fa";
 
-const DeliveryActions = ({ isArrived, aiData, distance, orderStatus, simulateDriving, handlePhotoUpload, deliveryPhoto, completeDelivery }) => {
-    return (
-        <div className={`bg-[var(--admin-panel)] p-[20px] rounded-[16px] mb-[20px] shadow-sm ${isArrived ? 'ring-2 ring-[var(--rider-success)] shadow-[0_4px_15px_rgba(16,185,129,0.2)]' : ''}`}>
-            <div className="grid grid-cols-2 gap-[15px] mb-[15px]">
-                <div className="bg-[rgba(239,68,68,0.05)] p-[15px] rounded-[12px] text-center">
-                    <div className="text-[12px] font-bold flex items-center justify-center gap-[6px] uppercase text-[var(--admin-muted)] purple"><FaBrain /> AI Traffic ETA</div>
-                    <div className="text-[26px] font-semibold text-[var(--admin-text)] mt-[5px] font-oswald">{isArrived ? "Arrived" : aiData.eta}</div>
-                </div>
-                <div className="bg-[rgba(239,68,68,0.05)] p-[15px] rounded-[12px] text-center">
-                    <div className="text-[12px] font-bold flex items-center justify-center gap-[6px] uppercase text-[var(--admin-muted)] blue"><FaRoute /> Road Distance</div>
-                    <div className="text-[26px] font-semibold text-[var(--admin-text)] mt-[5px] font-oswald">{isArrived ? "0 km" : aiData.roadDistance}</div>
-                </div>
-            </div>
-            <div className="text-[12px] font-semibold text-[var(--admin-muted)] text-center mb-[15px] uppercase">Geofence Aerial Distance: {distance !== null ? `${distance}m` : "..."}</div>
-
-            {orderStatus === "heading_to_customer" && (
-                <button onClick={simulateDriving} className="w-full p-[16px] bg-[var(--admin-panel)] text-[var(--admin-text)] border-2 border-white shadow-sm rounded cursor-pointer font-bold text-[16px] font-oswald uppercase">🚗 Drive Closer</button>
-            )}
-
-            {orderStatus === "arrived" && (
-                <label className="block w-full p-[16px] bg-gradient-to-r from-[#ef4444] to-[#b71c1c] text-white text-center rounded-[10px] cursor-pointer font-bold text-[16px] font-oswald uppercase border-none shadow-[var(--shadow-glow)]">
-                    <FaCamera style={{ marginRight: "8px" }} /> Take Proof of Delivery
-                    <input type="file" accept="image/*" capture="environment" onChange={handlePhotoUpload} style={{ display: "none" }} />
-                </label>
-            )}
-
-            {orderStatus === "photo_captured" && (
-                <div className="text-center mt-[15px]">
-                    <img src={deliveryPhoto} alt="Proof" className="w-[100px] h-[100px] rounded-[12px] object-cover mb-[20px] p-[4px] bg-[var(--admin-panel)] shadow-sm" />
-                    {/* 🔥 Swipe Button ki jagah Simple aur Reliable Click Button */}
-                    <button className="w-full p-[15px] bg-[var(--rider-success)] text-white border-none rounded-[10px] font-bold text-[15px] cursor-pointer flex justify-center items-center gap-[8px] font-oswald uppercase mt-[15px]" onClick={completeDelivery}>
-                        <FaCheckCircle /> Complete Delivery
-                    </button>
-                </div>
-            )}
+export default function DeliveryActions({
+  isArrived,
+  aiData,
+  distance,
+  orderStatus,
+  handlePhotoUpload,
+  deliveryPhoto,
+  completeDelivery,
+}) {
+  return (
+    <div
+      className={`bg-white dark:bg-neutral-900 border rounded-2xl p-4 mb-4 shadow-xs transition-all ${
+        isArrived
+          ? "border-emerald-500 ring-2 ring-emerald-500/30"
+          : "border-stone-200 dark:border-neutral-800"
+      }`}
+    >
+      {/* Metrics Row: AI Traffic ETA & Road Distance */}
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="bg-stone-50 dark:bg-neutral-950/80 border border-stone-200 dark:border-neutral-800 p-3 rounded-xl text-center">
+          <div className="text-[10px] font-bold flex items-center justify-center gap-1.5 uppercase text-purple-600 dark:text-purple-400">
+            <FaBrain className="text-[11px]" />
+            <span>AI Traffic ETA</span>
+          </div>
+          <div className="text-xl sm:text-2xl font-black text-stone-900 dark:text-white mt-1 font-['Oswald',sans-serif]">
+            {isArrived ? "Arrived" : aiData.eta}
+          </div>
         </div>
-    );
-};
 
-export default DeliveryActions;
+        <div className="bg-stone-50 dark:bg-neutral-950/80 border border-stone-200 dark:border-neutral-800 p-3 rounded-xl text-center">
+          <div className="text-[10px] font-bold flex items-center justify-center gap-1.5 uppercase text-sky-600 dark:text-sky-400">
+            <FaRoute className="text-[11px]" />
+            <span>Road Distance</span>
+          </div>
+          <div className="text-xl sm:text-2xl font-black text-stone-900 dark:text-white mt-1 font-['Oswald',sans-serif]">
+            {isArrived ? "0 km" : aiData.roadDistance}
+          </div>
+        </div>
+      </div>
+
+      {/* Geofence Distance Indicator */}
+      <div className="text-[11px] font-mono font-bold text-stone-500 dark:text-neutral-400 text-center mb-3 uppercase">
+        Geofence Distance: {distance !== null ? `${distance}m` : "..."}
+      </div>
+
+      {/* Arrived: Proof of Delivery Capture */}
+      {orderStatus === "arrived" && (
+        <label className="min-h-[44px] px-4 py-3 bg-red-600 hover:bg-red-700 text-white text-center rounded-xl cursor-pointer font-bold text-xs uppercase font-['Oswald',sans-serif] tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95">
+          <FaCamera className="text-sm" />
+          <span>Take Proof of Delivery</span>
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handlePhotoUpload}
+            className="hidden"
+          />
+        </label>
+      )}
+
+      {/* Photo Captured: Complete Delivery Confirmation */}
+      {orderStatus === "photo_captured" && (
+        <div className="text-center pt-1">
+          {deliveryPhoto && (
+            <img
+              src={deliveryPhoto}
+              alt="Proof of Delivery"
+              className="w-24 h-24 rounded-xl object-cover mx-auto mb-3 p-1 bg-stone-100 dark:bg-neutral-800 border border-stone-300 dark:border-neutral-700 shadow-xs"
+            />
+          )}
+          <button
+            type="button"
+            onClick={completeDelivery}
+            className="w-full min-h-[44px] p-3.5 bg-emerald-500 hover:bg-emerald-600 text-white border-none rounded-xl font-bold text-xs uppercase font-['Oswald',sans-serif] tracking-wider cursor-pointer flex justify-center items-center gap-2 shadow-md transition-all active:scale-95"
+          >
+            <FaCheckCircle className="text-sm" />
+            <span>Confirm Delivery</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
