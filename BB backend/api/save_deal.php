@@ -31,13 +31,10 @@ if (!empty($data->title) && isset($data->price) && $data->price !== '') {
         $isPermanent = !empty($data->is_permanent) ? 1 : 0;
         $startTime = ($isPermanent || empty($data->start_time)) ? null : trim($data->start_time);
         $endTime = ($isPermanent || empty($data->end_time)) ? null : trim($data->end_time);
-        $addonCategories = !empty($data->addon_categories) 
-            ? (is_array($data->addon_categories) ? implode(',', $data->addon_categories) : trim($data->addon_categories)) 
-            : 'drinks,Potato Corner,Sauses,Grilled Wings';
 
         // 1. Deal Insert
-        $query = "INSERT INTO deals (title, description, price, original_price, badge_tag, tag, img, promo_banner_image, is_featured_banner, banner_order, is_permanent, start_time, end_time, addon_categories, is_active) 
-                  VALUES (:title, :description, :price, :original_price, :badge_tag, :tag, :img, :promo_img, :is_featured, :b_order, :is_p, :s_time, :e_time, :addon_cats, 1)";
+        $query = "INSERT INTO deals (title, description, price, original_price, badge_tag, tag, img, promo_banner_image, is_featured_banner, banner_order, is_permanent, start_time, end_time, is_active) 
+                  VALUES (:title, :description, :price, :original_price, :badge_tag, :tag, :img, :promo_img, :is_featured, :b_order, :is_p, :s_time, :e_time, 1)";
         $stmt = $db->prepare($query);
         
         $stmt->execute([
@@ -53,8 +50,7 @@ if (!empty($data->title) && isset($data->price) && $data->price !== '') {
             ':b_order' => $bannerOrder,
             ':is_p'  => $isPermanent,
             ':s_time'=> $startTime,
-            ':e_time'=> $endTime,
-            ':addon_cats' => $addonCategories
+            ':e_time'=> $endTime
         ]);
         
         $deal_id = $db->lastInsertId();
@@ -91,11 +87,10 @@ if (!empty($data->title) && isset($data->price) && $data->price !== '') {
 
         $db->commit();
         echo json_encode([
-            "success" => true,
-            "message" => "Deal Created Successfully!",
-            "deal_id" => (int)$deal_id
+            "success" => true, 
+            "message" => "New Deal Created Successfully!",
+            "deal_id" => $deal_id
         ]);
-
     } catch (Exception $e) {
         $db->rollBack();
         http_response_code(500);
@@ -103,6 +98,6 @@ if (!empty($data->title) && isset($data->price) && $data->price !== '') {
     }
 } else {
     http_response_code(400);
-    echo json_encode(["success" => false, "message" => "Deal Title and Price are required!"]);
+    echo json_encode(["success" => false, "message" => "Incomplete data for deal creation."]);
 }
 ?>
