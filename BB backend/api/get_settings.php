@@ -23,6 +23,8 @@ try {
         "admin_email" => "support@bigbite.com",
         "restaurant_email" => $db_settings['admin_email'] ?? "support@bigbite.com",
         "delivery_fee" => "150",
+        "default_delivery_fee" => "150",
+        "free_delivery_threshold" => "1500",
         "estimated_delivery_time" => "30-40",
         "delivery_time" => "30",
         "min_order" => "500",

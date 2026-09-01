@@ -31,12 +31,29 @@ import {
 import { CartProvider, useCart } from "./Context/CartContext";
 import { OrderProvider } from "./Context/OrderContext";
 import { MenuUIProvider } from "./Context/MenuUIContext";
+import { AuthProvider, useAuth } from "./Context/AuthContext";
+import AuthModal from "./Components/Auth/AuthModal";
+import CustomerProfileDrawer from "./Components/Customer/CustomerProfileDrawer";
 
 const MainContent = () => {
   const { cartItems } = useCart();
+  const { isAuthenticated, openAuthModal } = useAuth();
 
   const location = useLocation();
   const currentPath = location.pathname;
+
+  // First Session Auto-Trigger: Welcome discount popup after 1.5s
+  useEffect(() => {
+    const hasSeenWelcome = sessionStorage.getItem("qb_welcome_modal_shown");
+    const isCheckout = location.pathname.toLowerCase().includes("/checkout");
+    if (!isAuthenticated && !hasSeenWelcome && !isCheckout) {
+      const timer = setTimeout(() => {
+        openAuthModal("login");
+        sessionStorage.setItem("qb_welcome_modal_shown", "true");
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, openAuthModal, location.pathname]);
 
   // Capture QR Code parameters (mode=dine_in&table=X)
   useEffect(() => {
@@ -99,21 +116,29 @@ const MainContent = () => {
 
       {/* 🛒 SLIDE-OUT CART POPUP (Available across store except checkout) */}
       {!isCheckoutPage && <CartPopup />}
+
+      {/* 🔐 AUTHENTICATION MODAL */}
+      <AuthModal />
+
+      {/* 👤 CUSTOMER PROFILE & ORDER HISTORY DRAWER */}
+      <CustomerProfileDrawer />
     </div>
   );
 };
 
 function App() {
   return (
-    <CartProvider>
-      <OrderProvider>
-        <MenuUIProvider>
-          <Router>
-            <MainContent />
-          </Router>
-        </MenuUIProvider>
-      </OrderProvider>
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <OrderProvider>
+          <MenuUIProvider>
+            <Router>
+              <MainContent />
+            </Router>
+          </MenuUIProvider>
+        </OrderProvider>
+      </CartProvider>
+    </AuthProvider>
   );
 }
 

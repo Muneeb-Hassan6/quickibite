@@ -8,11 +8,14 @@ import {
   FaSignOutAlt,
   FaBoxOpen,
   FaTag,
+  FaTicketAlt,
   FaUserTie,
   FaDesktop,
   FaQrcode,
   FaMoneyBillWave,
   FaUserShield,
+  FaUsers,
+  FaStar,
 } from "react-icons/fa";
 
 const AdminSidebar = ({
@@ -75,6 +78,8 @@ const AdminSidebar = ({
     {
       title: "Management & HR",
       items: [
+        { id: "customers", icon: <FaUsers />, label: "Customers CRM" },
+        { id: "reviews", icon: <FaStar />, label: "Customer Reviews" },
         { id: "inventory", icon: <FaBoxOpen />, label: "Inventory" },
         { id: "staff", icon: <FaUserTie />, label: "Staff & HR" },
         { id: "tables", icon: <FaQrcode />, label: "Tables & QR" },
@@ -85,6 +90,7 @@ const AdminSidebar = ({
       items: [
         { id: "analytics", icon: <FaChartLine />, label: "Analytics" },
         { id: "profit", icon: <FaMoneyBillWave />, label: "Product Profits" },
+        { id: "coupons", icon: <FaTicketAlt />, label: "Promo Codes" },
         { id: "homepage_builder", icon: <FaDesktop />, label: "Homepage Builder" },
         { id: "settings", icon: <FaCog />, label: "System Settings" },
       ],

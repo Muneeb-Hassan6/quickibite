@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import { useCart } from "../../Context/CartContext";
-import { FaShoppingBag, FaFire, FaCrown } from "react-icons/fa";
+import { FaShoppingBag, FaFire, FaCrown, FaStar } from "react-icons/fa";
 import PopupCard from "./PopupCard";
 import DealCard from "./DealCard";
 import { resolveImageUrl } from "../../utils/imageOptimizer";
@@ -98,13 +98,32 @@ const ProductCard = ({
           />
         </div>
 
-        {/* 📝 TITLE */}
-        <h5
-          className="text-xs sm:text-base font-bold font-['Oswald',sans-serif] tracking-wide text-gray-900 dark:text-white uppercase line-clamp-1 mt-1 text-left group-hover:text-amber-500 transition-colors m-0"
-          title={finalTitle}
-        >
-          {finalTitle}
-        </h5>
+        {/* 📝 TITLE & DYNAMIC RATING */}
+        <div>
+          <h5
+            className="text-xs sm:text-base font-bold font-['Oswald',sans-serif] tracking-wide text-gray-900 dark:text-white uppercase line-clamp-1 mt-1 text-left group-hover:text-amber-500 transition-colors m-0"
+            title={finalTitle}
+          >
+            {finalTitle}
+          </h5>
+
+          {/* Social Proof Rating - 100% Dynamic */}
+          {(() => {
+            const reviewCount = Number(item?.total_reviews || item?.review_count || item?.reviews_count || 0);
+            const avgRating = Number(item?.avg_rating || item?.rating || 0);
+            const hasReviews = reviewCount > 0 && avgRating > 0;
+
+            if (!hasReviews) return null;
+
+            return (
+              <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 mt-1 w-fit">
+                <span className="text-amber-500 text-xs">★</span>
+                <span>{avgRating.toFixed(1)}</span>
+                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-normal">({reviewCount})</span>
+              </div>
+            );
+          })()}
+        </div>
 
         {/* 💰 BOTTOM BAR (PRICE & ACTION) */}
         <div className="flex items-center justify-between mt-2 pt-1 border-t border-gray-100 dark:border-white/5">

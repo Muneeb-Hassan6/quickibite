@@ -48,6 +48,24 @@ export default function ProductMetadataFields({
         <span>Mark as Best Seller</span>
       </label>
 
+      {/* Spice Selection Control */}
+      <div className="my-0.5 border-b border-[var(--admin-border,rgba(255,255,255,0.06))]" />
+      <h4 className="m-0 text-[11px] uppercase tracking-widest text-amber-500 font-extrabold flex items-center gap-1.5">
+        Customizer Controls
+      </h4>
+
+      <label className="flex items-center gap-2.5 text-xs font-bold text-neutral-300 cursor-pointer p-2 rounded-xl bg-white/[0.02] hover:bg-white/5 transition-colors">
+        <input
+          type="checkbox"
+          checked={menuForm.has_spice_option !== false && menuForm.has_spice_option !== 0}
+          onChange={(e) =>
+            setMenuForm({ ...menuForm, has_spice_option: e.target.checked })
+          }
+          className="w-4 h-4 cursor-pointer accent-amber-500"
+        />
+        <span>Enable Spice Level Selection (Mild / Medium / Hot)</span>
+      </label>
+
       {/* Promo Banner Feature */}
       <div className="my-0.5 border-b border-[var(--admin-border,rgba(255,255,255,0.06))]" />
       <label

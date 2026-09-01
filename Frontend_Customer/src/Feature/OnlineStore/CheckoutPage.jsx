@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { LuShoppingBag, LuLock } from "react-icons/lu";
+import { LuShoppingBag, LuLock, LuQrCode, LuUtensils } from "react-icons/lu";
 import { useCheckoutForm } from "./Components/Checkout/hooks/useCheckoutForm";
 
 // Atomic Subcomponents
@@ -9,6 +9,8 @@ import CustomerContactFields from "./Components/Checkout/CustomerContactFields";
 import PaymentMethodPicker from "./Components/Checkout/PaymentMethodPicker";
 import OrderSummaryCard from "./Components/Checkout/OrderSummaryCard";
 import PaymentSandboxModal from "./Components/Checkout/PaymentSandboxModal";
+import PromoCodeBox from "../../Components/Checkout/PromoCodeBox";
+import RiderTipSelector from "../../Components/Checkout/RiderTipSelector";
 
 const CheckoutPage = () => {
   const form = useCheckoutForm();
@@ -74,6 +76,8 @@ const CheckoutPage = () => {
             <DeliveryAddressForm
               orderType={form.orderType}
               setOrderType={form.setOrderType}
+              isQrScanned={form.session?.isQrScanned}
+              session={form.session}
               baseDeliveryFee={form.baseDeliveryFee}
               houseNo={form.houseNo}
               setHouseNo={form.setHouseNo}
@@ -107,12 +111,32 @@ const CheckoutPage = () => {
             />
           </div>
 
-          {/* ════ RIGHT COLUMN: ORDER SUMMARY CARD (5 Cols) ════ */}
-          <div className="lg:col-span-5 sticky top-24 space-y-6">
+          {/* ════ RIGHT COLUMN: ORDER SUMMARY & PROMOS (5 Cols) ════ */}
+          <div className="lg:col-span-5 sticky top-24 space-y-4 sm:space-y-6">
+            {/* Promo Code & Coupon Engine Box */}
+            <PromoCodeBox
+              subtotal={form.subTotal}
+              appliedCoupon={form.appliedCoupon}
+              onApplyCoupon={form.setAppliedCoupon}
+              onRemoveCoupon={() => form.setAppliedCoupon(null)}
+            />
+
+            {/* Rider Tip Selection (Delivery Only) */}
+            {form.orderType === "delivery" && (
+              <RiderTipSelector
+                tipAmount={form.riderTip}
+                onTipChange={form.setRiderTip}
+              />
+            )}
+
             <OrderSummaryCard
               cartItems={form.cartItems}
               subTotal={form.subTotal}
               deliveryFee={form.deliveryFee}
+              riderTip={form.riderTip}
+              discountAmount={form.discountAmount}
+              appliedCoupon={form.appliedCoupon}
+              orderType={form.orderType}
               total={form.total}
               isSubmitting={form.isSubmitting}
               handleProceedOrder={form.handleProceedOrder}

@@ -54,7 +54,7 @@ try {
     $final_orders = [];
 
     foreach ($orders as $order) {
-        $itemQuery = "SELECT id, title as name, size, note, qty, price FROM order_items WHERE order_id = :oid";
+        $itemQuery = "SELECT id, title as name, size, note, qty, price, spice_level, selected_addons_json FROM order_items WHERE order_id = :oid";
         $itemStmt = $db->prepare($itemQuery);
         $itemStmt->execute([':oid' => $order['id']]);
         

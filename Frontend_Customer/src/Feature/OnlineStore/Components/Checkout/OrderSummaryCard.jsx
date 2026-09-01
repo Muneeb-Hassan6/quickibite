@@ -1,15 +1,21 @@
 import React from "react";
-import { LuArrowRight, LuShieldCheck } from "react-icons/lu";
+import { LuArrowRight, LuShieldCheck, LuTag, LuHeart } from "react-icons/lu";
 import CheckoutItemsReview from "./CheckoutItemsReview";
 
 export default function OrderSummaryCard({
   cartItems = [],
   subTotal = 0,
   deliveryFee = 0,
+  riderTip = 0,
+  discountAmount = 0,
+  appliedCoupon = null,
+  orderType = "delivery",
   total = 0,
   isSubmitting = false,
   handleProceedOrder,
 }) {
+  const isDelivery = orderType === "delivery";
+
   return (
     <div className="bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-neutral-800 rounded-3xl p-6 sm:p-7 shadow-sm backdrop-blur-md space-y-6">
       <CheckoutItemsReview cartItems={cartItems} />
@@ -23,12 +29,50 @@ export default function OrderSummaryCard({
           </span>
         </div>
 
-        <div className="flex justify-between text-neutral-600 dark:text-neutral-400">
-          <span>Delivery Fee</span>
-          <span className="font-bold text-neutral-900 dark:text-white">
-            {deliveryFee > 0 ? `Rs ${deliveryFee}` : "FREE"}
-          </span>
-        </div>
+        {/* Applied Coupon Discount Line */}
+        {discountAmount > 0 && (
+          <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-medium">
+            <span className="flex items-center gap-1.5">
+              <LuTag className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Coupon Discount {appliedCoupon?.code ? `(${appliedCoupon.code})` : ""}</span>
+            </span>
+            <span className="font-bold">
+              -Rs {discountAmount.toLocaleString()}
+            </span>
+          </div>
+        )}
+
+        {/* Delivery Fee Line */}
+        {isDelivery ? (
+          <div className="flex justify-between text-neutral-600 dark:text-neutral-400">
+            <span>Delivery Fee</span>
+            <span className="font-bold text-neutral-900 dark:text-white">
+              {deliveryFee > 0 ? `Rs ${deliveryFee.toLocaleString()}` : (
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">FREE</span>
+              )}
+            </span>
+          </div>
+        ) : (
+          <div className="flex justify-between text-neutral-500 dark:text-neutral-400 text-xs">
+            <span>Fulfillment Type</span>
+            <span className="font-bold text-amber-500 uppercase font-['Oswald',sans-serif]">
+              {orderType === "dine_in" ? "Dine-In Table Service" : "Self Takeaway"}
+            </span>
+          </div>
+        )}
+
+        {/* Rider Tip Line */}
+        {isDelivery && riderTip > 0 && (
+          <div className="flex justify-between text-neutral-600 dark:text-neutral-400 font-medium">
+            <span className="flex items-center gap-1.5">
+              <LuHeart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
+              <span>Rider Tip</span>
+            </span>
+            <span className="font-bold text-neutral-900 dark:text-white">
+              Rs {riderTip.toLocaleString()}
+            </span>
+          </div>
+        )}
 
         <div className="pt-3 border-t border-gray-100 dark:border-neutral-800 flex justify-between items-baseline">
           <span className="font-['Oswald',sans-serif] font-bold text-base uppercase text-neutral-900 dark:text-white">
@@ -62,3 +106,4 @@ export default function OrderSummaryCard({
     </div>
   );
 }
+

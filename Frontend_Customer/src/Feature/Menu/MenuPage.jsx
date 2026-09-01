@@ -6,6 +6,7 @@ import SearchBar from "./Components/SearchBar";
 import MenuContent from "./Components/MenuContent";
 import MenuHeroHeader from "./Components/MenuHeroHeader";
 import MenuSidebarDesktop from "./Components/MenuSidebarDesktop";
+import { API_BASE } from "../../config/api";
 
 const MenuPage = () => {
   const [activeCategory, setActiveCategory] = useState("");
@@ -24,7 +25,7 @@ const MenuPage = () => {
     queryKey: ["categories"],
     queryFn: async () => {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_categories.php`
+        `${API_BASE}/get_categories.php`
       );
       const data = await res.json();
       return Array.isArray(data) ? data : [];
@@ -34,7 +35,7 @@ const MenuPage = () => {
   const { data: menuItems = [], isLoading: isMenuLoading } = useQuery({
     queryKey: ["menu"],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
+      const res = await fetch(`${API_BASE}/get_menu.php`);
       const data = await res.json();
       return Array.isArray(data) ? data.filter((i) => i.isAvailable !== false) : [];
     },

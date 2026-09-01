@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { FaArrowLeft, FaSearch, FaUtensils } from "react-icons/fa";
 import ProductCard from "../../../Components/UI/ProductCard";
+import { API_BASE } from "../../../config/api";
 
 const CategoryItemPage = () => {
   const { categoryName } = useParams();
@@ -15,7 +16,7 @@ const CategoryItemPage = () => {
     queryKey: ["menu"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_menu.php`
+        `${API_BASE}/get_menu.php`
       );
       const data = await response.json();
       return Array.isArray(data) ? data.filter((item) => item.isAvailable !== false) : [];

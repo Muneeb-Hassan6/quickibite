@@ -9,6 +9,7 @@ import "swiper/css/navigation";
 import "swiper/css/free-mode";
 import "swiper/css/autoplay";
 import { resolveImageUrl } from "../../../utils/imageOptimizer";
+import { API_BASE } from "../../../config/api";
 
 const FoodDoodlesBackground = () => (
   <div className="absolute inset-0 w-full h-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-400 overflow-hidden z-0">
@@ -82,7 +83,7 @@ const ExploreMenu = ({
   const { data: categories = [], isLoading: isCatLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_categories.php`);
+      const response = await fetch(`${API_BASE}/get_categories.php`);
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     }

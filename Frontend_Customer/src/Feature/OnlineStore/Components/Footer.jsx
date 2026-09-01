@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import FooterBranding from "./FooterBranding";
 import FooterNavColumns from "./FooterNavColumns";
+import { API_BASE } from "../../../config/api";
 
 const Footer = ({ style }) => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ const Footer = ({ style }) => {
     queryKey: ["store_settings_footer"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_settings.php`
+        `${API_BASE}/get_settings.php`
       );
       const result = await response.json();
       if (result.success) {

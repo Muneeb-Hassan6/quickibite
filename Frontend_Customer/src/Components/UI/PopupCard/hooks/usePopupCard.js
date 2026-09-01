@@ -4,6 +4,7 @@ import { useCart } from "../../../../Context/CartContext";
 import { parseComboItems } from "../comboHelpers";
 import { usePopupCardPricing } from "./usePopupCardPricing";
 import { usePopupCardValidation } from "./usePopupCardValidation";
+import { API_BASE } from "../../../../config/api";
 
 export function usePopupCard({
   item,
@@ -15,6 +16,7 @@ export function usePopupCard({
 }) {
   const { addToCart } = useCart();
   const [specialNote, setSpecialNote] = useState("");
+  const [selectedSpice, setSelectedSpice] = useState("Medium Spicy");
   const [selectedDrink, setSelectedDrink] = useState("Coca-Cola");
   const [selectedPizza, setSelectedPizza] = useState("Chicken Tikka");
   const [selectedFries, setSelectedFries] = useState("Masala Fries");
@@ -48,7 +50,7 @@ export function usePopupCard({
     );
 
     if (isDealItem && (!item.items || item.items.length === 0)) {
-      fetch(`${import.meta.env.VITE_API_BASE}/get_deal_details.php?id=${rawId}`)
+      fetch(`${API_BASE}/get_deal_details.php?id=${rawId}`)
         .then((r) => r.json())
         .then((res) => {
           if (res.success && res.deal) {
@@ -82,6 +84,7 @@ export function usePopupCard({
     friesFlavor: true,
     drinkFlavor: true,
     ingredients: false,
+    productAddons: true,
   });
 
   const toggleSection = (sectionKey) => {
@@ -91,53 +94,61 @@ export function usePopupCard({
     }));
   };
 
-  const rawCategory = isDeal
-    ? "deals"
-    : fullItem?.category_name ||
-      fullItem?.category ||
-      fullItem?.category_title ||
-      "";
-  const itemCategory = rawCategory.toString().trim().toLowerCase();
-  const dealId = isDeal
-    ? fullItem?.deal_id ||
-      String(fullItem?.id || "").replace("deal-", "") ||
-      0
-    : 0;
-  const cleanItemId = String(fullItem?.id || item?.id || "").replace(
-    "deal-",
-    ""
-  );
+  // Fetch Full Addons & Optional Ingredients with Dynamic Cache
+  const itemCategory = (
+    fullItem?.category_name ||
+    fullItem?.category ||
+    fullItem?.category_title ||
+    fullItem?.type ||
+    (isDeal ? "deals" : "General")
+  )
+    .toString()
+    .trim()
+    .toLowerCase();
 
-  const { data: mappedAddonGroups = [] } = useQuery({
+  const rawIdVal = fullItem?.id
+    ? String(fullItem.id).replace("prod-", "").replace("deal-", "")
+    : "";
+  const cleanItemId = parseInt(rawIdVal, 10) || 0;
+  const dealId = isDeal ? (fullItem?.deal_id || cleanItemId) : null;
+
+  const { data: addonsData = { product_addons: [], addon_groups: [] } } = useQuery({
     queryKey: [
-      "product_mapped_addon_groups",
-      itemCategory,
-      cleanItemId,
-      dealId,
+      "item_addons_full",
+      isDeal ? `deal_${dealId}` : `prod_${itemCategory}_${cleanItemId}`,
     ],
     queryFn: async () => {
-      if (!itemCategory) return [];
       try {
-        const url =
-          isDeal && dealId
-            ? `${import.meta.env.VITE_API_BASE}/addon_groups.php?action=get_for_product&category=deals&deal_id=${encodeURIComponent(dealId)}`
-            : `${import.meta.env.VITE_API_BASE}/addon_groups.php?action=get_for_product&category=${encodeURIComponent(itemCategory)}&item_id=${encodeURIComponent(cleanItemId)}`;
+        const url = isDeal && dealId
+          ? `${API_BASE}/get_menu_addons.php?category=deals&deal_id=${encodeURIComponent(dealId)}`
+          : `${API_BASE}/get_menu_addons.php?category=${encodeURIComponent(itemCategory)}&item_id=${encodeURIComponent(cleanItemId)}`;
+        
         const res = await fetch(url, {
           credentials: "include",
           headers: { Accept: "application/json" },
         });
         const data = await res.json();
-        return data &&
-          data.status === "success" &&
-          Array.isArray(data.addon_groups)
-          ? data.addon_groups
-          : [];
+        if (data && data.success) {
+          return data;
+        }
+
+        // Fallback to legacy endpoint if needed
+        const legacyUrl = `${API_BASE}/addon_groups.php?action=get_for_product&category=${encodeURIComponent(itemCategory)}&item_id=${encodeURIComponent(cleanItemId)}`;
+        const legRes = await fetch(legacyUrl);
+        const legData = await legRes.json();
+        return {
+          product_addons: [],
+          addon_groups: legData?.addon_groups || [],
+        };
       } catch (err) {
-        return [];
+        return { product_addons: [], addon_groups: [] };
       }
     },
-    enabled: !!itemCategory,
+    enabled: !!(itemCategory || cleanItemId),
   });
+
+  const productCustomAddons = addonsData.product_addons || [];
+  const mappedAddonGroups = addonsData.addon_groups || [];
 
   const { data: optionalIngredients = [] } = useQuery({
     queryKey: ["product_optional_ingredients", item?.id],
@@ -145,7 +156,7 @@ export function usePopupCard({
       if (!item?.id || isDeal) return [];
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_product_ingredients.php?id=${item.id}`
+          `${API_BASE}/get_product_ingredients.php?id=${item.id}`
         );
         const data = await res.json();
         return Array.isArray(data)
@@ -193,6 +204,7 @@ export function usePopupCard({
       optionalIngredients,
       selectedVariant: pricing.selectedVariant,
       selectedAddons: pricing.selectedAddons,
+      selectedSpice,
       e,
     });
 
@@ -208,12 +220,18 @@ export function usePopupCard({
     toggleSection,
     selectedVariant: pricing.selectedVariant,
     setSelectedVariant: pricing.setSelectedVariant,
+    selectedSpice,
+    setSelectedSpice,
+    hasSpiceOption: fullItem?.has_spice_option !== 0 && fullItem?.has_spice_option !== false,
     selectedPizza,
     setSelectedPizza,
     selectedFries,
     setSelectedFries,
     selectedDrink,
     setSelectedDrink,
+    productCustomAddons,
+    selectedProductAddons: pricing.selectedAddons,
+    toggleProductAddon: pricing.toggleProductAddon,
     mappedAddonGroups,
     selectedUpsells: pricing.selectedUpsells,
     toggleMappedAddon: pricing.toggleMappedAddon,

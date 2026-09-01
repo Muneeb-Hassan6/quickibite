@@ -39,6 +39,7 @@ export function useMenuManager() {
     isAvailable: true,
     isTopDeal: false,
     isBestSeller: false,
+    has_spice_option: true,
     variants: [{ size: "Regular", price: "" }],
     slider_placements: [],
   };
@@ -168,6 +169,7 @@ export function useMenuManager() {
 
       const payload = {
         ...menuForm,
+        has_spice_option: menuForm.has_spice_option !== false && menuForm.has_spice_option !== 0 ? 1 : 0,
         img: finalImgUrl || "",
         promo_banner_image: finalPromoBannerUrl || "",
         is_featured_banner: menuForm.is_featured_banner ? 1 : 0,
@@ -355,6 +357,7 @@ export function useMenuManager() {
       isAvailable: item.isAvailable == 1,
       isTopDeal: item.isTopDeal == 1,
       isBestSeller: item.isBestSeller == 1,
+      has_spice_option: item.has_spice_option !== 0 && item.has_spice_option !== false,
       variants:
         Array.isArray(item.variants) && item.variants.length > 0
           ? item.variants.map((v) => ({ ...v, inStock: v.inStock != 0 }))

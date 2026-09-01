@@ -38,7 +38,9 @@ if ($data && is_array($data)) {
             'privacy_overview_text' => 'privacy_policy',
             'privacy_policy' => 'privacy_overview_text',
             'terms_agreement_text' => 'terms_and_conditions',
-            'terms_and_conditions' => 'terms_agreement_text'
+            'terms_and_conditions' => 'terms_agreement_text',
+            'delivery_fee' => 'default_delivery_fee',
+            'default_delivery_fee' => 'delivery_fee'
         ];
 
         foreach ($data as $key => $value) {

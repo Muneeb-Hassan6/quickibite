@@ -26,6 +26,7 @@ if (!empty($data->name) && !empty($data->variants)) {
     $promo_banner_image = isset($data->promo_banner_image) ? $data->promo_banner_image : null;
     $is_featured_banner = !empty($data->is_featured_banner) ? 1 : 0;
     $banner_order = isset($data->banner_order) ? intval($data->banner_order) : 0;
+    $has_spice_option = isset($data->has_spice_option) ? (!empty($data->has_spice_option) ? 1 : 0) : 1;
     
     $slider_placements = isset($data->slider_placements) && is_array($data->slider_placements) ? $data->slider_placements : [];
 
@@ -33,9 +34,9 @@ if (!empty($data->name) && !empty($data->variants)) {
         $conn->beginTransaction();
 
         // 1. Insert Main Item
-        $query1 = "INSERT INTO menu_items (name, description, category, img, isAvailable, isTopDeal, isBestSeller, promo_banner_image, is_featured_banner, banner_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $query1 = "INSERT INTO menu_items (name, description, category, img, isAvailable, isTopDeal, isBestSeller, promo_banner_image, is_featured_banner, banner_order, has_spice_option) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt1 = $conn->prepare($query1);
-        $stmt1->execute([$name, $description, $category, $img, $isAvailable, $isTopDeal, $isBestSeller, $promo_banner_image, $is_featured_banner, $banner_order]);
+        $stmt1->execute([$name, $description, $category, $img, $isAvailable, $isTopDeal, $isBestSeller, $promo_banner_image, $is_featured_banner, $banner_order, $has_spice_option]);
         
         $menu_id = $conn->lastInsertId();
 

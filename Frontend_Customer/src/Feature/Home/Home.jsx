@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import ReactDOM from "react-dom";
 import DynamicSectionResolver from "./Components/DynamicSectionResolver";
 import PopupCard from "../../Components/UI/PopupCard";
+import { API_BASE } from "../../config/api";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ const HomePage = () => {
   const { data: menuItems = [], isLoading: isMenuLoading } = useQuery({
     queryKey: ["menu"],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
+      const res = await fetch(`${API_BASE}/get_menu.php`);
       const data = await res.json();
       return Array.isArray(data) ? data : [];
     },
@@ -45,7 +46,7 @@ const HomePage = () => {
     queryKey: ["active_deals"],
     queryFn: async () => {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_active_deals.php`
+        `${API_BASE}/get_active_deals.php`
       );
       const data = await res.json();
       if (data.success && data.data) {
@@ -83,7 +84,7 @@ const HomePage = () => {
     queryKey: ["homepage_data"],
     queryFn: async () => {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_homepage_data.php`
+        `${API_BASE}/get_homepage_data.php`
       );
       const data = await res.json();
       return data.success
@@ -102,7 +103,7 @@ const HomePage = () => {
     if (!fullDeal || !fullDeal.items || fullDeal.items.length === 0) {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_deal_details.php?id=${dealId}`
+          `${API_BASE}/get_deal_details.php?id=${dealId}`
         );
         const data = await res.json();
         if (data.success && data.deal) {

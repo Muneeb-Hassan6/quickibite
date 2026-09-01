@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   FaPhoneAlt,
   FaMapMarkerAlt,
@@ -7,11 +7,94 @@ import {
   FaWhatsapp,
   FaCheckCircle,
   FaTimes,
+  FaBan,
 } from "react-icons/fa";
+import Swal from "sweetalert2";
 
 export default function ActiveOrderCard({ order, onComplete, onCancel, isCompleting }) {
+  const [isFailing, setIsFailing] = useState(false);
   if (!order) return null;
   const isCod = order.paymentType === "Cash on Delivery" || order.paymentType === "COD";
+
+  const handleDeliveryFailed = async () => {
+    const { value: formValues } = await Swal.fire({
+      title: "Report Delivery Failed",
+      html: `
+        <div style="text-align: left; font-size: 13px;">
+          <p style="margin-bottom: 8px; color: #a1a1aa;">Select the failure reason. Ingredients & package cost will be logged to the restaurant loss audit.</p>
+          <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #fff;">Failure Reason:</label>
+          <select id="swal-fail-reason" style="width: 100%; padding: 8px 12px; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 8px; margin-bottom: 12px;">
+            <option value="Customer unreachable / phone powered off">Customer unreachable / phone powered off</option>
+            <option value="Customer refused delivery at doorstep">Customer refused delivery at doorstep</option>
+            <option value="Spilled or damaged in transit">Spilled or damaged in transit</option>
+            <option value="Incorrect address / out of delivery area">Incorrect address / out of delivery area</option>
+          </select>
+          <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #fff;">Notes (Optional):</label>
+          <input id="swal-fail-notes" placeholder="e.g. Called 3 times at gate, no answer" style="width: 100%; padding: 8px 12px; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 8px; box-sizing: border-box;" />
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: "Confirm Delivery Failure",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#71717a",
+      background: "#18181b",
+      color: "#fff",
+      preConfirm: () => {
+        return {
+          reason: document.getElementById("swal-fail-reason").value,
+          notes: document.getElementById("swal-fail-notes").value,
+        };
+      },
+    });
+
+    if (formValues) {
+      setIsFailing(true);
+      try {
+        const user = JSON.parse(
+          localStorage.getItem("user") ||
+            sessionStorage.getItem("user") ||
+            "{}"
+        );
+        const riderName = user.name || user.username || "Delivery Rider";
+
+        const res = await fetch(
+          `${import.meta.env.VITE_API_BASE}/log_wastage.php`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "report_delivery_failure",
+              order_id: order.id,
+              reason: formValues.reason,
+              notes: formValues.notes,
+              reported_by: riderName,
+            }),
+          }
+        );
+        const data = await res.json();
+
+        if (data.success) {
+          Swal.fire({
+            icon: "warning",
+            title: "Delivery Failed",
+            text: `Order #${order.id} marked failed. Loss of Rs ${parseFloat(data.total_cost_lost || 0).toFixed(2)} logged for Admin review.`,
+            background: "#18181b",
+            color: "#fff",
+            timer: 2500,
+            showConfirmButton: false,
+          });
+          if (onCancel) onCancel();
+        } else {
+          Swal.fire("Error", data.message || "Failed to log delivery failure", "error");
+        }
+      } catch (err) {
+        Swal.fire("Error", "Server connection failed", "error");
+      } finally {
+        setIsFailing(false);
+      }
+    }
+  };
 
   return (
     <div className="bg-white dark:bg-neutral-900 border border-stone-200 dark:border-neutral-800 rounded-2xl overflow-hidden mb-4 shadow-xs transition-colors relative">
@@ -98,19 +181,20 @@ export default function ActiveOrderCard({ order, onComplete, onCancel, isComplet
           </div>
         </div>
 
-        {/* Actions: Cancel & Mark as Delivered */}
+        {/* Actions: Delivery Failed & Mark as Delivered */}
         <div className="flex gap-2.5 pt-1">
           <button
             type="button"
-            onClick={onCancel}
-            className="flex-1 min-h-[44px] px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30 font-bold text-xs uppercase font-['Oswald',sans-serif] tracking-wider cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-1.5"
+            disabled={isFailing || isCompleting}
+            onClick={handleDeliveryFailed}
+            className="flex-1 min-h-[44px] px-3.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-bold text-xs uppercase font-['Oswald',sans-serif] tracking-wider cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-50"
           >
-            <FaTimes className="text-xs" />
-            <span>Cancel</span>
+            <FaBan className="text-xs" />
+            <span>{isFailing ? "Logging..." : "Delivery Failed"}</span>
           </button>
           <button
             type="button"
-            disabled={isCompleting}
+            disabled={isCompleting || isFailing}
             onClick={onComplete}
             className="flex-[2] min-h-[44px] px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs uppercase font-['Oswald',sans-serif] tracking-wider cursor-pointer flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 border-none disabled:opacity-50 disabled:cursor-not-allowed"
           >

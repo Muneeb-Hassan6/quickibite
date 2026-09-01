@@ -3,30 +3,74 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useCart } from "../../../../../Context/CartContext";
+import { useAuth } from "../../../../../Context/AuthContext";
+import { useOrderSession } from "../../../../../Hooks/useOrderSession";
 import { useCheckoutValidation } from "./useCheckoutValidation";
 import { resolveAddressCoordinates } from "../../../../../Utils/geocode";
 import {
   getAccuratePosition,
   resolveCoordinatesToAddress,
 } from "../../../../../Utils/geoHydrator";
+import { API_BASE } from "../../../../../config/api";
 
 export function useCheckoutForm() {
   const navigate = useNavigate();
   const { cartItems, placeOrder } = useCart();
+  const { customer, isAuthenticated, savedAddresses } = useAuth();
+  const { session, switchMode, clearDineIn } = useOrderSession();
 
-  const sessionMode = sessionStorage.getItem("orderMode");
-  const sessionTable = sessionStorage.getItem("tableNumber");
-
-  const [orderType, setOrderType] = useState(
-    sessionMode === "Dine-In" ? "dine_in" : "delivery"
-  );
-  const [customerName, setCustomerName] = useState("");
-  const [customerMobile, setCustomerMobile] = useState("");
+  const [orderType, setOrderTypeState] = useState(session.mode || "delivery");
+  const [customerName, setCustomerName] = useState(customer?.full_name || customer?.name || "");
+  const [customerMobile, setCustomerMobile] = useState(customer?.phone || customer?.mobile || "");
   const [houseNo, setHouseNo] = useState("");
   const [street, setStreet] = useState("");
   const [area, setArea] = useState("");
-  const [tableNumber, setTableNumber] = useState(sessionTable || "");
+  const [tableNumber, setTableNumber] = useState(session.tableNumber || "");
   const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
+
+  // Enterprise Promo & Rider Tip State
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [riderTip, setRiderTip] = useState(0);
+
+  // Auto-fill from auth profile if customer logs in or changes
+  useEffect(() => {
+    if (customer) {
+      if (!customerName && (customer.full_name || customer.name)) {
+        setCustomerName(customer.full_name || customer.name);
+      }
+      if (!customerMobile && (customer.phone || customer.mobile)) {
+        setCustomerMobile(customer.phone || customer.mobile);
+      }
+    }
+  }, [customer]);
+
+  // Auto-fill default saved address if fields are empty
+  useEffect(() => {
+    if (savedAddresses && savedAddresses.length > 0 && !houseNo && !street && !area) {
+      const defaultAddr = savedAddresses.find((a) => a.is_default == 1) || savedAddresses[0];
+      if (defaultAddr) {
+        if (defaultAddr.house_no) setHouseNo(defaultAddr.house_no);
+        if (defaultAddr.street) setStreet(defaultAddr.street);
+        if (defaultAddr.area) setArea(defaultAddr.area);
+        if (defaultAddr.lat && defaultAddr.lng) {
+          setMapCoords({ lat: parseFloat(defaultAddr.lat), lng: parseFloat(defaultAddr.lng) });
+        }
+      }
+    }
+  }, [savedAddresses]);
+
+  // Sync state when session changes
+  useEffect(() => {
+    setOrderTypeState(session.mode);
+    if (session.tableNumber) {
+      setTableNumber(session.tableNumber);
+    }
+  }, [session.mode, session.tableNumber]);
+
+  const setOrderType = (newMode) => {
+    setOrderTypeState(newMode);
+    switchMode(newMode);
+  };
 
   // GPS Auto-Detection State
   const [isDetectingGps, setIsDetectingGps] = useState(false);
@@ -56,7 +100,7 @@ export function useCheckoutForm() {
     queryFn: async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_settings.php`
+          `${API_BASE}/get_settings.php`
         );
         const result = await response.json();
         return result && result.success ? result.data : {};
@@ -73,7 +117,7 @@ export function useCheckoutForm() {
     queryFn: async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_tables.php`
+          `${API_BASE}/get_tables.php`
         );
         if (!response.ok) return [];
         const result = await response.json();
@@ -86,13 +130,17 @@ export function useCheckoutForm() {
     staleTime: 60000,
   });
 
-  const baseDeliveryFee = Number(storeSettings.delivery_fee) || 150;
-  const deliveryFee = orderType === "delivery" ? baseDeliveryFee : 0;
+  const baseDeliveryFee = Number(storeSettings.default_delivery_fee || storeSettings.delivery_fee) || 150;
+  const freeThreshold = Number(storeSettings.free_delivery_threshold) || 1500;
   const subTotal = cartItems.reduce(
     (sum, item) => sum + Number(item.price) * Number(item.qty),
     0
   );
-  const total = subTotal + deliveryFee;
+  const isFreeDelivery = subTotal >= freeThreshold && subTotal > 0;
+  const deliveryFee = orderType === "delivery" ? (isFreeDelivery ? 0 : baseDeliveryFee) : 0;
+  const discountAmount = appliedCoupon ? parseFloat(appliedCoupon.discount_amount || 0) : 0;
+  const effectiveTip = orderType === "delivery" ? (Number(riderTip) || 0) : 0;
+  const total = Math.max(0, subTotal - discountAmount) + deliveryFee + effectiveTip;
 
   const estimatedPrepMinutes = 20;
   const estimatedDeliveryMinutes = 15;
@@ -281,6 +329,11 @@ export function useCheckoutForm() {
       }));
 
       const orderPayload = {
+        customer_id: customer?.id || null,
+        customerId: customer?.id || null,
+        customer_email: customer?.email || "",
+        customerEmail: customer?.email || "",
+        email: customer?.email || "",
         name: customerName.trim(),
         customer_name: customerName.trim(),
         customerName: customerName.trim(),
@@ -304,6 +357,13 @@ export function useCheckoutForm() {
         area: area.trim(),
         deliveryFee: deliveryFee,
         delivery_fee: deliveryFee,
+        rider_tip: effectiveTip,
+        riderTip: effectiveTip,
+        coupon_code: appliedCoupon?.code || null,
+        couponCode: appliedCoupon?.code || null,
+        discount_amount: discountAmount,
+        order_mode: orderType,
+        orderMode: orderType,
         total: total,
         paymentMethod: paymentMethodUsed,
         payment_method: paymentMethodUsed,
@@ -322,6 +382,7 @@ export function useCheckoutForm() {
       if (result && (result.success || result.id || result.orderId || result.order_id)) {
         sessionStorage.removeItem("orderMode");
         sessionStorage.removeItem("tableNumber");
+        clearDineIn();
         const orderId = result.orderId || result.order_id || result.id || "";
         if (orderId) {
           localStorage.setItem("activeOrderId", orderId.toString());
@@ -353,6 +414,14 @@ export function useCheckoutForm() {
     cartItems,
     orderType,
     setOrderType,
+    session,
+    clearDineIn,
+    appliedCoupon,
+    setAppliedCoupon,
+    discountAmount,
+    riderTip,
+    setRiderTip,
+    effectiveTip,
     customerName,
     customerMobile,
     houseNo,
@@ -392,6 +461,6 @@ export function useCheckoutForm() {
     setSandboxInput1,
     sandboxInput2,
     setSandboxInput2,
-    handleSandboxSuccess,
+    handleSandboxPay: handleSandboxSuccess,
   };
 }

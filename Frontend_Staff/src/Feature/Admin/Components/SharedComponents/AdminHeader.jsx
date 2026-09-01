@@ -1,6 +1,17 @@
-import React, { useState, useEffect } from "react";
-import { FaSun, FaMoon, FaClock } from "react-icons/fa";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  FaSun,
+  FaMoon,
+  FaClock,
+  FaBell,
+  FaUtensils,
+  FaMotorcycle,
+  FaTimesCircle,
+  FaFire,
+  FaCheck,
+} from "react-icons/fa";
 import { HiBars3BottomLeft } from "react-icons/hi2";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "../../../../Context/ThemeContext";
 
 const TAB_DESCRIPTIONS = {
@@ -8,7 +19,7 @@ const TAB_DESCRIPTIONS = {
   orders: "Live kitchen, cashier, and delivery pipeline monitoring",
   menu: "Product catalog, pricing, variants, and addon modifiers",
   deals: "Promotional combos, bundle deals, and dynamic banners",
-  inventory: "Raw ingredient tracking, stock alerts, and usage recipes",
+  inventory: "Raw ingredient tracking, stock alerts, and wastage loss audits",
   staff: "Employee roster, attendance logs, and payroll management",
   analytics: "Sales trends, top performing items, and customer metrics",
   profit: "Item-level cost breakdown, gross profits, and profit margins",
@@ -19,7 +30,10 @@ const TAB_DESCRIPTIONS = {
 
 const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
   const { theme, toggleTheme } = useTheme();
+  const queryClient = useQueryClient();
   const [currentTime, setCurrentTime] = useState("");
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const notifRef = useRef(null);
 
   useEffect(() => {
     const updateTime = () => {
@@ -36,6 +50,65 @@ const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Click outside to close notifications dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setIsNotifOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Poll staff notifications every 6 seconds
+  const { data: notifData = {} } = useQuery({
+    queryKey: ["staff_notifications"],
+    queryFn: async () => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_BASE}/admin_wastage_manager.php?action=get_notifications`
+        );
+        const data = await res.json();
+        return data.success ? data : { unread_count: 0, notifications: [] };
+      } catch (e) {
+        return { unread_count: 0, notifications: [] };
+      }
+    },
+    refetchInterval: 6000,
+  });
+
+  const unreadCount = notifData.unread_count || 0;
+  const notifications = notifData.notifications || [];
+
+  const handleMarkAllRead = async () => {
+    try {
+      await fetch(`${import.meta.env.VITE_API_BASE}/admin_wastage_manager.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "mark_notifications_read" }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["staff_notifications"] });
+    } catch (err) {
+      console.error("Failed to mark notifications read:", err);
+    }
+  };
+
+  const getNotifIcon = (type) => {
+    switch (type) {
+      case "remake":
+        return <FaUtensils className="text-amber-500 text-xs" />;
+      case "delivery_failed":
+        return <FaMotorcycle className="text-rose-500 text-xs" />;
+      case "cancellation":
+        return <FaTimesCircle className="text-blue-500 text-xs" />;
+      case "wastage":
+        return <FaFire className="text-purple-500 text-xs" />;
+      default:
+        return <FaBell className="text-amber-500 text-xs" />;
+    }
+  };
 
   const titleFormatted = (activeTab || "Dashboard")
     .replace(/_/g, " ")
@@ -56,7 +129,7 @@ const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="w-1.5 h-4 bg-red-600 rounded-full shrink-0" />
+            <span className="w-1.5 h-4 bg-amber-500 rounded-full shrink-0" />
             <h1 className="m-0 text-base sm:text-lg font-black text-[var(--admin-text,#fff)] tracking-wide font-['Oswald',sans-serif] uppercase truncate">
               {titleFormatted}
             </h1>
@@ -67,7 +140,7 @@ const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
         </div>
       </div>
 
-      {/* Right: Live Status Pill & Theme Toggle */}
+      {/* Right: Live Status Pill, Notifications & Theme Toggle */}
       <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
         {/* Live Store Pill */}
         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
@@ -79,6 +152,86 @@ const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
         <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/5 text-[var(--admin-muted,#9ca3af)] text-xs font-mono font-semibold">
           <FaClock className="text-amber-400 text-[11px]" />
           <span>{currentTime}</span>
+        </div>
+
+        {/* ═══ LIVE NOTIFICATIONS BELL & DROPDOWN ═══ */}
+        <div className="relative" ref={notifRef}>
+          <button
+            type="button"
+            onClick={() => setIsNotifOpen(!isNotifOpen)}
+            className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/[0.03] hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-[var(--admin-text,#fff)] border border-slate-200 dark:border-[var(--admin-border,rgba(255,255,255,0.08))] flex items-center justify-center cursor-pointer transition-all shadow-xs active:scale-95"
+            title="Real-Time Staff Alerts"
+            aria-label="Staff Notifications"
+          >
+            <FaBell className="text-xs sm:text-sm text-amber-500" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-rose-500 text-white rounded-full text-[10px] font-black flex items-center justify-center px-1 shadow-md animate-bounce">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {/* Notifications Dropdown Panel */}
+          {isNotifOpen && (
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-neutral-800 rounded-2xl shadow-2xl z-50 overflow-hidden animate-slide-up">
+              <div className="p-3.5 bg-zinc-50 dark:bg-neutral-950/80 border-b border-zinc-100 dark:border-neutral-800 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FaBell className="text-amber-500 text-xs" />
+                  <span className="text-xs font-bold font-['Oswald',sans-serif] uppercase tracking-wider text-zinc-900 dark:text-white">
+                    Live Operational Alerts
+                  </span>
+                </div>
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleMarkAllRead}
+                    className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline bg-transparent border-none cursor-pointer flex items-center gap-1"
+                  >
+                    <FaCheck className="text-[9px]" /> Mark All Read
+                  </button>
+                )}
+              </div>
+
+              <div className="max-h-[360px] overflow-y-auto divide-y divide-zinc-100 dark:divide-neutral-800">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-zinc-400">
+                    No recent staff alerts or notifications.
+                  </div>
+                ) : (
+                  notifications.map((notif) => (
+                    <div
+                      key={notif.id}
+                      className={`p-3 transition-colors flex items-start gap-2.5 ${
+                        notif.is_read == 0
+                          ? "bg-amber-500/5 dark:bg-amber-500/10"
+                          : "hover:bg-zinc-50 dark:hover:bg-neutral-800/40"
+                      }`}
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 mt-0.5">
+                        {getNotifIcon(notif.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <h4 className="text-xs font-bold text-zinc-900 dark:text-white m-0 truncate">
+                            {notif.title}
+                          </h4>
+                          <span className="text-[10px] text-zinc-400 whitespace-nowrap">
+                            {new Date(notif.created_at).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-zinc-600 dark:text-zinc-300 m-0 mt-0.5 leading-snug break-words">
+                          {notif.message}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Theme Toggle Button */}

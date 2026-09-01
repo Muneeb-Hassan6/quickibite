@@ -11,16 +11,16 @@ export default function AddonProductLinkList({
 }) {
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <label className="text-gray-300 text-sm block font-bold">
+      <div className="flex justify-between items-center mb-3">
+        <label className="text-xs font-extrabold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider block">
           Addon Categories to Assign
         </label>
         <button
           type="button"
           onClick={handleAddAddon}
-          className="text-red-500 text-sm font-bold flex items-center gap-1 hover:text-red-400 bg-transparent border-none cursor-pointer"
+          className="text-amber-600 dark:text-amber-400 hover:text-amber-500 text-xs font-bold flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded-lg border border-amber-500/30 cursor-pointer transition-all"
         >
-          <FaPlus /> Add Category
+          <FaPlus className="text-[10px]" /> Add Category
         </button>
       </div>
 
@@ -28,16 +28,18 @@ export default function AddonProductLinkList({
         {addons.map((addon, index) => (
           <div
             key={index}
-            className="flex flex-col gap-2 bg-[#1a1a1a] p-3 rounded border border-[#333]"
+            className="flex flex-col gap-2.5 bg-zinc-50 dark:bg-neutral-800/60 p-3.5 rounded-xl border border-zinc-200 dark:border-neutral-700/60"
           >
-            <div className="flex justify-between">
-              <label className="text-xs text-gray-400">Addon Category</label>
+            <div className="flex justify-between items-center">
+              <label className="text-[11px] font-bold text-zinc-500 dark:text-neutral-400 uppercase tracking-wider">
+                Addon Category
+              </label>
               <button
                 type="button"
                 onClick={() => handleRemoveAddon(index)}
-                className="text-gray-500 hover:text-red-500 text-xs flex items-center gap-1 bg-transparent border-none cursor-pointer"
+                className="text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 text-xs font-semibold flex items-center gap-1 bg-transparent border-none cursor-pointer"
               >
-                <FaTrash /> Remove
+                <FaTrash className="text-[10px]" /> Remove
               </button>
             </div>
             <select
@@ -45,7 +47,7 @@ export default function AddonProductLinkList({
               onChange={(e) =>
                 handleAddonChange(index, "addon_category", e.target.value)
               }
-              className="w-full bg-[#222] text-white border border-[#444] rounded px-2 py-2 outline-none text-sm"
+              className="w-full bg-white dark:bg-neutral-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-neutral-700 rounded-lg px-3 py-2 outline-none focus:border-amber-500 text-sm font-semibold"
             >
               <option value="">-- Select Category (e.g. Drinks) --</option>
               {categories.map((cat) => (
@@ -59,8 +61,8 @@ export default function AddonProductLinkList({
               ))}
             </select>
 
-            <div className="mt-1">
-              <label className="text-xs text-gray-400 mb-1 block">
+            <div>
+              <label className="text-[11px] font-bold text-zinc-500 dark:text-neutral-400 uppercase tracking-wider mb-1 block">
                 Custom Label (Optional)
               </label>
               <input
@@ -70,13 +72,13 @@ export default function AddonProductLinkList({
                 onChange={(e) =>
                   handleAddonChange(index, "custom_label", e.target.value)
                 }
-                className="w-full bg-[#222] text-white border border-[#444] rounded px-2 py-1 outline-none text-sm"
+                className="w-full bg-white dark:bg-neutral-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-neutral-700 rounded-lg px-3 py-2 outline-none focus:border-amber-500 text-sm"
               />
             </div>
 
-            <div className="flex gap-4 mt-2">
+            <div className="flex flex-col sm:flex-row gap-3 pt-1">
               <div className="flex-1">
-                <label className="text-xs text-gray-400 mb-1 block">
+                <label className="text-[11px] font-bold text-zinc-500 dark:text-neutral-400 uppercase tracking-wider mb-1 block">
                   Selection Type
                 </label>
                 <select
@@ -84,7 +86,7 @@ export default function AddonProductLinkList({
                   onChange={(e) =>
                     handleAddonChange(index, "selection_type", e.target.value)
                   }
-                  className="w-full bg-[#222] text-white border border-[#444] rounded px-2 py-1 outline-none text-sm"
+                  className="w-full bg-white dark:bg-neutral-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-neutral-700 rounded-lg px-3 py-2 outline-none focus:border-amber-500 text-sm"
                 >
                   <option value="single_choice">Single Choice (Radio)</option>
                   <option value="multiple_choice">
@@ -92,15 +94,15 @@ export default function AddonProductLinkList({
                   </option>
                 </select>
               </div>
-              <div className="flex-1 flex items-center pt-4">
-                <label className="flex items-center gap-2 text-white text-sm cursor-pointer">
+              <div className="flex-1 flex items-center sm:pt-4">
+                <label className="flex items-center gap-2 text-zinc-800 dark:text-zinc-200 text-xs font-bold cursor-pointer">
                   <input
                     type="checkbox"
                     checked={addon.is_required}
                     onChange={(e) =>
                       handleAddonChange(index, "is_required", e.target.checked)
                     }
-                    className="w-4 h-4 cursor-pointer"
+                    className="w-4 h-4 cursor-pointer accent-amber-500"
                   />
                   Is Required?
                 </label>
@@ -109,8 +111,8 @@ export default function AddonProductLinkList({
           </div>
         ))}
         {addons.length === 0 && (
-          <p className="text-gray-500 text-sm text-center py-6 italic border border-dashed border-[#333] rounded">
-            No addon categories mapped yet. Click "Add Category".
+          <p className="text-zinc-500 dark:text-neutral-400 text-xs text-center py-6 italic border border-dashed border-zinc-300 dark:border-neutral-800 rounded-xl bg-zinc-50 dark:bg-neutral-900">
+            No addon categories mapped yet. Click "+ Add Category".
           </p>
         )}
       </div>

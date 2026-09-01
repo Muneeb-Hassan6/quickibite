@@ -1,3 +1,5 @@
+import { API_BASE } from "../config/api";
+
 /**
  * Optimizes a Cloudinary image URL by injecting quality, format, and width parameters.
  * If the URL is not a valid Cloudinary upload URL, it returns the original URL.
@@ -41,8 +43,10 @@ export const resolveImageUrl = (img, width = 600) => {
   if (cleanImg.startsWith("data:") || cleanImg.startsWith("blob:")) {
     return cleanImg;
   }
-  const apiBase = import.meta.env.VITE_API_BASE || "";
+  const apiBase = API_BASE || "";
   const serverBase = apiBase.replace(/\/api\/?$/, "");
   const cleanPath = cleanImg.startsWith("/") ? cleanImg : `/${cleanImg}`;
   return `${serverBase}${cleanPath}`;
 };
+
+export const getOptimizedImageUrl = resolveImageUrl;

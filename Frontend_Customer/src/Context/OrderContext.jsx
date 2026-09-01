@@ -1,5 +1,6 @@
 import React, { createContext, useContext } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { API_BASE } from "../config/api";
 
 const OrderContext = createContext();
 
@@ -15,7 +16,7 @@ export const OrderProvider = ({ children }) => {
       const token = sessionStorage.getItem("auth_token");
       if (!token) return [];
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_orders.php`, {
+      const response = await fetch(`${API_BASE}/get_orders.php`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (!response.ok) return [];
@@ -54,7 +55,7 @@ export const OrderProvider = ({ children }) => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/insert_order.php`,
+        `${API_BASE}/insert_order.php`,
         {
           method: "POST",
           headers: {
@@ -83,7 +84,7 @@ export const OrderProvider = ({ children }) => {
 
     // Database mein update bhejna
     try {
-      await fetch(`${import.meta.env.VITE_API_BASE}/update_order_status.php`, {
+      await fetch(`${API_BASE}/update_order_status.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: orderId, status: newStatus }),

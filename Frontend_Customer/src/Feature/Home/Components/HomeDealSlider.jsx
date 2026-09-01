@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaFire, FaArrowRight } from "react-icons/fa";
 import DealCard from "../../../Components/UI/DealCard";
+import { API_BASE } from "../../../config/api";
 
 const HomeDealsSlider = () => {
   const [deals, setDeals] = useState([]);
@@ -11,7 +12,7 @@ const HomeDealsSlider = () => {
     const fetchActiveDeals = async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_active_deals.php`
+          `${API_BASE}/get_active_deals.php`
         );
         const data = await response.json();
         if (data.success && Array.isArray(data.data) && data.data.length > 0) {

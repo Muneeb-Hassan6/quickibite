@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FaDollarSign, FaSave, FaSpinner } from "react-icons/fa";
+import { FaDollarSign, FaSave, FaSpinner, FaTruck } from "react-icons/fa";
 import Swal from "sweetalert2";
 
 const FinancialSettings = () => {
@@ -8,6 +8,7 @@ const FinancialSettings = () => {
   const [settings, setSettings] = useState({
     tax_rate: "0",
     delivery_fee: "0",
+    free_delivery_threshold: "1500",
     accept_cards: false,
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -25,8 +26,9 @@ const FinancialSettings = () => {
     if (settingsData && Object.keys(settingsData).length > 0) {
       setSettings({
         tax_rate: settingsData.tax_rate || "0",
-        delivery_fee: settingsData.delivery_fee || "0",
-        accept_cards: settingsData.accept_cards === "true",
+        delivery_fee: settingsData.default_delivery_fee || settingsData.delivery_fee || "0",
+        free_delivery_threshold: settingsData.free_delivery_threshold || "1500",
+        accept_cards: settingsData.accept_cards === "true" || settingsData.accept_cards === "1",
       });
     }
   }, [settingsData]);
@@ -52,6 +54,8 @@ const FinancialSettings = () => {
           body: JSON.stringify({
             tax_rate: settings.tax_rate,
             delivery_fee: settings.delivery_fee,
+            default_delivery_fee: settings.delivery_fee,
+            free_delivery_threshold: settings.free_delivery_threshold,
             accept_cards: settings.accept_cards ? "true" : "false",
           }),
         },
@@ -134,8 +138,8 @@ const FinancialSettings = () => {
           </label>
         </div>
 
-        {/* Tax Rate and Delivery Fee */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Tax Rate, Delivery Fee & Free Delivery Threshold */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
               Sales Tax / GST Rate (%)
@@ -165,6 +169,25 @@ const FinancialSettings = () => {
               className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-bold focus:outline-none focus:border-amber-500 font-mono"
               placeholder="e.g. 150"
             />
+          </div>
+
+          <div>
+            <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5 flex items-center gap-1.5">
+              <FaTruck className="text-amber-500 text-[11px]" />
+              <span>Free Delivery Min Spend (Rs.)</span>
+            </label>
+            <input
+              type="number"
+              name="free_delivery_threshold"
+              value={settings.free_delivery_threshold}
+              onChange={handleChange}
+              min="0"
+              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-bold focus:outline-none focus:border-amber-500 font-mono"
+              placeholder="e.g. 1500"
+            />
+            <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-1 m-0">
+              Cart subtotal required to trigger 100% Free Delivery waiver.
+            </p>
           </div>
         </div>
       </div>

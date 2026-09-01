@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import toast from "react-hot-toast";
-import { io } from "socket.io-client"; // 🔥 SOCKET IMPORT ADDED
 import Swal from "sweetalert2";
+import { API_BASE } from "../config/api";
 
 const CartContext = createContext();
 
@@ -122,37 +122,55 @@ export const CartProvider = ({ children }) => {
       return null;
     }
 
-    const orderTotal = cartItems.reduce(
-      (acc, item) => acc + parseFloat(item.price) * (item.qty || 1),
-      0,
-    );
+    let loggedUser = null;
+    try {
+      const saved = localStorage.getItem("quickbite_customer_user");
+      if (saved) loggedUser = JSON.parse(saved);
+    } catch {}
+
+    const customerId = customerDetails.customer_id || customerDetails.customerId || loggedUser?.id || null;
+    const customerEmail = customerDetails.customer_email || customerDetails.customerEmail || customerDetails.email || loggedUser?.email || "";
 
     // Prepare Data for Backend
     const orderData = {
-      order_type: customerDetails.orderType || "Takeaway",
-      customer_name: customerDetails.customerName || "",
-      customer_mobile: customerDetails.customerMobile || "",
-      customer_address: customerDetails.customerAddress || "",
-      table_number: customerDetails.tableNumber || "",
+      customer_id: customerId,
+      customerId: customerId,
+      customer_email: customerEmail,
+      customerEmail: customerEmail,
+      email: customerEmail,
+      order_type: customerDetails.orderType || customerDetails.order_type || "Takeaway",
+      customer_name: customerDetails.customerName || customerDetails.customer_name || loggedUser?.full_name || "Walk-in",
+      customer_mobile: customerDetails.customerMobile || customerDetails.customer_mobile || customerDetails.mobile || customerDetails.phone || loggedUser?.phone || "",
+      customer_address: customerDetails.customerAddress || customerDetails.customer_address || customerDetails.address || "",
+      table_number: customerDetails.tableNumber || customerDetails.table_number || "",
       
-      // Address Breakdown
+      // Address Breakdown & GPS
       house_no: customerDetails.house_no || null,
       street: customerDetails.street || null,
       area: customerDetails.area || null,
+      customer_lat: customerDetails.customer_lat || customerDetails.lat || null,
+      customer_lng: customerDetails.customer_lng || customerDetails.lng || null,
+
+      // Promo & Tips
+      delivery_fee: customerDetails.delivery_fee || customerDetails.deliveryFee || 0,
+      rider_tip: customerDetails.rider_tip || customerDetails.riderTip || 0,
+      coupon_code: customerDetails.coupon_code || customerDetails.couponCode || null,
+      discount_amount: customerDetails.discount_amount || customerDetails.discountAmount || 0,
 
       // Payment Details
-      payment_method: customerDetails.paymentMethod || "Cash on Delivery",
-      payment_status: customerDetails.paymentStatus || "Pending",
+      payment_method: customerDetails.paymentMethod || customerDetails.payment_method || "Cash on Delivery",
+      payment_status: customerDetails.paymentStatus || customerDetails.payment_status || "Pending",
 
-      total: orderTotal,
-      cart: cartItems,
+      total: customerDetails.total || orderTotal,
+      cart: customerDetails.items || customerDetails.cart || cartItems,
+      items: customerDetails.items || customerDetails.cart || cartItems,
     };
 
     const loadingToast = toast.loading("Placing your order...");
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/create_order.php`,
+        `${API_BASE}/create_order.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

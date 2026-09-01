@@ -1,28 +1,44 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-import { FaTimes, FaSpinner } from "react-icons/fa";
+import { FaTimes, FaSpinner, FaUtensils } from "react-icons/fa";
 import AddonSubItemsTable from "./AddonSubItemsTable";
 
-const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems = [] }) => {
+const AddonModal = ({
+  isOpen,
+  onClose,
+  menuItem,
+  menuItems = [],
+  inventoryItems = [],
+  onSaved,
+}) => {
+  const [selectedItem, setSelectedItem] = useState(menuItem);
   const [addons, setAddons] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (isOpen && menuItem) {
+    if (menuItem) {
+      setSelectedItem(menuItem);
+    } else if (menuItems.length > 0 && !selectedItem) {
+      setSelectedItem(menuItems[0]);
+    }
+  }, [menuItem, menuItems]);
+
+  useEffect(() => {
+    if (isOpen && selectedItem?.id) {
       setLoading(true);
       fetch(
-        `${import.meta.env.VITE_API_BASE}/get_addons.php?menu_item_id=${menuItem.id}`
+        `${import.meta.env.VITE_API_BASE}/admin_manage_addons.php?action=get_product_addons&menu_item_id=${selectedItem.id}`
       )
         .then((res) => res.json())
         .then((resData) => {
           const list = resData.data || resData.addons || [];
           if (Array.isArray(list) && list.length > 0) {
             const mapped = list.map((a) => ({
-              addon_name: a.addon_name || "",
-              addon_price: a.addon_price || "",
+              addon_name: a.title || a.addon_name || "",
+              addon_price: a.price || a.addon_price || "",
               inventory_id: a.inventory_id || "",
-              qty: a.qty_to_deduct || "",
+              qty: a.qty_to_deduct || a.qty || "",
             }));
             setAddons(mapped);
           } else {
@@ -37,7 +53,7 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems = [] }) => {
           setLoading(false);
         });
     }
-  }, [isOpen, menuItem]);
+  }, [isOpen, selectedItem]);
 
   const handleAddRow = () => {
     setAddons([
@@ -62,25 +78,33 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems = [] }) => {
   };
 
   const handleSave = async () => {
+    if (!selectedItem?.id) {
+      Swal.fire("Error", "Please select a product first", "error");
+      return;
+    }
+
     setIsSaving(true);
 
     const filteredAddons = addons
       .filter((a) => a.addon_name.trim() !== "")
       .map((a) => ({
+        title: a.addon_name.trim(),
         addon_name: a.addon_name.trim(),
+        price: a.addon_price !== "" ? Number(a.addon_price) : 0,
         addon_price: a.addon_price !== "" ? Number(a.addon_price) : 0,
         inventory_id: a.inventory_id ? Number(a.inventory_id) : null,
-        qty: a.qty ? Number(a.qty) : null,
+        qty_to_deduct: a.qty ? Number(a.qty) : null,
       }));
 
     const payload = {
-      menu_item_id: menuItem.id,
+      action: "save_product_addons",
+      menu_item_id: selectedItem.id,
       addons: filteredAddons,
     };
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/save_addons.php`,
+        `${import.meta.env.VITE_API_BASE}/admin_manage_addons.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -92,10 +116,11 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems = [] }) => {
         Swal.fire({
           icon: "success",
           title: "Saved!",
-          text: "Item add-ons updated successfully",
+          text: `Custom add-ons for "${selectedItem.name}" updated successfully`,
           timer: 1500,
           showConfirmButton: false,
         });
+        if (onSaved) onSaved();
         onClose();
       } else {
         throw new Error(result.message || "Failed to save addons");
@@ -108,7 +133,7 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems = [] }) => {
     }
   };
 
-  if (!isOpen || !menuItem) return null;
+  if (!isOpen) return null;
 
   return (
     <div
@@ -120,16 +145,16 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems = [] }) => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex justify-between items-center pb-4 mb-5 border-b border-[var(--admin-border,rgba(255,255,255,0.06))]">
+        <div className="flex justify-between items-center pb-4 mb-4 border-b border-[var(--admin-border,rgba(255,255,255,0.06))]">
           <div>
             <div className="flex items-center gap-2.5">
               <span className="w-1.5 h-5 bg-amber-500 rounded-full" />
               <h3 className="m-0 text-base sm:text-lg md:text-xl font-black text-[var(--admin-text,#fff)] font-['Oswald',sans-serif] uppercase tracking-wide">
-                Custom Add-on Options
+                Product Custom Add-ons & Modifiers
               </h3>
             </div>
-            <p className="text-xs text-amber-400 font-bold mt-1 m-0">
-              Product: {menuItem.name}
+            <p className="text-xs text-gray-400 mt-1 m-0">
+              Configure product-level upgrades (e.g. Extra Cheese, Bacon, Special Sauces).
             </p>
           </div>
           <button
@@ -140,6 +165,29 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems = [] }) => {
             <FaTimes className="text-sm" />
           </button>
         </div>
+
+        {/* Product Selector Dropdown if multiple products available */}
+        {menuItems.length > 0 && (
+          <div className="mb-4 p-3 rounded-xl bg-white/5 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5 shrink-0">
+              <FaUtensils className="text-[10px]" /> Select Target Product:
+            </label>
+            <select
+              value={selectedItem?.id || ""}
+              onChange={(e) => {
+                const found = menuItems.find((m) => String(m.id) === String(e.target.value));
+                if (found) setSelectedItem(found);
+              }}
+              className="w-full sm:w-auto flex-1 bg-neutral-900 border border-neutral-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg focus:outline-hidden focus:border-amber-500"
+            >
+              {menuItems.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name} ({m.category || "General"}) - Rs {parseFloat(m.price || 0).toLocaleString()}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto pr-1">

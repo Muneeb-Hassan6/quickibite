@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import DealsSidebar from "./Components/DealsSidebar";
 import DealsHeroBanner from "./Components/DealsHeroBanner";
 import DealsGridList from "./Components/DealsGridList";
+import { API_BASE } from "../../config/api";
 
 const DealsPage = () => {
   const [activeCategory, setActiveCategory] = useState("All Deals");
@@ -14,7 +15,7 @@ const DealsPage = () => {
     queryKey: ["active_deals"],
     queryFn: async () => {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_active_deals.php`
+        `${API_BASE}/get_active_deals.php`
       );
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
@@ -51,7 +52,7 @@ const DealsPage = () => {
   const { data: menuData = [], isLoading: isMenuLoading } = useQuery({
     queryKey: ["menu"],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
+      const res = await fetch(`${API_BASE}/get_menu.php`);
       const data = await res.json();
       return Array.isArray(data) ? data : [];
     },

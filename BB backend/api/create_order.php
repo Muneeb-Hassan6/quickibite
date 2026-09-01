@@ -7,6 +7,15 @@ $db = $database->getConnection();
 
 // ─── AUTO-MIGRATE: Ensure payment_method, payment_status, and coordinate columns exist ───
 try {
+    $checkCustId = $db->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                                  WHERE TABLE_SCHEMA = DATABASE() 
+                                  AND TABLE_NAME = 'orders' 
+                                  AND COLUMN_NAME = 'customer_id'");
+    $checkCustId->execute();
+    if ($checkCustId->fetchColumn() == 0) {
+        $db->exec("ALTER TABLE `orders` ADD COLUMN `customer_id` INT NULL AFTER `id`");
+    }
+
     $checkCol = $db->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
                                WHERE TABLE_SCHEMA = DATABASE() 
                                AND TABLE_NAME = 'orders' 
@@ -205,23 +214,81 @@ if (!empty($cart_items)) {
     }
 }
 
-// Fallback to client total if server calculation was 0 but client sent a valid total
-if ($order_total <= 0 && !empty($data->total)) {
-    $order_total = floatval($data->total);
+$subtotal = $order_total;
+$raw_order_type = !empty($data->order_type) ? $data->order_type : (!empty($data->orderType) ? $data->orderType : (!empty($data->type) ? $data->type : (!empty($data->order_mode) ? $data->order_mode : "delivery")));
+$order_mode = "delivery";
+$order_type = "Delivery";
+
+if (strtolower($raw_order_type) === 'dine_in' || strtolower($raw_order_type) === 'dine-in') {
+    $order_mode = "dine_in";
+    $order_type = "Dine-In";
+} elseif (strtolower($raw_order_type) === 'takeaway' || strtolower($raw_order_type) === 'pickup') {
+    $order_mode = "takeaway";
+    $order_type = "Takeaway";
+} else {
+    $order_mode = "delivery";
+    $order_type = "Delivery";
 }
 
-$raw_order_type = !empty($data->order_type) ? $data->order_type : (!empty($data->orderType) ? $data->orderType : (!empty($data->type) ? $data->type : "Takeaway"));
-if (strtolower($raw_order_type) === 'delivery') {
-    $order_type = "Delivery";
-    // Only add delivery fee if not already accounted for
-    if (empty($data->deliveryFee) && empty($data->delivery_fee)) {
-        $order_total += 150;
+$rider_tip = 0.00;
+$delivery_fee = 0.00;
+$discount_amount = 0.00;
+$coupon_code = !empty($data->coupon_code) ? trim($data->coupon_code) : (!empty($data->couponCode) ? trim($data->couponCode) : (!empty($data->promo_code) ? trim($data->promo_code) : null));
+
+// 1. Enforce Delivery Fee based on Order Mode
+if ($order_mode === 'delivery') {
+    // Dynamic Free Delivery Threshold
+    $delivSettingsQuery = $db->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('free_delivery_threshold', 'default_delivery_fee', 'delivery_fee')");
+    $delivSettings = [];
+    if ($delivSettingsQuery) {
+        while ($row = $delivSettingsQuery->fetch(PDO::FETCH_ASSOC)) {
+            $delivSettings[$row['setting_key']] = $row['setting_value'];
+        }
     }
-} elseif (strtolower($raw_order_type) === 'dine_in' || strtolower($raw_order_type) === 'dine-in') {
-    $order_type = "Dine-In";
+    $dbThreshold = isset($delivSettings['free_delivery_threshold']) ? floatval($delivSettings['free_delivery_threshold']) : 1500.00;
+    $dbDefaultFee = isset($delivSettings['default_delivery_fee']) ? floatval($delivSettings['default_delivery_fee']) : (isset($delivSettings['delivery_fee']) ? floatval($delivSettings['delivery_fee']) : 150.00);
+
+    $delivery_fee = ($subtotal >= $dbThreshold) ? 0.00 : $dbDefaultFee;
 } else {
-    $order_type = "Takeaway";
+    // Mode is Takeaway or Dine-In: Strictly zero out delivery fees
+    $delivery_fee = 0.00;
 }
+
+// 2. Server-Side Coupon Re-validation
+$couponIdToUpdate = null;
+if (!empty($coupon_code)) {
+    $cStmt = $db->prepare("SELECT * FROM coupons WHERE BINARY code = :code AND is_active = 1 LIMIT 1");
+    $cStmt->execute([':code' => $coupon_code]);
+    $validCoupon = $cStmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($validCoupon) {
+        $minSpend = floatval($validCoupon['min_spend'] ?? 0);
+        $isNotExpired = empty($validCoupon['expiry_date']) || strtotime($validCoupon['expiry_date']) >= time();
+        $hasUsageLeft = is_null($validCoupon['usage_limit']) || intval($validCoupon['times_used']) < intval($validCoupon['usage_limit']);
+
+        if ($subtotal >= $minSpend && $isNotExpired && $hasUsageLeft) {
+            if ($validCoupon['discount_type'] === 'percentage') {
+                $discount_amount = ($subtotal * floatval($validCoupon['discount_value'])) / 100;
+                if (!empty($validCoupon['max_discount'])) {
+                    $discount_amount = min($discount_amount, floatval($validCoupon['max_discount']));
+                }
+            } else {
+                $discount_amount = floatval($validCoupon['discount_value']);
+            }
+            $discount_amount = min($discount_amount, $subtotal);
+            $couponIdToUpdate = $validCoupon['id'];
+        } else {
+            $coupon_code = null;
+            $discount_amount = 0.00;
+        }
+    } else {
+        $coupon_code = null;
+        $discount_amount = 0.00;
+    }
+}
+
+// 3. Final Grand Total Calculation
+$order_total = max(0, $subtotal - $discount_amount) + $delivery_fee + $rider_tip;
 
 if(!empty($cart_items) && $order_total > 0) {
     try {
@@ -261,13 +328,37 @@ if(!empty($cart_items) && $order_total > 0) {
                     (!empty($data->longitude) ? floatval($data->longitude) : 
                     (!empty($data->lng) ? floatval($data->lng) : null)));
 
-        $house_val = !empty($data->house_info) ? trim($data->house_info) : (!empty($data->house_no) ? trim($data->house_no) : null);
+        $customer_id = !empty($data->customer_id) ? intval($data->customer_id) : (!empty($data->customerId) ? intval($data->customerId) : null);
 
-        $query = "INSERT INTO orders (order_type, customer_name, customer_mobile, customer_address, customer_lat, customer_lng, latitude, longitude, house_no, house_info, street, area, table_number, total, status, payment_method, payment_status) 
-                  VALUES (:type, :name, :mobile, :address, :cust_lat, :cust_lng, :lat, :lng, :house, :house_info, :street, :area, :table, :total, 'Pending', :pmethod, :pstatus)";
+        // Fallback: If customer_id is missing, auto-link to customer_users by phone or email
+        if (!$customer_id && !empty($customer_mobile)) {
+            $cleanPh = preg_replace('/[^0-9]/', '', $customer_mobile);
+            $findCust = $db->prepare("SELECT id FROM customer_users WHERE phone = :ph OR phone = :ph2 LIMIT 1");
+            $findCust->execute([':ph' => $customer_mobile, ':ph2' => $cleanPh]);
+            $cRow = $findCust->fetch(PDO::FETCH_ASSOC);
+            if ($cRow) {
+                $customer_id = intval($cRow['id']);
+            }
+        }
+        if (!$customer_id && !empty($data->customer_email ?? ($data->email ?? null))) {
+            $em = trim($data->customer_email ?? $data->email);
+            $findCustEm = $db->prepare("SELECT id FROM customer_users WHERE email = :em LIMIT 1");
+            $findCustEm->execute([':em' => $em]);
+            $cRowEm = $findCustEm->fetch(PDO::FETCH_ASSOC);
+            if ($cRowEm) {
+                $customer_id = intval($cRowEm['id']);
+            }
+        }
+
+        $house_val = !empty($data->house_no) ? trim($data->house_no) : (!empty($data->house_info) ? trim($data->house_info) : (!empty($data->house) ? trim($data->house) : null));
+
+        $query = "INSERT INTO orders (customer_id, order_type, order_mode, customer_name, customer_mobile, customer_address, customer_lat, customer_lng, latitude, longitude, house_no, house_info, street, area, table_number, delivery_fee, rider_tip, coupon_code, discount_amount, total, status, payment_method, payment_status) 
+                  VALUES (:cid, :type, :mode, :name, :mobile, :address, :cust_lat, :cust_lng, :lat, :lng, :house, :house_info, :street, :area, :table, :deliv_fee, :tip, :coupon, :discount, :total, 'Pending', :pmethod, :pstatus)";
         $stmt = $db->prepare($query);
         $stmt->execute([
+            ':cid'        => $customer_id,
             ':type'       => $order_type,
+            ':mode'       => $order_mode,
             ':name'       => $customer_name,
             ':mobile'     => $customer_mobile,
             ':address'    => $full_addr,
@@ -280,11 +371,21 @@ if(!empty($cart_items) && $order_total > 0) {
             ':street'     => $data->street ?? null,
             ':area'       => $data->area ?? null,
             ':table'      => $table_num,
+            ':deliv_fee'  => $delivery_fee,
+            ':tip'        => $rider_tip,
+            ':coupon'     => $coupon_code,
+            ':discount'   => $discount_amount,
             ':total'      => $order_total,
             ':pmethod'    => $payment_method,
             ':pstatus'    => $payment_status
         ]);
         $order_id = $db->lastInsertId();
+
+        // Increment coupon times_used if applied
+        if ($couponIdToUpdate) {
+            $upStmt = $db->prepare("UPDATE coupons SET times_used = times_used + 1 WHERE id = :id");
+            $upStmt->execute([':id' => $couponIdToUpdate]);
+        }
 
         // FETCH ALL RECIPES
         $recipes_map = [];
@@ -336,20 +437,30 @@ if(!empty($cart_items) && $order_total > 0) {
         }
 
         // INSERT ORDER ITEMS & CALCULATE DEDUCTIONS
-        $itemQuery = "INSERT INTO order_items (order_id, title, size, note, qty, price) VALUES (:oid, :title, :size, :note, :qty, :price)";
+        $itemQuery = "INSERT INTO order_items (order_id, title, size, note, qty, price, spice_level, selected_addons_json) VALUES (:oid, :title, :size, :note, :qty, :price, :spice, :addons_json)";
         $itemStmt = $db->prepare($itemQuery);
 
         $inventory_deductions = [];
         $cost_updates = [];
 
         foreach($cart_items as $item) {
+            $spice_val = !empty($item->spice_level) ? $item->spice_level : (!empty($item->spiceLevel) ? $item->spiceLevel : 'Medium Spicy');
+            $addons_json = null;
+            if (!empty($item->selected_addons)) {
+                $addons_json = is_string($item->selected_addons) ? $item->selected_addons : json_encode($item->selected_addons);
+            } else if (!empty($item->addons)) {
+                $addons_json = is_string($item->addons) ? $item->addons : json_encode($item->addons);
+            }
+
             $itemStmt->execute([
-                ':oid'   => $order_id,
-                ':title' => $item->name ?? ($item->title ?? 'Unknown Item'),
-                ':size'  => $item->size ?? 'Regular',
-                ':note'  => $item->note ?? '',
-                ':qty'   => $item->qty ?? 1,
-                ':price' => $item->price ?? 0
+                ':oid'         => $order_id,
+                ':title'       => $item->name ?? ($item->title ?? 'Unknown Item'),
+                ':size'        => $item->size ?? 'Regular',
+                ':note'        => $item->note ?? '',
+                ':qty'         => $item->qty ?? 1,
+                ':price'       => $item->price ?? 0,
+                ':spice'       => $spice_val,
+                ':addons_json' => $addons_json
             ]);
             $order_item_id = $db->lastInsertId();
 
@@ -378,6 +489,7 @@ if(!empty($cart_items) && $order_total > 0) {
                     foreach ($item->excluded_ingredients as $exId) $excluded[] = intval($exId);
                 }
 
+                // 1. Deduct standard recipe ingredients
                 $key = $menu_item_id . '_' . $variant_name;
                 if (isset($recipes_map[$key])) {
                     foreach ($recipes_map[$key] as $ing) {
@@ -392,6 +504,44 @@ if(!empty($cart_items) && $order_total > 0) {
                         if ($total_deduct > 0) {
                             if (!isset($inventory_deductions[$inv_id])) $inventory_deductions[$inv_id] = 0;
                             $inventory_deductions[$inv_id] += $total_deduct;
+                        }
+                    }
+                }
+
+                // 2. Deduct product custom add-ons
+                $item_addons = [];
+                if (!empty($item->selected_addons)) {
+                    $item_addons = is_string($item->selected_addons) ? json_decode($item->selected_addons, true) : $item->selected_addons;
+                } else if (!empty($item->addons)) {
+                    $item_addons = is_string($item->addons) ? json_decode($item->addons, true) : $item->addons;
+                }
+
+                if (is_array($item_addons) && !empty($item_addons)) {
+                    foreach ($item_addons as $addObj) {
+                        $addInvId = !empty($addObj['inventory_id']) ? intval($addObj['inventory_id']) : (!empty($addObj->inventory_id) ? intval($addObj->inventory_id) : 0);
+                        $addQty = !empty($addObj['qty_to_deduct']) ? floatval($addObj['qty_to_deduct']) : (!empty($addObj['qty']) ? floatval($addObj['qty']) : (!empty($addObj->qty) ? floatval($addObj->qty) : 0));
+
+                        if ($addInvId <= 0 && $menu_item_id > 0) {
+                            $addTitle = $addObj['title'] ?? ($addObj['name'] ?? ($addObj->title ?? ($addObj->name ?? '')));
+                            if (!empty($addTitle)) {
+                                $lookupStmt = $db->prepare("SELECT inventory_id, qty_to_deduct FROM product_custom_addons WHERE menu_item_id = ? AND title = ? LIMIT 1");
+                                $lookupStmt->execute([$menu_item_id, $addTitle]);
+                                $foundAddon = $lookupStmt->fetch(PDO::FETCH_ASSOC);
+                                if ($foundAddon && !empty($foundAddon['inventory_id'])) {
+                                    $addInvId = intval($foundAddon['inventory_id']);
+                                    if ($addQty <= 0) $addQty = floatval($foundAddon['qty_to_deduct'] ?: 1);
+                                }
+                            }
+                        }
+
+                        if ($addInvId > 0) {
+                            if ($addQty <= 0) $addQty = 1.0;
+                            $invPrice = $inventory_prices[$addInvId] ?? 0;
+                            $unit_cost += ($addQty * $invPrice);
+
+                            $total_add_deduct = $addQty * $order_qty;
+                            if (!isset($inventory_deductions[$addInvId])) $inventory_deductions[$addInvId] = 0;
+                            $inventory_deductions[$addInvId] += $total_add_deduct;
                         }
                     }
                 }

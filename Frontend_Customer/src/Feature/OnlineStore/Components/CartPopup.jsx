@@ -1,19 +1,32 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../../Context/CartContext";
+import { useOrderSession } from "../../../Hooks/useOrderSession";
 import { FaTimes } from "react-icons/fa";
 import CartDrawerItemList from "./CartDrawerItemList";
 import CartDrawerCheckoutFooter from "./CartDrawerCheckoutFooter";
+import CartFreeDeliveryMeter from "../../../Components/Cart/CartFreeDeliveryMeter";
+import CartCrossSellList from "../../../Components/Cart/CartCrossSellList";
+import { API_BASE } from "../../../config/api";
 
 const CartPopup = () => {
   const navigate = useNavigate();
+  const { session } = useOrderSession();
+  const isDineIn = session?.mode === "dine_in";
+
   const {
     isCartOpen,
     toggleCart,
     cartItems,
+    addToCart,
     removeFromCart,
     updateQty,
   } = useCart();
+
+  const [threshold, setThreshold] = useState(1500);
+  const [defaultFee, setDefaultFee] = useState(150);
+  const [upsellItems, setUpsellItems] = useState([]);
+  const [isLoadingUpsells, setIsLoadingUpsells] = useState(false);
 
   // Lock body background scroll when drawer is open
   useEffect(() => {
@@ -29,6 +42,61 @@ const CartPopup = () => {
     };
   }, [isCartOpen]);
 
+  // Fetch dynamic free delivery threshold & database cross-sell items
+  const fetchCartUpsells = useCallback(async () => {
+    try {
+      setIsLoadingUpsells(true);
+      const cartIds = cartItems
+        .map((item) => {
+          if (item.menuItemId) return item.menuItemId;
+          if (item.id && typeof item.id === "string") {
+            const parts = item.id.split("-");
+            if (parts[0] && !isNaN(parts[0])) return parts[0];
+          }
+          return item.id;
+        })
+        .filter(Boolean);
+
+      const queryParam = cartIds.length > 0 ? `?cart_item_ids=${cartIds.join(",")}` : "";
+      const res = await fetch(
+        `${API_BASE}/get_cart_upsells.php${queryParam}`
+      );
+      const data = await res.json();
+
+      if (data.success) {
+        if (data.threshold) setThreshold(parseFloat(data.threshold));
+        if (data.default_delivery_fee !== undefined)
+          setDefaultFee(parseFloat(data.default_delivery_fee));
+        setUpsellItems(data.upsell_items || []);
+      }
+    } catch (err) {
+      console.warn("Could not fetch cart upsells, using defaults:", err);
+    } finally {
+      setIsLoadingUpsells(false);
+    }
+  }, [cartItems]);
+
+  useEffect(() => {
+    if (isCartOpen) {
+      fetchCartUpsells();
+    }
+  }, [isCartOpen, fetchCartUpsells]);
+
+  // Quick 1-click add for cross-sell recommendations
+  const handleQuickAdd = (product) => {
+    addToCart({
+      id: product.id,
+      menuItemId: product.id,
+      name: product.name,
+      title: product.name,
+      price: parseFloat(product.price || 0),
+      size: product.default_size || "Regular",
+      img: product.image_url || product.img,
+      image_url: product.image_url || product.img,
+      qty: 1,
+    });
+  };
+
   const totalAmount = cartItems.reduce(
     (total, item) => total + parseFloat(item.price || 0) * (item.qty || 1),
     0
@@ -38,6 +106,10 @@ const CartPopup = () => {
     (total, item) => total + (item.qty || 1),
     0
   );
+
+  const isFreeDelivery = !isDineIn && totalAmount >= threshold && totalAmount > 0;
+  const effectiveDeliveryFee = isDineIn ? 0 : (isFreeDelivery ? 0 : defaultFee);
+  const grandTotal = totalAmount + effectiveDeliveryFee;
 
   return (
     <div className="fixed inset-0 z-[99999] pointer-events-none">
@@ -78,8 +150,19 @@ const CartPopup = () => {
           </span>
         </div>
 
-        {/* Cart Item List */}
+        {/* Scrollable Content: Free Delivery Progress + Items + Cross-sell list */}
         <div className="flex-1 overflow-y-auto px-3.5 sm:px-5 py-3 space-y-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-200 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-full">
+          {/* Phase 3.1: Free Delivery Meter (Hidden in Dine-In Mode) */}
+          {cartItems.length > 0 && !isDineIn && (
+            <CartFreeDeliveryMeter
+              subtotal={totalAmount}
+              threshold={threshold}
+              defaultFee={defaultFee}
+              isDineIn={isDineIn}
+            />
+          )}
+
+          {/* Cart Item List */}
           <CartDrawerItemList
             cartItems={cartItems}
             removeFromCart={removeFromCart}
@@ -87,6 +170,14 @@ const CartPopup = () => {
             toggleCart={toggleCart}
             navigate={navigate}
           />
+
+          {/* Phase 3.2: 100% Database-Driven Cross-Sell Carousel */}
+          {cartItems.length > 0 && (
+            <CartCrossSellList
+              upsellItems={upsellItems}
+              onQuickAdd={handleQuickAdd}
+            />
+          )}
         </div>
 
         {/* Sticky Pinned Footer */}
@@ -94,6 +185,11 @@ const CartPopup = () => {
           <CartDrawerCheckoutFooter
             totalQty={totalQty}
             totalAmount={totalAmount}
+            effectiveDeliveryFee={effectiveDeliveryFee}
+            defaultFee={defaultFee}
+            isFreeDelivery={isFreeDelivery}
+            isDineIn={isDineIn}
+            grandTotal={grandTotal}
             toggleCart={toggleCart}
             navigate={navigate}
           />

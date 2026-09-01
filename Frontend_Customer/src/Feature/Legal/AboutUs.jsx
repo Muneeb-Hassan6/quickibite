@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { FaUtensils, FaHeart, FaTruck, FaShieldAlt, FaPhoneAlt, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
+import { API_BASE } from "../../config/api";
 
 const AboutUs = () => {
   useEffect(() => {
@@ -12,7 +13,7 @@ const AboutUs = () => {
   const { data: settings = {}, isLoading } = useQuery({
     queryKey: ["store_settings"],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
+      const response = await fetch(`${API_BASE}/get_settings.php`);
       const result = await response.json();
       return result.success ? result.data : {};
     },

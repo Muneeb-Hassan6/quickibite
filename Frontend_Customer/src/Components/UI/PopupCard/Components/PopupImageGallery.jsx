@@ -1,5 +1,5 @@
 import React from "react";
-import { FaTimes } from "react-icons/fa";
+import { FaTimes, FaFireAlt, FaCheckCircle } from "react-icons/fa";
 
 export default function PopupImageGallery({
   finalImage,
@@ -12,7 +12,6 @@ export default function PopupImageGallery({
       {/* Ambient Glow */}
       <div className="absolute inset-0 bg-amber-400/10 dark:bg-amber-400/5 blur-xl pointer-events-none" />
 
-      {/* Floating Close Button */}
       <button
         type="button"
         onClick={handleCloseModal}
@@ -41,3 +40,4 @@ export default function PopupImageGallery({
     </>
   );
 }
+

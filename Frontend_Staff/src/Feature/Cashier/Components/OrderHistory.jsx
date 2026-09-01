@@ -29,25 +29,68 @@ export default function OrderHistory({
       const data = await response.json();
       if (Array.isArray(data)) {
         return data
-          .map((o) => ({
-            id: o.id,
-            customer_name: o.customer_name || "Walk-in",
-            table_no: o.table_number || "",
-            order_type:
+          .map((o) => {
+            const rawItems = Array.isArray(o.items) && o.items.length > 0
+              ? o.items
+              : typeof o.cart === "string"
+              ? JSON.parse(o.cart || "[]")
+              : o.cart || [];
+
+            const parsedItems = Array.isArray(rawItems)
+              ? rawItems.map((it) => ({
+                  ...it,
+                  name: it.title || it.name || "Item",
+                  title: it.title || it.name || "Item",
+                  qty: parseInt(it.qty || it.quantity || 1, 10),
+                  price: parseFloat(it.price || 0),
+                }))
+              : [];
+
+            const resolvedType =
+              o.order_mode ||
               o.order_type ||
-              (o.table_number?.includes("Takeaway")
+              (o.table_number?.toLowerCase().includes("takeaway")
                 ? "Takeaway"
-                : o.table_number?.includes("Delivery")
+                : o.table_number?.toLowerCase().includes("delivery")
                 ? "Delivery"
-                : "Dine-In"),
-            total_amount: parseFloat(o.total || o.total_amount || 0),
-            payment_status: o.payment_status || o.status || "Pending",
-            created_at: o.time || o.created_at || "Just now",
-            items:
-              typeof o.cart === "string"
-                ? JSON.parse(o.cart || "[]")
-                : o.cart || [],
-          }))
+                : "Dine-In");
+
+            const resolvedCustomer =
+              o.customer_name ||
+              o.customer ||
+              o.guest_name ||
+              "Walk-In Customer";
+
+            return {
+              ...o,
+              id: o.id,
+              customer_name: resolvedCustomer,
+              customerName: resolvedCustomer,
+              customer_mobile: o.customer_mobile || "",
+              customer_address: o.customer_address || "",
+              table_no: o.table_number || "",
+              table_number: o.table_number || "",
+              table: o.table_number || "",
+              order_type: resolvedType,
+              order_mode: resolvedType,
+              type: resolvedType,
+              subtotal: parseFloat(o.subtotal || 0),
+              tax_amount: parseFloat(o.tax_amount || 0),
+              delivery_fee: parseFloat(o.delivery_fee || 0),
+              rider_tip: parseFloat(o.rider_tip || 0),
+              discount_amount: parseFloat(o.discount_amount || 0),
+              coupon_code: o.coupon_code || "",
+              total_amount: parseFloat(o.total || o.total_amount || 0),
+              total: parseFloat(o.total || o.total_amount || 0),
+              payment_status: o.payment_status || o.status || "Pending",
+              payment_method: o.payment_method || "Cash",
+              time: o.time || o.created_at || "Just now",
+              date: o.date || "",
+              created_at: o.time || o.created_at || "Just now",
+              items: parsedItems,
+              cart: parsedItems,
+            };
+          })
           .sort((a, b) => b.id - a.id);
       }
       return [];

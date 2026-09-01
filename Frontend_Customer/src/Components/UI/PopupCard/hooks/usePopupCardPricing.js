@@ -62,6 +62,32 @@ export function usePopupCardPricing({
     });
   };
 
+  const toggleProductAddon = (addon) => {
+    setSelectedAddons((prev) => {
+      const exists = prev.some(
+        (a) => a.id === addon.id || a.title === addon.title
+      );
+      if (exists) {
+        return prev.filter(
+          (a) => !(a.id === addon.id || a.title === addon.title)
+        );
+      } else {
+        return [
+          ...prev,
+          {
+            id: addon.id,
+            title: addon.title || addon.name,
+            name: addon.title || addon.name,
+            price: parseFloat(addon.price || 0),
+            addon_price: parseFloat(addon.price || 0),
+            inventory_id: addon.inventory_id || null,
+            qty: addon.qty || null,
+          },
+        ];
+      }
+    });
+  };
+
   const toggleRemovable = (invId) =>
     setExcludedIds((prev) =>
       prev.includes(invId)
@@ -95,6 +121,7 @@ export function usePopupCardPricing({
     setSelectedVariant,
     selectedAddons,
     setSelectedAddons,
+    toggleProductAddon,
     selectedUpsells,
     setSelectedUpsells,
     toggleMappedAddon,

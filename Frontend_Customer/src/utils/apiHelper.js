@@ -4,7 +4,8 @@
  * It automatically attaches the JWT token from sessionStorage.
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE || `${import.meta.env.VITE_API_BASE}`;
+import { API_BASE } from "../config/api";
+export { API_BASE };
 
 /**
  * Get the stored JWT token

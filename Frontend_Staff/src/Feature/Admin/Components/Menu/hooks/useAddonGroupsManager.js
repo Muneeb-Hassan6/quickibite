@@ -3,18 +3,23 @@ import Swal from "sweetalert2";
 
 export function useAddonGroupsManager() {
   const [mappings, setMappings] = useState([]);
+  const [productAddonsList, setProductAddonsList] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Form State
+  // Category Mapping Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
   const [currentMapping, setCurrentMapping] = useState({
     target_category: "",
     addons: [],
   });
   const [isEditing, setIsEditing] = useState(false);
+
+  // Product Custom Addons Modal State
+  const [isProductAddonModalOpen, setIsProductAddonModalOpen] = useState(false);
+  const [selectedProductForAddons, setSelectedProductForAddons] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -23,8 +28,12 @@ export function useAddonGroupsManager() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [mapsRes, catRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_BASE}/addon_groups.php`, {
+      const [mapsRes, prodAddonsRes, catRes, menuRes] = await Promise.all([
+        fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_addons.php?action=get_category_mappings`, {
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        }),
+        fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_addons.php?action=get_all_product_addons`, {
           credentials: "include",
           headers: { Accept: "application/json" },
         }),
@@ -32,44 +41,34 @@ export function useAddonGroupsManager() {
           credentials: "include",
           headers: { Accept: "application/json" },
         }),
+        fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`, {
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        }),
       ]);
 
-      // Safe JSON parsing for Category Mappings
-      const mapsRaw = await mapsRes.text();
-      let mapsData = null;
-      try {
-        mapsData = JSON.parse(mapsRaw);
-      } catch (err) {
-        console.error(
-          "Backend returned non-JSON response for addon_groups.php:",
-          mapsRaw
-        );
-      }
-
-      if (
-        mapsData &&
-        mapsData.status === "success" &&
-        Array.isArray(mapsData.category_addons)
-      ) {
-        setMappings(mapsData.category_addons);
+      // Category Mappings
+      const mapsData = await mapsRes.json().catch(() => null);
+      if (mapsData && mapsData.success && Array.isArray(mapsData.data)) {
+        setMappings(mapsData.data);
       } else if (Array.isArray(mapsData)) {
         setMappings(mapsData);
+      } else if (mapsData && Array.isArray(mapsData.mappings)) {
+        setMappings(mapsData.mappings);
       } else {
         setMappings([]);
       }
 
-      // Safe JSON parsing for Categories
-      const catRaw = await catRes.text();
-      let catData = null;
-      try {
-        catData = JSON.parse(catRaw);
-      } catch (err) {
-        console.error(
-          "Backend returned non-JSON response for get_categories.php:",
-          catRaw
-        );
+      // Product Custom Addons
+      const prodData = await prodAddonsRes.json().catch(() => null);
+      if (prodData && prodData.success && Array.isArray(prodData.data)) {
+        setProductAddonsList(prodData.data);
+      } else {
+        setProductAddonsList([]);
       }
 
+      // Categories
+      const catData = await catRes.json().catch(() => null);
       if (Array.isArray(catData)) {
         setCategories(catData);
       } else if (catData && catData.data && Array.isArray(catData.data)) {
@@ -77,10 +76,20 @@ export function useAddonGroupsManager() {
       } else {
         setCategories([]);
       }
+
+      // Menu Items
+      const mData = await menuRes.json().catch(() => null);
+      if (Array.isArray(mData)) {
+        setMenuItems(mData);
+      } else if (mData && mData.data && Array.isArray(mData.data)) {
+        setMenuItems(mData.data);
+      } else {
+        setMenuItems([]);
+      }
     } catch (error) {
       console.error("Error fetching data in AddonGroupsManager:", error);
       setMappings([]);
-      setCategories([]);
+      setProductAddonsList([]);
     } finally {
       setLoading(false);
     }
@@ -89,7 +98,7 @@ export function useAddonGroupsManager() {
   const openModal = (mapping = null) => {
     if (mapping) {
       setCurrentMapping({
-        target_category: mapping.target_category || "",
+        target_category: mapping.target_category || mapping.parent_category_name || "",
         addons: Array.isArray(mapping.addons) ? mapping.addons : [],
       });
       setIsEditing(true);
@@ -101,6 +110,16 @@ export function useAddonGroupsManager() {
       setIsEditing(false);
     }
     setIsModalOpen(true);
+  };
+
+  const openProductAddonModal = (product = null) => {
+    if (product) {
+      const full = menuItems.find((m) => m.id === (product.menu_item_id || product.id)) || product;
+      setSelectedProductForAddons(full);
+    } else {
+      setSelectedProductForAddons(menuItems[0] || null);
+    }
+    setIsProductAddonModalOpen(true);
   };
 
   const handleAddAddon = () => {
@@ -140,48 +159,31 @@ export function useAddonGroupsManager() {
     const addons = currentMapping.addons || [];
     for (let i = 0; i < addons.length; i++) {
       if (!addons[i].addon_category) {
-        Swal.fire(
-          "Error",
-          "Please select an Addon Category for all rows",
-          "error"
-        );
+        Swal.fire("Error", "Please select an Addon Category for all rows", "error");
         return;
       }
     }
 
     setIsSaving(true);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/addon_groups.php`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ action: "save_mapping", ...currentMapping }),
-        }
-      );
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_addons.php`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ action: "save_category_mapping", ...currentMapping }),
+      });
 
-      const raw = await res.text();
-      let data = null;
-      try {
-        data = JSON.parse(raw);
-      } catch (err) {
-        console.error("Save mapping parse error:", raw);
-      }
+      const data = await res.json().catch(() => null);
 
-      if (data && data.status === "success") {
+      if (data && (data.success || data.status === "success")) {
         Swal.fire("Saved", "Category Addons saved successfully", "success");
         setIsModalOpen(false);
         fetchData();
       } else {
-        Swal.fire(
-          "Error",
-          data?.message || "Failed to save category addons",
-          "error"
-        );
+        Swal.fire("Error", data?.message || "Failed to save category addons", "error");
       }
     } catch (error) {
       Swal.fire("Error", "Failed to save category addons", "error");
@@ -201,39 +203,26 @@ export function useAddonGroupsManager() {
       }).then((res) => res.isConfirmed)
     ) {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_BASE}/addon_groups.php`,
-          {
-            method: "POST",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-            body: JSON.stringify({
-              action: "delete_mapping",
-              target_category,
-            }),
-          }
-        );
+        const res = await fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_addons.php`, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            action: "delete_category_mapping",
+            target_category,
+          }),
+        });
 
-        const raw = await res.text();
-        let data = null;
-        try {
-          data = JSON.parse(raw);
-        } catch (err) {
-          console.error("Delete mapping parse error:", raw);
-        }
+        const data = await res.json().catch(() => null);
 
-        if (data && data.status === "success") {
+        if (data && (data.success || data.status === "success")) {
           Swal.fire("Deleted", "Mapping deleted successfully", "success");
           fetchData();
         } else {
-          Swal.fire(
-            "Error",
-            data?.message || "Failed to delete mapping",
-            "error"
-          );
+          Swal.fire("Error", data?.message || "Failed to delete mapping", "error");
         }
       } catch (error) {
         Swal.fire("Error", "Failed to delete mapping", "error");
@@ -243,7 +232,9 @@ export function useAddonGroupsManager() {
 
   return {
     mappings,
+    productAddonsList,
     categories,
+    menuItems,
     loading,
     isModalOpen,
     setIsModalOpen,
@@ -252,10 +243,16 @@ export function useAddonGroupsManager() {
     setCurrentMapping,
     isEditing,
     openModal,
+    isProductAddonModalOpen,
+    setIsProductAddonModalOpen,
+    selectedProductForAddons,
+    setSelectedProductForAddons,
+    openProductAddonModal,
     handleAddAddon,
     handleAddonChange,
     handleRemoveAddon,
     handleSave,
     handleDelete,
+    refreshData: fetchData,
   };
 }

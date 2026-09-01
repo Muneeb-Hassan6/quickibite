@@ -17,6 +17,9 @@ import DealsDashboard from "./Components/Deals/DealsDashboard";
 import HomepageBuilder from "./Components/HomepageBuilder/HomepageBuilder";
 import TableManager from "./Components/Tables/TableManager";
 import ProductProfitTab from "./Components/ProductProfitTab/ProductProfitTab";
+import CouponsManagement from "./Components/Coupons/CouponsManagement";
+import CustomersCRM from "./Components/Customers/CustomersCRM";
+import ReviewsManagement from "./Components/Reviews/ReviewsManagement";
 
 const AdminDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -80,8 +83,14 @@ const AdminDashboard = () => {
         return <DealsDashboard />;
       case "tables":
         return <TableManager />;
+      case "coupons":
+        return <CouponsManagement />;
       case "homepage_builder":
         return <HomepageBuilder />;
+      case "customers":
+        return <CustomersCRM />;
+      case "reviews":
+        return <ReviewsManagement />;
       default:
         return <DashboardHome />;
     }

@@ -41,7 +41,7 @@ export function usePopupCardValidation({
   const buildAndAddToCart = ({
     isDeal,
     comboItems,
-    selectedUpsells,
+    selectedUpsells = [],
     hasPizzaInCombo,
     selectedPizza,
     hasFriesInCombo,
@@ -51,19 +51,39 @@ export function usePopupCardValidation({
     specialNote,
     singleUnitTotal,
     quantity,
-    excludedIds,
-    optionalIngredients,
+    excludedIds = [],
+    optionalIngredients = [],
     selectedVariant,
-    selectedAddons,
+    selectedAddons = [],
+    selectedSpice = "Medium Spicy",
     e,
   }) => {
     if (e) e.stopPropagation();
+
+    // Combine all selected addons (product custom addons + category upsells)
+    const combinedAddons = [
+      ...selectedAddons.map((a) => ({
+        id: a.id,
+        name: a.title || a.name,
+        title: a.title || a.name,
+        price: parseFloat(a.price || a.addon_price || 0),
+        is_custom_addon: true,
+      })),
+      ...selectedUpsells.map((u) => ({
+        id: u.id,
+        name: u.name || u.title,
+        title: u.name || u.title,
+        price: parseFloat(u.selectedPrice || u.price || 0),
+        addon_group: u.addon_group,
+        is_mapping_addon: true,
+      })),
+    ];
 
     if (isDeal) {
       const comboSummary = comboItems
         .map((c) => `${c.qty} ${c.name}`)
         .join(", ");
-      const addonsSummary = selectedUpsells.map((a) => a.name).join(", ");
+      const addonsSummary = combinedAddons.map((a) => a.name).join(", ");
       let noteParts = [];
       if (hasPizzaInCombo) noteParts.push(`Pizza: ${selectedPizza}`);
       if (hasFriesInCombo) noteParts.push(`Fries: ${selectedFries}`);
@@ -90,7 +110,8 @@ export function usePopupCardValidation({
           drink: hasDrinkInCombo ? selectedDrink : null,
           addOns: selectedUpsells,
         },
-        addons: selectedUpsells,
+        addons: combinedAddons,
+        selected_addons: combinedAddons,
         upsell_items: selectedUpsells,
         note: `Combo: ${comboSummary}${
           noteParts.length ? ` | ${noteParts.join(" | ")}` : ""
@@ -105,11 +126,19 @@ export function usePopupCardValidation({
         .filter(Boolean)
         .join(", ");
 
-      let finalNote = specialNote;
+      let noteParts = [];
+      if (selectedSpice && selectedSpice !== "Medium Spicy") {
+        noteParts.push(`Spice: ${selectedSpice}`);
+      }
       if (excludedNames) {
-        finalNote = specialNote
-          ? `Without: ${excludedNames} | ${specialNote}`
-          : `Without: ${excludedNames}`;
+        noteParts.push(`Without: ${excludedNames}`);
+      }
+      const addonsSummary = combinedAddons.map((a) => a.name).join(", ");
+      if (addonsSummary) {
+        noteParts.push(`Addons: ${addonsSummary}`);
+      }
+      if (specialNote) {
+        noteParts.push(`Note: ${specialNote}`);
       }
 
       addToCart({
@@ -120,10 +149,13 @@ export function usePopupCardValidation({
         size: selectedVariant ? selectedVariant.size : "Regular",
         is_deal: false,
         image: finalImage,
+        spice_level: selectedSpice,
+        spiceLevel: selectedSpice,
         excluded_ingredients: excludedIds,
-        selected_addons: selectedAddons,
+        selected_addons: combinedAddons,
+        addons: combinedAddons,
         upsell_items: selectedUpsells,
-        note: finalNote,
+        note: noteParts.join(" | "),
       });
     }
 

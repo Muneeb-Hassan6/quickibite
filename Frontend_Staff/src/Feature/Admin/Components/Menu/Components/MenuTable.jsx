@@ -151,14 +151,6 @@ const MenuTable = ({
                           </button>
                           <button
                             type="button"
-                            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-white/10 cursor-pointer transition-all shadow-sm"
-                            title="Manage Addons"
-                            onClick={() => onAddOns(item)}
-                          >
-                            <FaLayerGroup className="text-xs" />
-                          </button>
-                          <button
-                            type="button"
                             className="p-2 rounded-xl bg-blue-500/10 hover:bg-blue-600 text-blue-600 dark:text-blue-400 hover:text-white border border-blue-500/20 cursor-pointer transition-all shadow-sm"
                             title="Edit Item"
                             onClick={() => onEdit(item)}

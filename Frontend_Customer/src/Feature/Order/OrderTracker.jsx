@@ -12,6 +12,7 @@ import OrderTrackerHeader from "./Components/OrderTrackerHeader";
 import OrderTrackerTimeline from "./Components/OrderTrackerTimeline";
 import OrderTrackerReceiptSummary from "./Components/OrderTrackerReceiptSummary";
 import OrderTrackerRiderCard from "./Components/OrderTrackerRiderCard";
+import { API_BASE } from "../../config/api";
 
 const OrderTracker = () => {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ const OrderTracker = () => {
     queryKey: ["store_settings"],
     queryFn: async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
+        const response = await fetch(`${API_BASE}/get_settings.php`);
         const result = await response.json();
         return result && result.success ? result.data : {};
       } catch (err) {
@@ -55,7 +56,7 @@ const OrderTracker = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_order_details.php?id=${id}`
+        `${API_BASE}/get_order_details.php?id=${id}`
       );
       const data = await response.json();
 
@@ -64,7 +65,7 @@ const OrderTracker = () => {
       } else {
         // Fallback check in track_public_orders.php
         const publicRes = await fetch(
-          `${import.meta.env.VITE_API_BASE}/track_public_orders.php`
+          `${API_BASE}/track_public_orders.php`
         );
         const publicList = await publicRes.json();
         if (Array.isArray(publicList)) {

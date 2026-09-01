@@ -52,7 +52,7 @@ const MenuModal = ({
         </div>
 
         {/* Content Body */}
-        <div className="flex flex-col md:flex-row gap-5 sm:gap-6 flex-1">
+        <div className="w-full flex-1">
           <ProductBasicInfoForm
             menuForm={menuForm}
             setMenuForm={setMenuForm}

@@ -1,11 +1,14 @@
 import React from "react";
+import { FaStar } from "react-icons/fa";
 import { getCategoryIcon } from "./PopupCard/comboHelpers";
 import { usePopupCard } from "./PopupCard/hooks/usePopupCard";
 
 // Atomic Subcomponents
 import PopupImageGallery from "./PopupCard/Components/PopupImageGallery";
 import ItemVariantList from "./PopupCard/Components/ItemVariantList";
+import ItemSpiceSelector from "./PopupCard/Components/ItemSpiceSelector";
 import DealComboMatrix from "./PopupCard/Components/DealComboMatrix";
+import ProductCustomAddonsList from "./PopupCard/Components/ProductCustomAddonsList";
 import ItemAddonsPicker from "./PopupCard/Components/ItemAddonsPicker";
 import ItemRemovables from "./PopupCard/Components/ItemRemovables";
 import ItemQuantityFooter from "./PopupCard/Components/ItemQuantityFooter";
@@ -62,6 +65,21 @@ const PopupCard = ({ image, title, description, price, item, closePopup }) => {
                       : "🔥 EXCLUSIVE DEAL"
                     : "Customize Your Order"}
                 </span>
+                {(() => {
+                  const reviewCount = Number(item?.total_reviews || item?.review_count || item?.reviews_count || 0);
+                  const avgRating = Number(item?.avg_rating || item?.rating || 0);
+                  const hasReviews = reviewCount > 0 && avgRating > 0;
+
+                  if (!hasReviews) return null;
+
+                  return (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-amber-400/15 text-amber-500 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-400/30">
+                      <FaStar className="text-[9px] text-amber-400" />
+                      <span>{avgRating.toFixed(1)}</span>
+                      <span className="text-neutral-400 font-normal">({reviewCount})</span>
+                    </span>
+                  );
+                })()}
                 {cardState.isDeal && (
                   <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-400/30">
                     Value Pack
@@ -82,7 +100,7 @@ const PopupCard = ({ image, title, description, price, item, closePopup }) => {
               )}
             </div>
 
-            {/* 1. Combo Deal Accordions */}
+            {/* 1. Combo Deal Accordions (Deals Only) */}
             <DealComboMatrix
               isDeal={cardState.isDeal}
               comboItems={cardState.comboItems}
@@ -99,7 +117,7 @@ const PopupCard = ({ image, title, description, price, item, closePopup }) => {
               setSelectedDrink={cardState.setSelectedDrink}
             />
 
-            {/* 2. Regular Product Variant Selector */}
+            {/* 2. Choose Size / Portion (Regular Products) */}
             <ItemVariantList
               isDeal={cardState.isDeal}
               fullItem={cardState.fullItem}
@@ -107,17 +125,15 @@ const PopupCard = ({ image, title, description, price, item, closePopup }) => {
               setSelectedVariant={cardState.setSelectedVariant}
             />
 
-            {/* 3. Dynamic Mapped Addon Groups */}
-            <ItemAddonsPicker
-              mappedAddonGroups={cardState.mappedAddonGroups}
-              openSections={cardState.openSections}
-              toggleSection={cardState.toggleSection}
-              selectedUpsells={cardState.selectedUpsells}
-              toggleMappedAddon={cardState.toggleMappedAddon}
-              getCategoryIcon={getCategoryIcon}
+            {/* 3. Choose Spice Level (1-Tap Chips) */}
+            <ItemSpiceSelector
+              isDeal={cardState.isDeal}
+              hasSpiceOption={cardState.hasSpiceOption}
+              selectedSpice={cardState.selectedSpice}
+              setSelectedSpice={cardState.setSelectedSpice}
             />
 
-            {/* 4. Customize Ingredients */}
+            {/* 4. Remove Ingredients / Free Modifiers */}
             <ItemRemovables
               isDeal={cardState.isDeal}
               optionalIngredients={cardState.optionalIngredients}
@@ -127,7 +143,24 @@ const PopupCard = ({ image, title, description, price, item, closePopup }) => {
               toggleRemovable={cardState.toggleRemovable}
             />
 
-            {/* 5. Special Instructions Input */}
+            {/* 5. Product-Specific Custom Add-ons */}
+            <ProductCustomAddonsList
+              productAddons={cardState.productCustomAddons}
+              selectedProductAddons={cardState.selectedProductAddons}
+              toggleProductAddon={cardState.toggleProductAddon}
+            />
+
+            {/* 6. Dynamic Mapped Addon Groups (Drinks, Dips, Sides) */}
+            <ItemAddonsPicker
+              mappedAddonGroups={cardState.mappedAddonGroups}
+              openSections={cardState.openSections}
+              toggleSection={cardState.toggleSection}
+              selectedUpsells={cardState.selectedUpsells}
+              toggleMappedAddon={cardState.toggleMappedAddon}
+              getCategoryIcon={getCategoryIcon}
+            />
+
+            {/* 7. Special Cooking Instructions Input */}
             <ItemQuantityFooter
               mode="note_only"
               specialNote={cardState.specialNote}

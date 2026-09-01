@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa";
 import HeaderNavLinks from "./HeaderNavLinks";
 import HeaderMobileDrawer from "./HeaderMobileDrawer";
+import HeaderUserMenu from "./HeaderUserMenu";
 
 const Header = () => {
   const [cartBounce, setCartBounce] = useState(false);
@@ -154,6 +155,9 @@ const Header = () => {
                 </span>
               )}
             </button>
+
+            {/* Customer User / Sign In Menu */}
+            <HeaderUserMenu />
 
             {/* Mobile Hamburger Button */}
             <button
