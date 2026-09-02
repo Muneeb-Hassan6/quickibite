@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
@@ -29,7 +30,7 @@ export function useGeneralSettings() {
     queryKey: ["settings"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_settings.php`
+        `${API_BASE}/get_settings.php`
       );
       const result = await response.json();
       return result.success ? result.data : {};
@@ -133,7 +134,7 @@ export function useGeneralSettings() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_settings.php`,
+        `${API_BASE}/update_settings.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

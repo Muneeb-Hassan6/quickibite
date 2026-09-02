@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../utils/apiHelper';
 import React, { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FaBoxes, FaFire } from "react-icons/fa";
@@ -34,7 +35,7 @@ const InventoryManager = () => {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['inventory'],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/inventory_api.php`);
+      const response = await fetch(`${API_BASE}/inventory_api.php`);
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     }
@@ -134,7 +135,7 @@ const InventoryManager = () => {
     if (result.isConfirmed) {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/inventory_api.php?id=${id}`,
+          `${API_BASE}/inventory_api.php?id=${id}`,
           { method: "DELETE" }
         );
         const res = await response.json();
@@ -159,7 +160,7 @@ const InventoryManager = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
-      const url = `${import.meta.env.VITE_API_BASE}/inventory_api.php`;
+      const url = `${API_BASE}/inventory_api.php`;
       const method = editingProduct ? "PUT" : "POST";
       const payload = editingProduct ? { ...form, id: editingProduct.id } : form;
 

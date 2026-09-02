@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import {
   FaBoxOpen,
@@ -20,7 +21,7 @@ const OrderTracker = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/track_public_orders.php`,
+        `${API_BASE}/track_public_orders.php`,
       );
       const data = await response.json();
 

@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FaDollarSign, FaSave, FaSpinner, FaTruck } from "react-icons/fa";
@@ -16,7 +17,7 @@ const FinancialSettings = () => {
   const { data: settingsData = {}, isLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
+      const response = await fetch(`${API_BASE}/get_settings.php`);
       const result = await response.json();
       return result.success ? result.data : {};
     }
@@ -47,7 +48,7 @@ const FinancialSettings = () => {
     setIsSaving(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_settings.php`,
+        `${API_BASE}/update_settings.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

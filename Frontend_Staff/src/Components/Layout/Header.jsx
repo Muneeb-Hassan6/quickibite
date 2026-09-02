@@ -1,3 +1,4 @@
+import { API_BASE } from '../../utils/apiHelper';
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import OrderTracking from "../../Feature/Order/Components/OrderTracker";
@@ -40,7 +41,7 @@ const Header = () => {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
+        const response = await fetch(`${API_BASE}/get_menu.php`);
         const result = await response.json();
         if (result.success && result.data) {
           setMenuItems(result.data);

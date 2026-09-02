@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../utils/apiHelper';
 import React, { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -25,7 +26,7 @@ const StaffDashboard = () => {
   const { data: staffData = [] } = useQuery({
     queryKey: ['staff'],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_staff.php`);
+      const response = await fetch(`${API_BASE}/get_staff.php`);
       const result = await response.json();
       return result.success ? result.data : [];
     }

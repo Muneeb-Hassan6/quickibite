@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { FaSave, FaHeading, FaSpinner } from "react-icons/fa";
@@ -14,7 +15,7 @@ const HeroTextSettings = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
+        const response = await fetch(`${API_BASE}/get_settings.php`);
         const result = await response.json();
         if (result.success && result.data) {
           setSettings({
@@ -39,7 +40,7 @@ const HeroTextSettings = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/update_settings.php`, {
+      const response = await fetch(`${API_BASE}/update_settings.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(settings),

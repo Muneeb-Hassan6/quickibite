@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Swal from "sweetalert2";
@@ -68,7 +69,7 @@ export function useDealMaker({ editDeal, onSuccess }) {
     queryKey: ["menu"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_menu.php`
+        `${API_BASE}/get_menu.php`
       );
       const data = await response.json();
       return Array.isArray(data) ? data : (data.data || []);
@@ -256,7 +257,7 @@ export function useDealMaker({ editDeal, onSuccess }) {
 
       const endpoint = editDeal ? "update_deal.php" : "save_deal.php";
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/${endpoint}`,
+        `${API_BASE}/${endpoint}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

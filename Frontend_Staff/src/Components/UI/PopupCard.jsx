@@ -1,3 +1,4 @@
+import { API_BASE } from '../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import { useCart } from "../../Context/CartContext";
 import {
@@ -35,7 +36,7 @@ const PopupCard = ({ image, title, description, price, item, closePopup }) => {
         setIsFetchingExtras(true);
         try {
           const recipeRes = await fetch(
-            `${import.meta.env.VITE_API_BASE}/get_recipe.php?menu_item_id=${item.id}&variant_name=${selectedVariant.size}`,
+            `${API_BASE}/get_recipe.php?menu_item_id=${item.id}&variant_name=${selectedVariant.size}`,
           );
           const recipeData = await recipeRes.json();
           if (recipeRes.ok && recipeData.status === "success") {
@@ -48,7 +49,7 @@ const PopupCard = ({ image, title, description, price, item, closePopup }) => {
           }
 
           const addonsRes = await fetch(
-            `${import.meta.env.VITE_API_BASE}/get_addons.php?menu_item_id=${item.id}`,
+            `${API_BASE}/get_addons.php?menu_item_id=${item.id}`,
           );
           const addonsData = await addonsRes.json();
           if (

@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import {
   FaUsers,
@@ -37,7 +38,7 @@ const CustomersCRM = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_admin_customers.php`
+        `${API_BASE}/get_admin_customers.php`
       );
       const result = await response.json();
 
@@ -68,7 +69,7 @@ const CustomersCRM = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_admin_customers.php`,
+        `${API_BASE}/get_admin_customers.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

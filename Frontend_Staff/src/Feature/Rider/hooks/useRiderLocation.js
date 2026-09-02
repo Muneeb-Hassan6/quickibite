@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../utils/apiHelper';
 import { useState, useEffect, useRef, useCallback } from "react";
 import toast from "react-hot-toast";
 import { riderSocket } from "./useRiderSocket";
@@ -108,7 +109,7 @@ export function useRiderLocation({
               lastLocationSent.current = { lat: latitude, lng: longitude };
 
               fetch(
-                `${import.meta.env.VITE_API_BASE}/update_rider_location.php`,
+                `${API_BASE}/update_rider_location.php`,
                 {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
@@ -175,7 +176,7 @@ export function useRiderLocation({
       }));
 
       if (riderId) {
-        fetch(`${import.meta.env.VITE_API_BASE}/update_rider_location.php`, {
+        fetch(`${API_BASE}/update_rider_location.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

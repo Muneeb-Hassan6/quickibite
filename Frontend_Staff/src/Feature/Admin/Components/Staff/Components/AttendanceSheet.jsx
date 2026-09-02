@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import AttendanceHeaderControls from "./AttendanceHeaderControls";
@@ -16,7 +17,7 @@ const AttendanceSheet = () => {
     const fetchStaff = async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_staff.php`
+          `${API_BASE}/get_staff.php`
         );
         const result = await response.json();
 
@@ -79,7 +80,7 @@ const AttendanceSheet = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/mark_attendance.php`,
+        `${API_BASE}/mark_attendance.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

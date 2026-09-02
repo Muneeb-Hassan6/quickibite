@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
@@ -10,7 +11,7 @@ export function useDealList() {
     queryKey: ["admin_deals"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_admin_deals.php`
+        `${API_BASE}/get_admin_deals.php`
       );
       const data = await response.json();
       return data.success ? data.data : [];
@@ -22,7 +23,7 @@ export function useDealList() {
     const newStatus = currentStatus === 1 || currentStatus === "1" ? 0 : 1;
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_deal_status.php`,
+        `${API_BASE}/update_deal_status.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -65,7 +66,7 @@ export function useDealList() {
       if (result.isConfirmed) {
         try {
           const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/delete_deal.php`,
+            `${API_BASE}/delete_deal.php`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },

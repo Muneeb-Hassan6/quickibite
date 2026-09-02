@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -33,7 +34,7 @@ export default function KitchenHeader({ activeFilter, setActiveFilter }) {
     queryKey: ["settings"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_settings.php`
+        `${API_BASE}/get_settings.php`
       );
       const result = await response.json();
       return result.success ? result.data : {};

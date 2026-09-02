@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import { FaTimes, FaPlus, FaMinus } from "react-icons/fa";
 import ItemVariantSelector from "./ItemVariantSelector";
@@ -36,7 +37,7 @@ export default function PosItemModal({ isOpen, onClose, menuItem, onAddToCart })
         setIsLoading(true);
         try {
           const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/get_recipe.php?menu_item_id=${menuItem.id}&variant_name=${selectedVariant}`
+            `${API_BASE}/get_recipe.php?menu_item_id=${menuItem.id}&variant_name=${selectedVariant}`
           );
           const data = await response.json();
 

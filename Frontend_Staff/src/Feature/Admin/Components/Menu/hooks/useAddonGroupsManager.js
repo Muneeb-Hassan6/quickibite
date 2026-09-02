@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 
@@ -29,19 +30,19 @@ export function useAddonGroupsManager() {
     setLoading(true);
     try {
       const [mapsRes, prodAddonsRes, catRes, menuRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_addons.php?action=get_category_mappings`, {
+        fetch(`${API_BASE}/admin_manage_addons.php?action=get_category_mappings`, {
           credentials: "include",
           headers: { Accept: "application/json" },
         }),
-        fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_addons.php?action=get_all_product_addons`, {
+        fetch(`${API_BASE}/admin_manage_addons.php?action=get_all_product_addons`, {
           credentials: "include",
           headers: { Accept: "application/json" },
         }),
-        fetch(`${import.meta.env.VITE_API_BASE}/get_categories.php`, {
+        fetch(`${API_BASE}/get_categories.php`, {
           credentials: "include",
           headers: { Accept: "application/json" },
         }),
-        fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`, {
+        fetch(`${API_BASE}/get_menu.php`, {
           credentials: "include",
           headers: { Accept: "application/json" },
         }),
@@ -166,7 +167,7 @@ export function useAddonGroupsManager() {
 
     setIsSaving(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_addons.php`, {
+      const res = await fetch(`${API_BASE}/admin_manage_addons.php`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -203,7 +204,7 @@ export function useAddonGroupsManager() {
       }).then((res) => res.isConfirmed)
     ) {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_addons.php`, {
+        const res = await fetch(`${API_BASE}/admin_manage_addons.php`, {
           method: "POST",
           credentials: "include",
           headers: {

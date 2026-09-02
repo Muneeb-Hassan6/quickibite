@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../utils/apiHelper';
 import React from "react";
 import { FaPlus, FaUtensils } from "react-icons/fa";
 
@@ -27,7 +28,7 @@ export default function MenuItemCard({ item, onItemClick }) {
             src={
               item.img.startsWith("http")
                 ? item.img
-                : `${import.meta.env.VITE_API_BASE.replace(/\/api$/, "")}/${item.img.replace(/^\//, "")}`
+                : `${API_BASE.replace(/\/api$/, "")}/${item.img.replace(/^\//, "")}`
             }
             alt={item.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

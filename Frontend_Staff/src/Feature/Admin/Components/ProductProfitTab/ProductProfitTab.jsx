@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import ProductProfitFilterBar from "./Components/ProductProfitFilterBar";
 import ProfitSummaryMetrics from "./Components/ProfitSummaryMetrics";
@@ -27,7 +28,7 @@ const ProductProfitTab = () => {
       const token = sessionStorage.getItem("auth_token");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      let url = `${import.meta.env.VITE_API_BASE}/get_product_profit.php?range=${filter}`;
+      let url = `${API_BASE}/get_product_profit.php?range=${filter}`;
       if (filter === "custom") {
         url += `&start=${startDate}&end=${endDate}`;
       }

@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../utils/apiHelper';
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { io } from "socket.io-client";
@@ -48,7 +49,7 @@ export function useDispatcherData() {
     queryKey: ["dispatcher_orders"],
     queryFn: async () => {
       const orderRes = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=all`
+        `${API_BASE}/get_orders.php?type=all`
       );
       const orderData = await orderRes.json();
       return Array.isArray(orderData) ? orderData : orderData.data || [];
@@ -62,7 +63,7 @@ export function useDispatcherData() {
     queryKey: ["dispatcher_staff"],
     queryFn: async () => {
       const staffRes = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_staff.php`
+        `${API_BASE}/get_staff.php`
       );
       const staffJson = await staffRes.json();
       return staffJson.success && Array.isArray(staffJson.data)
@@ -247,7 +248,7 @@ export function useDispatcherData() {
       const ordersToAssign = batchDetails ? batchDetails.map((b) => b.id) : [orderId];
 
       for (const id of ordersToAssign) {
-        await fetch(`${import.meta.env.VITE_API_BASE}/assign_rider.php`, {
+        await fetch(`${API_BASE}/assign_rider.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -259,7 +260,7 @@ export function useDispatcherData() {
         });
       }
 
-      await fetch(`${import.meta.env.VITE_API_BASE}/update_rider_status.php`, {
+      await fetch(`${API_BASE}/update_rider_status.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: riderId, status: "Busy" }),
@@ -301,7 +302,7 @@ export function useDispatcherData() {
     mutationFn: async ({ orderId, riderId }) => {
       // 1. Update order status to 'Delivered' in DB
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_order_status.php`,
+        `${API_BASE}/update_order_status.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -317,7 +318,7 @@ export function useDispatcherData() {
       // 2. Free rider status back to 'Available' in DB
       if (riderId) {
         await fetch(
-          `${import.meta.env.VITE_API_BASE}/update_rider_status.php`,
+          `${API_BASE}/update_rider_status.php`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

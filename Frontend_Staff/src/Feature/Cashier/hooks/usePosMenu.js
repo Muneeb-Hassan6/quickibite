@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { API_BASE } from "../../../utils/apiHelper";
 
 export default function usePosMenu({ terminalResetTrigger = 0 } = {}) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -10,7 +11,7 @@ export default function usePosMenu({ terminalResetTrigger = 0 } = {}) {
     queryKey: ["settings"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_settings.php`
+        `${API_BASE}/get_settings.php`
       );
       const data = await response.json();
       return data.status === "success" ? data.data : {};
@@ -25,7 +26,7 @@ export default function usePosMenu({ terminalResetTrigger = 0 } = {}) {
     queryKey: ["menu"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_menu.php`
+        `${API_BASE}/get_menu.php`
       );
       return await response.json();
     },

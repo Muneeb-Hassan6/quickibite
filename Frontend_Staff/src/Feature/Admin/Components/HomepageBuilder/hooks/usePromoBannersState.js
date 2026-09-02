@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
@@ -11,7 +12,7 @@ export function usePromoBannersState(getAuthHeaders) {
     queryKey: ['master_promo_banners'],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/save_homepage_banners.php`,
+        `${API_BASE}/save_homepage_banners.php`,
         {
           method: 'POST',
           headers: getAuthHeaders(),
@@ -26,7 +27,7 @@ export function usePromoBannersState(getAuthHeaders) {
   const handleToggleMasterBanner = async (item, type) => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/save_homepage_banners.php`,
+        `${API_BASE}/save_homepage_banners.php`,
         {
           method: 'POST',
           headers: getAuthHeaders(),
@@ -57,7 +58,7 @@ export function usePromoBannersState(getAuthHeaders) {
   const handleUpdateMasterBannerOrder = async (item, type, newOrder) => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/save_homepage_banners.php`,
+        `${API_BASE}/save_homepage_banners.php`,
         {
           method: 'POST',
           headers: getAuthHeaders(),

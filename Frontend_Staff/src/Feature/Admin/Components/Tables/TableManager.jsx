@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../utils/apiHelper';
 import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
@@ -20,7 +21,7 @@ const TableManager = () => {
     queryKey: ["tables"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`
+        `${API_BASE}/admin_manage_tables.php`
       );
       const result = await response.json();
       return result.success
@@ -41,7 +42,7 @@ const TableManager = () => {
   const handleSaveBaseUrl = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`,
+        `${API_BASE}/admin_manage_tables.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -80,7 +81,7 @@ const TableManager = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`,
+        `${API_BASE}/admin_manage_tables.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -117,7 +118,7 @@ const TableManager = () => {
   const handleToggleStatus = async (id) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`,
+        `${API_BASE}/admin_manage_tables.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -148,7 +149,7 @@ const TableManager = () => {
       if (result.isConfirmed) {
         try {
           const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`,
+            `${API_BASE}/admin_manage_tables.php`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },

@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../utils/apiHelper';
 import { useState, useEffect } from "react";
 import { io } from "socket.io-client";
 import Swal from "sweetalert2";
@@ -149,7 +150,7 @@ export default function usePosCart({
       });
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/create_order.php`,
+        `${API_BASE}/create_order.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../utils/apiHelper';
 import { useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -29,7 +30,7 @@ export function useRiderMutations({
   const toggleDutyStatusMutation = useMutation({
     mutationFn: async (newStatus) => {
       if (!riderSession?.id) return;
-      await fetch(`${import.meta.env.VITE_API_BASE}/update_rider_status.php`, {
+      await fetch(`${API_BASE}/update_rider_status.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -102,7 +103,7 @@ export function useRiderMutations({
     }
 
     try {
-      await fetch(`${import.meta.env.VITE_API_BASE}/update_rider_status.php`, {
+      await fetch(`${API_BASE}/update_rider_status.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -135,7 +136,7 @@ export function useRiderMutations({
   const completeDeliveryMutation = useMutation({
     mutationFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/complete_order.php`,
+        `${API_BASE}/complete_order.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -206,7 +207,7 @@ export function useRiderMutations({
   const declineOrderMutation = useMutation({
     mutationFn: async (orderId) => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/decline_order.php`,
+        `${API_BASE}/decline_order.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

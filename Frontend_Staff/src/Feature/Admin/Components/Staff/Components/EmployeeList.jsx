@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import React, { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
@@ -16,7 +17,7 @@ const EmployeeList = () => {
     queryKey: ["staff"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_staff.php`
+        `${API_BASE}/get_staff.php`
       );
       const result = await response.json();
       return result.success ? result.data : [];
@@ -38,7 +39,7 @@ const EmployeeList = () => {
       if (result.isConfirmed) {
         try {
           const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/delete_staff.php`,
+            `${API_BASE}/delete_staff.php`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -94,7 +95,7 @@ const EmployeeList = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_staff.php`,
+        `${API_BASE}/update_staff.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

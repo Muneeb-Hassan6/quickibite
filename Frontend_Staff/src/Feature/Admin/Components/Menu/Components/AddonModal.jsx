@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { FaTimes, FaSpinner, FaUtensils } from "react-icons/fa";
@@ -28,7 +29,7 @@ const AddonModal = ({
     if (isOpen && selectedItem?.id) {
       setLoading(true);
       fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_manage_addons.php?action=get_product_addons&menu_item_id=${selectedItem.id}`
+        `${API_BASE}/admin_manage_addons.php?action=get_product_addons&menu_item_id=${selectedItem.id}`
       )
         .then((res) => res.json())
         .then((resData) => {
@@ -104,7 +105,7 @@ const AddonModal = ({
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_manage_addons.php`,
+        `${API_BASE}/admin_manage_addons.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

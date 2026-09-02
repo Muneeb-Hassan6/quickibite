@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import React from "react";
 import { FaPlus, FaEdit, FaTrash, FaLayerGroup, FaUtensils } from "react-icons/fa";
 import Swal from "sweetalert2";
@@ -20,7 +21,7 @@ export default function ProductAddonsDirectory({
     ) {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API_BASE}/admin_manage_addons.php`,
+          `${API_BASE}/admin_manage_addons.php`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

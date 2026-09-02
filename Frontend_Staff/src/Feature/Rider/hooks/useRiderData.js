@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { API_BASE } from "../../../utils/apiHelper";
 import { useRiderSocket } from "./useRiderSocket";
 import { useRiderLocation } from "./useRiderLocation";
 import { useRiderMutations } from "./useRiderMutations";
@@ -22,7 +23,7 @@ export function useRiderData() {
   // 2. DUTY & ACTIVE DELIVERY STATES
   const [isOnline, setIsOnline] = useState(
     riderSession?.status === "Available" ||
-      riderSession?.shift_status === "Available"
+    riderSession?.shift_status === "Available"
   );
   const [currentOrder, setCurrentOrder] = useState(null);
   const [incomingOrderDetails, setIncomingOrderDetails] = useState(null);
@@ -78,8 +79,7 @@ export function useRiderData() {
     queryKey: ["rider_assigned_order", riderSession?.id],
     queryFn: async () => {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_assigned_order.php?rider_id=${
-          riderSession.id
+        `${API_BASE}/get_assigned_order.php?rider_id=${riderSession.id
         }`
       );
       return await res.json();

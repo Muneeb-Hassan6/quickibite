@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../utils/apiHelper';
 import React from "react";
 import { FaUtensils, FaArrowRight } from "react-icons/fa";
 
@@ -41,7 +42,7 @@ export default function CategoryView({
                     src={
                       firstImageItem.img.startsWith("http")
                         ? firstImageItem.img
-                        : `${import.meta.env.VITE_API_BASE.replace(/\/api$/, "")}/${firstImageItem.img.replace(/^\//, "")}`
+                        : `${API_BASE.replace(/\/api$/, "")}/${firstImageItem.img.replace(/^\//, "")}`
                     }
                     alt={category}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

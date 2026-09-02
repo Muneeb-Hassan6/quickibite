@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { FaTimes, FaSpinner } from "react-icons/fa";
@@ -29,7 +30,7 @@ const RecipeModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
         setIsFetching(true);
         try {
           const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/get_recipe.php?menu_item_id=${menuItem.id}&variant_name=${selectedVariant}`
+            `${API_BASE}/get_recipe.php?menu_item_id=${menuItem.id}&variant_name=${selectedVariant}`
           );
           const data = await response.json();
 
@@ -104,7 +105,7 @@ const RecipeModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
     setIsSaving(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/save_recipe.php`,
+        `${API_BASE}/save_recipe.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

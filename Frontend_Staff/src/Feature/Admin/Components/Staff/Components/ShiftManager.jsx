@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import { FaGear } from "react-icons/fa6";
 import Swal from "sweetalert2";
@@ -17,7 +18,7 @@ const ShiftManager = () => {
   const fetchShifts = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_shifts.php`
+        `${API_BASE}/get_shifts.php`
       );
       const result = await response.json();
       if (result.success) {
@@ -44,7 +45,7 @@ const ShiftManager = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_shift.php`,
+        `${API_BASE}/update_shift.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -108,7 +109,7 @@ const ShiftManager = () => {
       if (result.isConfirmed) {
         try {
           const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/update_shift_timings.php`,
+            `${API_BASE}/update_shift_timings.php`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },

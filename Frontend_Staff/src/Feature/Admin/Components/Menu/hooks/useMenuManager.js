@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import imageCompression from "browser-image-compression";
@@ -56,7 +57,7 @@ export function useMenuManager() {
   const { data: menuItems = [] } = useQuery({
     queryKey: ["menu"],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
+      const response = await fetch(`${API_BASE}/get_menu.php`);
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
@@ -65,7 +66,7 @@ export function useMenuManager() {
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_categories.php`);
+      const response = await fetch(`${API_BASE}/get_categories.php`);
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
@@ -74,7 +75,7 @@ export function useMenuManager() {
   const { data: inventoryItems = [] } = useQuery({
     queryKey: ["inventory"],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/inventory_api.php`);
+      const response = await fetch(`${API_BASE}/inventory_api.php`);
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
@@ -83,7 +84,7 @@ export function useMenuManager() {
   const { data: customSliders = [] } = useQuery({
     queryKey: ["homepage_sliders"],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_homepage_data.php`);
+      const response = await fetch(`${API_BASE}/get_homepage_data.php`);
       const result = await response.json();
       if (result.success && result.data && result.data.sections) {
         return result.data.sections.filter(
@@ -177,8 +178,8 @@ export function useMenuManager() {
         auth_token: sessionStorage.getItem("auth_token"),
       };
       const url = editingItem
-        ? `${import.meta.env.VITE_API_BASE}/update_menu.php`
-        : `${import.meta.env.VITE_API_BASE}/add_menu.php`;
+        ? `${API_BASE}/update_menu.php`
+        : `${API_BASE}/add_menu.php`;
 
       const response = await fetch(url, {
         method: "POST",
@@ -220,7 +221,7 @@ export function useMenuManager() {
   const executeDeleteMenu = async (id) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/delete_menu.php`,
+        `${API_BASE}/delete_menu.php`,
         {
           method: "POST",
           headers: {
@@ -263,8 +264,8 @@ export function useMenuManager() {
         auth_token: sessionStorage.getItem("auth_token"),
       };
       const url = editingCategory
-        ? `${import.meta.env.VITE_API_BASE}/update_category.php`
-        : `${import.meta.env.VITE_API_BASE}/add_category.php`;
+        ? `${API_BASE}/update_category.php`
+        : `${API_BASE}/add_category.php`;
 
       const response = await fetch(url, {
         method: "POST",
@@ -306,7 +307,7 @@ export function useMenuManager() {
   const executeDeleteCategory = async (id) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/delete_category.php`,
+        `${API_BASE}/delete_category.php`,
         {
           method: "POST",
           headers: {

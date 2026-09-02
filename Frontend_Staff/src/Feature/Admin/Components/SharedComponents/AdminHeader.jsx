@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../utils/apiHelper';
 import React, { useState, useEffect, useRef } from "react";
 import {
   FaSun,
@@ -68,7 +69,7 @@ const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
     queryFn: async () => {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API_BASE}/admin_wastage_manager.php?action=get_notifications`
+          `${API_BASE}/admin_wastage_manager.php?action=get_notifications`
         );
         const data = await res.json();
         return data.success ? data : { unread_count: 0, notifications: [] };
@@ -84,7 +85,7 @@ const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
 
   const handleMarkAllRead = async () => {
     try {
-      await fetch(`${import.meta.env.VITE_API_BASE}/admin_wastage_manager.php`, {
+      await fetch(`${API_BASE}/admin_wastage_manager.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "mark_notifications_read" }),

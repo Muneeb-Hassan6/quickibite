@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Swal from "sweetalert2";
@@ -26,7 +27,7 @@ export default function ShiftReport({ ordersData = [] }) {
     queryKey: ["shift_orders"],
     queryFn: async () => {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=all`
+        `${API_BASE}/get_orders.php?type=all`
       );
       const data = await res.json();
       if (Array.isArray(data)) {

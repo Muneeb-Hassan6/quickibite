@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import { FaFileExcel, FaChartPie, FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 
@@ -9,7 +10,7 @@ const AttendanceHistory = () => {
     const fetchAttendance = async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_attendance.php`,
+          `${API_BASE}/get_attendance.php`,
         );
         const result = await response.json();
         if (result.success) {

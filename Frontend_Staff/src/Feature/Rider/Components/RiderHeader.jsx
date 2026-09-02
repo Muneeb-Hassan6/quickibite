@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../utils/apiHelper';
 import React, { useState } from "react";
 import { FaFire, FaSignOutAlt, FaSun, FaMoon, FaExclamationTriangle } from "react-icons/fa";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +13,7 @@ export default function RiderHeader({ onLogout, riderName }) {
     queryKey: ["settings"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_settings.php`
+        `${API_BASE}/get_settings.php`
       );
       const result = await response.json();
       return result.success ? result.data : {};

@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import {
   FaHome,
@@ -51,7 +52,7 @@ const AdminSidebar = ({
     const fetchLogo = async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_settings.php`
+          `${API_BASE}/get_settings.php`
         );
         const result = await response.json();
 

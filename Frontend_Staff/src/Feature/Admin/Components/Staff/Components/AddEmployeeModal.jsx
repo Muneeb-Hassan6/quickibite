@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import React, { useState } from "react";
 import { FaTimes, FaUserPlus, FaSpinner } from "react-icons/fa";
 import Swal from "sweetalert2";
@@ -45,7 +46,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/add_staff.php`,
+        `${API_BASE}/add_staff.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

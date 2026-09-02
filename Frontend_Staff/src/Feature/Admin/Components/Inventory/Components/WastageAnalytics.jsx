@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import React, { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -22,7 +23,7 @@ export default function WastageAnalytics() {
     queryKey: ["wastage_analytics"],
     queryFn: async () => {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_wastage_manager.php?action=get_wastage_analytics`
+        `${API_BASE}/admin_wastage_manager.php?action=get_wastage_analytics`
       );
       const data = await res.json();
       return data.success ? data : {};
@@ -35,7 +36,7 @@ export default function WastageAnalytics() {
     queryKey: ["wastage_logs"],
     queryFn: async () => {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_wastage_manager.php?action=get_wastage_logs`
+        `${API_BASE}/admin_wastage_manager.php?action=get_wastage_logs`
       );
       const data = await res.json();
       return data.success ? data.logs : [];
@@ -60,7 +61,7 @@ export default function WastageAnalytics() {
       const adminName = user.name || user.username || "Admin";
 
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_wastage_manager.php`,
+        `${API_BASE}/admin_wastage_manager.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

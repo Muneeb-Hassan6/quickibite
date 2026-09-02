@@ -1,3 +1,4 @@
+import { API_BASE } from '../utils/apiHelper';
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 const OrderContext = createContext();
@@ -14,14 +15,23 @@ export const OrderProvider = ({ children }) => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php`,
+        `${API_BASE}/get_orders.php`,
         {
           headers: {
             "Authorization": `Bearer ${token}`
           }
         }
       );
-      if (!response.ok) return; // Ignore 401s or other errors silently
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        throw new Error(`Expected JSON but received: ${text.substring(0, 50)}...`);
+      }
 
       const data = await response.json();
       if (Array.isArray(data)) {
@@ -70,7 +80,7 @@ export const OrderProvider = ({ children }) => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/create_order.php`,
+        `${API_BASE}/create_order.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -78,8 +88,13 @@ export const OrderProvider = ({ children }) => {
         },
       );
 
-      const result = await response.json();
-      console.log(result.message);
+      if (response.ok) {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const result = await response.json();
+          console.log(result.message);
+        }
+      }
 
       // Order place hone ke baad list ko dobara fresh karo
       fetchOrders();
@@ -98,7 +113,7 @@ export const OrderProvider = ({ children }) => {
 
     // Database mein update bhejna
     try {
-      await fetch(`${import.meta.env.VITE_API_BASE}/update_order_status.php`, {
+      await fetch(`${API_BASE}/update_order_status.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: orderId, status: newStatus }),

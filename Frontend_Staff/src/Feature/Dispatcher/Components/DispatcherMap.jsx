@@ -1,7 +1,11 @@
 import React, { useRef, useMemo } from "react";
 import Map, { Marker } from "react-map-gl";
+import mapboxgl from "mapbox-gl";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import "mapbox-gl/dist/mapbox-gl.css";
+
+const MY_FALLBACK_TOKEN = "pk.eyJ1IjoiZmFpemktNTU2NiIsImEiOiJjbW81eGN1bGUwNzczMm9zaGFjMGF3anZjIn0.AfIlvdHBVNHv8chE4ZSh0Q";
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || MY_FALLBACK_TOKEN;
 
 export default function DispatcherMap({
   riders = [],
@@ -31,6 +35,8 @@ export default function DispatcherMap({
     }
   };
 
+  const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN || MY_FALLBACK_TOKEN;
+
   return (
     <div className="bg-white dark:bg-neutral-900 border border-stone-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-xs transition-colors">
       {/* High-Contrast Card Header Bar */}
@@ -46,51 +52,56 @@ export default function DispatcherMap({
 
       {/* Mapbox Canvas - Permanent High-Visibility Streets Light Style */}
       <div className="h-64 sm:h-80 w-full relative">
-        <Map
-          ref={mapRef}
-          {...viewState}
-          onMove={(evt) => setViewState(evt.viewState)}
-          mapStyle="mapbox://styles/mapbox/streets-v12"
-          mapboxAccessToken={MAPBOX_TOKEN}
-          style={{ width: "100%", height: "100%", position: "absolute" }}
-          onLoad={handleMapLoad}
-          attributionControl={false}
-        >
-          {activeGpsRiders.map((rider) => {
-            const isAvailable = String(rider.status).toLowerCase() === "available";
+        {!mapboxToken ? (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-stone-100 dark:bg-neutral-800 text-stone-500 text-center">
+            <p className="animate-pulse m-0 font-bold mb-1">Loading Mapbox Token...</p>
+            <p className="text-xs m-0 px-4">Waiting for VITE_MAPBOX_TOKEN to resolve</p>
+          </div>
+        ) : (
+          <Map
+            ref={mapRef}
+            {...viewState}
+            onMove={(evt) => setViewState(evt.viewState)}
+            mapStyle="mapbox://styles/mapbox/streets-v12"
+            mapboxAccessToken={mapboxToken}
+            style={{ width: "100%", height: "100%", position: "absolute" }}
+            onLoad={handleMapLoad}
+            attributionControl={false}
+          >
+            {activeGpsRiders.map((rider) => {
+              const isAvailable = String(rider.status).toLowerCase() === "available";
 
-            return (
-              <Marker
-                key={rider.id}
-                longitude={rider.location.lng}
-                latitude={rider.location.lat}
-                anchor="bottom"
-              >
-                <div className="flex flex-col items-center cursor-pointer group">
-                  <div
-                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white border-2 shadow-md flex items-center justify-center p-1.5 transition-transform group-hover:scale-110 ${
-                      isAvailable ? "border-emerald-500" : "border-amber-500"
-                    }`}
-                  >
-                    <img
-                      src="https://cdn-icons-png.flaticon.com/512/3198/3198336.png"
-                      className="w-full h-full object-contain"
-                      alt="Rider Marker"
-                    />
+              return (
+                <Marker
+                  key={rider.id}
+                  longitude={rider.location.lng}
+                  latitude={rider.location.lat}
+                  anchor="bottom"
+                >
+                  <div className="flex flex-col items-center cursor-pointer group">
+                    <div
+                      className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white border-2 shadow-md flex items-center justify-center p-1.5 transition-transform group-hover:scale-110 ${isAvailable ? "border-emerald-500" : "border-amber-500"
+                        }`}
+                    >
+                      <img
+                        src="https://cdn-icons-png.flaticon.com/512/3198/3198336.png"
+                        className="w-full h-full object-contain"
+                        alt="Rider Marker"
+                      />
+                    </div>
+                    <div className="bg-stone-900/95 text-white px-2 py-0.5 rounded-md text-[10px] font-bold mt-1 shadow-xs border border-white/10 whitespace-nowrap font-mono flex items-center gap-1">
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${isAvailable ? "bg-emerald-400" : "bg-amber-400"
+                          }`}
+                      />
+                      <span>{rider.name}</span>
+                    </div>
                   </div>
-                  <div className="bg-stone-900/95 text-white px-2 py-0.5 rounded-md text-[10px] font-bold mt-1 shadow-xs border border-white/10 whitespace-nowrap font-mono flex items-center gap-1">
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        isAvailable ? "bg-emerald-400" : "bg-amber-400"
-                      }`}
-                    />
-                    <span>{rider.name}</span>
-                  </div>
-                </div>
-              </Marker>
-            );
-          })}
-        </Map>
+                </Marker>
+              );
+            })}
+          </Map>
+        )}
       </div>
     </div>
   );

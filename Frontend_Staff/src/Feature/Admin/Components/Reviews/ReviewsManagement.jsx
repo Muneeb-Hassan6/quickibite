@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../utils/apiHelper';
 import React, { useState, useEffect, useCallback } from "react";
 import {
   FaStar,
@@ -30,7 +31,7 @@ export default function ReviewsManagement() {
   const [statusFilter, setStatusFilter] = useState("all"); // 'all' | 'approved' | 'hidden' | 'featured'
   const [actionLoadingId, setActionLoadingId] = useState(null);
 
-  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost/quickibite/BB backend/api";
+  const API_BASE = API_BASE || "http://localhost/quickibite/BB backend/api";
 
   const fetchReviews = useCallback(async () => {
     setLoading(true);

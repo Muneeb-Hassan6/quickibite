@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { API_BASE } from "../../../utils/apiHelper";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
@@ -22,7 +23,7 @@ export function useKitchenOrders() {
     queryKey: ["kitchen_orders"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php`
+        `${API_BASE}/get_orders.php`
       );
       const data = await response.json();
 
@@ -77,12 +78,12 @@ export function useKitchenOrders() {
             statusLower === "pending"
               ? "pending"
               : statusLower === "cooking" || statusLower === "preparing"
-              ? "preparing"
-              : statusLower === "ready"
-              ? "ready"
-              : statusLower === "completed"
-              ? "completed"
-              : statusLower,
+                ? "preparing"
+                : statusLower === "ready"
+                  ? "ready"
+                  : statusLower === "completed"
+                    ? "completed"
+                    : statusLower,
 
           type: dbOrder.order_type
             ? dbOrder.order_type.toUpperCase().replace("_", " ")
@@ -114,7 +115,7 @@ export function useKitchenOrders() {
       // Optional audio notification chime
       try {
         const audio = new Audio("/audio/order-chime.mp3");
-        audio.play().catch(() => {});
+        audio.play().catch(() => { });
       } catch (e) {
         // audio playback ignored if unavailable
       }
@@ -146,7 +147,7 @@ export function useKitchenOrders() {
   const statusMutation = useMutation({
     mutationFn: async ({ orderId, newStatus }) => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_order_status.php`,
+        `${API_BASE}/update_order_status.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -169,10 +170,10 @@ export function useKitchenOrders() {
                 newStatus === "Ready"
                   ? "ready"
                   : newStatus === "Cooking"
-                  ? "preparing"
-                  : newStatus === "Completed"
-                  ? "completed"
-                  : newStatus,
+                    ? "preparing"
+                    : newStatus === "Completed"
+                      ? "completed"
+                      : newStatus,
             };
           }
           return order;

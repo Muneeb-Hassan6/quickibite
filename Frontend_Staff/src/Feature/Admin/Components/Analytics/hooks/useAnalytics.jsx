@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import { useState, useEffect } from "react";
 import React from "react";
 import {
@@ -47,10 +48,10 @@ export function useAnalytics() {
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
         const [ordersRes, menuRes] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_BASE}/get_orders.php?type=all`, {
+          fetch(`${API_BASE}/get_orders.php?type=all`, {
             headers,
           }),
-          fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`, { headers }),
+          fetch(`${API_BASE}/get_menu.php`, { headers }),
         ]);
         const data = await ordersRes.json();
         const menuData = await menuRes.json();

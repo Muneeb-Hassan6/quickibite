@@ -1,3 +1,4 @@
+import { API_BASE } from '../utils/apiHelper';
 import React, { createContext, useState, useContext, useEffect } from "react";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client"; // 🔥 SOCKET IMPORT ADDED
@@ -148,7 +149,7 @@ export const CartProvider = ({ children }) => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/create_order.php`,
+        `${API_BASE}/create_order.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

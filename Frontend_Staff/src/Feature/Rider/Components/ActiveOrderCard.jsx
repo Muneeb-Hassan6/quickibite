@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../utils/apiHelper';
 import React, { useState } from "react";
 import {
   FaPhoneAlt,
@@ -59,7 +60,7 @@ export default function ActiveOrderCard({ order, onComplete, onCancel, isComplet
         const riderName = user.name || user.username || "Delivery Rider";
 
         const res = await fetch(
-          `${import.meta.env.VITE_API_BASE}/log_wastage.php`,
+          `${API_BASE}/log_wastage.php`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

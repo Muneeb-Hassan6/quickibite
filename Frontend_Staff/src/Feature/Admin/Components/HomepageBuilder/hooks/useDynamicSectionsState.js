@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import Swal from 'sweetalert2';
@@ -57,7 +58,7 @@ export function useDynamicSectionsState(getAuthHeaders, handleAuthError, heroSli
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_manage_homepage.php`,
+        `${API_BASE}/admin_manage_homepage.php`,
         {
           method: 'POST',
           headers: getAuthHeaders(),
@@ -111,7 +112,7 @@ export function useDynamicSectionsState(getAuthHeaders, handleAuthError, heroSli
       const action = type === 'hero' ? 'delete_hero' : 'delete_section';
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/admin_manage_homepage.php`,
+          `${API_BASE}/admin_manage_homepage.php`,
           {
             method: 'POST',
             headers: getAuthHeaders(),
@@ -230,7 +231,7 @@ export function useDynamicSectionsState(getAuthHeaders, handleAuthError, heroSli
       };
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_manage_homepage.php`,
+        `${API_BASE}/admin_manage_homepage.php`,
         {
           method: 'POST',
           headers: getAuthHeaders(),

@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import Swal from 'sweetalert2';
@@ -27,7 +28,7 @@ export function useHeroSliderState(homepageData, getAuthHeaders, handleAuthError
     setIsSavingGlobal(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_settings.php`,
+        `${API_BASE}/update_settings.php`,
         {
           method: 'POST',
           headers: getAuthHeaders(),

@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../utils/apiHelper';
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -24,7 +25,7 @@ export default function OrderHistory({
     queryKey: ["cashier_orders"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=cashier`
+        `${API_BASE}/get_orders.php?type=cashier`
       );
       const data = await response.json();
       if (Array.isArray(data)) {

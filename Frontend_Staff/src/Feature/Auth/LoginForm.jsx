@@ -1,3 +1,4 @@
+import { API_BASE } from '../../utils/apiHelper';
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUserShield, FaLock, FaUser, FaArrowLeft, FaEye, FaEyeSlash } from "react-icons/fa";
@@ -29,8 +30,9 @@ const LoginForm = () => {
 
     try {
       // 🔥 Backend API Call
+      const BASE_URL = API_BASE || "http://localhost/quickibite/BB backend/api";
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/login.php`,
+        `${BASE_URL}/login.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -38,7 +40,12 @@ const LoginForm = () => {
         },
       );
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const text = await response.text();
+      const result = text ? JSON.parse(text) : {};
 
       if (result.success) {
         // 1. Save user session AND JWT token

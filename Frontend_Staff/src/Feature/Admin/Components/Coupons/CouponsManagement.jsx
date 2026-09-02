@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import {
   FaTag,
@@ -39,7 +40,7 @@ const CouponsManagement = () => {
     try {
       setLoading(true);
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_admin_coupons.php`
+        `${API_BASE}/get_admin_coupons.php`
       );
       const data = await res.json();
       if (data.success) {
@@ -91,7 +92,7 @@ const CouponsManagement = () => {
   const handleToggleStatus = async (coupon) => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/delete_coupon.php`,
+        `${API_BASE}/delete_coupon.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -131,7 +132,7 @@ const CouponsManagement = () => {
       if (result.isConfirmed) {
         try {
           const res = await fetch(
-            `${import.meta.env.VITE_API_BASE}/delete_coupon.php`,
+            `${API_BASE}/delete_coupon.php`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -178,7 +179,7 @@ const CouponsManagement = () => {
       };
 
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/save_coupon.php`,
+        `${API_BASE}/save_coupon.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

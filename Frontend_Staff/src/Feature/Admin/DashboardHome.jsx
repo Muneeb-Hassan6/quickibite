@@ -1,3 +1,4 @@
+import { API_BASE } from '../../utils/apiHelper';
 import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import OrderReceiptModal from "./Components/Orders/Components/OrderReceiptModal";
@@ -19,7 +20,7 @@ const DashboardHome = ({ setActiveTab }) => {
     queryKey: ["admin_orders", "all"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=all`
+        `${API_BASE}/get_orders.php?type=all`
       );
       const data = await response.json();
       if (Array.isArray(data)) {
@@ -64,7 +65,7 @@ const DashboardHome = ({ setActiveTab }) => {
     queryKey: ["menu"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_menu.php`
+        `${API_BASE}/get_menu.php`
       );
       const data = await response.json();
       return Array.isArray(data) ? data : [];
@@ -76,7 +77,7 @@ const DashboardHome = ({ setActiveTab }) => {
       queryKey: ["profit_stats", "today"],
       queryFn: async () => {
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_profit_stats.php?range=today`
+          `${API_BASE}/get_profit_stats.php?range=today`
         );
         const profitJson = await response.json();
         return profitJson.success && profitJson.data

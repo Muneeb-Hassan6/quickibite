@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 
@@ -20,7 +21,7 @@ const OrdersManager = () => {
     queryKey: ['admin_orders', 'all'],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=all`
+        `${API_BASE}/get_orders.php?type=all`
       );
       const data = await response.json();
 
@@ -82,7 +83,7 @@ const OrdersManager = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_order_status.php`,
+        `${API_BASE}/update_order_status.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

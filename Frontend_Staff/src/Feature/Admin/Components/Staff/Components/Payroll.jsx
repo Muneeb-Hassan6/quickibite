@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import React, { useState, useEffect } from "react";
 import { FaPrint, FaCog } from "react-icons/fa";
 import Swal from "sweetalert2";
@@ -17,7 +18,7 @@ const Payroll = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_payroll_data.php`
+        `${API_BASE}/get_payroll_data.php`
       );
       const result = await response.json();
 
@@ -69,7 +70,7 @@ const Payroll = () => {
         const newOffDays = parseInt(result.value);
         try {
           const res = await fetch(
-            `${import.meta.env.VITE_API_BASE}/update_off_days.php`,
+            `${API_BASE}/update_off_days.php`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -128,7 +129,7 @@ const Payroll = () => {
       if (result.isConfirmed) {
         try {
           const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/pay_salary.php`,
+            `${API_BASE}/pay_salary.php`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },

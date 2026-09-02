@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../utils/apiHelper';
 import React, { useState } from "react";
 import { FaUtensils, FaArrowRight, FaCheck, FaPrint, FaFire, FaExclamationTriangle } from "react-icons/fa";
 import Swal from "sweetalert2";
@@ -83,7 +84,7 @@ export default function KitchenCard({
         const chefName = user.name || user.username || "Kitchen Chef";
 
         const res = await fetch(
-          `${import.meta.env.VITE_API_BASE}/log_wastage.php`,
+          `${API_BASE}/log_wastage.php`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

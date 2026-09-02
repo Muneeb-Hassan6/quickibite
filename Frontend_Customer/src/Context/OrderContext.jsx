@@ -21,6 +21,12 @@ export const OrderProvider = ({ children }) => {
       });
       if (!response.ok) return [];
 
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("Expected JSON response but received something else.");
+        return [];
+      }
+
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
@@ -65,7 +71,12 @@ export const OrderProvider = ({ children }) => {
         }
       );
 
-      const result = await response.json();
+      if (response.ok) {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const result = await response.json();
+        }
+      }
 
       // Order place hone ke baad list ko dobara fresh karo
       fetchOrders();
@@ -76,7 +87,7 @@ export const OrderProvider = ({ children }) => {
   // 🔥 3. UPDATE STATUS FUNCTION (Sends to Backend)
   const updateOrderStatus = async (orderId, newStatus) => {
     // UI mein foran update dikhane ke liye (Optimistic update)
-    queryClient.setQueryData(['customer_orders'], (old = []) => 
+    queryClient.setQueryData(['customer_orders'], (old = []) =>
       old.map((order) =>
         order.id === orderId ? { ...order, status: newStatus } : order
       )

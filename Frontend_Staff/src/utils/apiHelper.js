@@ -4,7 +4,10 @@
  * It automatically attaches the JWT token from sessionStorage.
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE || `${import.meta.env.VITE_API_BASE}`;
+const envBase = import.meta.env.VITE_API_BASE;
+export const API_BASE = envBase && envBase !== "undefined"
+  ? envBase
+  : "http://localhost/quickibite/BB%20backend/api";
 
 /**
  * Get the stored JWT token

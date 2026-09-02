@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../../../utils/apiHelper';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -44,7 +45,7 @@ export function useHomepageBuilder() {
     queryKey: ['homepage_data'],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_homepage_data.php?all=1`
+        `${API_BASE}/get_homepage_data.php?all=1`
       );
       const result = await response.json();
       return result.success && result.data ? result.data : {};
@@ -74,7 +75,7 @@ export function useHomepageBuilder() {
     queryKey: ['categories'],
     queryFn: async () => {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_categories.php`
+        `${API_BASE}/get_categories.php`
       );
       const data = await res.json();
       return Array.isArray(data) ? data : [];
@@ -84,7 +85,7 @@ export function useHomepageBuilder() {
   const { data: menuItems = [] } = useQuery({
     queryKey: ['menu'],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
+      const res = await fetch(`${API_BASE}/get_menu.php`);
       const data = await res.json();
       return Array.isArray(data) ? data : [];
     },
@@ -94,7 +95,7 @@ export function useHomepageBuilder() {
     queryKey: ['active_deals'],
     queryFn: async () => {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_active_deals.php`
+        `${API_BASE}/get_active_deals.php`
       );
       const data = await res.json();
       return data.success && data.data ? data.data : [];
