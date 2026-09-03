@@ -1,5 +1,7 @@
 <?php
 include_once __DIR__ . '/../config/cors_headers.php';
+include_once __DIR__ . '/../config/auth_middleware.php';
+require_role(['Admin', 'Manager']);
 include_once __DIR__ . '/../config/Database.php';
 
 $database = new Database();

@@ -158,8 +158,13 @@ const CouponsManagement = () => {
       toast.error("Please enter a coupon code");
       return;
     }
-    if (!formData.discount_value || parseFloat(formData.discount_value) <= 0) {
+    const discountVal = parseFloat(formData.discount_value);
+    if (!formData.discount_value || isNaN(discountVal) || discountVal <= 0) {
       toast.error("Discount value must be greater than 0");
+      return;
+    }
+    if (formData.discount_type === "percentage" && discountVal > 100) {
+      toast.error("Percentage discount cannot exceed 100%");
       return;
     }
 

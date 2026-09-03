@@ -21,8 +21,14 @@ try {
         exit();
     }
 
-    // 1. Fetch order status and created_at
-    $orderStmt = $db->prepare("SELECT id, status, created_at, total_price, customer_name, customer_phone FROM orders WHERE id = ?");
+    // 1. Fetch order status, created_at, and exact DB elapsed seconds
+    $orderStmt = $db->prepare("
+        SELECT id, status, created_at, 
+               TIMESTAMPDIFF(SECOND, created_at, NOW()) as elapsed_seconds,
+               total, customer_name, customer_mobile 
+        FROM orders 
+        WHERE id = ?
+    ");
     $orderStmt->execute([$order_id]);
     $order = $orderStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -32,34 +38,50 @@ try {
         exit();
     }
 
-    $currentStatus = strtolower(trim($order['status']));
-    $createdTime = strtotime($order['created_at']);
-    $currentTime = time();
-    $elapsedSeconds = $currentTime - $createdTime;
+    $currentStatus = strtolower(trim($order['status'] ?? ''));
+    $elapsedSeconds = intval($order['elapsed_seconds'] ?? (time() - strtotime($order['created_at'])));
 
     // Strict validation:
-    // If not staff override, customer can only cancel if status is 'pending' AND elapsed <= 120s (with a slight 15s grace margin for network lag = 135s)
+    // If not staff override, customer can only cancel if status is strictly 'pending' AND elapsed <= 120s
     if (!$is_staff_override) {
         if ($currentStatus !== 'pending') {
             http_response_code(400);
             echo json_encode([
                 "success" => false,
-                "message" => "Chef has already started preparation. Please call restaurant support to modify or cancel."
+                "message" => "Order cannot be cancelled because the kitchen has already started preparing it.",
+                "current_status" => $order['status']
             ]);
             exit();
         }
 
-        if ($elapsedSeconds > 135) {
+        if ($elapsedSeconds > 120) {
             http_response_code(400);
             echo json_encode([
                 "success" => false,
-                "message" => "The 2-minute cancellation window has expired. Kitchen is already prepping your order."
+                "message" => "Cancellation window (2 minutes) has expired.",
+                "current_status" => $order['status']
             ]);
             exit();
         }
     }
 
     $db->beginTransaction();
+
+    // Prevent race conditions: Lock row and re-verify status under transaction lock
+    $lockStmt = $db->prepare("SELECT status FROM orders WHERE id = ? FOR UPDATE");
+    $lockStmt->execute([$order_id]);
+    $lockedStatus = strtolower(trim($lockStmt->fetchColumn() ?: ''));
+
+    if (!$is_staff_override && $lockedStatus !== 'pending') {
+        $db->rollBack();
+        http_response_code(400);
+        echo json_encode([
+            "success" => false,
+            "message" => "Order cannot be cancelled because the kitchen has already started preparing it.",
+            "current_status" => $lockedStatus
+        ]);
+        exit();
+    }
 
     // 2. Fetch order items to calculate inventory restoration
     $itemsStmt = $db->prepare("SELECT id, title, size, quantity, addons_json FROM order_items WHERE order_id = ?");

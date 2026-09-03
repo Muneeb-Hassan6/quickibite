@@ -32,6 +32,9 @@ export default function DeliveryAddressForm({
   hasExactGps = false,
   mapCoords = { lat: 31.5204, lng: 74.3587 },
   onCoordinatesChange,
+  deliveryDistanceKm = 0,
+  maxDeliveryRadiusKm = 10,
+  isOutOfDeliveryRadius = false,
 }) {
   const isDineIn = isQrScanned || orderType === "dine_in";
 
@@ -141,6 +144,38 @@ export default function DeliveryAddressForm({
             onLocateMe={onUseCurrentLocation}
             hasExactGps={hasExactGps}
           />
+
+          {/* 📏 Live Delivery Radius & Distance Status Indicator */}
+          {deliveryDistanceKm > 0 && (
+            <div
+              className={`p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-bold border transition-all animate-fade-in ${
+                isOutOfDeliveryRadius
+                  ? "bg-red-500/10 border-red-500/30 text-red-400"
+                  : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-sm shrink-0">{isOutOfDeliveryRadius ? "⚠️" : "📍"}</span>
+                <span>
+                  Distance to restaurant:{" "}
+                  <strong className="font-mono text-white underline decoration-amber-500/50">
+                    {deliveryDistanceKm.toFixed(1)} km
+                  </strong>
+                </span>
+              </div>
+              <span
+                className={`text-[10px] sm:text-[11px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full self-start sm:self-auto border ${
+                  isOutOfDeliveryRadius
+                    ? "bg-red-500/20 text-red-300 border-red-500/40"
+                    : "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                }`}
+              >
+                {isOutOfDeliveryRadius
+                  ? `Exceeds ${maxDeliveryRadiusKm} km limit`
+                  : `Within ${maxDeliveryRadiusKm} km coverage`}
+              </span>
+            </div>
+          )}
 
           {/* Saved Addresses 1-Click Picker */}
           <SavedAddressSelector

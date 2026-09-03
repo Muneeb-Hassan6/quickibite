@@ -21,8 +21,25 @@ if(!empty($data->id)) {
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     $imageUrl = $row['img'] ?? '';
 
-    // --- STEP 2: Database se record delete karna ---
-    if($menuItem->delete()){
+    // --- STEP 2: Clean up child relations inside transaction before deleting ---
+    $db->beginTransaction();
+    $isDeleted = false;
+    try {
+        $db->prepare("DELETE FROM product_custom_addons WHERE menu_item_id = ?")->execute([$menuItem->id]);
+        $db->prepare("DELETE FROM menu_variants WHERE menu_item_id = ?")->execute([$menuItem->id]);
+        $db->prepare("DELETE FROM menu_recipes WHERE menu_id = ?")->execute([$menuItem->id]);
+        $db->prepare("DELETE FROM deal_items WHERE menu_item_id = ?")->execute([$menuItem->id]);
+
+        $isDeleted = $menuItem->delete();
+        $db->commit();
+    } catch (Exception $e) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        $isDeleted = false;
+    }
+
+    if($isDeleted){
         
         // --- STEP 3: Cloudinary se picture delete karna (PRO LEVEL) ---
         if (!empty($imageUrl) && strpos($imageUrl, 'cloudinary.com') !== false) {

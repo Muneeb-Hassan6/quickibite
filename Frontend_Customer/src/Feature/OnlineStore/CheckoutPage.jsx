@@ -95,6 +95,9 @@ const CheckoutPage = () => {
               hasExactGps={form.hasExactGps}
               mapCoords={form.mapCoords}
               onCoordinatesChange={form.handleMapCoordinatesChange}
+              deliveryDistanceKm={form.deliveryDistanceKm}
+              maxDeliveryRadiusKm={form.maxDeliveryRadiusKm}
+              isOutOfDeliveryRadius={form.isOutOfDeliveryRadius}
             />
 
             <CustomerContactFields
@@ -103,6 +106,8 @@ const CheckoutPage = () => {
               customerMobile={form.customerMobile}
               handleMobileChange={form.handleMobileChange}
               errors={form.errors}
+              phoneCollision={form.phoneCollision}
+              onOpenLogin={() => form.openAuthModal("login")}
             />
 
             <PaymentMethodPicker
@@ -119,6 +124,9 @@ const CheckoutPage = () => {
               appliedCoupon={form.appliedCoupon}
               onApplyCoupon={form.setAppliedCoupon}
               onRemoveCoupon={() => form.setAppliedCoupon(null)}
+              customerId={form.customer?.id}
+              customerMobile={form.customerMobile}
+              handleApplyCoupon={form.handleApplyCoupon}
             />
 
             {/* Rider Tip Selection (Delivery Only) */}
@@ -140,6 +148,9 @@ const CheckoutPage = () => {
               total={form.total}
               isSubmitting={form.isSubmitting}
               handleProceedOrder={form.handleProceedOrder}
+              isOutOfDeliveryRadius={form.isOutOfDeliveryRadius}
+              deliveryDistanceKm={form.deliveryDistanceKm}
+              maxDeliveryRadiusKm={form.maxDeliveryRadiusKm}
             />
           </div>
         </div>

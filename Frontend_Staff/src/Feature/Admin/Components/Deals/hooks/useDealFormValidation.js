@@ -39,16 +39,29 @@ export function useDealFormValidation() {
       Swal.fire("Validation Error", "Please provide a deal title.", "warning");
       return false;
     }
-    if (!dealForm.price || isNaN(dealForm.price) || Number(dealForm.price) <= 0) {
+    const priceNum = Number(dealForm.price);
+    if (!dealForm.price || isNaN(priceNum) || priceNum <= 0) {
       Swal.fire("Validation Error", "Please provide a valid deal price.", "warning");
       return false;
     }
 
-    const validItems = includedItems.filter((it) => it.item_title.trim() !== "");
+    const origPriceNum = Number(dealForm.original_price);
+    if (dealForm.original_price && !isNaN(origPriceNum) && origPriceNum > 0 && origPriceNum <= priceNum) {
+      Swal.fire(
+        "Validation Error",
+        "Original price must be strictly higher than the discounted deal price.",
+        "warning"
+      );
+      return false;
+    }
+
+    const validItems = includedItems.filter(
+      (it) => it.item_title.trim() !== "" && (parseInt(it.quantity) || 0) >= 1
+    );
     if (validItems.length === 0) {
       Swal.fire(
         "Validation Error",
-        "Please add at least 1 bundled item.",
+        "Please add at least 1 bundled item with a quantity of 1 or more.",
         "warning"
       );
       return false;

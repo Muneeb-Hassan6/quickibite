@@ -68,10 +68,16 @@ const InventoryModal = ({
               <input
                 type="number"
                 step="0.01"
+                min="0"
                 required
                 className="w-full p-3 bg-white/5 border border-white/10 text-white rounded-xl text-xs font-bold focus:outline-none focus:border-amber-500 font-mono"
                 value={form.stock}
-                onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    stock: e.target.value === "" ? "" : Math.max(0, parseFloat(e.target.value) || 0),
+                  })
+                }
                 placeholder="0.00"
               />
             </div>
@@ -104,10 +110,16 @@ const InventoryModal = ({
               <input
                 type="number"
                 step="0.01"
+                min="0"
                 required
                 className="w-full p-3 bg-white/5 border border-white/10 text-white rounded-xl text-xs font-bold focus:outline-none focus:border-amber-500 font-mono"
                 value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    price: e.target.value === "" ? "" : Math.max(0, parseFloat(e.target.value) || 0),
+                  })
+                }
                 placeholder="e.g. 850.00"
               />
             </div>
@@ -119,11 +131,15 @@ const InventoryModal = ({
               <input
                 type="number"
                 step="0.01"
+                min="0"
                 required
                 className="w-full p-3 bg-white/5 border border-white/10 text-white rounded-xl text-xs font-bold focus:outline-none focus:border-amber-500 font-mono"
                 value={form.threshold}
                 onChange={(e) =>
-                  setForm({ ...form, threshold: e.target.value })
+                  setForm({
+                    ...form,
+                    threshold: e.target.value === "" ? "" : Math.max(0, parseFloat(e.target.value) || 0),
+                  })
                 }
                 placeholder="e.g. 5.00"
               />

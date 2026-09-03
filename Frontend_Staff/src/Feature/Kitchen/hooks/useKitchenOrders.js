@@ -111,12 +111,25 @@ export function useKitchenOrders() {
     const handleNewOrder = (newOrder) => {
       queryClient.invalidateQueries({ queryKey: ["kitchen_orders"] });
 
-      // Optional audio notification chime
+      // Resilient Web Audio synthesizer chime (Zero external asset dependency)
       try {
-        const audio = new Audio("/audio/order-chime.mp3");
-        audio.play().catch(() => {});
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          const ctx = new AudioCtx();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+          osc.frequency.setValueAtTime(880, ctx.currentTime + 0.12); // A5
+          gain.gain.setValueAtTime(0.25, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.5);
+        }
       } catch (e) {
-        // audio playback ignored if unavailable
+        // audio context blocked by browser autoplay policy until first interaction
       }
 
       toast.success(`🔔 New Order #${newOrder?.id || ""} Received!`, {

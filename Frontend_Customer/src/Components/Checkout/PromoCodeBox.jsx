@@ -1,8 +1,18 @@
 import React, { useState } from "react";
 import { LuTag, LuCheck, LuX, LuLoader } from "react-icons/lu";
 import { API_BASE } from "../../config/api";
+import { useAuth } from "../../Context/AuthContext";
 
-const PromoCodeBox = ({ subtotal = 0, appliedCoupon = null, onApplyCoupon, onRemoveCoupon }) => {
+const PromoCodeBox = ({
+  subtotal = 0,
+  appliedCoupon = null,
+  onApplyCoupon,
+  onRemoveCoupon,
+  customerId = null,
+  customerMobile = "",
+  handleApplyCoupon = null,
+}) => {
+  const { customer } = useAuth();
   const [inputCode, setInputCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -15,10 +25,29 @@ const PromoCodeBox = ({ subtotal = 0, appliedCoupon = null, onApplyCoupon, onRem
     setErrorMsg("");
 
     try {
+      if (typeof handleApplyCoupon === "function") {
+        const res = await handleApplyCoupon(code);
+        if (res.success) {
+          setInputCode("");
+          setErrorMsg("");
+        } else {
+          setErrorMsg(res.message || "Invalid promo code");
+        }
+        return;
+      }
+
+      const activeCid = customerId || customer?.id || null;
+      const activeMobile = (customerMobile || customer?.phone || customer?.mobile || "").trim();
+
       const response = await fetch(`${API_BASE}/validate_coupon.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, subtotal }),
+        body: JSON.stringify({
+          code,
+          subtotal,
+          customer_id: activeCid,
+          customer_mobile: activeMobile,
+        }),
       });
       const data = await response.json();
 

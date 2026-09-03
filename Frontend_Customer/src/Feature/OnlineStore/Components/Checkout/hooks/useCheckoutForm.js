@@ -13,10 +13,27 @@ import {
 } from "../../../../../Utils/geoHydrator";
 import { API_BASE } from "../../../../../config/api";
 
+export const RESTAURANT_COORDS = { lat: 31.5204, lng: 74.3587 };
+export const MAX_DELIVERY_RADIUS_KM = 10.0;
+
+export function calculateHaversineDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export function useCheckoutForm() {
   const navigate = useNavigate();
   const { cartItems, placeOrder } = useCart();
-  const { customer, isAuthenticated, savedAddresses } = useAuth();
+  const { customer, isAuthenticated, savedAddresses, openAuthModal } = useAuth();
   const { session, switchMode, clearDineIn } = useOrderSession();
 
   const [orderType, setOrderTypeState] = useState(session.mode || "delivery");
@@ -27,6 +44,10 @@ export function useCheckoutForm() {
   const [area, setArea] = useState("");
   const [tableNumber, setTableNumber] = useState(session.tableNumber || "");
   const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
+  const [mapCoords, setMapCoords] = useState({
+    lat: 31.5204,
+    lng: 74.3587,
+  });
 
   // Enterprise Promo & Rider Tip State
   const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -44,16 +65,53 @@ export function useCheckoutForm() {
     }
   }, [customer]);
 
+  // Guest Mobile Collision State & Debounced Backend Verification
+  const [phoneCollision, setPhoneCollision] = useState({
+    isColliding: false,
+    existingName: "",
+  });
+
+  useEffect(() => {
+    const clean = (customerMobile || "").replace(/\D/g, "");
+    if (!isAuthenticated && clean.length === 11 && clean.startsWith("03")) {
+      const timer = setTimeout(async () => {
+        try {
+          const res = await fetch(
+            `${API_BASE}/check_customer_phone.php?phone=${encodeURIComponent(clean)}`
+          );
+          const data = await res.json();
+          if (data && data.exists) {
+            setPhoneCollision({
+              isColliding: true,
+              existingName: data.name || "",
+            });
+          } else {
+            setPhoneCollision({ isColliding: false, existingName: "" });
+          }
+        } catch (err) {
+          setPhoneCollision({ isColliding: false, existingName: "" });
+        }
+      }, 400);
+
+      return () => clearTimeout(timer);
+    } else {
+      setPhoneCollision({ isColliding: false, existingName: "" });
+    }
+  }, [customerMobile, isAuthenticated]);
+
   // Auto-fill default saved address if fields are empty
   useEffect(() => {
     if (savedAddresses && savedAddresses.length > 0 && !houseNo && !street && !area) {
       const defaultAddr = savedAddresses.find((a) => a.is_default == 1) || savedAddresses[0];
       if (defaultAddr) {
-        if (defaultAddr.house_no) setHouseNo(defaultAddr.house_no);
+        const hNo = defaultAddr.house_no || defaultAddr.address_line || "";
+        if (hNo) setHouseNo(hNo);
         if (defaultAddr.street) setStreet(defaultAddr.street);
         if (defaultAddr.area) setArea(defaultAddr.area);
-        if (defaultAddr.lat && defaultAddr.lng) {
-          setMapCoords({ lat: parseFloat(defaultAddr.lat), lng: parseFloat(defaultAddr.lng) });
+        const lat = defaultAddr.latitude ?? defaultAddr.lat;
+        const lng = defaultAddr.longitude ?? defaultAddr.lng;
+        if (lat && lng) {
+          setMapCoords({ lat: parseFloat(lat), lng: parseFloat(lng) });
         }
       }
     }
@@ -136,11 +194,33 @@ export function useCheckoutForm() {
     (sum, item) => sum + Number(item.price) * Number(item.qty),
     0
   );
+
+  // Auto-invalidate coupon if subtotal drops below minimum spend requirement
+  useEffect(() => {
+    if (appliedCoupon && appliedCoupon.min_spend && subTotal < Number(appliedCoupon.min_spend)) {
+      setAppliedCoupon(null);
+      toast.error(`Coupon removed: Minimum spend of Rs ${appliedCoupon.min_spend} required.`);
+    }
+  }, [subTotal, appliedCoupon]);
+
   const isFreeDelivery = subTotal >= freeThreshold && subTotal > 0;
   const deliveryFee = orderType === "delivery" ? (isFreeDelivery ? 0 : baseDeliveryFee) : 0;
   const discountAmount = appliedCoupon ? parseFloat(appliedCoupon.discount_amount || 0) : 0;
   const effectiveTip = orderType === "delivery" ? (Number(riderTip) || 0) : 0;
   const total = Math.max(0, subTotal - discountAmount) + deliveryFee + effectiveTip;
+
+  // Delivery Radius Boundary Guard (Haversine Formula)
+  const restaurantLat = Number(storeSettings.restaurant_lat) || RESTAURANT_COORDS.lat;
+  const restaurantLng = Number(storeSettings.restaurant_lng) || RESTAURANT_COORDS.lng;
+  const maxDeliveryRadiusKm = Number(storeSettings.delivery_radius) || MAX_DELIVERY_RADIUS_KM;
+
+  const deliveryDistanceKm =
+    orderType === "delivery" && mapCoords?.lat && mapCoords?.lng
+      ? calculateHaversineDistanceKm(restaurantLat, restaurantLng, mapCoords.lat, mapCoords.lng)
+      : 0;
+
+  const isOutOfDeliveryRadius =
+    orderType === "delivery" && deliveryDistanceKm > maxDeliveryRadiusKm;
 
   const estimatedPrepMinutes = 20;
   const estimatedDeliveryMinutes = 15;
@@ -160,11 +240,6 @@ export function useCheckoutForm() {
   const handleMobileChange = (val) => {
     mobileHandler(val, setCustomerMobile, setErrors);
   };
-
-  const [mapCoords, setMapCoords] = useState({
-    lat: 31.5204,
-    lng: 74.3587,
-  });
 
   const handleMapCoordinatesChange = ({
     lat,
@@ -244,7 +319,36 @@ export function useCheckoutForm() {
     );
   };
 
+  const handleApplyCoupon = async (code) => {
+    const cleanCode = (code || "").trim().toUpperCase();
+    if (!cleanCode) return { success: false, message: "Please enter a promo code." };
+
+    try {
+      const response = await fetch(`${API_BASE}/validate_coupon.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: cleanCode,
+          subtotal: subTotal,
+          customer_id: customer?.id || null,
+          customer_mobile: customerMobile.trim(),
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setAppliedCoupon(data);
+        return { success: true, data };
+      } else {
+        return { success: false, message: data.message || "Invalid promo code" };
+      }
+    } catch (err) {
+      return { success: false, message: "Network error validating promo code." };
+    }
+  };
+
   const handleProceedOrder = async () => {
+    if (isSubmitting) return;
+
     const isValid = formValidator({
       customerName,
       customerMobile,
@@ -259,6 +363,15 @@ export function useCheckoutForm() {
     if (!isValid) {
       const firstError = Object.values(errors)[0] || "Please fill all required fields.";
       toast.error(firstError);
+      return;
+    }
+
+    // Boundary check guard
+    if (orderType === "delivery" && isOutOfDeliveryRadius) {
+      toast.error(
+        `Selected address is ${deliveryDistanceKm.toFixed(1)} km away. We only deliver within ${maxDeliveryRadiusKm} km. Please select Takeaway or choose a nearby address.`,
+        { duration: 6000 }
+      );
       return;
     }
 
@@ -352,9 +465,9 @@ export function useCheckoutForm() {
         longitude: customerLng,
         lat: customerLat,
         lng: customerLng,
-        house_no: houseNo.trim(),
-        street: street.trim(),
-        area: area.trim(),
+        house_no: orderType === "delivery" ? houseNo.trim() : null,
+        street: orderType === "delivery" ? street.trim() : null,
+        area: orderType === "delivery" ? area.trim() : null,
         deliveryFee: deliveryFee,
         delivery_fee: deliveryFee,
         rider_tip: effectiveTip,
@@ -462,5 +575,12 @@ export function useCheckoutForm() {
     sandboxInput2,
     setSandboxInput2,
     handleSandboxPay: handleSandboxSuccess,
+    customer,
+    handleApplyCoupon,
+    phoneCollision,
+    openAuthModal,
+    deliveryDistanceKm,
+    maxDeliveryRadiusKm,
+    isOutOfDeliveryRadius,
   };
 }

@@ -74,23 +74,44 @@ const CashierReceiptModal = ({ isOpen, onClose, order }) => {
     document.body.appendChild(iframe);
 
     const itemsHtml = items
-      .map(
-        (item) => `
-        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 4px;">
-          <span style="flex: 2;">${item.qty || item.quantity || 1}x ${item.name || item.title || "Item"}${
+      .map((item) => {
+        let addons = item.selectedAddons || item.addons || [];
+        if (typeof addons === "string") {
+          try {
+            addons = JSON.parse(addons);
+          } catch {
+            addons = [];
+          }
+        }
+        const addonsHtml =
+          Array.isArray(addons) && addons.length > 0
+            ? addons
+                .map(
+                  (a) =>
+                    `<div style="font-size: 10px; color: #444; margin-left: 12px;">+ ${
+                      a.name || a.addon_name || "Addon"
+                    } (Rs. ${Number(a.price || 0)})</div>`
+                )
+                .join("")
+            : "";
+
+        return `
+        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 2px;">
+          <span style="flex: 2; word-break: break-word;">${item.qty || item.quantity || 1}x ${item.name || item.title || "Item"}${
           item.size && item.size !== "Regular" ? ` (${item.size})` : ""
         }</span>
           <span style="flex: 1; text-align: right; font-family: monospace;">Rs. ${(
             parseFloat(item.price || 0) * parseInt(item.qty || item.quantity || 1, 10)
           ).toFixed(0)}</span>
         </div>
+        ${addonsHtml}
         ${
           item.note
             ? `<div style="font-size: 10px; color: #555; margin-left: 12px; margin-bottom: 3px;">Note: ${item.note}</div>`
             : ""
         }
-      `
-      )
+      `;
+      })
       .join("");
 
     const content = `
@@ -311,33 +332,53 @@ const CashierReceiptModal = ({ isOpen, onClose, order }) => {
             </div>
 
             {items && items.length > 0 ? (
-              items.map((item, index) => (
-                <div key={index} className="py-1 border-b border-dotted border-zinc-200 dark:border-zinc-800 last:border-none">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-black dark:text-white font-bold" style={{ flex: 2 }}>
-                      <span className="text-amber-600 dark:text-amber-400 font-mono mr-1">
-                        {item.qty || item.quantity || 1}x
-                      </span>
-                      {item.title || item.name}
-                      {item.size && item.size !== "Regular" && (
-                        <span className="text-[10px] text-zinc-500 dark:text-zinc-400 ml-1 font-normal">
-                          ({item.size})
+              items.map((item, index) => {
+                let addons = item.selectedAddons || item.addons || [];
+                if (typeof addons === "string") {
+                  try {
+                    addons = JSON.parse(addons);
+                  } catch {
+                    addons = [];
+                  }
+                }
+
+                return (
+                  <div key={index} className="py-1 border-b border-dotted border-zinc-200 dark:border-zinc-800 last:border-none">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-black dark:text-white font-bold" style={{ flex: 2 }}>
+                        <span className="text-amber-600 dark:text-amber-400 font-mono mr-1">
+                          {item.qty || item.quantity || 1}x
                         </span>
-                      )}
-                    </span>
-                    <span className="text-black dark:text-white font-mono font-bold shrink-0" style={{ flex: 1, textAlign: "right" }}>
-                      Rs. {(
-                        parseFloat(item.price || 0) * parseInt(item.qty || item.quantity || 1, 10)
-                      ).toFixed(0)}
-                    </span>
-                  </div>
-                  {item.note && (
-                    <div className="text-[10px] text-zinc-500 dark:text-zinc-400 italic pl-3">
-                      Note: {item.note}
+                        {item.title || item.name}
+                        {item.size && item.size !== "Regular" && (
+                          <span className="text-[10px] text-zinc-500 dark:text-zinc-400 ml-1 font-normal">
+                            ({item.size})
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-black dark:text-white font-mono font-bold shrink-0" style={{ flex: 1, textAlign: "right" }}>
+                        Rs. {(
+                          parseFloat(item.price || 0) * parseInt(item.qty || item.quantity || 1, 10)
+                        ).toFixed(0)}
+                      </span>
                     </div>
-                  )}
-                </div>
-              ))
+                    {Array.isArray(addons) && addons.length > 0 && (
+                      <div className="space-y-0.5 mt-0.5">
+                        {addons.map((addon, aIdx) => (
+                          <div key={aIdx} className="text-[10px] text-zinc-500 dark:text-zinc-400 pl-3 font-mono">
+                            + {addon.name || addon.addon_name} (Rs. {Number(addon.price || 0)})
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {item.note && (
+                      <div className="text-[10px] text-zinc-500 dark:text-zinc-400 italic pl-3 mt-0.5">
+                        Note: {item.note}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             ) : (
               <div className="text-xs text-zinc-400 text-center py-2">
                 No items recorded

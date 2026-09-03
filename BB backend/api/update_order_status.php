@@ -24,18 +24,48 @@ if (!empty($orderId) && !empty($data->status)) {
 
         // Normalize status string (capitalized word for DB, lowercase for client)
         $statusMap = [
-            'pending' => 'Pending',
-            'cooking' => 'Cooking',
-            'preparing' => 'Cooking',
-            'ready' => 'Ready',
+            'pending'    => 'Pending',
+            'cooking'    => 'Cooking',
+            'preparing'  => 'Cooking',
+            'ready'      => 'Ready',
             'dispatched' => 'Dispatched',
-            'delivered' => 'Delivered',
-            'completed' => 'Completed',
-            'cancelled' => 'Cancelled',
-            'declined' => 'Declined'
+            'delivered'  => 'Delivered',
+            'completed'  => 'Completed',
+            'cancelled'  => 'Cancelled',
+            'declined'   => 'Declined'
         ];
 
-        $dbStatus = isset($statusMap[strtolower($rawStatus)]) ? $statusMap[strtolower($rawStatus)] : ucfirst($rawStatus);
+        $normKey = strtolower($rawStatus);
+        if (!isset($statusMap[$normKey])) {
+            http_response_code(400);
+            echo json_encode([
+                "success" => false, 
+                "message" => "Invalid order status. Allowed: Pending, Cooking, Ready, Dispatched, Delivered, Completed, Cancelled, Declined"
+            ]);
+            exit();
+        }
+        $dbStatus = $statusMap[$normKey];
+
+        // Fetch current status to check transition validity
+        $currStmt = $db->prepare("SELECT status FROM orders WHERE id = :id LIMIT 1");
+        $currStmt->execute([':id' => $id]);
+        $currentOrder = $currStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$currentOrder) {
+            http_response_code(404);
+            echo json_encode(["success" => false, "message" => "Order #$id not found."]);
+            exit();
+        }
+
+        $terminalStatuses = ['Completed', 'Delivered', 'Cancelled', 'Declined'];
+        if (in_array($currentOrder['status'], $terminalStatuses) && $dbStatus === 'Pending') {
+            http_response_code(400);
+            echo json_encode([
+                "success" => false, 
+                "message" => "Cannot revert order from terminal status '{$currentOrder['status']}' back to 'Pending'."
+            ]);
+            exit();
+        }
 
         $query = "UPDATE orders SET status = :status WHERE id = :id";
         $stmt = $db->prepare($query);

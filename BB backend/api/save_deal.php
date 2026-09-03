@@ -58,14 +58,16 @@ if (!empty($data->title) && isset($data->price) && $data->price !== '') {
         // 2. Deal Items Insert
         if (!empty($data->items) && is_array($data->items)) {
             $itemQuery = "INSERT INTO deal_items 
-                          (deal_id, item_title, quantity, is_customizable, choice_group_name, options_json) 
-                          VALUES (:deal_id, :item_title, :qty, :is_customizable, :choice_group_name, :options_json)";
+                          (deal_id, menu_item_id, item_title, quantity, is_customizable, choice_group_name, options_json) 
+                          VALUES (:deal_id, :menu_item_id, :item_title, :qty, :is_customizable, :choice_group_name, :options_json)";
             $itemStmt = $db->prepare($itemQuery);
 
             foreach ($data->items as $item) {
                 $item = (object)$item;
                 $itemTitle = trim($item->item_title ?? $item->name ?? '');
                 if ($itemTitle === '') continue;
+
+                $menuItemId = !empty($item->menu_item_id) ? intval($item->menu_item_id) : (!empty($item->id) && is_numeric($item->id) ? intval($item->id) : 0);
 
                 $optionsJson = null;
                 if (!empty($item->options_str)) {
@@ -76,6 +78,7 @@ if (!empty($data->title) && isset($data->price) && $data->price !== '') {
 
                 $itemStmt->execute([
                     ':deal_id' => $deal_id,
+                    ':menu_item_id' => $menuItemId,
                     ':item_title' => $itemTitle,
                     ':qty' => max(1, intval($item->quantity ?? $item->qty ?? 1)),
                     ':is_customizable' => !empty($item->is_customizable) ? 1 : 0,

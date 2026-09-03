@@ -195,7 +195,32 @@ export default function ActiveOrderCard({ order, onComplete, onCancel, isComplet
           <button
             type="button"
             disabled={isCompleting || isFailing}
-            onClick={onComplete}
+            onClick={async () => {
+              if (isCod) {
+                const res = await Swal.fire({
+                  title: "Collect Cash on Delivery",
+                  html: `
+                    <div style="text-align: center; font-size: 13px;">
+                      <p style="color: #a1a1aa; margin-bottom: 10px;">Please verify you have received payment from the customer:</p>
+                      <div style="font-size: 26px; font-weight: 900; color: #10b981; font-family: 'Oswald', sans-serif; margin-bottom: 8px;">
+                        ${order.total}
+                      </div>
+                      <p style="color: #71717a; font-size: 11px; margin: 0;">Order #${order.id} &bull; ${order.customer}</p>
+                    </div>
+                  `,
+                  icon: "question",
+                  showCancelButton: true,
+                  confirmButtonText: "Yes, Cash Collected",
+                  confirmButtonColor: "#10b981",
+                  cancelButtonText: "Cancel",
+                  cancelButtonColor: "#71717a",
+                  background: "#18181b",
+                  color: "#fff",
+                });
+                if (!res.isConfirmed) return;
+              }
+              if (onComplete) onComplete();
+            }}
             className="flex-[2] min-h-[44px] px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs uppercase font-['Oswald',sans-serif] tracking-wider cursor-pointer flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 border-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FaCheckCircle className="text-xs" />

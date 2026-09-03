@@ -55,7 +55,7 @@ export const OrderProvider = ({ children }) => {
 
     try {
       const response = await fetch(
-        `${API_BASE}/insert_order.php`,
+        `${API_BASE}/create_order.php`,
         {
           method: "POST",
           headers: {

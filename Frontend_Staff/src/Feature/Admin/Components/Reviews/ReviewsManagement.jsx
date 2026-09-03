@@ -60,11 +60,18 @@ export default function ReviewsManagement() {
   // Update Status (Approved / Hidden)
   const handleUpdateStatus = async (reviewId, newStatus) => {
     setActionLoadingId(reviewId);
+    const targetReview = reviews.find((r) => r.id === reviewId);
+    const currentFeatured = targetReview?.is_featured || 0;
+
     try {
       const res = await fetch(`${API_BASE}/admin_reviews.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: reviewId, status: newStatus }),
+        body: JSON.stringify({
+          id: reviewId,
+          status: newStatus,
+          is_featured: currentFeatured,
+        }),
       });
       const data = await res.json();
       if (data.success) {

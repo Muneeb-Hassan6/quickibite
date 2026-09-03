@@ -2,11 +2,21 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  // 1. Session Check - get user + token
+  // 1. Session Check - get user + token with cross-tab fallback
   const sessionData =
-    sessionStorage.getItem("staff_session") || sessionStorage.getItem("user");
-  const token = sessionStorage.getItem("auth_token");
-  const user = sessionData ? JSON.parse(sessionData) : null;
+    sessionStorage.getItem("staff_session") ||
+    sessionStorage.getItem("user") ||
+    localStorage.getItem("staff_session") ||
+    localStorage.getItem("user");
+  const token =
+    sessionStorage.getItem("auth_token") || localStorage.getItem("auth_token");
+
+  let user = null;
+  try {
+    user = sessionData ? JSON.parse(sessionData) : null;
+  } catch {
+    user = null;
+  }
 
   // 2. If not logged in OR no token, redirect to login
   if (!user || !token) {
@@ -14,6 +24,9 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     sessionStorage.removeItem("staff_session");
     sessionStorage.removeItem("user");
     sessionStorage.removeItem("auth_token");
+    localStorage.removeItem("staff_session");
+    localStorage.removeItem("user");
+    localStorage.removeItem("auth_token");
     return <Navigate to="/login" replace />;
   }
 

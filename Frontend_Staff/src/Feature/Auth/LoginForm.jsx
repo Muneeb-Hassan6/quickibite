@@ -41,10 +41,15 @@ const LoginForm = () => {
       const result = await response.json();
 
       if (result.success) {
-        // 1. Save user session AND JWT token
-        sessionStorage.setItem("staff_session", JSON.stringify(result.user));
-        sessionStorage.setItem("user", JSON.stringify(result.user));
-        sessionStorage.setItem("auth_token", result.token); // 🔥 JWT Token save ho gaya
+        // 1. Save user session AND JWT token across both storage layers
+        const userJson = JSON.stringify(result.user);
+        sessionStorage.setItem("staff_session", userJson);
+        sessionStorage.setItem("user", userJson);
+        sessionStorage.setItem("auth_token", result.token);
+
+        localStorage.setItem("staff_session", userJson);
+        localStorage.setItem("user", userJson);
+        localStorage.setItem("auth_token", result.token);
 
         Swal.fire({
           toast: true,

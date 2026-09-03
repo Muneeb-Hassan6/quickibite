@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
   // Auth Modal State & Handlers
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState("login"); // 'login' | 'register' | 'forgot'
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
 
   const openAuthModal = (modeOrTab = "login") => {
     let target = modeOrTab;
@@ -32,6 +33,16 @@ export const AuthProvider = ({ children }) => {
   const closeAuthModal = () => {
     setIsAuthModalOpen(false);
   };
+
+  // Auto-prompt Google OAuth users who have no phone number on file
+  useEffect(() => {
+    if (customer && (!customer.phone || customer.phone.trim() === "")) {
+      const skipped = sessionStorage.getItem("qb_skip_phone_prompt");
+      if (!skipped) {
+        setShowPhoneModal(true);
+      }
+    }
+  }, [customer]);
 
   // Fetch saved addresses for the authenticated customer
   const fetchAddresses = useCallback(async (customerId = null) => {
@@ -138,6 +149,12 @@ export const AuthProvider = ({ children }) => {
         toast.success(`Google sign-in successful! Welcome, ${data.customer.full_name}! 👋`);
         setIsAuthModalOpen(false);
         fetchAddresses(data.customer.id);
+
+        // Prompt user to add phone number if missing
+        if (!data.customer.phone || data.customer.phone.trim() === "") {
+          setShowPhoneModal(true);
+        }
+
         return { success: true, customer: data.customer };
       } else {
         toast.error(data.message || "Google authentication failed.");
@@ -146,6 +163,46 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.error("Google auth error:", err);
       toast.error("Network error during Google sign-in.");
+      return { success: false, message: "Network error" };
+    }
+  };
+
+  // Update Customer Phone handler (for Google OAuth users or profile completion)
+  const updateCustomerPhone = async (phone) => {
+    if (!customer?.id) {
+      toast.error("Please log in first.");
+      return { success: false, message: "User not logged in." };
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/customer_update_phone.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_id: customer.id,
+          phone: phone.trim(),
+        }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        const updatedCust = {
+          ...customer,
+          phone: data.phone,
+          mobile: data.phone,
+        };
+        setCustomer(updatedCust);
+        localStorage.setItem("quickbite_customer_user", JSON.stringify(updatedCust));
+        toast.success("Phone number saved successfully! 🎉");
+        setShowPhoneModal(false);
+        return { success: true, phone: data.phone };
+      } else {
+        toast.error(data.message || "Failed to update phone number.");
+        return { success: false, message: data.message };
+      }
+    } catch (err) {
+      console.error("Phone update error:", err);
+      toast.error("Network error while updating phone number.");
       return { success: false, message: "Network error" };
     }
   };
@@ -252,7 +309,14 @@ export const AuthProvider = ({ children }) => {
 
       if (data.success) {
         toast.success("Address removed.");
-        setSavedAddresses((prev) => prev.filter((a) => a.id !== addressId));
+        setSavedAddresses((prev) => {
+          const remaining = prev.filter((a) => a.id !== addressId);
+          const wasDefault = prev.find((a) => a.id === addressId)?.is_default == 1;
+          if (wasDefault && remaining.length > 0) {
+            remaining[0] = { ...remaining[0], is_default: 1 };
+          }
+          return remaining;
+        });
         return { success: true };
       } else {
         toast.error(data.message || "Failed to remove address.");
@@ -304,6 +368,9 @@ export const AuthProvider = ({ children }) => {
         fetchAddresses,
         addAddress,
         deleteAddress,
+        showPhoneModal,
+        setShowPhoneModal,
+        updateCustomerPhone,
       }}
     >
       {children}

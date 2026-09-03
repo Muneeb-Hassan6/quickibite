@@ -33,6 +33,7 @@ import { OrderProvider } from "./Context/OrderContext";
 import { MenuUIProvider } from "./Context/MenuUIContext";
 import { AuthProvider, useAuth } from "./Context/AuthContext";
 import AuthModal from "./Components/Auth/AuthModal";
+import GooglePhoneModal from "./Components/Customer/GooglePhoneModal";
 import CustomerProfileDrawer from "./Components/Customer/CustomerProfileDrawer";
 
 const MainContent = () => {
@@ -119,6 +120,9 @@ const MainContent = () => {
 
       {/* 🔐 AUTHENTICATION MODAL */}
       <AuthModal />
+
+      {/* 📱 GOOGLE LOGIN PHONE PROMPT MODAL */}
+      <GooglePhoneModal />
 
       {/* 👤 CUSTOMER PROFILE & ORDER HISTORY DRAWER */}
       <CustomerProfileDrawer />

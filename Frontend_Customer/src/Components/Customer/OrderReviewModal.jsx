@@ -84,6 +84,8 @@ export default function OrderReviewModal({ order, isOpen, onClose, onReviewSubmi
         order_id: order.id,
         customer_id: order.customer_id || null,
         customer_name: order.customer_name || "Verified Buyer",
+        customer_mobile: order.customer_mobile || order.phone || order.mobile || null,
+        order_type: order.order_type || order.order_mode || "Delivery",
         rating: rating,
         review_text: reviewText.trim(),
         tags: selectedTags,

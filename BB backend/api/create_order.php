@@ -133,7 +133,28 @@ $addon_ids = [];
 $menu_item_ids = [];
 
 // Safely extract cart items from either 'cart' or 'items'
-$cart_items = !empty($data->cart) && is_array($data->cart) ? $data->cart : (!empty($data->items) && is_array($data->items) ? $data->items : []);
+$raw_items = !empty($data->cart) && is_array($data->cart) ? $data->cart : (!empty($data->items) && is_array($data->items) ? $data->items : []);
+
+// Sanitize and filter items to only allow valid positive quantities (1 to 100)
+$cart_items = [];
+foreach ($raw_items as $raw_item) {
+    if (is_object($raw_item)) {
+        $qty = intval($raw_item->qty ?? 1);
+        if ($qty > 0 && $qty <= 100) {
+            $raw_item->qty = $qty;
+            $cart_items[] = $raw_item;
+        }
+    }
+}
+
+if (empty($cart_items)) {
+    http_response_code(400);
+    echo json_encode([
+        "success" => false, 
+        "message" => "Cart is empty or contains invalid item quantities."
+    ]);
+    exit();
+}
 
 if (!empty($cart_items)) {
     foreach($cart_items as $item) {
@@ -235,10 +256,37 @@ $delivery_fee = 0.00;
 $discount_amount = 0.00;
 $coupon_code = !empty($data->coupon_code) ? trim($data->coupon_code) : (!empty($data->couponCode) ? trim($data->couponCode) : (!empty($data->promo_code) ? trim($data->promo_code) : null));
 
-// 1. Enforce Delivery Fee based on Order Mode
+// Extract customer info early for coupon security validation
+$customer_mobile = !empty($data->customer_mobile) ? trim($data->customer_mobile) : 
+                  (!empty($data->customerMobile) ? trim($data->customerMobile) : 
+                  (!empty($data->mobile) ? trim($data->mobile) : 
+                  (!empty($data->phone) ? trim($data->phone) : 
+                  (!empty($data->contact) ? trim($data->contact) : null))));
+
+$customer_id = !empty($data->customer_id) ? intval($data->customer_id) : (!empty($data->customerId) ? intval($data->customerId) : null);
+if (!$customer_id && !empty($customer_mobile)) {
+    $cleanPh = preg_replace('/[^0-9]/', '', $customer_mobile);
+    $findCust = $db->prepare("SELECT id FROM customer_users WHERE phone = :ph OR phone = :ph2 LIMIT 1");
+    $findCust->execute([':ph' => $customer_mobile, ':ph2' => $cleanPh]);
+    $cRow = $findCust->fetch(PDO::FETCH_ASSOC);
+    if ($cRow) {
+        $customer_id = intval($cRow['id']);
+    }
+}
+if (!$customer_id && !empty($data->customer_email ?? ($data->email ?? null))) {
+    $em = trim($data->customer_email ?? $data->email);
+    $findCustEm = $db->prepare("SELECT id FROM customer_users WHERE email = :em LIMIT 1");
+    $findCustEm->execute([':em' => $em]);
+    $cRowEm = $findCustEm->fetch(PDO::FETCH_ASSOC);
+    if ($cRowEm) {
+        $customer_id = intval($cRowEm['id']);
+    }
+}
+
+// 1. Enforce Delivery Fee & Delivery Radius Boundary Check based on Order Mode
 if ($order_mode === 'delivery') {
-    // Dynamic Free Delivery Threshold
-    $delivSettingsQuery = $db->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('free_delivery_threshold', 'default_delivery_fee', 'delivery_fee')");
+    // Dynamic Delivery Settings
+    $delivSettingsQuery = $db->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('free_delivery_threshold', 'default_delivery_fee', 'delivery_fee', 'delivery_radius', 'restaurant_lat', 'restaurant_lng')");
     $delivSettings = [];
     if ($delivSettingsQuery) {
         while ($row = $delivSettingsQuery->fetch(PDO::FETCH_ASSOC)) {
@@ -247,8 +295,44 @@ if ($order_mode === 'delivery') {
     }
     $dbThreshold = isset($delivSettings['free_delivery_threshold']) ? floatval($delivSettings['free_delivery_threshold']) : 1500.00;
     $dbDefaultFee = isset($delivSettings['default_delivery_fee']) ? floatval($delivSettings['default_delivery_fee']) : (isset($delivSettings['delivery_fee']) ? floatval($delivSettings['delivery_fee']) : 150.00);
-
     $delivery_fee = ($subtotal >= $dbThreshold) ? 0.00 : $dbDefaultFee;
+
+    // Delivery Radius Boundary Guard (Haversine Formula)
+    $restaurantLat = isset($delivSettings['restaurant_lat']) && floatval($delivSettings['restaurant_lat']) != 0 ? floatval($delivSettings['restaurant_lat']) : 31.5204;
+    $restaurantLng = isset($delivSettings['restaurant_lng']) && floatval($delivSettings['restaurant_lng']) != 0 ? floatval($delivSettings['restaurant_lng']) : 74.3587;
+    $maxDeliveryRadiusKm = isset($delivSettings['delivery_radius']) && floatval($delivSettings['delivery_radius']) > 0 ? floatval($delivSettings['delivery_radius']) : 10.0;
+
+    $reqLat = !empty($data->customer_lat) ? floatval($data->customer_lat) : 
+              (!empty($data->target_lat) ? floatval($data->target_lat) : 
+              (!empty($data->latitude) ? floatval($data->latitude) : 
+              (!empty($data->lat) ? floatval($data->lat) : null)));
+
+    $reqLng = !empty($data->customer_lng) ? floatval($data->customer_lng) : 
+              (!empty($data->target_lng) ? floatval($data->target_lng) : 
+              (!empty($data->longitude) ? floatval($data->longitude) : 
+              (!empty($data->lng) ? floatval($data->lng) : null)));
+
+    if ($reqLat !== null && $reqLng !== null && ($reqLat != 0 || $reqLng != 0)) {
+        $earthRadius = 6371; // Earth's radius in km
+        $dLat = deg2rad($reqLat - $restaurantLat);
+        $dLon = deg2rad($reqLng - $restaurantLng);
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+             cos(deg2rad($restaurantLat)) * cos(deg2rad($reqLat)) *
+             sin($dLon / 2) * sin($dLon / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        $distanceKm = $earthRadius * $c;
+
+        if ($distanceKm > $maxDeliveryRadiusKm) {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'message' => "Delivery location exceeds our maximum delivery radius of " . number_format($maxDeliveryRadiusKm, 0) . " km.",
+                'distance_km' => round($distanceKm, 2),
+                'max_radius_km' => $maxDeliveryRadiusKm
+            ]);
+            exit();
+        }
+    }
 } else {
     // Mode is Takeaway or Dine-In: Strictly zero out delivery fees
     $delivery_fee = 0.00;
@@ -266,24 +350,83 @@ if (!empty($coupon_code)) {
         $isNotExpired = empty($validCoupon['expiry_date']) || strtotime($validCoupon['expiry_date']) >= time();
         $hasUsageLeft = is_null($validCoupon['usage_limit']) || intval($validCoupon['times_used']) < intval($validCoupon['usage_limit']);
 
-        if ($subtotal >= $minSpend && $isNotExpired && $hasUsageLeft) {
-            if ($validCoupon['discount_type'] === 'percentage') {
-                $discount_amount = ($subtotal * floatval($validCoupon['discount_value'])) / 100;
-                if (!empty($validCoupon['max_discount'])) {
-                    $discount_amount = min($discount_amount, floatval($validCoupon['max_discount']));
-                }
-            } else {
-                $discount_amount = floatval($validCoupon['discount_value']);
-            }
-            $discount_amount = min($discount_amount, $subtotal);
-            $couponIdToUpdate = $validCoupon['id'];
-        } else {
-            $coupon_code = null;
-            $discount_amount = 0.00;
+        if (!$isNotExpired || !$hasUsageLeft || $subtotal < $minSpend) {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'message' => 'The applied promo code is no longer valid or minimum spend requirement is not met.'
+            ]);
+            exit();
         }
+
+        // Rule B (Per-Customer Multi-Use Prevention)
+        if (!empty($customer_id) || !empty($customer_mobile)) {
+            $whereParts = [];
+            $params = [':code' => $coupon_code];
+
+            if (!empty($customer_id)) {
+                $whereParts[] = "customer_id = :cid";
+                $params[':cid'] = $customer_id;
+            }
+            if (!empty($customer_mobile)) {
+                $whereParts[] = "customer_mobile = :mobile";
+                $params[':mobile'] = $customer_mobile;
+            }
+
+            $whereClause = implode(" OR ", $whereParts);
+            $usageCheckStmt = $db->prepare("SELECT COUNT(*) FROM orders WHERE coupon_code = :code AND ({$whereClause}) AND status != 'Cancelled'");
+            $usageCheckStmt->execute($params);
+            if (intval($usageCheckStmt->fetchColumn()) > 0) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'You have already redeemed this promo code on a previous order.'
+                ]);
+                exit();
+            }
+        }
+
+        // Rule A (Welcome & First-Order Coupons)
+        $isFirstOrderOnly = ($coupon_code === 'WELCOME50' || !empty($validCoupon['is_first_order_only']));
+        if ($isFirstOrderOnly) {
+            if (empty($customer_id)) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => "The {$validCoupon['code']} coupon is exclusive to registered members. Please log in or create an account to claim."
+                ]);
+                exit();
+            }
+
+            $priorStmt = $db->prepare("SELECT COUNT(*) FROM orders WHERE customer_id = :cid AND status != 'Cancelled'");
+            $priorStmt->execute([':cid' => $customer_id]);
+            if (intval($priorStmt->fetchColumn()) > 0) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'This welcome promo is valid on your first order only.'
+                ]);
+                exit();
+            }
+        }
+
+        if ($validCoupon['discount_type'] === 'percentage') {
+            $discount_amount = ($subtotal * floatval($validCoupon['discount_value'])) / 100;
+            if (!empty($validCoupon['max_discount'])) {
+                $discount_amount = min($discount_amount, floatval($validCoupon['max_discount']));
+            }
+        } else {
+            $discount_amount = floatval($validCoupon['discount_value']);
+        }
+        $discount_amount = min($discount_amount, $subtotal);
+        $couponIdToUpdate = $validCoupon['id'];
     } else {
-        $coupon_code = null;
-        $discount_amount = 0.00;
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Invalid or expired promo code.'
+        ]);
+        exit();
     }
 }
 

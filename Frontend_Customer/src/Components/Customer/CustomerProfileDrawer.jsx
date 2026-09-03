@@ -109,15 +109,76 @@ export default function CustomerProfileDrawer() {
 
   if (!isProfileDrawerOpen || !isAuthenticated) return null;
 
-  // 1-Click Reorder Handler
-  const handleReorder = (order) => {
+  // 1-Click Reorder Handler with Live Catalog Revalidation
+  const handleReorder = async (order) => {
     if (!order.items || order.items.length === 0) {
       toast.error("This order has no item details to reorder.");
       return;
     }
 
+    const reorderToast = toast.loading("Checking live menu prices & availability...");
+    let liveMenuItems = [];
+
+    try {
+      const res = await fetch(`${API_BASE}/get_menu.php`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        liveMenuItems = data;
+      } else if (data && Array.isArray(data.data)) {
+        liveMenuItems = data.data;
+      } else if (data && Array.isArray(data.menu)) {
+        liveMenuItems = data.menu;
+      }
+    } catch (err) {
+      console.warn("Could not fetch live menu for reorder, falling back to cached prices:", err);
+    }
+
+    toast.dismiss(reorderToast);
+
     let addedCount = 0;
+    let skippedCount = 0;
+
     order.items.forEach((item) => {
+      const itemId = item.menu_item_id || item.item_id || item.id;
+      const itemName = item.title || item.name || item.item_name || "Food Item";
+
+      // Match item against active live menu catalog
+      const matchedItem = liveMenuItems.find(
+        (m) =>
+          String(m.id) === String(itemId) ||
+          (m.name && itemName && m.name.trim().toLowerCase() === itemName.trim().toLowerCase())
+      );
+
+      // Check stock availability
+      const isAvailable = matchedItem
+        ? matchedItem.isAvailable !== false &&
+          matchedItem.is_available !== 0 &&
+          matchedItem.isAvailable !== 0 &&
+          matchedItem.is_available !== "0" &&
+          matchedItem.isAvailable !== "0"
+        : true;
+
+      if (!isAvailable) {
+        skippedCount += 1;
+        toast.error(`"${itemName}" is currently unavailable and was not reordered.`, {
+          duration: 4500,
+        });
+        return;
+      }
+
+      // Check live price: variant price if available, else base price, fallback to historical
+      let livePrice = matchedItem ? Number(matchedItem.price) : Number(item.price || 0);
+      const itemSize = item.size || "Regular";
+
+      if (matchedItem && Array.isArray(matchedItem.variants) && matchedItem.variants.length > 0) {
+        const matchedVariant = matchedItem.variants.find(
+          (v) => (v.size || v.name || v.size_name || "").trim().toLowerCase() === itemSize.trim().toLowerCase()
+        );
+        if (matchedVariant && matchedVariant.price) {
+          livePrice = Number(matchedVariant.price);
+        }
+      }
+
       let parsedAddons = [];
       if (item.addons) {
         try {
@@ -128,21 +189,27 @@ export default function CustomerProfileDrawer() {
       }
 
       addToCart({
-        id: item.menu_item_id || item.item_id || item.id,
-        name: item.title || item.name || item.item_name || "Food Item",
-        title: item.title || item.name || item.item_name || "Food Item",
-        price: parseFloat(item.price || 0),
+        id: matchedItem ? matchedItem.id : itemId,
+        menuItemId: matchedItem ? matchedItem.id : itemId,
+        name: itemName,
+        title: itemName,
+        price: livePrice,
         qty: parseInt(item.qty || item.quantity || 1, 10),
-        size: item.size || "Regular",
+        size: itemSize,
         note: item.note || "",
         selectedAddons: parsedAddons,
+        img: matchedItem?.img || matchedItem?.image || item.img || item.image || "",
       });
       addedCount += 1;
     });
 
     closeProfileDrawer();
-    setIsCartOpen(true);
-    toast.success(`⚡ Reorder successful! Added ${addedCount} items to your cart.`);
+    if (addedCount > 0) {
+      setIsCartOpen(true);
+      toast.success(`⚡ Reorder successful! Added ${addedCount} items to your cart at current prices.`);
+    } else if (skippedCount > 0) {
+      toast.error("All items in this order are currently out of stock.");
+    }
   };
 
   // Review submission callback
@@ -165,12 +232,13 @@ export default function CustomerProfileDrawer() {
     }
 
     setSavingAddress(true);
+    const shouldBeDefault = newIsDefault || savedAddresses.length === 0;
     const res = await addAddress({
       label: newLabel,
       address_line: newAddressLine.trim(),
       area: newArea.trim(),
       landmark: newLandmark.trim(),
-      is_default: newIsDefault ? 1 : 0,
+      is_default: shouldBeDefault ? 1 : 0,
     });
     setSavingAddress(false);
 
@@ -398,8 +466,12 @@ export default function CustomerProfileDrawer() {
                               <span className="font-mono font-black text-sm text-zinc-900 dark:text-white">
                                 #{order.id}
                               </span>
-                              <span className="text-[10px] text-zinc-600 dark:text-neutral-400 uppercase font-mono px-2 py-0.5 rounded-md bg-zinc-200/80 dark:bg-neutral-900 border border-zinc-300 dark:border-neutral-800">
-                                {order.order_type || "Delivery"}
+                              <span className="text-[10px] text-zinc-600 dark:text-neutral-400 font-mono px-2 py-0.5 rounded-md bg-zinc-200/80 dark:bg-neutral-900 border border-zinc-300 dark:border-neutral-800 uppercase font-bold">
+                                {order.order_type === "dine_in"
+                                  ? `Dine-In ${order.table_number ? `(T-${order.table_number})` : ""}`
+                                  : order.order_type === "takeaway"
+                                  ? "Takeaway"
+                                  : "Delivery"}
                               </span>
                             </div>
                             <span className="text-[11px] text-zinc-400 dark:text-neutral-500 font-mono block mt-1">
@@ -428,24 +500,30 @@ export default function CustomerProfileDrawer() {
                             {isExpanded ? <FaChevronUp className="text-[10px]" /> : <FaChevronDown className="text-[10px]" />}
                           </button>
 
-                          <div className="flex items-center gap-2">
-                            {/* Rate This Order Button */}
+                          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                            {/* Rate This Order Button (Permanently Locked once reviewed) */}
                             {isDelivered && (
                               <button
                                 type="button"
-                                onClick={() => setReviewOrder(order)}
-                                className={`px-2.5 py-1.5 rounded-xl font-['Oswald',sans-serif] font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer border ${
+                                disabled={Boolean(reviewedOrderIds[order.id])}
+                                onClick={() => !reviewedOrderIds[order.id] && setReviewOrder(order)}
+                                className={`px-2.5 py-1.5 rounded-xl font-['Oswald',sans-serif] font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all border ${
                                   reviewedOrderIds[order.id]
-                                    ? "bg-zinc-200 dark:bg-neutral-900 text-amber-600 dark:text-amber-400 border-amber-500/40"
-                                    : "bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                                    ? "bg-zinc-100 dark:bg-neutral-900 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 opacity-90 cursor-default"
+                                    : "bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 border-amber-500/30 cursor-pointer active:scale-95"
                                 }`}
                               >
-                                <FaStar className="text-[10px] text-amber-500" />
-                                <span>
-                                  {reviewedOrderIds[order.id]
-                                    ? `Rated (${reviewedOrderIds[order.id].rating}/5)`
-                                    : "Rate Order"}
-                                </span>
+                                {reviewedOrderIds[order.id] ? (
+                                  <>
+                                    <FaCheckCircle className="text-[10px] text-emerald-500" />
+                                    <span>Rated ({reviewedOrderIds[order.id].rating}/5)</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <FaStar className="text-[10px] text-amber-500" />
+                                    <span>Rate Order</span>
+                                  </>
+                                )}
                               </button>
                             )}
 

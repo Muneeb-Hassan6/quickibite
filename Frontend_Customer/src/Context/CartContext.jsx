@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
+import { io } from "socket.io-client";
 import { API_BASE } from "../config/api";
 
 const CartContext = createContext();
@@ -161,7 +162,13 @@ export const CartProvider = ({ children }) => {
       payment_method: customerDetails.paymentMethod || customerDetails.payment_method || "Cash on Delivery",
       payment_status: customerDetails.paymentStatus || customerDetails.payment_status || "Pending",
 
-      total: customerDetails.total || orderTotal,
+      total:
+        customerDetails.total !== undefined && customerDetails.total !== null
+          ? Number(customerDetails.total)
+          : cartItems.reduce(
+              (sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1),
+              0
+            ),
       cart: customerDetails.items || customerDetails.cart || cartItems,
       items: customerDetails.items || customerDetails.cart || cartItems,
     };
@@ -236,7 +243,8 @@ export const CartProvider = ({ children }) => {
 
       // 🔥 SOCKET EMIT: Node Server ko directly frontend se batao!
       try {
-        const socket = io(import.meta.env.VITE_SOCKET_URL);
+        const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
+        const socket = io(socketUrl);
         socket.emit("new_order_placed");
         setTimeout(() => socket.disconnect(), 1000);
       } catch (sockErr) {

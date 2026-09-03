@@ -7,6 +7,8 @@ export default function CustomerContactFields({
   customerMobile = "",
   handleMobileChange,
   errors = {},
+  phoneCollision = {},
+  onOpenLogin,
 }) {
   return (
     <div className="bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-neutral-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-3 sm:space-y-4">
@@ -86,6 +88,35 @@ export default function CustomerContactFields({
             </span>
           )}
         </div>
+
+        {/* 🌟 Guest Phone Collision Notice Banner */}
+        {phoneCollision?.isColliding && (
+          <div className="sm:col-span-2 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-400 text-neutral-950 flex items-center justify-center shrink-0 font-black text-xs shadow-md mt-0.5">
+                ★
+              </div>
+              <div>
+                <p className="text-xs sm:text-sm font-bold text-amber-500 m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
+                  Registered Account Detected {phoneCollision.existingName ? `(${phoneCollision.existingName})` : ""}
+                </p>
+                <p className="text-[11px] sm:text-xs text-neutral-300 dark:text-neutral-300 mt-1 leading-relaxed">
+                  This mobile number is linked with an existing QuickiBite account. Log in to claim loyalty points and track this order in your profile.
+                </p>
+              </div>
+            </div>
+
+            {onOpenLogin && (
+              <button
+                type="button"
+                onClick={onOpenLogin}
+                className="self-start sm:self-center shrink-0 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 active:scale-95 text-neutral-950 text-xs font-black font-['Oswald',sans-serif] uppercase tracking-wider transition-all shadow-md cursor-pointer border-none"
+              >
+                Log In Now
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/cors_headers.php';
+require_once __DIR__ . '/../config/auth_middleware.php';
+require_role(['Admin', 'Manager']);
 require_once __DIR__ . '/../config/Database.php';
 
 try {

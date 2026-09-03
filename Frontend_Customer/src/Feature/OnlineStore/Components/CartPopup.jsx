@@ -13,6 +13,8 @@ const CartPopup = () => {
   const navigate = useNavigate();
   const { session } = useOrderSession();
   const isDineIn = session?.mode === "dine_in";
+  const isTakeaway = session?.mode === "takeaway";
+  const isPickupOrDineIn = isDineIn || isTakeaway;
 
   const {
     isCartOpen,
@@ -107,8 +109,8 @@ const CartPopup = () => {
     0
   );
 
-  const isFreeDelivery = !isDineIn && totalAmount >= threshold && totalAmount > 0;
-  const effectiveDeliveryFee = isDineIn ? 0 : (isFreeDelivery ? 0 : defaultFee);
+  const isFreeDelivery = !isPickupOrDineIn && totalAmount >= threshold && totalAmount > 0;
+  const effectiveDeliveryFee = isPickupOrDineIn ? 0 : (isFreeDelivery ? 0 : defaultFee);
   const grandTotal = totalAmount + effectiveDeliveryFee;
 
   return (
@@ -152,13 +154,13 @@ const CartPopup = () => {
 
         {/* Scrollable Content: Free Delivery Progress + Items + Cross-sell list */}
         <div className="flex-1 overflow-y-auto px-3.5 sm:px-5 py-3 space-y-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-200 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-full">
-          {/* Phase 3.1: Free Delivery Meter (Hidden in Dine-In Mode) */}
-          {cartItems.length > 0 && !isDineIn && (
+          {/* Phase 3.1: Free Delivery Meter (Hidden in Dine-In & Takeaway Mode) */}
+          {cartItems.length > 0 && !isPickupOrDineIn && (
             <CartFreeDeliveryMeter
               subtotal={totalAmount}
               threshold={threshold}
               defaultFee={defaultFee}
-              isDineIn={isDineIn}
+              isDineIn={isPickupOrDineIn}
             />
           )}
 
@@ -188,7 +190,7 @@ const CartPopup = () => {
             effectiveDeliveryFee={effectiveDeliveryFee}
             defaultFee={defaultFee}
             isFreeDelivery={isFreeDelivery}
-            isDineIn={isDineIn}
+            isDineIn={isPickupOrDineIn}
             grandTotal={grandTotal}
             toggleCart={toggleCart}
             navigate={navigate}

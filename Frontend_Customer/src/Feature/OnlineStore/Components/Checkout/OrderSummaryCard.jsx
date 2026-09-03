@@ -13,6 +13,9 @@ export default function OrderSummaryCard({
   total = 0,
   isSubmitting = false,
   handleProceedOrder,
+  isOutOfDeliveryRadius = false,
+  deliveryDistanceKm = 0,
+  maxDeliveryRadiusKm = 10,
 }) {
   const isDelivery = orderType === "delivery";
 
@@ -84,19 +87,40 @@ export default function OrderSummaryCard({
         </div>
       </div>
 
+      {/* Out of Delivery Radius Alert */}
+      {isOutOfDeliveryRadius && (
+        <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-xs flex items-start gap-2.5 animate-fade-in">
+          <span className="text-base shrink-0">⚠️</span>
+          <div>
+            <p className="font-bold text-red-400 m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
+              Outside Delivery Zone ({deliveryDistanceKm.toFixed(1)} km)
+            </p>
+            <p className="text-[11px] text-neutral-300 mt-1 leading-relaxed">
+              We only deliver within {maxDeliveryRadiusKm} km of our restaurant. Please choose a nearby address or switch your order to <strong>Takeaway</strong> for self-pickup.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Place Order CTA Button */}
       <button
         type="button"
-        disabled={isSubmitting}
+        disabled={isSubmitting || isOutOfDeliveryRadius}
         onClick={handleProceedOrder}
-        className="w-full py-4 rounded-2xl bg-amber-400 hover:bg-amber-500 active:scale-[0.98] disabled:opacity-50 text-neutral-950 font-['Oswald',sans-serif] font-black text-base uppercase tracking-wider shadow-lg shadow-amber-400/25 transition-all flex items-center justify-center gap-2 cursor-pointer border-none"
+        className={`w-full py-4 rounded-2xl font-['Oswald',sans-serif] font-black text-base uppercase tracking-wider transition-all flex items-center justify-center gap-2 border-none ${
+          isOutOfDeliveryRadius
+            ? "bg-neutral-800 text-neutral-500 cursor-not-allowed border border-white/5 opacity-70"
+            : "bg-amber-400 hover:bg-amber-500 active:scale-[0.98] disabled:opacity-50 text-neutral-950 shadow-lg shadow-amber-400/25 cursor-pointer"
+        }`}
       >
         <span>
           {isSubmitting
             ? "Placing Order..."
+            : isOutOfDeliveryRadius
+            ? `Address Exceeds ${maxDeliveryRadiusKm} km Radius`
             : `Place Order (Rs ${total.toLocaleString()})`}
         </span>
-        <LuArrowRight className="w-4 h-4" />
+        {!isOutOfDeliveryRadius && <LuArrowRight className="w-4 h-4" />}
       </button>
 
       <div className="flex items-center justify-center gap-2 text-xs font-semibold text-neutral-400 dark:text-neutral-500">
