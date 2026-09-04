@@ -392,7 +392,8 @@ export function useCheckoutForm() {
 
   const submitFinalOrder = async (
     paymentMethodUsed,
-    paymentStatus = "Unpaid"
+    paymentStatus = "Unpaid",
+    transactionId = null
   ) => {
     setIsSubmitting(true);
     try {
@@ -482,6 +483,8 @@ export function useCheckoutForm() {
         payment_method: paymentMethodUsed,
         paymentStatus: paymentStatus,
         payment_status: paymentStatus,
+        transaction_id: transactionId || null,
+        transactionId: transactionId || null,
         orderType: orderType,
         order_type: orderType,
         tableNumber: orderType === "dine_in" ? tableNumber : null,
@@ -515,12 +518,16 @@ export function useCheckoutForm() {
     }
   };
 
-  const handleSandboxSuccess = async () => {
+  const handleSandboxSuccess = async (txnRef) => {
     setSandboxLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, 1500));
     setSandboxLoading(false);
     setSandboxModalOpen(false);
-    await submitFinalOrder(paymentMethod, "Paid Online (Sandbox)");
+    const resolvedTxn =
+      typeof txnRef === "string" && txnRef.trim()
+        ? txnRef.trim()
+        : `TXN-${Date.now().toString(36).toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
+    await submitFinalOrder(paymentMethod, "Paid Online (Sandbox)", resolvedTxn);
   };
 
   return {

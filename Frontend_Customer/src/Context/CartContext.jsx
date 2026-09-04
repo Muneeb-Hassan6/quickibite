@@ -161,6 +161,7 @@ export const CartProvider = ({ children }) => {
       // Payment Details
       payment_method: customerDetails.paymentMethod || customerDetails.payment_method || "Cash on Delivery",
       payment_status: customerDetails.paymentStatus || customerDetails.payment_status || "Pending",
+      transaction_id: customerDetails.transaction_id || customerDetails.transactionId || customerDetails.txn_id || null,
 
       total:
         customerDetails.total !== undefined && customerDetails.total !== null

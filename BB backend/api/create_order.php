@@ -78,6 +78,15 @@ try {
     if ($checkHouse->fetchColumn() == 0) {
         $db->exec("ALTER TABLE `orders` ADD COLUMN `house_info` VARCHAR(255) NULL DEFAULT NULL AFTER `house_no`");
     }
+
+    $checkTxn = $db->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                               WHERE TABLE_SCHEMA = DATABASE() 
+                               AND TABLE_NAME = 'orders' 
+                               AND COLUMN_NAME = 'transaction_id'");
+    $checkTxn->execute();
+    if ($checkTxn->fetchColumn() == 0) {
+        $db->exec("ALTER TABLE `orders` ADD COLUMN `transaction_id` VARCHAR(100) NULL DEFAULT NULL AFTER `payment_status`");
+    }
 } catch (PDOException $migErr) {
     // Silently continue — migration may have already been applied
     error_log("Auto-migrate notice: " . $migErr->getMessage());
@@ -460,6 +469,24 @@ if(!empty($cart_items) && $order_total > 0) {
 
         $payment_method = !empty($data->paymentMethod) ? $data->paymentMethod : (!empty($data->payment_method) ? $data->payment_method : "Cash on Delivery");
         $payment_status = !empty($data->paymentStatus) ? $data->paymentStatus : (!empty($data->payment_status) ? $data->payment_status : "Pending");
+        $transaction_id = !empty($data->transaction_id) ? trim($data->transaction_id) : 
+                          (!empty($data->transactionId) ? trim($data->transactionId) : 
+                          (!empty($data->txn_id) ? trim($data->txn_id) : null));
+
+        // Strict Backend Validation: Online digital payments marked as Paid must provide a valid transaction reference
+        $isOnlinePayment = in_array(strtolower($payment_method), ['jazzcash', 'easypaisa', 'credit / debit card', 'card', 'online']);
+        $isMarkedPaid = stripos($payment_status, 'paid') !== false;
+
+        if ($isOnlinePayment && $isMarkedPaid) {
+            if (empty($transaction_id) || strlen($transaction_id) < 6) {
+                http_response_code(400);
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Transaction reference is required for online digital payments."
+                ]);
+                exit();
+            }
+        }
 
         $cust_lat = !empty($data->customer_lat) ? floatval($data->customer_lat) : 
                     (!empty($data->target_lat) ? floatval($data->target_lat) : 
@@ -495,8 +522,8 @@ if(!empty($cart_items) && $order_total > 0) {
 
         $house_val = !empty($data->house_no) ? trim($data->house_no) : (!empty($data->house_info) ? trim($data->house_info) : (!empty($data->house) ? trim($data->house) : null));
 
-        $query = "INSERT INTO orders (customer_id, order_type, order_mode, customer_name, customer_mobile, customer_address, customer_lat, customer_lng, latitude, longitude, house_no, house_info, street, area, table_number, delivery_fee, rider_tip, coupon_code, discount_amount, total, status, payment_method, payment_status) 
-                  VALUES (:cid, :type, :mode, :name, :mobile, :address, :cust_lat, :cust_lng, :lat, :lng, :house, :house_info, :street, :area, :table, :deliv_fee, :tip, :coupon, :discount, :total, 'Pending', :pmethod, :pstatus)";
+        $query = "INSERT INTO orders (customer_id, order_type, order_mode, customer_name, customer_mobile, customer_address, customer_lat, customer_lng, latitude, longitude, house_no, house_info, street, area, table_number, delivery_fee, rider_tip, coupon_code, discount_amount, total, status, payment_method, payment_status, transaction_id) 
+                  VALUES (:cid, :type, :mode, :name, :mobile, :address, :cust_lat, :cust_lng, :lat, :lng, :house, :house_info, :street, :area, :table, :deliv_fee, :tip, :coupon, :discount, :total, 'Pending', :pmethod, :pstatus, :txn_id)";
         $stmt = $db->prepare($query);
         $stmt->execute([
             ':cid'        => $customer_id,
@@ -520,7 +547,8 @@ if(!empty($cart_items) && $order_total > 0) {
             ':discount'   => $discount_amount,
             ':total'      => $order_total,
             ':pmethod'    => $payment_method,
-            ':pstatus'    => $payment_status
+            ':pstatus'    => $payment_status,
+            ':txn_id'     => $transaction_id
         ]);
         $order_id = $db->lastInsertId();
 
