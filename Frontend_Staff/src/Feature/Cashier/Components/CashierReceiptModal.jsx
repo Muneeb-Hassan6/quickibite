@@ -166,8 +166,13 @@ const CashierReceiptModal = ({ isOpen, onClose, order }) => {
           }
           <div class="row">
             <span>Cashier: ${cashierUser}</span>
-            <span>Pay: ${order.payment_method || "Cash"}</span>
+            <span>Pay: ${order.payment_method || "Cash"} (${order.payment_status || "Paid"})</span>
           </div>
+          ${
+            order.transaction_id
+              ? `<div class="row"><span>Txn Ref:</span> <span style="font-family: monospace; font-weight: bold;">${order.transaction_id}</span></div>`
+              : ""
+          }
           
           <div class="divider"></div>
           <div class="row" style="font-weight: bold; text-decoration: underline; font-size: 11px;">
@@ -322,6 +327,14 @@ const CashierReceiptModal = ({ isOpen, onClose, order }) => {
                 {order.payment_method || "Cash"} ({order.payment_status || "Paid"})
               </span>
             </div>
+            {order.transaction_id && (
+              <div className="flex justify-between">
+                <span className="text-zinc-500 dark:text-zinc-400">Txn Ref:</span>
+                <span className="font-semibold font-mono text-black dark:text-white">
+                  {order.transaction_id}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Items Table */}
@@ -478,8 +491,11 @@ const CashierReceiptModal = ({ isOpen, onClose, order }) => {
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;
-            width: 80mm !important;
-            padding: 5mm 3mm !important;
+            width: 76mm !important;
+            max-width: 76mm !important;
+            margin: 0 auto !important;
+            padding: 4mm 2mm !important;
+            box-sizing: border-box !important;
             font-size: 11px !important;
             line-height: 1.3 !important;
             color: #000000 !important;
@@ -488,6 +504,11 @@ const CashierReceiptModal = ({ isOpen, onClose, order }) => {
             border: none !important;
             border-radius: 0 !important;
             box-shadow: none !important;
+            page-break-inside: avoid !important;
+          }
+          #thermal-receipt .border-b,
+          #thermal-receipt .border-t {
+            border-color: #000000 !important;
           }
         }
       `}</style>

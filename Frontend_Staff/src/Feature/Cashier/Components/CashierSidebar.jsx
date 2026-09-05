@@ -12,6 +12,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import { useTheme } from "../../../Context/ThemeContext";
+import { useStaffAuth } from "../../../Context/AuthContext";
 import bigBiteLogo from "../../../assets/bigbite logo.png";
 
 const CashierSidebar = ({
@@ -22,6 +23,7 @@ const CashierSidebar = ({
 }) => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { logout } = useStaffAuth();
 
   const { data: settingsData } = useQuery({
     queryKey: ["settings"],
@@ -47,9 +49,7 @@ const CashierSidebar = ({
       confirmButtonText: "Yes, Logout",
     }).then((result) => {
       if (result.isConfirmed) {
-        sessionStorage.removeItem("staff_session");
-        sessionStorage.removeItem("user");
-        navigate("/login", { replace: true });
+        logout();
       }
     });
   };

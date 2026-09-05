@@ -48,16 +48,17 @@ export default function usePosMenu({ terminalResetTrigger = 0 } = {}) {
     const items = menuData
       .filter((item) => item.isAvailable)
       .map((item) => ({
+        ...item,
         id: item.id,
         title: item.name,
         name: item.name,
-        category: item.category || "Uncategorized",
+        category: (item.category || "Uncategorized").trim(),
         img: item.img || "",
         variants: item.variants || [],
         price:
           item.variants && item.variants.length > 0
             ? parseFloat(item.variants[0].price)
-            : parseFloat(item.price),
+            : parseFloat(item.price || 0),
       }));
 
     const uniqueCategories = [

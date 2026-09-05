@@ -13,34 +13,47 @@ const AttendanceSheet = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const fetchStaff = async () => {
+    const fetchAttendanceForDate = async () => {
+      if (!selectedDate) return;
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_staff.php`
+          `${import.meta.env.VITE_API_BASE}/get_attendance.php?date=${selectedDate}`
         );
         const result = await response.json();
 
-        if (result.success) {
-          const activeStaff = result.data.filter(
-            (emp) => emp.status === "Active"
-          );
-          setEmployees(activeStaff);
-
-          const initialData = {};
-          activeStaff.forEach((emp) => {
-            initialData[emp.id] = { status: "Present", time: "09:00" };
+        if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+          setEmployees(result.data);
+          const mapped = {};
+          result.data.forEach((emp) => {
+            mapped[emp.id] = {
+              status: emp.status || "Present",
+              time: emp.time || "09:00",
+            };
           });
-          setAttendanceData(initialData);
+          setAttendanceData(mapped);
+        } else {
+          // Fallback to active staff
+          const staffRes = await fetch(`${import.meta.env.VITE_API_BASE}/get_staff.php`);
+          const staffData = await staffRes.json();
+          if (staffData.success) {
+            const active = staffData.data.filter((e) => e.status === "Active");
+            setEmployees(active);
+            const initialData = {};
+            active.forEach((emp) => {
+              initialData[emp.id] = { status: "Present", time: "09:00" };
+            });
+            setAttendanceData(initialData);
+          }
         }
       } catch (error) {
-        console.error("Error fetching staff:", error);
+        console.error("Error fetching attendance for date:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchStaff();
-  }, []);
+    fetchAttendanceForDate();
+  }, [selectedDate]);
 
   const handleStatusChange = (id, newStatus) =>
     setAttendanceData((prev) => ({

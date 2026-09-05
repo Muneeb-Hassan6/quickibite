@@ -56,8 +56,8 @@ export default function POSTerminal({
   });
 
   // 3. Catalog Item Click Handler
-  const handleItemClick = (item) => {
-    if (item.variants && item.variants.length > 1) {
+  const handleItemClick = (item, openModal = false) => {
+    if (openModal || (item.variants && item.variants.length > 1)) {
       setCustomizationItem(item);
     } else {
       const variant =
@@ -87,11 +87,12 @@ export default function POSTerminal({
         name: item.title,
         size: variant.size,
         variant: variant.size,
-        price: parseFloat(variant.price),
+        price: parseFloat(variant.price || 0),
         qty: 1,
         quantity: 1,
         note: "",
         excluded_ingredients: [],
+        selected_addons: [],
       });
     }
   };

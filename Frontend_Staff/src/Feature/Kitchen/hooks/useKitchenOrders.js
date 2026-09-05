@@ -12,10 +12,62 @@ const socket = io(SOCKET_URL, {
   autoConnect: true,
 });
 
+// Singleton AudioContext reference for persistent, unlocked Web Audio playback
+let globalAudioCtx = null;
+
+export const playKitchenChime = () => {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    if (!globalAudioCtx) {
+      globalAudioCtx = new AudioCtx();
+    }
+    if (globalAudioCtx.state === "suspended") {
+      globalAudioCtx.resume().catch(() => {});
+    }
+    const ctx = globalAudioCtx;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.12); // A5
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.5);
+  } catch (e) {
+    console.warn("Kitchen chime playback error:", e);
+  }
+};
+
 export function useKitchenOrders() {
   const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [printOrder, setPrintOrder] = useState(null);
+
+  // Auto-unlock Web Audio on first user interaction with the dashboard
+  useEffect(() => {
+    const unlockAudio = () => {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx && !globalAudioCtx) {
+          globalAudioCtx = new AudioCtx();
+        }
+        if (globalAudioCtx && globalAudioCtx.state === "suspended") {
+          globalAudioCtx.resume().catch(() => {});
+        }
+      } catch (e) {}
+    };
+
+    window.addEventListener("pointerdown", unlockAudio, { once: true });
+    window.addEventListener("keydown", unlockAudio, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
+    };
+  }, []);
 
   // 1. FETCH LIVE ORDERS via React Query
   const { data: orders = [], isLoading } = useQuery({
@@ -94,6 +146,8 @@ export function useKitchenOrders() {
             size: i ? i.size || "" : "",
             note: i ? i.note || "" : "",
             description: i ? i.description || "" : "",
+            spice_level: i ? i.spice_level || i.spiceLevel || "" : "",
+            selected_addons_json: i ? i.selected_addons_json || i.selected_addons || null : null,
           })),
 
           originalStatus: dbOrder.status || "Pending",
@@ -110,27 +164,7 @@ export function useKitchenOrders() {
   useEffect(() => {
     const handleNewOrder = (newOrder) => {
       queryClient.invalidateQueries({ queryKey: ["kitchen_orders"] });
-
-      // Resilient Web Audio synthesizer chime (Zero external asset dependency)
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (AudioCtx) {
-          const ctx = new AudioCtx();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.type = "sine";
-          osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-          osc.frequency.setValueAtTime(880, ctx.currentTime + 0.12); // A5
-          gain.gain.setValueAtTime(0.25, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-          osc.start(ctx.currentTime);
-          osc.stop(ctx.currentTime + 0.5);
-        }
-      } catch (e) {
-        // audio context blocked by browser autoplay policy until first interaction
-      }
+      playKitchenChime();
 
       toast.success(`🔔 New Order #${newOrder?.id || ""} Received!`, {
         duration: 4000,
@@ -142,20 +176,32 @@ export function useKitchenOrders() {
       });
     };
 
+    const handleRefreshKitchen = () => {
+      queryClient.invalidateQueries({ queryKey: ["kitchen_orders"] });
+      playKitchenChime();
+    };
+
     const handleStatusUpdate = () => {
       queryClient.invalidateQueries({ queryKey: ["kitchen_orders"] });
     };
 
+    // Listen to all relevant order triggers from socket server
     socket.on("new_order", handleNewOrder);
+    socket.on("new_order_placed", handleNewOrder);
+    socket.on("refresh_kitchen", handleRefreshKitchen);
     socket.on("order_status_updated", handleStatusUpdate);
+    socket.on("order_status_changed", handleStatusUpdate);
 
     return () => {
       socket.off("new_order", handleNewOrder);
+      socket.off("new_order_placed", handleNewOrder);
+      socket.off("refresh_kitchen", handleRefreshKitchen);
       socket.off("order_status_updated", handleStatusUpdate);
+      socket.off("order_status_changed", handleStatusUpdate);
     };
   }, [queryClient]);
 
-  // 3. MUTATION FOR UPDATING ORDER STATUS
+  // 3. MUTATION FOR UPDATING ORDER STATUS WITH STATE PROGRESSION GUARD
   const statusMutation = useMutation({
     mutationFn: async ({ orderId, newStatus }) => {
       const response = await fetch(
@@ -166,7 +212,11 @@ export function useKitchenOrders() {
           body: JSON.stringify({ order_id: orderId, status: newStatus }),
         }
       );
-      return await response.json();
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.message || "Failed to update order status");
+      }
+      return result;
     },
     onMutate: async ({ orderId, newStatus }) => {
       await queryClient.cancelQueries({ queryKey: ["kitchen_orders"] });
@@ -194,11 +244,15 @@ export function useKitchenOrders() {
 
       return { previousOrders };
     },
+    onSuccess: () => {
+      // Broadcast to other staff displays immediately
+      socket.emit("order_status_changed");
+    },
     onError: (err, variables, context) => {
       if (context?.previousOrders) {
         queryClient.setQueryData(["kitchen_orders"], context.previousOrders);
       }
-      toast.error("Failed to update status.");
+      toast.error(err.message || "Failed to update status.");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["kitchen_orders"] });
@@ -206,6 +260,24 @@ export function useKitchenOrders() {
   });
 
   const updateStatus = (orderId, targetStatus) => {
+    // 🛡️ Client-Side State Progression Guard
+    const currentOrder = orders.find((o) => o.id === orderId);
+    if (currentOrder) {
+      const currentNorm = (currentOrder.status || "").toLowerCase();
+      if (currentNorm === "pending" && targetStatus !== "preparing") {
+        toast.error("State progression blocked: New order must be set to 'Cooking' first!");
+        return;
+      }
+      if (currentNorm === "preparing" && targetStatus !== "ready") {
+        toast.error("State progression blocked: Preparing order must be marked 'Ready' first!");
+        return;
+      }
+      if (currentNorm === "ready" && targetStatus !== "completed") {
+        toast.error("State progression blocked: Ready order can only be marked 'Completed'!");
+        return;
+      }
+    }
+
     let dbStatus = "Cooking";
     if (targetStatus === "ready") dbStatus = "Ready";
     else if (targetStatus === "completed") dbStatus = "Completed";

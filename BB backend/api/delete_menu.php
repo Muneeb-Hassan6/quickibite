@@ -26,7 +26,7 @@ if(!empty($data->id)) {
     $isDeleted = false;
     try {
         $db->prepare("DELETE FROM product_custom_addons WHERE menu_item_id = ?")->execute([$menuItem->id]);
-        $db->prepare("DELETE FROM menu_variants WHERE menu_item_id = ?")->execute([$menuItem->id]);
+        $db->prepare("DELETE FROM menu_variants WHERE menu_id = ?")->execute([$menuItem->id]);
         $db->prepare("DELETE FROM menu_recipes WHERE menu_id = ?")->execute([$menuItem->id]);
         $db->prepare("DELETE FROM deal_items WHERE menu_item_id = ?")->execute([$menuItem->id]);
 

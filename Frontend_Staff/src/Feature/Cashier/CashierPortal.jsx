@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { FaBars, FaSun, FaMoon, FaShoppingCart } from "react-icons/fa";
 import { useTheme } from "../../Context/ThemeContext";
+import { useStaffAuth } from "../../Context/AuthContext";
 import bigBiteLogo from "../../assets/bigbite logo.png";
 
 // Components
@@ -13,6 +14,7 @@ import ShiftReport from "./Components/ShiftReport";
 import CashierReceiptModal from "./Components/CashierReceiptModal";
 
 const CashierPortal = () => {
+  const { logout } = useStaffAuth();
   const [activeTab, setActiveTab] = useState("terminal");
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [selectedOrderToView, setSelectedOrderToView] = useState(null);
@@ -55,6 +57,10 @@ const CashierPortal = () => {
       confirmButtonText: "Yes, Logout",
       confirmButtonColor: "#ef4444",
       cancelButtonColor: "#71717a",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        logout();
+      }
     });
   };
 

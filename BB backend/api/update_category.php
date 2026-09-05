@@ -17,15 +17,21 @@ if(!empty($data->id) && !empty($data->name) && !empty($data->img)){
     $category->name = $data->name;
     $category->img = $data->img; // Yeh Naya URL hai jo frontend se aya
 
-    // --- STEP 1: Update karne se pehle purani image ka URL nikalna ---
-    $query = "SELECT img FROM categories WHERE id = ?";
+    // --- STEP 1: Update karne se pehle purani image aur naam nikalna ---
+    $query = "SELECT name, img FROM categories WHERE id = ?";
     $stmt = $db->prepare($query);
     $stmt->execute([$category->id]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $oldName = $row['name'] ?? '';
     $oldImageUrl = $row['img'] ?? '';
 
     // --- STEP 2: Database mein naya data Update karna ---
     if($category->update()){
+        // Cascade category name change to menu_items
+        if (!empty($oldName) && $oldName !== $category->name) {
+            $cascadeStmt = $db->prepare("UPDATE menu_items SET category = ? WHERE category = ?");
+            $cascadeStmt->execute([$category->name, $oldName]);
+        }
         
         // --- STEP 3: Agar nayi image aayi hai, toh purani ko Cloudinary se Delete karna ---
         // Check: Purani image mojood ho + Nayi image purani se mukhtalif ho + Cloudinary ka link ho

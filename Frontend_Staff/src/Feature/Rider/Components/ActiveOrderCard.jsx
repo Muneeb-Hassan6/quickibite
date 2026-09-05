@@ -8,6 +8,7 @@ import {
   FaCheckCircle,
   FaTimes,
   FaBan,
+  FaRoute,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 
@@ -15,6 +16,20 @@ export default function ActiveOrderCard({ order, onComplete, onCancel, isComplet
   const [isFailing, setIsFailing] = useState(false);
   if (!order) return null;
   const isCod = order.paymentType === "Cash on Delivery" || order.paymentType === "COD";
+
+  const rawPhone = (order.phone || "").replace(/[^0-9]/g, "");
+  const formattedWhatsAppPhone = rawPhone.startsWith("0")
+    ? "92" + rawPhone.slice(1)
+    : rawPhone.length === 10 && rawPhone.startsWith("3")
+    ? "92" + rawPhone
+    : rawPhone;
+
+  const navUrl =
+    order.targetLat && order.targetLng
+      ? `https://www.google.com/maps/dir/?api=1&destination=${order.targetLat},${order.targetLng}`
+      : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+          order.address || ""
+        )}`;
 
   const handleDeliveryFailed = async () => {
     const { value: formValues } = await Swal.fire({
@@ -107,7 +122,7 @@ export default function ActiveOrderCard({ order, onComplete, onCancel, isComplet
           Order #{order.id}
         </span>
         <span className="text-xs font-mono font-bold text-stone-500 dark:text-neutral-400">
-          {order.time}
+          {order.time || "Just now"}
         </span>
       </div>
 
@@ -116,23 +131,23 @@ export default function ActiveOrderCard({ order, onComplete, onCancel, isComplet
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="min-w-0">
             <h4 className="text-base font-bold text-stone-900 dark:text-neutral-100 m-0 truncate">
-              {order.customer}
+              {order.customer || "Valued Customer"}
             </h4>
             <div className="text-xs font-mono text-stone-500 dark:text-neutral-400 mt-0.5">
-              {order.phone}
+              {order.phone || "No phone provided"}
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <a
-              href={`tel:${order.phone}`}
+              href={`tel:${order.phone || ""}`}
               className="flex-1 sm:flex-initial min-h-[44px] px-3.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all no-underline active:scale-95"
             >
               <FaPhoneAlt className="text-xs" />
               <span>Call</span>
             </a>
             <a
-              href={`https://wa.me/${order.phone.replace(/[^0-9]/g, "")}`}
+              href={formattedWhatsAppPhone ? `https://wa.me/${formattedWhatsAppPhone}` : "#"}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 sm:flex-initial min-h-[44px] px-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all no-underline shadow-xs active:scale-95"
@@ -143,10 +158,21 @@ export default function ActiveOrderCard({ order, onComplete, onCancel, isComplet
           </div>
         </div>
 
-        {/* Delivery Address */}
-        <div className="bg-stone-50 dark:bg-neutral-950/80 border border-stone-200 dark:border-neutral-800 p-3 rounded-xl text-xs text-stone-800 dark:text-neutral-200 leading-relaxed flex items-start gap-2">
-          <FaMapMarkerAlt className="text-red-500 shrink-0 text-sm mt-0.5" />
-          <span className="font-medium">{order.address}</span>
+        {/* Delivery Address & Navigate */}
+        <div className="bg-stone-50 dark:bg-neutral-950/80 border border-stone-200 dark:border-neutral-800 p-3 rounded-xl text-xs text-stone-800 dark:text-neutral-200 leading-relaxed flex items-center justify-between gap-2.5">
+          <div className="flex items-start gap-2 min-w-0">
+            <FaMapMarkerAlt className="text-red-500 shrink-0 text-sm mt-0.5" />
+            <span className="font-medium truncate">{order.address || "Customer Address"}</span>
+          </div>
+          <a
+            href={navUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 min-h-[36px] px-3 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 text-xs font-bold flex items-center gap-1.5 transition-all no-underline active:scale-95"
+          >
+            <FaRoute className="text-xs" />
+            <span>Directions</span>
+          </a>
         </div>
 
         {/* Order Items */}
@@ -155,7 +181,7 @@ export default function ActiveOrderCard({ order, onComplete, onCancel, isComplet
             <FaShoppingBag className="text-[10px]" />
             <span>ORDER ITEMS</span>
           </div>
-          <span className="font-semibold">{order.items}</span>
+          <span className="font-semibold">{order.items || "1x Food Item"}</span>
         </div>
 
         {/* Payment Amount to Collect */}
@@ -166,7 +192,7 @@ export default function ActiveOrderCard({ order, onComplete, onCancel, isComplet
               <span>TO COLLECT</span>
             </div>
             <div className="text-xl sm:text-2xl font-black font-['Oswald',sans-serif] text-stone-900 dark:text-white">
-              {isCod ? order.total : "PAID"}
+              {isCod ? (order.total || "Rs 0") : "PAID"}
             </div>
           </div>
 
@@ -177,7 +203,7 @@ export default function ActiveOrderCard({ order, onComplete, onCancel, isComplet
                 : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30"
             }`}
           >
-            {order.paymentType}
+            {order.paymentType || "COD"}
           </div>
         </div>
 
@@ -203,9 +229,9 @@ export default function ActiveOrderCard({ order, onComplete, onCancel, isComplet
                     <div style="text-align: center; font-size: 13px;">
                       <p style="color: #a1a1aa; margin-bottom: 10px;">Please verify you have received payment from the customer:</p>
                       <div style="font-size: 26px; font-weight: 900; color: #10b981; font-family: 'Oswald', sans-serif; margin-bottom: 8px;">
-                        ${order.total}
+                        ${order.total || "Rs 0"}
                       </div>
-                      <p style="color: #71717a; font-size: 11px; margin: 0;">Order #${order.id} &bull; ${order.customer}</p>
+                      <p style="color: #71717a; font-size: 11px; margin: 0;">Order #${order.id} &bull; ${order.customer || ""}</p>
                     </div>
                   `,
                   icon: "question",

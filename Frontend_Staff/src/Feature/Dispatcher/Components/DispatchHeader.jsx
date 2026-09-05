@@ -9,10 +9,12 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../Context/ThemeContext";
+import { useStaffAuth } from "../../../Context/AuthContext";
 
 export default function DispatchHeader() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { logout } = useStaffAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Fetch Settings from React Query
@@ -30,11 +32,8 @@ export default function DispatchHeader() {
   const storeLogo = settingsData?.store_logo || "";
 
   const handleConfirmLogout = () => {
-    sessionStorage.removeItem("staff_session");
-    sessionStorage.removeItem("user");
-    sessionStorage.removeItem("isAuth");
     setShowLogoutModal(false);
-    navigate("/login", { replace: true });
+    logout();
   };
 
   return (

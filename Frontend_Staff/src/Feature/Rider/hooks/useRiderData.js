@@ -98,6 +98,14 @@ export function useRiderData() {
       assignedOrderData.order
     ) {
       const o = assignedOrderData.order;
+      if (
+        !o.status ||
+        ["delivered", "cancelled", "declined", "failed"].includes(
+          o.status.toLowerCase()
+        )
+      ) {
+        return;
+      }
       const addr =
         o.customer_address || o.address || o.full_address || "No Address Provided";
       const rawTargetLat = parseFloat(

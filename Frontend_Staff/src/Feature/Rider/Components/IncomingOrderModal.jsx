@@ -1,23 +1,26 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { FaBell, FaCheck, FaTimes } from "react-icons/fa";
 
 export default function IncomingOrderModal({ order, onAccept, onDecline }) {
   const [timeLeft, setTimeLeft] = useState(30);
+  const onDeclineRef = useRef(onDecline);
+  onDeclineRef.current = onDecline;
 
   useEffect(() => {
     if (!order) return;
+    setTimeLeft(30);
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          onDecline();
+          if (onDeclineRef.current) onDeclineRef.current();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [order, onDecline]);
+  }, [order?.id]);
 
   if (!order) return null;
 
@@ -34,20 +37,20 @@ export default function IncomingOrderModal({ order, onAccept, onDecline }) {
         </h2>
 
         <div className="inline-block px-3 py-1 rounded-full text-[11px] font-bold mb-4 uppercase bg-stone-100 dark:bg-neutral-800 border border-stone-200 dark:border-neutral-700 text-stone-700 dark:text-neutral-300">
-          {order.paymentType}
+          {order.paymentType || "COD"}
         </div>
 
         {/* Order Details Box */}
         <div className="bg-stone-50 dark:bg-neutral-950/80 border border-stone-200 dark:border-neutral-800 p-3.5 rounded-xl text-left text-xs space-y-1.5 mb-4">
           <p className="m-0 text-stone-600 dark:text-neutral-400">
-            <strong className="text-stone-900 dark:text-white">Order:</strong> #{order.id} ({order.items})
+            <strong className="text-stone-900 dark:text-white">Order:</strong> #{order.id} ({order.items || "1 item"})
           </p>
           <p className="m-0 text-stone-600 dark:text-neutral-400">
             <strong className="text-stone-900 dark:text-white">Total:</strong>{" "}
-            <span className="font-bold text-emerald-600 dark:text-emerald-400">{order.total}</span>
+            <span className="font-bold text-emerald-600 dark:text-emerald-400">{order.total || "Rs 0"}</span>
           </p>
           <p className="m-0 text-stone-600 dark:text-neutral-400 truncate">
-            <strong className="text-stone-900 dark:text-white">Dropoff:</strong> {order.address}
+            <strong className="text-stone-900 dark:text-white">Dropoff:</strong> {order.address || "Customer Location"}
           </p>
         </div>
 

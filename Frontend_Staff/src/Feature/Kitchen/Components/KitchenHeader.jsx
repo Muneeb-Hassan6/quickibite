@@ -13,8 +13,12 @@ import {
   FaSun,
   FaMoon,
   FaChevronDown,
+  FaBell,
 } from "react-icons/fa";
+import toast from "react-hot-toast";
 import { useTheme } from "../../../Context/ThemeContext";
+import { useStaffAuth } from "../../../Context/AuthContext";
+import { playKitchenChime } from "../hooks/useKitchenOrders";
 
 const FILTER_TABS = [
   { label: "ALL", value: "ALL", icon: FaList },
@@ -27,6 +31,7 @@ export default function KitchenHeader({ activeFilter, setActiveFilter }) {
   const [time, setTime] = useState(new Date());
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { logout } = useStaffAuth();
 
   // Fetch Settings from React Query
   const { data: settingsData } = useQuery({
@@ -60,9 +65,7 @@ export default function KitchenHeader({ activeFilter, setActiveFilter }) {
       color: theme === "dark" ? "#ffffff" : "#1c1917",
     }).then((result) => {
       if (result.isConfirmed) {
-        sessionStorage.removeItem("staff_session");
-        sessionStorage.removeItem("user");
-        navigate("/login", { replace: true });
+        logout();
       }
     });
   };
@@ -150,6 +153,21 @@ export default function KitchenHeader({ activeFilter, setActiveFilter }) {
           </select>
           <FaChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-[8px] text-stone-500 dark:text-neutral-400 pointer-events-none" />
         </div>
+
+        {/* Test Audio Chime & Unlock Button */}
+        <button
+          type="button"
+          onClick={() => {
+            playKitchenChime();
+            toast.success("🔔 Audio Chime Verified & Active!");
+          }}
+          className="h-7.5 sm:h-8 px-2 sm:px-2.5 rounded-lg sm:rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs"
+          title="Test Kitchen Audio Chime & Unlock Sound"
+          aria-label="Test Sound"
+        >
+          <FaBell className="text-xs" />
+          <span className="hidden xl:inline text-[11px]">Chime</span>
+        </button>
 
         {/* Theme Switcher */}
         <button

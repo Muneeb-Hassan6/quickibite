@@ -66,12 +66,13 @@ export function useRiderLocation({
     [MAPBOX_TOKEN]
   );
 
+  const watchIdRef = useRef(null);
+
   // 3. Throttled Geolocation Watcher
   useEffect(() => {
-    let watchId;
     if (isOnline && riderId) {
       if ("geolocation" in navigator) {
-        watchId = navigator.geolocation.watchPosition(
+        watchIdRef.current = navigator.geolocation.watchPosition(
           (pos) => {
             if (isDevSimulating.current) return;
             if (orderStatus === "arrived" || orderStatus === "photo_captured")
@@ -149,13 +150,19 @@ export function useRiderLocation({
         );
       }
     } else {
-      if (watchId) navigator.geolocation.clearWatch(watchId);
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
       setDistance(null);
       setIsArrived(false);
     }
 
     return () => {
-      if (watchId) navigator.geolocation.clearWatch(watchId);
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
     };
   }, [isOnline, currentOrder, isArrived, orderStatus, riderId, setOrderStatus]);
 

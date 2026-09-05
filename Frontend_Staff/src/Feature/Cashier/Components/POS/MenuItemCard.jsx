@@ -12,7 +12,7 @@ export default function MenuItemCard({ item, onItemClick }) {
 
   return (
     <div
-      onClick={() => !isOutOfStock && onItemClick(item)}
+      onClick={() => !isOutOfStock && onItemClick(item, true)}
       className={`group relative bg-white dark:bg-zinc-900 border rounded-2xl p-3 flex flex-col justify-between transition-all select-none ${
         isOutOfStock
           ? "opacity-50 border-zinc-200 dark:border-zinc-800 cursor-not-allowed"
@@ -85,7 +85,7 @@ export default function MenuItemCard({ item, onItemClick }) {
             title={hasVariants ? "Choose size & options" : "Add to order"}
             onClick={(e) => {
               e.stopPropagation();
-              if (!isOutOfStock) onItemClick(item);
+              if (!isOutOfStock) onItemClick(item, false);
             }}
           >
             <FaPlus className="text-xs" />

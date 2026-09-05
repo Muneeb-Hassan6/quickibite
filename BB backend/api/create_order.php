@@ -639,8 +639,9 @@ if(!empty($cart_items) && $order_total > 0) {
             $unit_cost = 0;
 
             if (!empty($item->is_addon) && !empty($item->addon_data)) {
-                $addon_inv_id = intval($item->addon_data->inventory_id ?? 0);
-                $addon_deduct = floatval($item->addon_data->qty ?? 0);
+                $addon_data_arr = is_array($item->addon_data) ? $item->addon_data : (array)$item->addon_data;
+                $addon_inv_id = intval($addon_data_arr['inventory_id'] ?? 0);
+                $addon_deduct = floatval($addon_data_arr['qty'] ?? 0);
                 if ($addon_inv_id > 0 && $addon_deduct > 0) {
                     $invPrice = $inventory_prices[$addon_inv_id] ?? 0;
                     $unit_cost += ($addon_deduct * $invPrice);
@@ -682,18 +683,28 @@ if(!empty($cart_items) && $order_total > 0) {
                 // 2. Deduct product custom add-ons
                 $item_addons = [];
                 if (!empty($item->selected_addons)) {
-                    $item_addons = is_string($item->selected_addons) ? json_decode($item->selected_addons, true) : $item->selected_addons;
+                    if (is_string($item->selected_addons)) {
+                        $item_addons = json_decode($item->selected_addons, true) ?: [];
+                    } else {
+                        // Normalize stdClass objects to associative arrays
+                        $item_addons = json_decode(json_encode($item->selected_addons), true) ?: [];
+                    }
                 } else if (!empty($item->addons)) {
-                    $item_addons = is_string($item->addons) ? json_decode($item->addons, true) : $item->addons;
+                    if (is_string($item->addons)) {
+                        $item_addons = json_decode($item->addons, true) ?: [];
+                    } else {
+                        $item_addons = json_decode(json_encode($item->addons), true) ?: [];
+                    }
                 }
 
                 if (is_array($item_addons) && !empty($item_addons)) {
                     foreach ($item_addons as $addObj) {
-                        $addInvId = !empty($addObj['inventory_id']) ? intval($addObj['inventory_id']) : (!empty($addObj->inventory_id) ? intval($addObj->inventory_id) : 0);
-                        $addQty = !empty($addObj['qty_to_deduct']) ? floatval($addObj['qty_to_deduct']) : (!empty($addObj['qty']) ? floatval($addObj['qty']) : (!empty($addObj->qty) ? floatval($addObj->qty) : 0));
+                        // $addObj is now guaranteed to be an associative array
+                        $addInvId = !empty($addObj['inventory_id']) ? intval($addObj['inventory_id']) : 0;
+                        $addQty = !empty($addObj['qty_to_deduct']) ? floatval($addObj['qty_to_deduct']) : (!empty($addObj['qty']) ? floatval($addObj['qty']) : 0);
 
                         if ($addInvId <= 0 && $menu_item_id > 0) {
-                            $addTitle = $addObj['title'] ?? ($addObj['name'] ?? ($addObj->title ?? ($addObj->name ?? '')));
+                            $addTitle = $addObj['title'] ?? ($addObj['name'] ?? '');
                             if (!empty($addTitle)) {
                                 $lookupStmt = $db->prepare("SELECT inventory_id, qty_to_deduct FROM product_custom_addons WHERE menu_item_id = ? AND title = ? LIMIT 1");
                                 $lookupStmt->execute([$menu_item_id, $addTitle]);
@@ -739,12 +750,37 @@ if(!empty($cart_items) && $order_total > 0) {
             }
         }
 
+        // Synchronize Payments Ledger
+        try {
+            $payStmt = $db->prepare("
+                INSERT INTO payments (order_id, amount, method, status, created_at)
+                VALUES (:oid, :amt, :method, :status, NOW())
+            ");
+            $payStmt->execute([
+                ':oid'    => $order_id,
+                ':amt'    => $order_total,
+                ':method' => $payment_method,
+                ':status' => $payment_status
+            ]);
+        } catch (\Throwable $payErr) {
+            error_log("Payments insert warning: " . $payErr->getMessage());
+        }
+
         $db->commit();
+
+        // NOTE: Socket broadcast handled by frontend (usePosCart.js emits 'new_order_placed' after success)
+        // PHP-side HTTP trigger disabled to prevent response blocking on Windows.
+
+
         echo json_encode([
-            "success"       => true, 
-            "message"       => "Order saved successfully!", 
-            "order_id"      => $order_id,
-            "database_used" => "restaurant_db"
+            "success"        => true, 
+            "message"        => "Order saved successfully!", 
+            "order_id"       => $order_id,
+            "payment_method" => $payment_method,
+            "payment_status" => $payment_status,
+            "transaction_id" => $transaction_id,
+            "total"          => $order_total,
+            "database_used"  => "restaurant_db"
         ]);
     } catch(Exception $e) {
         $db->rollBack();

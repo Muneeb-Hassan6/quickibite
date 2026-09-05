@@ -1,0 +1,4 @@
+<?php
+// Cleanup placeholder
+exit();
+?>

@@ -1,91 +1,90 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FaUserShield, FaLock, FaUser, FaArrowLeft, FaEye, FaEyeSlash } from "react-icons/fa";
 import Swal from "sweetalert2";
+import { useStaffAuth, getRoleDashboard } from "../../Context/AuthContext";
 import "./loginForm.css";
 
 const LoginForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, isAuthenticated, user } = useStaffAuth();
 
-  // Form States (Role nikal diya hai)
-  const [loginId, setLoginId] = useState(""); // Ab yeh Username YA Phone dono ke liye use hoga
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Auto-redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated && user?.role) {
+      const fromPath = location.state?.from?.pathname;
+      const destination =
+        fromPath && fromPath !== "/login" && fromPath !== "/"
+          ? fromPath
+          : getRoleDashboard(user.role);
+      navigate(destination, { replace: true });
+    }
+  }, [isAuthenticated, user, navigate, location.state]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (!loginId || !password) {
-      Swal.fire(
-        "Warning",
-        "Please enter your username/phone and password!",
-        "warning",
-      );
+    const cleanUsername = (loginId || "").trim();
+    if (!cleanUsername || !password) {
+      Swal.fire({
+        icon: "warning",
+        title: "Missing Credentials",
+        text: "Please enter your username/phone and password!",
+      });
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // 🔥 Backend API Call
+      // Backend API Call
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE}/login.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: loginId, password }), // Backend ko username key hi bhejen ge
-        },
+          body: JSON.stringify({ username: cleanUsername, password }),
+        }
       );
 
       const result = await response.json();
 
-      if (result.success) {
-        // 1. Save user session AND JWT token across both storage layers
-        const userJson = JSON.stringify(result.user);
-        sessionStorage.setItem("staff_session", userJson);
-        sessionStorage.setItem("user", userJson);
-        sessionStorage.setItem("auth_token", result.token);
-
-        localStorage.setItem("staff_session", userJson);
-        localStorage.setItem("user", userJson);
-        localStorage.setItem("auth_token", result.token);
+      if (result.success && result.user && result.token) {
+        // Synchronize auth state across storage & context
+        login(result.user, result.token);
 
         Swal.fire({
           toast: true,
           position: "top-end",
           icon: "success",
-          title: `Welcome ${result.user.name}!`,
+          title: `Welcome back, ${result.user.name}!`,
           showConfirmButton: false,
           timer: 1500,
         });
 
-        // 2. 🔥 Strict Routing Database ke Role par
-        const dbRole = result.user.role.toLowerCase();
-
-        if (dbRole === "admin" || dbRole === "manager") {
-          navigate("/admin");
-        } else if (dbRole === "cashier") {
-          navigate("/cashier");
-        } else if (dbRole === "chef" || dbRole === "kitchen") {
-          navigate("/kitchen");
-        } else if (dbRole === "dispatcher") {
-          navigate("/dispatcher");
-        } else if (dbRole === "rider") {
-          navigate("/rider");
+        // Strict Role-Based Dashboard Routing
+        const targetRoute = getRoleDashboard(result.user.role);
+        if (targetRoute && targetRoute !== "/login") {
+          navigate(targetRoute, { replace: true });
         } else {
           Swal.fire(
-            "Error",
-            "Your role is not assigned to any portal.",
-            "error",
+            "Role Unassigned",
+            "Your role is not mapped to any staff portal. Please contact management.",
+            "error"
           );
         }
       } else {
-        Swal.fire("Login Failed", result.message, "error");
+        Swal.fire("Login Failed", result.message || "Invalid username or password!", "error");
       }
     } catch (error) {
       console.error("Login error:", error);
-      Swal.fire("Error", "Network connection failed.", "error");
+      Swal.fire("Network Error", "Unable to reach the authentication server. Please check connection.", "error");
     } finally {
       setIsLoading(false);
     }

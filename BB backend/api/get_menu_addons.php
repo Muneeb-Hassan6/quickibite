@@ -14,11 +14,14 @@ try {
     $category = trim($_GET['category'] ?? ($_GET['category_name'] ?? ''));
     $dealId = isset($_GET['deal_id']) ? intval($_GET['deal_id']) : 0;
 
-    // If item_id is provided but category is empty, fetch category from menu_items
-    if ($itemId > 0 && empty($category)) {
+    // If item_id is provided and category is empty or 'uncategorized', fetch category from menu_items
+    if ($itemId > 0 && (empty($category) || strtolower($category) === 'uncategorized')) {
         $stmt = $db->prepare("SELECT category FROM menu_items WHERE id = ?");
         $stmt->execute([$itemId]);
-        $category = $stmt->fetchColumn() ?: '';
+        $fetchedCat = $stmt->fetchColumn();
+        if (!empty($fetchedCat)) {
+            $category = $fetchedCat;
+        }
     }
 
     if ($dealId > 0 || strtolower($category) === 'deal') {
@@ -26,6 +29,16 @@ try {
     }
 
     $targetCatLower = strtolower($category);
+
+    // ── Helper: Classify custom addon type for UI icon/badges ────────────────
+    function getAddonVisualType($title) {
+        $t = strtolower($title);
+        if (strpos($t, 'cheese') !== false) return 'cheese';
+        if (strpos($t, 'patty') !== false || strpos($t, 'chicken') !== false || strpos($t, 'beef') !== false) return 'patty';
+        if (strpos($t, 'sauce') !== false || strpos($t, 'mayo') !== false || strpos($t, 'dip') !== false) return 'sauce';
+        if (strpos($t, 'olive') !== false || strpos($t, 'jelapeno') !== false || strpos($t, 'jalapeno') !== false || strpos($t, 'mashroom') !== false || strpos($t, 'mushroom') !== false) return 'topping';
+        return 'extra';
+    }
 
     // ── 1. FETCH PRODUCT-SPECIFIC CUSTOM ADDONS ─────────────────────────────
     $productAddons = [];
@@ -44,12 +57,17 @@ try {
             foreach ($rows as $r) {
                 $productAddons[] = [
                     'id' => intval($r['id']),
+                    'uid' => 'custom_' . intval($r['id']),
                     'title' => $r['title'],
                     'name' => $r['title'],
                     'price' => floatval($r['price']),
                     'inventory_id' => !empty($r['inventory_id']) ? intval($r['inventory_id']) : null,
                     'qty' => !empty($r['qty_to_deduct']) ? floatval($r['qty_to_deduct']) : null,
-                    'is_product_addon' => true
+                    'is_product_addon' => true,
+                    'addon_type' => 'product_custom',
+                    'visual_type' => getAddonVisualType($r['title']),
+                    'image' => null,
+                    'img' => null
                 ];
             }
         } else {
@@ -65,12 +83,17 @@ try {
             foreach ($legacyRows as $r) {
                 $productAddons[] = [
                     'id' => intval($r['id']),
+                    'uid' => 'custom_' . intval($r['id']),
                     'title' => $r['title'],
                     'name' => $r['title'],
                     'price' => floatval($r['price']),
                     'inventory_id' => !empty($r['inventory_id']) ? intval($r['inventory_id']) : null,
                     'qty' => !empty($r['qty_to_deduct']) ? floatval($r['qty_to_deduct']) : null,
-                    'is_product_addon' => true
+                    'is_product_addon' => true,
+                    'addon_type' => 'product_custom',
+                    'visual_type' => getAddonVisualType($r['title']),
+                    'image' => null,
+                    'img' => null
                 ];
             }
         }
@@ -80,18 +103,21 @@ try {
     $addonGroups = [];
 
     // Query dynamic mappings for this category
-    $mapStmt = $db->prepare("
-        SELECT g.id, g.title, g.subtitle, g.icon_type, g.source_category_id, g.source_category_name
-        FROM category_addon_mappings m
-        JOIN addon_groups g ON m.addon_group_id = g.id
-        WHERE LOWER(m.parent_category_name) = ? AND g.is_active = 1
-        ORDER BY g.id ASC
-    ");
-    $mapStmt->execute([$targetCatLower]);
-    $mappedGroups = $mapStmt->fetchAll(PDO::FETCH_ASSOC);
+    $mappedGroups = [];
+    if (!empty($targetCatLower)) {
+        $mapStmt = $db->prepare("
+            SELECT g.id, g.title, g.subtitle, g.icon_type, g.source_category_id, g.source_category_name
+            FROM category_addon_mappings m
+            JOIN addon_groups g ON m.addon_group_id = g.id
+            WHERE LOWER(m.parent_category_name) = ? AND g.is_active = 1
+            ORDER BY g.id ASC
+        ");
+        $mapStmt->execute([$targetCatLower]);
+        $mappedGroups = $mapStmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-    // Fallback: If no custom mapping in database for this category, check default global groups
-    if (empty($mappedGroups) && $targetCatLower !== '') {
+    // Fallback: If no custom mapping in database for this category, check default active groups
+    if (empty($mappedGroups)) {
         $defaultMapStmt = $db->query("
             SELECT g.id, g.title, g.subtitle, g.icon_type, g.source_category_id, g.source_category_name
             FROM addon_groups g
@@ -103,7 +129,7 @@ try {
         // Filter out group if the target category itself matches source category
         foreach ($allGroups as $grp) {
             $srcCatLower = strtolower($grp['source_category_name'] ?? '');
-            if ($srcCatLower !== $targetCatLower) {
+            if (empty($targetCatLower) || $srcCatLower !== $targetCatLower) {
                 $mappedGroups[] = $grp;
             }
         }
@@ -144,12 +170,17 @@ try {
             foreach ($items as $it) {
                 $formattedItems[] = [
                     'id' => intval($it['id']),
+                    'uid' => 'item_' . intval($it['id']),
                     'name' => $it['item_name'],
                     'title' => $it['item_name'],
                     'price' => floatval($it['price']),
                     'img' => $it['img'],
+                    'image' => $it['img'],
+                    'image_url' => $it['img'],
                     'category' => $it['category'],
-                    'is_addon' => true
+                    'is_addon' => true,
+                    'addon_type' => 'upsell_item',
+                    'visual_type' => 'item'
                 ];
             }
 

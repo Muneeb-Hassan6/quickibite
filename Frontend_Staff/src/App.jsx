@@ -27,6 +27,7 @@ import {
 import { FaShoppingCart } from "react-icons/fa";
 
 // ✅ CONTEXT IMPORTS (Aapke image k mutabiq capital 'C' wale folder se)
+import { AuthProvider } from "./Context/AuthContext";
 import { CartProvider, useCart } from "./Context/CartContext";
 import { OrderProvider } from "./Context/OrderContext";
 
@@ -142,13 +143,15 @@ const MainContent = () => {
 
 function App() {
   return (
-    <CartProvider>
-      <OrderProvider>
-        <Router>
-          <MainContent />
-        </Router>
-      </OrderProvider>
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <OrderProvider>
+          <Router>
+            <MainContent />
+          </Router>
+        </OrderProvider>
+      </CartProvider>
+    </AuthProvider>
   );
 }
 

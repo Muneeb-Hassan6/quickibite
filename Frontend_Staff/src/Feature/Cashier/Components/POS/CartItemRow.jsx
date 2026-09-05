@@ -41,6 +41,15 @@ export default function CartItemRow({ item, updateQty, removeFromCart }) {
             - {item.excluded_ingredients.length} item(s) removed
           </div>
         )}
+        {item.selected_addons && item.selected_addons.length > 0 && (
+          <div className="text-[10px] text-amber-400 font-mono mt-0.5 space-y-0.5">
+            {item.selected_addons.map((a, idx) => (
+              <div key={idx} className="truncate">
+                + {a.name || a.title} (Rs. {Number(a.price || 0)})
+              </div>
+            ))}
+          </div>
+        )}
         <div className="text-[11px] font-mono text-zinc-400 mt-0.5">
           Rs. {price.toFixed(2)} × {qty}
         </div>

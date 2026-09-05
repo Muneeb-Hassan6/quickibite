@@ -142,6 +142,7 @@ export function useRiderMutations({
           body: JSON.stringify({
             order_id: currentOrder.id,
             rider_id: riderSession.id,
+            payment_method: currentOrder.paymentType || currentOrder.payment_method || "COD",
           }),
         }
       );
@@ -157,9 +158,13 @@ export function useRiderMutations({
       riderSocket.emit("rider_status_update");
       riderSocket.emit("refresh_kitchen");
 
-      const isCash = currentOrder?.paymentType === "Cash on Delivery";
+      const isCash =
+        currentOrder?.paymentType === "Cash on Delivery" ||
+        currentOrder?.paymentType === "COD" ||
+        currentOrder?.payment_method === "Cash on Delivery" ||
+        currentOrder?.payment_method === "COD";
       const orderAmount =
-        parseInt(currentOrder?.total?.replace(/\D/g, "") || "0") || 0;
+        parseInt(String(currentOrder?.total || "").replace(/\D/g, "") || "0") || 0;
 
       const newDelivery = {
         id: currentOrder.id,

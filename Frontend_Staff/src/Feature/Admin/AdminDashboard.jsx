@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { useTheme } from "../../Context/ThemeContext";
+import { useStaffAuth } from "../../Context/AuthContext";
 
 // Components Import
 import AdminSidebar from "./Components/SharedComponents/AdminSidebar";
@@ -26,6 +27,7 @@ const AdminDashboard = () => {
   const { theme, toggleTheme } = useTheme();
   const isDarkMode = theme === "dark";
   const navigate = useNavigate();
+  const { logout } = useStaffAuth();
 
   const [activeTab, setActiveTab] = useState(() => {
     const savedTab = localStorage.getItem("adminActiveTab");
@@ -51,10 +53,7 @@ const AdminDashboard = () => {
       },
     }).then((result) => {
       if (result.isConfirmed) {
-        sessionStorage.removeItem("staff_session");
-        sessionStorage.removeItem("user");
-        sessionStorage.removeItem("auth_token");
-        sessionStorage.removeItem("adminActiveTab");
+        logout();
         navigate("/login", { replace: true });
       }
     });

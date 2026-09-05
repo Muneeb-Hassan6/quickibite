@@ -132,6 +132,77 @@ try {
         exit();
     }
 
+    // 6. LOG RAW INGREDIENT WASTAGE DIRECTLY FROM ADMIN
+    if ($action === 'log_raw_wastage') {
+        $inv_id = !empty($data->inventory_id) ? intval($data->inventory_id) : 0;
+        $qty = !empty($data->quantity) ? floatval($data->quantity) : 0.0;
+        $reason = !empty($data->reason) ? trim($data->reason) : 'Expired / Spoilage';
+        $reported_by = !empty($data->reported_by) ? trim($data->reported_by) : ($auth_user['name'] ?? 'Admin');
+
+        if ($inv_id <= 0 || $qty <= 0) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "Valid inventory_id and quantity (> 0) required."]);
+            exit();
+        }
+
+        $invStmt = $db->prepare("SELECT id, name, stock, unit, price, threshold FROM inventory WHERE id = ? FOR UPDATE");
+        $db->beginTransaction();
+        $invStmt->execute([$inv_id]);
+        $invItem = $invStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$invItem) {
+            $db->rollBack();
+            http_response_code(404);
+            echo json_encode(["success" => false, "message" => "Inventory item not found."]);
+            exit();
+        }
+
+        $unitCost = floatval($invItem['price'] ?? 0.0);
+        $costLost = round($qty * $unitCost, 2);
+        $itemUnit = !empty($data->unit) ? trim($data->unit) : ($invItem['unit'] ?: 'kg');
+
+        // Insert into inventory_wastage
+        $wastageStmt = $db->prepare("
+            INSERT INTO inventory_wastage (order_id, inventory_id, quantity, unit, cost_lost, stage, reported_by, reason, is_verified)
+            VALUES (NULL, ?, ?, ?, ?, 'inventory_audit', ?, ?, 1)
+        ");
+        $wastageStmt->execute([$inv_id, $qty, $itemUnit, $costLost, $reported_by, $reason]);
+
+        // Atomic deduction
+        $deductStmt = $db->prepare("UPDATE inventory SET stock = GREATEST(0, stock - ?) WHERE id = ?");
+        $deductStmt->execute([$qty, $inv_id]);
+
+        $newStock = max(0.0, floatval($invItem['stock']) - $qty);
+        $threshold = floatval($invItem['threshold'] ?? 10.0);
+
+        // Low stock alert check
+        $alertTriggered = false;
+        if ($newStock <= $threshold) {
+            $alertTitle = "Low Stock Alert: " . $invItem['name'];
+            $alertMsg = "Stock for {$invItem['name']} dropped to {$newStock} {$itemUnit} (Threshold: {$threshold} {$itemUnit}) after wastage audit.";
+            $notifStmt = $db->prepare("
+                INSERT INTO staff_notifications (type, title, message, order_id, is_read)
+                VALUES ('wastage', ?, ?, NULL, 0)
+            ");
+            $notifStmt->execute([$alertTitle, $alertMsg]);
+            $alertTriggered = true;
+        }
+
+        $db->commit();
+
+        echo json_encode([
+            "success" => true,
+            "message" => "Raw ingredient wastage recorded and stock deducted successfully.",
+            "inventory_id" => $inv_id,
+            "inventory_name" => $invItem['name'],
+            "quantity_deducted" => $qty,
+            "remaining_stock" => $newStock,
+            "cost_lost" => $costLost,
+            "low_stock_alert" => $alertTriggered
+        ]);
+        exit();
+    }
+
     echo json_encode(["success" => false, "message" => "Invalid action."]);
 } catch (Exception $e) {
     http_response_code(500);

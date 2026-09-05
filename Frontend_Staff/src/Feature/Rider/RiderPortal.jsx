@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FaMotorcycle, FaCommentDots } from "react-icons/fa";
+import { useStaffAuth } from "../../Context/AuthContext";
 import { useRiderData } from "./hooks/useRiderData";
 
 import NetworkStatus from "./Components/NetworkStatus";
@@ -18,6 +19,7 @@ import RiderGpsSimulator from "./Components/RiderGpsSimulator";
 
 export default function RiderPortal() {
   const navigate = useNavigate();
+  const { logout } = useStaffAuth();
   const {
     riderSession,
     isOnline,
@@ -51,11 +53,7 @@ export default function RiderPortal() {
     if (isOnline) {
       handleToggleStatus();
     }
-    localStorage.removeItem("staff_session");
-    localStorage.removeItem("user");
-    sessionStorage.removeItem("staff_session");
-    sessionStorage.removeItem("user");
-    navigate("/login");
+    logout();
   };
 
   if (!riderSession) return null;

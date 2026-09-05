@@ -22,15 +22,24 @@ export default function PosCart({
   setCustomerName,
   customerMobile = "",
   setCustomerMobile,
+  paymentMethod = "Cash",
+  setPaymentMethod,
+  paymentStatus = "Paid",
+  setPaymentStatus,
+  transactionId = "",
+  setTransactionId,
   subtotal = 0,
   gstRate = 0,
   taxAmount = 0,
   deliveryFee = 0,
   grandTotal = 0,
+  handleCheckout,
   onCheckout,
   isMobileCartOpen = false,
   setIsMobileCartOpen,
 }) {
+  // Support both prop names: handleCheckout (from usePosCart spread) or onCheckout (explicit)
+  const doCheckout = handleCheckout || onCheckout;
   const orderTypes = [
     { id: "Dine-In", label: "Dine-In", icon: FaUtensils },
     { id: "Takeaway", label: "Takeaway", icon: FaShoppingBag },
@@ -120,7 +129,13 @@ export default function PosCart({
         deliveryFee={deliveryFee}
         grandTotal={grandTotal}
         cartLength={cart.length}
-        onCheckout={onCheckout}
+        paymentMethod={paymentMethod}
+        setPaymentMethod={setPaymentMethod}
+        paymentStatus={paymentStatus}
+        setPaymentStatus={setPaymentStatus}
+        transactionId={transactionId}
+        setTransactionId={setTransactionId}
+        onCheckout={doCheckout}
       />
     </div>
   );

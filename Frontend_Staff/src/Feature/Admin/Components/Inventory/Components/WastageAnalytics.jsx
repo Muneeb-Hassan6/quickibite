@@ -45,6 +45,122 @@ export default function WastageAnalytics() {
 
   const logs = Array.isArray(logsData) ? logsData : [];
 
+  // 3. Fetch Inventory Items for Direct Raw Wastage Logging
+  const { data: inventoryItems = [] } = useQuery({
+    queryKey: ["inventory"],
+    queryFn: async () => {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/inventory_api.php`);
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+  });
+
+  const handleLogRawWastage = async () => {
+    if (!inventoryItems.length) {
+      Swal.fire("Notice", "No inventory items available to log wastage.", "info");
+      return;
+    }
+
+    const optionsHtml = inventoryItems
+      .map(
+        (item) =>
+          `<option value="${item.id}" data-unit="${item.unit || "kg"}" data-price="${item.price || 0}">
+            ${item.name} (${item.stock} ${item.unit || "kg"} in stock) - Rs ${item.price}
+          </option>`
+      )
+      .join("");
+
+    const { value: formValues } = await Swal.fire({
+      title: "Log Raw Ingredient Wastage",
+      html: `
+        <div style="text-align: left; font-size: 13px;">
+          <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #fff;">Select Ingredient:</label>
+          <select id="swal-inv-id" style="width: 100%; padding: 8px 12px; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 8px; margin-bottom: 12px;">
+            ${optionsHtml}
+          </select>
+
+          <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #fff;">Quantity to Deduct:</label>
+          <input id="swal-inv-qty" type="number" step="0.1" min="0.1" placeholder="e.g. 2.5" style="width: 100%; padding: 8px 12px; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box;" />
+
+          <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #fff;">Reason:</label>
+          <select id="swal-inv-reason" style="width: 100%; padding: 8px 12px; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 8px; margin-bottom: 12px;">
+            <option value="Expired / Spoilage">Expired / Spoilage</option>
+            <option value="Spilled in Kitchen">Spilled in Kitchen</option>
+            <option value="Damaged Packaging / Contaminated">Damaged Packaging / Contaminated</option>
+            <option value="Quality Inspection Rejection">Quality Inspection Rejection</option>
+          </select>
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: "Record & Deduct Stock",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#71717a",
+      background: "#18181b",
+      color: "#fff",
+      preConfirm: () => {
+        const invSelect = document.getElementById("swal-inv-id");
+        const qty = parseFloat(document.getElementById("swal-inv-qty").value);
+        if (isNaN(qty) || qty <= 0) {
+          Swal.showValidationMessage("Please enter a valid positive quantity");
+          return false;
+        }
+        return {
+          inventory_id: invSelect.value,
+          quantity: qty,
+          reason: document.getElementById("swal-inv-reason").value,
+        };
+      },
+    });
+
+    if (formValues) {
+      try {
+        const user = JSON.parse(
+          localStorage.getItem("user") ||
+            sessionStorage.getItem("user") ||
+            "{}"
+        );
+        const adminName = user.name || user.username || "Admin";
+
+        const res = await fetch(
+          `${import.meta.env.VITE_API_BASE}/admin_wastage_manager.php`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "log_raw_wastage",
+              inventory_id: formValues.inventory_id,
+              quantity: formValues.quantity,
+              reason: formValues.reason,
+              reported_by: adminName,
+            }),
+          }
+        );
+        const data = await res.json();
+        if (data.success) {
+          Swal.fire({
+            icon: "success",
+            title: "Wastage Logged",
+            html: `
+              <p>Deducted <strong>${data.quantity_deducted}</strong> from <strong>${data.inventory_name}</strong>.</p>
+              <p style="color: #ef4444; font-weight: bold;">Loss Impact: Rs ${parseFloat(data.cost_lost || 0).toFixed(2)}</p>
+              ${data.low_stock_alert ? `<p style="color: #f59e0b; font-weight: bold;">⚠️ Low Stock Alert Generated!</p>` : ""}
+            `,
+            background: "#18181b",
+            color: "#fff",
+          });
+          queryClient.invalidateQueries({ queryKey: ["wastage_logs"] });
+          queryClient.invalidateQueries({ queryKey: ["wastage_analytics"] });
+          queryClient.invalidateQueries({ queryKey: ["inventory"] });
+        } else {
+          Swal.fire("Error", data.message || "Failed to log wastage", "error");
+        }
+      } catch (err) {
+        Swal.fire("Error", "Server connection failed", "error");
+      }
+    }
+  };
+
   const filteredLogs = logs.filter((log) => {
     if (selectedStage === "all") return true;
     return log.stage === selectedStage;
@@ -212,17 +328,27 @@ export default function WastageAnalytics() {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            queryClient.invalidateQueries({ queryKey: ["wastage_logs"] });
-            queryClient.invalidateQueries({ queryKey: ["wastage_analytics"] });
-          }}
-          className="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-neutral-800 hover:bg-zinc-200 dark:hover:bg-neutral-700 text-zinc-700 dark:text-zinc-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-zinc-200 dark:border-neutral-700 transition-all"
-        >
-          <FaSync className="text-[10px]" />
-          <span>Refresh Data</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleLogRawWastage}
+            className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-rose-500/30 transition-all active:scale-95 shadow-xs"
+          >
+            <FaFire className="text-[10px]" />
+            <span>Log Raw Wastage</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              queryClient.invalidateQueries({ queryKey: ["wastage_logs"] });
+              queryClient.invalidateQueries({ queryKey: ["wastage_analytics"] });
+            }}
+            className="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-neutral-800 hover:bg-zinc-200 dark:hover:bg-neutral-700 text-zinc-700 dark:text-zinc-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-zinc-200 dark:border-neutral-700 transition-all"
+          >
+            <FaSync className="text-[10px]" />
+            <span>Refresh Data</span>
+          </button>
+        </div>
       </div>
 
       {/* ═══ 3. DETAILED WASTAGE AUDIT TABLE ═══ */}

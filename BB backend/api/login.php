@@ -7,12 +7,15 @@ $database = new Database();
 $db = $database->getConnection();
 $data = json_decode(file_get_contents("php://input"));
 
-if(!empty($data->username) && !empty($data->password)) {
+$username = !empty($data->username) ? trim($data->username) : null;
+$password = !empty($data->password) ? $data->password : null;
+
+if(!empty($username) && !empty($password)) {
     try {
         $query = "SELECT id, name, role, status, password FROM staff WHERE username = :username OR phone = :username";
         $stmt = $db->prepare($query);
         $stmt->execute([
-            ':username' => $data->username
+            ':username' => $username
         ]);
 
         if($stmt->rowCount() > 0) {

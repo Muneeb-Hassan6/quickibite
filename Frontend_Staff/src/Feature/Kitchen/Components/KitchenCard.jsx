@@ -247,15 +247,26 @@ export default function KitchenCard({
                       addonsList = typeof item.selected_addons === "string" ? JSON.parse(item.selected_addons) : item.selected_addons;
                     } else if (item.selected_addons_json) {
                       try {
-                        addonsList = JSON.parse(item.selected_addons_json);
+                        addonsList = typeof item.selected_addons_json === "string" ? JSON.parse(item.selected_addons_json) : item.selected_addons_json;
                       } catch(e) {}
                     } else if (item.addons && Array.isArray(item.addons)) {
                       addonsList = item.addons;
                     }
                     if (Array.isArray(addonsList) && addonsList.length > 0) {
                       return (
-                        <div className="text-[10px] sm:text-[11px] font-bold text-amber-700 dark:text-amber-400">
-                          + Add-ons: {addonsList.map(a => a.name || a.title).join(", ")}
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {addonsList.map((a, aIdx) => {
+                            const aName = typeof a === "string" ? a : (a?.name || a?.title || a?.addon_name || "");
+                            if (!aName) return null;
+                            return (
+                              <span
+                                key={aIdx}
+                                className="text-[10px] sm:text-[11px] font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded shadow-2xs"
+                              >
+                                + {aName}
+                              </span>
+                            );
+                          })}
                         </div>
                       );
                     }
@@ -268,8 +279,8 @@ export default function KitchenCard({
                     </p>
                   )}
                   {item.note && (
-                    <div className="text-[10px] sm:text-[11px] bg-amber-50 border border-amber-200 text-amber-900 dark:bg-amber-950/30 dark:border-amber-900/40 dark:text-amber-300 rounded px-1.5 sm:px-2 py-0.5 italic inline-block">
-                      Note: {item.note}
+                    <div className="block max-w-full break-words bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded px-2 py-1 text-amber-900 dark:text-amber-300 font-semibold italic text-[10px] sm:text-[11px]">
+                      📝 Note: {item.note}
                     </div>
                   )}
                 </div>

@@ -1,0 +1,3 @@
+SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'Gourmet Burgers (QA-Test)-Drinks & Dips' for key 'unique_category_mapping' on line 136
+#0 C:\xampp\htdocs\quickibite\BB backend\api\e2e_29_tables_master_test.php(136): PDOStatement->execute(Array)
+#1 {main}

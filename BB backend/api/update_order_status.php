@@ -57,12 +57,40 @@ if (!empty($orderId) && !empty($data->status)) {
             exit();
         }
 
-        $terminalStatuses = ['Completed', 'Delivered', 'Cancelled', 'Declined'];
-        if (in_array($currentOrder['status'], $terminalStatuses) && $dbStatus === 'Pending') {
+        $currentStatus = $currentOrder['status'] ?? 'Pending';
+
+        // If status is unchanged, return idempotent success
+        if (strcasecmp($currentStatus, $dbStatus) === 0) {
+            echo json_encode([
+                "success" => true,
+                "message" => "Order #$id is already $dbStatus",
+                "status" => $dbStatus,
+                "id" => $id
+            ]);
+            exit();
+        }
+
+        // Strict State Transition Progression Matrix
+        $allowedTransitions = [
+            'Pending'    => ['Cooking', 'Cancelled', 'Declined'],
+            'Cooking'    => ['Ready', 'Cancelled'],
+            'Ready'      => ['Completed', 'Dispatched', 'Cancelled'],
+            'Dispatched' => ['Delivered', 'Cancelled'],
+            'Delivered'  => ['Completed'],
+            'Completed'  => [],
+            'Cancelled'  => [],
+            'Declined'   => []
+        ];
+
+        $validTargets = $allowedTransitions[$currentStatus] ?? [];
+
+        if (!in_array($dbStatus, $validTargets)) {
             http_response_code(400);
             echo json_encode([
                 "success" => false, 
-                "message" => "Cannot revert order from terminal status '{$currentOrder['status']}' back to 'Pending'."
+                "message" => "State jump blocked: Cannot transition order #$id directly from '$currentStatus' to '$dbStatus'. Allowed next states: " . (empty($validTargets) ? "None (Terminal Status)" : implode(', ', $validTargets)),
+                "current_status" => $currentStatus,
+                "requested_status" => $dbStatus
             ]);
             exit();
         }
@@ -73,6 +101,21 @@ if (!empty($orderId) && !empty($data->status)) {
             ':status' => $dbStatus,
             ':id' => $id
         ]);
+
+        // Trigger real-time broadcast to socket server (non-blocking)
+        try {
+            $ctx = stream_context_create([
+                'http' => [
+                    'method' => 'POST',
+                    'timeout' => 0.5,
+                    'header' => "Content-Type: application/json\r\n",
+                    'content' => json_encode(['order_id' => $id, 'status' => $dbStatus])
+                ]
+            ]);
+            @file_get_contents('http://localhost:3001/trigger-order', false, $ctx);
+        } catch (\Throwable $e) {
+            // Non-blocking fallback
+        }
 
         echo json_encode([
             "success" => true,

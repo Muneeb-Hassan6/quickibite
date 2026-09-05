@@ -14,12 +14,15 @@ export default function usePosCart({
   const [tableNo, setTableNo] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerMobile, setCustomerMobile] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("Cash");
+  const [paymentStatus, setPaymentStatus] = useState("Paid");
+  const [transactionId, setTransactionId] = useState("");
 
   // Notify parent of total cart count changes
   useEffect(() => {
     if (onCartCountChange) {
       const count = cart.reduce(
-        (total, item) => total + Number(item.qty || item.quantity || 1),
+        (total, item) => total + (Number(item.qty || item.quantity) || 1),
         0
       );
       onCartCountChange(count);
@@ -28,15 +31,18 @@ export default function usePosCart({
 
   const addItemToCart = (cartItem) => {
     const noteString = (cartItem.note || "").trim();
-    const excludedArr = cartItem.excluded_ingredients || [];
-    const cartId = `${cartItem.id}-${cartItem.size || cartItem.variant || "Regular"}-${noteString}-${excludedArr.join("-")}`;
+    const excludedArr = (cartItem.excluded_ingredients || []).slice().sort();
+    const addonsArr = (cartItem.selected_addons || [])
+      .map((a) => `${a.uid || a.id || a.name || a.title}_${a.price}`)
+      .sort();
+    const cartId = `${cartItem.id}-${cartItem.size || cartItem.variant || "Regular"}-${noteString}-${excludedArr.join("-")}-${addonsArr.join("-")}`;
 
     setCart((prev) => {
       const exist = prev.find((i) => i.cartId === cartId);
       if (exist) {
         return prev.map((i) =>
           i.cartId === cartId
-            ? { ...i, qty: Number(i.qty || 1) + Number(cartItem.qty || 1) }
+            ? { ...i, qty: (Number(i.qty) || 1) + (Number(cartItem.qty) || 1) }
             : i
         );
       }
@@ -46,7 +52,7 @@ export default function usePosCart({
         {
           ...cartItem,
           cartId,
-          qty: Number(cartItem.qty || cartItem.quantity || 1),
+          qty: Number(cartItem.qty || cartItem.quantity) || 1,
         },
       ];
     });
@@ -56,7 +62,7 @@ export default function usePosCart({
     setCart((prev) =>
       prev.map((item) => {
         if (item.cartId === cartIdOrId || item.id === cartIdOrId) {
-          const currentQty = Number(item.qty || item.quantity || 1);
+          const currentQty = Number(item.qty || item.quantity) || 1;
           const newQty =
             typeof deltaOrQty === "number" &&
             (deltaOrQty === -1 || deltaOrQty === 1)
@@ -81,16 +87,19 @@ export default function usePosCart({
     setCustomerName("");
     setCustomerMobile("");
     setOrderType("Dine-In");
+    setPaymentMethod("Cash");
+    setPaymentStatus("Paid");
+    setTransactionId("");
   };
 
-  // Computations
+  // Safe Computations (Zero NaN)
   const subtotal = cart.reduce(
     (total, item) =>
-      total + Number(item.price || 0) * Number(item.qty || item.quantity || 1),
+      total + (Number(item.price) || 0) * (Number(item.qty || item.quantity) || 1),
     0
   );
-  const taxAmount = (subtotal * gstRate) / 100;
-  const activeDeliveryFee = orderType === "Delivery" ? deliveryFee : 0;
+  const taxAmount = (subtotal * (Number(gstRate) || 0)) / 100;
+  const activeDeliveryFee = orderType === "Delivery" ? (Number(deliveryFee) || 0) : 0;
   const grandTotal = subtotal + taxAmount + activeDeliveryFee;
 
   // Checkout API trigger
@@ -107,7 +116,7 @@ export default function usePosCart({
       return Swal.fire({
         icon: "warning",
         title: "Table No Required",
-        text: "Please enter a Table Number.",
+        text: "Please enter or select a Table Number.",
       });
     }
 
@@ -130,14 +139,18 @@ export default function usePosCart({
 
     const orderPayload = {
       order_type: orderType,
-      customer_name: customerName || "Walk-in",
+      order_mode: orderType.toUpperCase(),
+      customer_name: (customerName || "").trim() || "Walk-in Customer",
       table_number: orderType === "Dine-In" ? tableNo : orderType,
       customer_mobile: orderType === "Delivery" ? customerMobile : null,
       customer_address: orderType === "Delivery" ? tableNo : "",
-      subtotal,
-      tax_amount: taxAmount,
-      delivery_fee: activeDeliveryFee,
-      total: grandTotal,
+      subtotal: Number(subtotal.toFixed(2)),
+      tax_amount: Number(taxAmount.toFixed(2)),
+      delivery_fee: Number(activeDeliveryFee.toFixed(2)),
+      total: Number(grandTotal.toFixed(2)),
+      payment_method: paymentMethod || "Cash",
+      payment_status: paymentStatus || "Paid",
+      transaction_id: transactionId || null,
       cart,
     };
 
@@ -156,18 +169,45 @@ export default function usePosCart({
           body: JSON.stringify(orderPayload),
         }
       );
-      const data = await response.json();
+
+      const rawText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch (parseErr) {
+        console.error("Non-JSON API response from create_order.php:", rawText);
+        throw new Error("Server returned an invalid response. Please verify backend status.");
+      }
 
       if (response.ok && data.success) {
+        const orderId = data.order_id || Math.floor(1000 + Math.random() * 9000);
         const newOrderForPortal = {
-          id: data.order_id || Math.floor(1000 + Math.random() * 9000),
+          id: orderId,
+          order_id: orderId,
           table: orderPayload.table_number,
-          customerName: customerName || "Walk-in",
-          time: new Date().toLocaleTimeString(),
-          total: grandTotal,
+          table_number: orderPayload.table_number,
+          order_type: orderType,
+          order_mode: orderType.toUpperCase(),
+          customer: orderPayload.customer_name,
+          customer_name: orderPayload.customer_name,
+          customerName: orderPayload.customer_name,
+          customer_mobile: orderPayload.customer_mobile,
+          customer_address: orderPayload.customer_address,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          date: new Date().toISOString().split("T")[0],
+          created_at: new Date().toLocaleString(),
+          subtotal: Number(subtotal.toFixed(2)),
+          tax_amount: Number(taxAmount.toFixed(2)),
+          delivery_fee: Number(activeDeliveryFee.toFixed(2)),
+          total: Number(grandTotal.toFixed(2)),
           status: "Pending",
+          payment_method: data.payment_method || paymentMethod,
+          payment_status: data.payment_status || paymentStatus,
+          transaction_id: data.transaction_id || transactionId || null,
           items: cart,
+          cart,
         };
+
         if (onPlaceOrder) onPlaceOrder(newOrderForPortal);
 
         // Real-Time Socket Signal
@@ -190,7 +230,7 @@ export default function usePosCart({
         Swal.fire({
           icon: "success",
           title: "Order Placed!",
-          text: `Order sent to kitchen as ${orderType}`,
+          text: `Order #${orderId} sent to kitchen as ${orderType}`,
           timer: 2000,
           showConfirmButton: false,
         });
@@ -217,6 +257,12 @@ export default function usePosCart({
     setCustomerName,
     customerMobile,
     setCustomerMobile,
+    paymentMethod,
+    setPaymentMethod,
+    paymentStatus,
+    setPaymentStatus,
+    transactionId,
+    setTransactionId,
     addItemToCart,
     updateQty,
     removeFromCart,

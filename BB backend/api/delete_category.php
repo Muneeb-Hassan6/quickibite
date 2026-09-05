@@ -16,12 +16,19 @@ $data = json_decode(file_get_contents("php://input"));
 if(!empty($data->id)) {
     $category->id = $data->id;
 
-    // Cloudinary Delete logic ke liye URL nikalna
-    $query = "SELECT img FROM categories WHERE id = ?";
+    // Fetch category name and img before deletion
+    $query = "SELECT name, img FROM categories WHERE id = ?";
     $stmt = $db->prepare($query);
     $stmt->execute([$category->id]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $categoryName = $row['name'] ?? '';
     $imageUrl = $row['img'] ?? '';
+
+    // Reassign any menu items in this category to 'Uncategorized' to preserve relational integrity
+    if (!empty($categoryName)) {
+        $reassignStmt = $db->prepare("UPDATE menu_items SET category = 'Uncategorized' WHERE category = ?");
+        $reassignStmt->execute([$categoryName]);
+    }
 
     // Database se Delete
     if($category->delete()){
