@@ -108,7 +108,8 @@ if (!empty($orderId) && !empty($data->status)) {
                 'http' => [
                     'method' => 'POST',
                     'timeout' => 0.5,
-                    'header' => "Content-Type: application/json\r\n",
+                    'header' => "Content-Type: application/json\r\n" .
+                                "x-internal-secret: quickibite_internal_secret_2026\r\n",
                     'content' => json_encode(['order_id' => $id, 'status' => $dbStatus])
                 ]
             ]);

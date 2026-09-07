@@ -27,6 +27,9 @@ const io = new Server(server, {
   transports: ["websocket", "polling"],
 });
 
+const INTERNAL_SOCKET_SECRET =
+  process.env.INTERNAL_SOCKET_SECRET || "quickibite_internal_secret_2026";
+
 // ── HTTP Health check ──────────────────────────────────────────────────────────
 app.get("/health", (req, res) => {
   const rooms = [];
@@ -39,11 +42,43 @@ app.get("/health", (req, res) => {
   });
 });
 
-// ── HTTP trigger from PHP backend (fallback if needed) ─────────────────────────
+// ── HTTP trigger from PHP backend (secured with shared secret) ─────────────────
 app.post("/trigger-order", (req, res) => {
-  console.log("📦 HTTP trigger received from PHP backend → broadcasting refresh_kitchen");
+  const incomingSecret =
+    req.headers["x-internal-secret"] ||
+    (req.headers["authorization"] &&
+      req.headers["authorization"].replace(/^Bearer\s+/i, ""));
+
+  if (!incomingSecret || incomingSecret !== INTERNAL_SOCKET_SECRET) {
+    console.warn(`⛔ Unauthorized HTTP trigger attempt from ${req.ip || "unknown IP"}`);
+    return res.status(403).json({
+      success: false,
+      message: "Unauthorized internal trigger",
+    });
+  }
+
+  console.log("📦 Authorized HTTP trigger received from PHP backend → broadcasting refresh_kitchen");
   io.emit("refresh_kitchen");
   res.json({ success: true, message: "Kitchen refreshed via HTTP trigger" });
+});
+
+// ── Socket.io Connection Guard ────────────────────────────────────────────────
+io.use((socket, next) => {
+  const origin = socket.handshake.headers.origin;
+  const allowedOrigin =
+    NODE_ENV === "production"
+      ? process.env.FRONTEND_URL_PRODUCTION
+      : process.env.FRONTEND_URL || "*";
+
+  if (NODE_ENV === "production" && origin && allowedOrigin !== "*") {
+    const allowedList = allowedOrigin.split(",").map((o) => o.trim());
+    if (!allowedList.includes(origin)) {
+      console.warn(`⛔ Rejected socket connection from unauthorized origin: ${origin}`);
+      return next(new Error("Unauthorized connection origin"));
+    }
+  }
+
+  next();
 });
 
 // ── Socket.io events ───────────────────────────────────────────────────────────
