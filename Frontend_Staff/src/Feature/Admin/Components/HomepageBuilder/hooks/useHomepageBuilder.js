@@ -11,10 +11,9 @@ export function useHomepageBuilder() {
   // Auth Helpers
   const getAuthToken = () => {
     return (
-      localStorage.getItem('token') ||
-      localStorage.getItem('staff_token') ||
-      sessionStorage.getItem('auth_token') ||
       sessionStorage.getItem('token') ||
+      sessionStorage.getItem('auth_token') ||
+      sessionStorage.getItem('staff_token') ||
       ''
     );
   };
@@ -30,10 +29,11 @@ export function useHomepageBuilder() {
   const handleAuthError = () => {
     toast.error('Session expired or unauthorized (401). Redirecting to login...');
     sessionStorage.removeItem('auth_token');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('staff_token');
     sessionStorage.removeItem('staff_session');
     sessionStorage.removeItem('user');
-    localStorage.removeItem('token');
-    localStorage.removeItem('staff_token');
+    sessionStorage.removeItem('staff_user');
     setTimeout(() => {
       navigate('/login');
     }, 1200);

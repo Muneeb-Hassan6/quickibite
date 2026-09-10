@@ -19,7 +19,7 @@ export default function HeroSlideConfigForm({
           value={formData.subtitle}
           onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
           placeholder="e.g. Hot & Fresh Pizza Bundles"
-          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
+          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
         />
       </div>
 
@@ -31,7 +31,7 @@ export default function HeroSlideConfigForm({
           type="file"
           onChange={(e) => setFormData({ ...formData, file: e.target.files[0] })}
           required={!editId}
-          className="w-full p-2.5 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
+          className="w-full p-2.5 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white rounded-xl text-xs"
         />
       </div>
 

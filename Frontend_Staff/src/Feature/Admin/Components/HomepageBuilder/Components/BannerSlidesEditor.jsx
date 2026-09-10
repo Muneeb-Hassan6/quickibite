@@ -9,8 +9,8 @@ export default function BannerSlidesEditor({
   deals = [],
 }) {
   return (
-    <div className="p-4 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/10 space-y-3">
-      <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-white/10">
+    <div className="p-4 bg-slate-50 dark:bg-neutral-900/60 rounded-2xl border border-slate-200 dark:border-neutral-800 space-y-3">
+      <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-neutral-800">
         <h4 className="text-xs font-bold uppercase text-slate-900 dark:text-white m-0">Banner Slides</h4>
         <button
           type="button"
@@ -22,7 +22,7 @@ export default function BannerSlidesEditor({
       </div>
 
       {bannerSlides.map((slide, index) => (
-        <div key={index} className="p-3 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 space-y-2 relative shadow-sm">
+        <div key={index} className="p-3 bg-white dark:bg-[#16161a] rounded-xl border border-slate-200 dark:border-neutral-800 space-y-2 relative shadow-sm">
           {bannerSlides.length > 1 && (
             <button
               type="button"
@@ -48,7 +48,7 @@ export default function BannerSlidesEditor({
                   newSlides[index].title = e.target.value;
                   setBannerSlides(newSlides);
                 }}
-                className="w-full p-2 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-lg text-xs"
+                className="w-full p-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white rounded-lg text-xs"
               />
             </div>
             <div>
@@ -61,7 +61,7 @@ export default function BannerSlidesEditor({
                   newSlides[index].subtitle = e.target.value;
                   setBannerSlides(newSlides);
                 }}
-                className="w-full p-2 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-lg text-xs"
+                className="w-full p-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white rounded-lg text-xs"
               />
             </div>
             <div className="sm:col-span-2">
@@ -88,7 +88,7 @@ export default function BannerSlidesEditor({
                   setBannerSlides(newSlides);
                 }}
                 required={!slide.image_url}
-                className="w-full p-2 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-lg text-xs"
+                className="w-full p-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white rounded-lg text-xs"
               />
             </div>
           </div>

@@ -305,7 +305,7 @@ export default function PaymentSandboxModal({
             disabled={sandboxLoading || !isFormValid}
             className={`w-full py-4 rounded-2xl font-['Oswald',sans-serif] font-black uppercase text-sm tracking-wider shadow-md transition-all flex items-center justify-center gap-2 border-none ${
               !isFormValid || sandboxLoading
-                ? "bg-neutral-800 text-neutral-500 cursor-not-allowed opacity-60 border border-white/5"
+                ? "bg-gray-200 dark:bg-neutral-800 text-gray-400 dark:text-neutral-500 cursor-not-allowed opacity-60 border border-gray-300 dark:border-white/5"
                 : "bg-amber-400 hover:bg-amber-500 active:scale-[0.98] text-neutral-950 shadow-amber-400/25 cursor-pointer"
             }`}
           >

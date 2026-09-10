@@ -76,7 +76,8 @@ export default function KitchenCard({
       setIsRemaking(true);
       try {
         const user = JSON.parse(
-          localStorage.getItem("user") ||
+          sessionStorage.getItem("staff_user") ||
+            sessionStorage.getItem("staff_session") ||
             sessionStorage.getItem("user") ||
             "{}"
         );

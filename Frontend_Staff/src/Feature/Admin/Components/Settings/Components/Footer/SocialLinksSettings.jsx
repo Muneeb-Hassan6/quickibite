@@ -13,10 +13,10 @@ export default function SocialLinksSettings({
         </label>
         <input
           type="text"
-          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${
+          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-neutral-900 border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${
             errors.footer_facebook
               ? "border-red-500"
-              : "border-slate-300 dark:border-white/10"
+              : "border-slate-200 dark:border-neutral-700"
           }`}
           name="footer_facebook"
           value={settings.footer_facebook}
@@ -36,10 +36,10 @@ export default function SocialLinksSettings({
         </label>
         <input
           type="text"
-          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${
+          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-neutral-900 border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${
             errors.footer_twitter
               ? "border-red-500"
-              : "border-slate-300 dark:border-white/10"
+              : "border-slate-200 dark:border-neutral-700"
           }`}
           name="footer_twitter"
           value={settings.footer_twitter}
@@ -59,10 +59,10 @@ export default function SocialLinksSettings({
         </label>
         <input
           type="text"
-          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${
+          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-neutral-900 border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${
             errors.footer_instagram
               ? "border-red-500"
-              : "border-slate-300 dark:border-white/10"
+              : "border-slate-200 dark:border-neutral-700"
           }`}
           name="footer_instagram"
           value={settings.footer_instagram}
@@ -82,10 +82,10 @@ export default function SocialLinksSettings({
         </label>
         <input
           type="text"
-          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${
+          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-neutral-900 border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${
             errors.footer_youtube
               ? "border-red-500"
-              : "border-slate-300 dark:border-white/10"
+              : "border-slate-200 dark:border-neutral-700"
           }`}
           name="footer_youtube"
           value={settings.footer_youtube}

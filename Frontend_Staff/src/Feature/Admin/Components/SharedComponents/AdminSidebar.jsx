@@ -32,6 +32,7 @@ const AdminSidebar = ({
   useEffect(() => {
     try {
       const rawUser =
+        sessionStorage.getItem("staff_user") ||
         sessionStorage.getItem("staff_session") ||
         sessionStorage.getItem("user");
       if (rawUser) {
@@ -114,7 +115,7 @@ const AdminSidebar = ({
         }`}
       >
         {/* Brand Header */}
-        <div className="p-5 border-b border-[var(--admin-border,rgba(255,255,255,0.06))] flex items-center justify-between shrink-0 bg-white/[0.01]">
+        <div className="p-5 border-b border-[var(--admin-border,rgba(255,255,255,0.06))] flex items-center justify-between shrink-0 bg-slate-50 dark:bg-white/[0.01]">
           <div className="flex items-center gap-3">
             {storeLogo ? (
               <img
@@ -185,9 +186,9 @@ const AdminSidebar = ({
         </div>
 
         {/* User Profile & Logout Footer */}
-        <div className="p-3 sm:p-4 border-t border-[var(--admin-border,rgba(255,255,255,0.06))] bg-white/[0.01] shrink-0 space-y-2.5">
-          <div className="flex items-center gap-3 p-2 rounded-xl bg-white/[0.02] border border-white/5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xs font-black shrink-0">
+        <div className="p-3 sm:p-4 border-t border-[var(--admin-border,rgba(255,255,255,0.06))] bg-slate-50 dark:bg-white/[0.01] shrink-0 space-y-2.5">
+          <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-100 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-500 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center text-xs font-black shrink-0">
               <FaUserShield />
             </div>
             <div className="flex-1 min-w-0">

@@ -68,7 +68,10 @@ const EmployeeList = () => {
   };
 
   const handleEditClick = (emp) => {
-    setEditingEmp(emp);
+    setEditingEmp({
+      ...emp,
+      password: "",
+    });
     setPhoneError("");
     setIsEditModalOpen(true);
   };
@@ -92,6 +95,17 @@ const EmployeeList = () => {
       return;
     }
 
+    if (editingEmp.password && editingEmp.password.length < 4) {
+      Swal.fire({
+        icon: "warning",
+        title: "Weak Password",
+        text: "New password must be at least 4 characters long.",
+        background: "#171717",
+        color: "#fff",
+      });
+      return;
+    }
+
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE}/update_staff.php`,
@@ -107,7 +121,7 @@ const EmployeeList = () => {
         Swal.fire({
           icon: "success",
           title: "Updated!",
-          text: "Employee details updated.",
+          text: result.message || "Employee details updated.",
           timer: 1500,
           showConfirmButton: false,
           background: "#171717",
@@ -116,10 +130,22 @@ const EmployeeList = () => {
         setIsEditModalOpen(false);
         queryClient.invalidateQueries({ queryKey: ["staff"] });
       } else {
-        Swal.fire("Error", result.message, "error");
+        Swal.fire({
+          icon: "error",
+          title: "Update Failed",
+          text: result.message || "Failed to update employee.",
+          background: "#171717",
+          color: "#fff",
+        });
       }
     } catch (error) {
-      Swal.fire("Error", "Server error.", "error");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Server connection failed.",
+        background: "#171717",
+        color: "#fff",
+      });
     }
   };
 

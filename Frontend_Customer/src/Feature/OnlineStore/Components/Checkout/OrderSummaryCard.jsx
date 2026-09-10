@@ -109,7 +109,7 @@ export default function OrderSummaryCard({
         onClick={handleProceedOrder}
         className={`w-full py-4 rounded-2xl font-['Oswald',sans-serif] font-black text-base uppercase tracking-wider transition-all flex items-center justify-center gap-2 border-none ${
           isOutOfDeliveryRadius
-            ? "bg-neutral-800 text-neutral-500 cursor-not-allowed border border-white/5 opacity-70"
+            ? "bg-gray-200 dark:bg-neutral-800 text-gray-400 dark:text-neutral-500 cursor-not-allowed border border-gray-300 dark:border-white/5 opacity-70"
             : "bg-amber-400 hover:bg-amber-500 active:scale-[0.98] disabled:opacity-50 text-neutral-950 shadow-lg shadow-amber-400/25 cursor-pointer"
         }`}
       >

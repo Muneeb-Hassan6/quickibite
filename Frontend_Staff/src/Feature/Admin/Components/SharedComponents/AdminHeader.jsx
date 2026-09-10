@@ -143,14 +143,14 @@ const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
       {/* Right: Live Status Pill, Notifications & Theme Toggle */}
       <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
         {/* Live Store Pill */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span className="text-[11px] uppercase tracking-wider">Store Online</span>
         </div>
 
         {/* Live Clock */}
-        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/5 text-[var(--admin-muted,#9ca3af)] text-xs font-mono font-semibold">
-          <FaClock className="text-amber-400 text-[11px]" />
+        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 text-slate-700 dark:text-[var(--admin-muted,#9ca3af)] text-xs font-mono font-semibold">
+          <FaClock className="text-amber-500 dark:text-amber-400 text-[11px]" />
           <span>{currentTime}</span>
         </div>
 
@@ -159,7 +159,7 @@ const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
           <button
             type="button"
             onClick={() => setIsNotifOpen(!isNotifOpen)}
-            className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/[0.03] hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-[var(--admin-text,#fff)] border border-slate-200 dark:border-[var(--admin-border,rgba(255,255,255,0.08))] flex items-center justify-center cursor-pointer transition-all shadow-xs active:scale-95"
+            className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/[0.03] hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white border border-slate-200 dark:border-white/10 flex items-center justify-center cursor-pointer transition-all shadow-xs active:scale-95"
             title="Real-Time Staff Alerts"
             aria-label="Staff Notifications"
           >

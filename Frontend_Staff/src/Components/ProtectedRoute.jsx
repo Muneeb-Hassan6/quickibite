@@ -7,14 +7,38 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { user, token, isAuthenticated, logout } = useStaffAuth();
   const location = useLocation();
 
-  // 1. Session Check - If not logged in OR no token, purge stale data and redirect to login
-  if (!isAuthenticated || !user || !token) {
+  // Tab-isolated session verification directly from active tab's sessionStorage
+  let activeUser = user;
+  let activeToken = token;
+
+  if (!activeUser || !activeToken) {
+    try {
+      const rawUser =
+        sessionStorage.getItem("staff_user") ||
+        sessionStorage.getItem("user") ||
+        sessionStorage.getItem("staff_session");
+      const storedToken =
+        sessionStorage.getItem("token") ||
+        sessionStorage.getItem("auth_token") ||
+        sessionStorage.getItem("staff_token");
+      if (rawUser && storedToken) {
+        activeUser = JSON.parse(rawUser);
+        activeToken = storedToken;
+      }
+    } catch {
+      activeUser = null;
+      activeToken = null;
+    }
+  }
+
+  // 1. Session Check - If not logged in OR no token, purge stale tab session and redirect to login
+  if (!activeUser || !activeToken) {
     logout();
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // 2. Case-Insensitive Role Matching
-  const userRole = String(user.role || "").toLowerCase().trim();
+  const userRole = String(activeUser.role || "").toLowerCase().trim();
   const safeAllowedRoles = allowedRoles.map((role) =>
     String(role).toLowerCase().trim()
   );
@@ -22,7 +46,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   // 3. RBAC Block: If role is not authorized for this specific portal
   if (allowedRoles.length > 0 && !safeAllowedRoles.includes(userRole)) {
     console.warn(
-      `[RBAC Guard Block] Role "${user.role}" is not authorized for "${location.pathname}". Redirecting to authorized portal.`
+      `[RBAC Guard Block] Role "${activeUser.role}" is not authorized for "${location.pathname}". Redirecting to authorized portal.`
     );
 
     const authorizedDashboard = getRoleDashboard(userRole);

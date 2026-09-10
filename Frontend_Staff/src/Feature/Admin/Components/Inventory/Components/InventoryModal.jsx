@@ -41,7 +41,9 @@ const InventoryModal = ({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            onSave();
+            if (typeof onSave === "function") {
+              onSave(e, form);
+            }
           }}
           className="space-y-4"
         >

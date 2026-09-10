@@ -26,7 +26,7 @@ export default function LinkTargetSelector({
       <select
         value={parsed.type}
         onChange={(e) => onChange(buildLink(e.target.value, ''))}
-        className="p-2 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
+        className="p-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
       >
         <option className="bg-white dark:bg-[#171717]" value="url">Standard URL</option>
         <option className="bg-white dark:bg-[#171717]" value="product">Link to Product</option>
@@ -39,7 +39,7 @@ export default function LinkTargetSelector({
           placeholder="/menu"
           value={parsed.value}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 p-2 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
+          className="flex-1 p-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
         />
       )}
 
@@ -47,7 +47,7 @@ export default function LinkTargetSelector({
         <select
           value={parsed.id || ''}
           onChange={(e) => onChange(buildLink('product', e.target.value))}
-          className="flex-1 p-2 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
+          className="flex-1 p-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
         >
           <option className="bg-white dark:bg-[#171717]" value="">Select a Product...</option>
           {menuItems.map((item) => (
@@ -62,7 +62,7 @@ export default function LinkTargetSelector({
         <select
           value={parsed.id || ''}
           onChange={(e) => onChange(buildLink('deal', e.target.value))}
-          className="flex-1 p-2 bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
+          className="flex-1 p-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
         >
           <option className="bg-white dark:bg-[#171717]" value="">Select a Deal...</option>
           {deals.map((deal) => (

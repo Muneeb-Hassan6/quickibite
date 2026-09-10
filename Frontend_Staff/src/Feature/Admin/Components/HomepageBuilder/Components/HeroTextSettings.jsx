@@ -73,8 +73,8 @@ const HeroTextSettings = () => {
     );
 
   return (
-    <div className="admin-card-surface bg-white dark:bg-[#161616] p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-white shadow-sm space-y-4">
-      <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-white/[0.06]">
+    <div className="admin-card-surface bg-white dark:bg-[#121216] p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white shadow-sm space-y-4">
+      <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-neutral-800">
         <div className="flex items-center gap-2">
           <FaHeading className="text-amber-500 text-sm" />
           <h3 className="m-0 text-sm sm:text-base font-black text-slate-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
@@ -104,7 +104,7 @@ const HeroTextSettings = () => {
             value={settings.hero_title}
             onChange={handleChange}
             placeholder="WELCOME TO <span style='color:#f59e0b;'>BIG BITE!</span>"
-            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
+            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
           />
         </div>
 
@@ -118,7 +118,7 @@ const HeroTextSettings = () => {
             value={settings.hero_subtitle}
             onChange={handleChange}
             placeholder="Order Delicious Fast Food Online"
-            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
+            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
           />
         </div>
 
@@ -132,7 +132,7 @@ const HeroTextSettings = () => {
             value={settings.hero_search_placeholder}
             onChange={handleChange}
             placeholder="Search our delicious burgers, pizzas..."
-            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
+            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
           />
         </div>
       </div>

@@ -12,7 +12,7 @@ export default function FooterBrandingSettings({
           Footer Tagline
         </label>
         <textarea
-          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 resize-y"
+          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 resize-y"
           name="footer_tagline"
           value={settings.footer_tagline}
           onChange={handleChange}
@@ -27,10 +27,10 @@ export default function FooterBrandingSettings({
         </label>
         <input
           type="text"
-          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${
+          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-neutral-900 border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${
             errors.footer_phone
               ? "border-red-500"
-              : "border-slate-300 dark:border-white/10"
+              : "border-slate-200 dark:border-neutral-700"
           }`}
           name="footer_phone"
           value={settings.footer_phone}
@@ -53,10 +53,10 @@ export default function FooterBrandingSettings({
         </label>
         <input
           type="email"
-          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${
+          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-neutral-900 border text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 ${
             errors.footer_email
               ? "border-red-500"
-              : "border-slate-300 dark:border-white/10"
+              : "border-slate-200 dark:border-neutral-700"
           }`}
           name="footer_email"
           value={settings.footer_email}

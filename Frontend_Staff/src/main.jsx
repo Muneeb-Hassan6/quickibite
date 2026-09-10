@@ -10,7 +10,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const originalFetch = window.fetch;
 window.fetch = async function (resource, options) {
   const token =
-    sessionStorage.getItem("auth_token") || localStorage.getItem("auth_token");
+    sessionStorage.getItem("token") ||
+    sessionStorage.getItem("auth_token") ||
+    sessionStorage.getItem("staff_token");
   if (token) {
     let url = "";
     if (typeof resource === "string") {

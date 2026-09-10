@@ -3,7 +3,6 @@ import FooterSettings from '../Settings/Components/Footer/FooterSettings';
 
 // Subcomponents
 import HeroTextSettings from './Components/HeroTextSettings';
-import GlobalHomepageSettings from './Components/GlobalHomepageSettings';
 import HeroSlidesEditor from './Components/HeroSlidesEditor';
 import PromoBannersEditor from './Components/PromoBannersEditor';
 import DynamicSectionsEditor from './Components/DynamicSectionsEditor';
@@ -17,10 +16,6 @@ const HomepageBuilder = () => {
     heroSlides,
     sections,
     isLoading,
-    globalSettings,
-    setGlobalSettings,
-    isSavingGlobal,
-    handleSaveGlobalSettings,
     masterBanners,
     handleToggleMasterBanner,
     handleUpdateMasterBannerOrder,
@@ -48,7 +43,7 @@ const HomepageBuilder = () => {
   return (
     <div className="space-y-6 animate-slide-up">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-2 border-b border-slate-200 dark:border-white/[0.06]">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-2 border-b border-slate-200 dark:border-neutral-800">
         <div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-4 bg-red-600 rounded-full shrink-0" />
@@ -68,18 +63,10 @@ const HomepageBuilder = () => {
         </div>
       )}
 
-      {/* 1. Global Homepage Settings */}
-      <GlobalHomepageSettings
-        globalSettings={globalSettings}
-        setGlobalSettings={setGlobalSettings}
-        handleSaveGlobalSettings={handleSaveGlobalSettings}
-        isSavingGlobal={isSavingGlobal}
-      />
-
-      {/* 2. Hero Static Content Settings */}
+      {/* 1. Hero Static Content Settings */}
       <HeroTextSettings />
 
-      {/* 3. Hero Carousel Slides */}
+      {/* 2. Hero Carousel Slides */}
       <HeroSlidesEditor
         heroSlides={heroSlides}
         openModal={openModal}

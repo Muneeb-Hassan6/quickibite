@@ -19,8 +19,8 @@ const FooterSettings = () => {
   }
 
   return (
-    <div className="admin-card-surface bg-white dark:bg-[#161616] rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-white shadow-sm space-y-6 animate-slide-up">
-      <div className="flex justify-between items-center pb-4 border-b border-slate-200 dark:border-white/[0.06]">
+    <div className="admin-card-surface bg-white dark:bg-[#121216] rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white shadow-sm space-y-6 animate-slide-up">
+      <div className="flex justify-between items-center pb-4 border-b border-slate-200 dark:border-neutral-800">
         <div className="flex items-center gap-2.5 text-sm sm:text-base font-black text-slate-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
           Footer Branding & Social Links
         </div>

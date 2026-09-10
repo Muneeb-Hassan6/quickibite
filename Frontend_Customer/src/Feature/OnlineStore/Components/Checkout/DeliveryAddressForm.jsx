@@ -158,7 +158,7 @@ export default function DeliveryAddressForm({
                 <span className="text-sm shrink-0">{isOutOfDeliveryRadius ? "⚠️" : "📍"}</span>
                 <span>
                   Distance to restaurant:{" "}
-                  <strong className="font-mono text-white underline decoration-amber-500/50">
+                  <strong className="font-mono text-zinc-900 dark:text-white underline decoration-amber-500/50">
                     {deliveryDistanceKm.toFixed(1)} km
                   </strong>
                 </span>

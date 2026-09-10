@@ -173,14 +173,14 @@ export default function ReviewsManagement() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-mono font-bold tracking-widest text-amber-400 uppercase bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+            <span className="text-[10px] font-mono font-bold tracking-widest text-amber-600 dark:text-amber-400 uppercase bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
               SOCIAL PROOF ENGINE
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black font-['Oswald',sans-serif] uppercase tracking-wide text-white m-0">
+          <h1 className="text-2xl sm:text-3xl font-black font-['Oswald',sans-serif] uppercase tracking-wide text-slate-900 dark:text-white m-0">
             Verified Customer Reviews
           </h1>
-          <p className="text-xs sm:text-sm text-neutral-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-neutral-400 mt-1">
             Moderate, feature, and showcase verified buyer dining feedback.
           </p>
         </div>
@@ -188,69 +188,69 @@ export default function ReviewsManagement() {
         <button
           type="button"
           onClick={fetchReviews}
-          className="px-4 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-700/80 text-neutral-300 hover:text-white text-xs font-bold flex items-center gap-2 transition-all cursor-pointer self-start sm:self-auto"
+          className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-neutral-900 dark:hover:bg-neutral-800 border border-slate-200 dark:border-neutral-700/80 text-slate-700 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white text-xs font-bold flex items-center gap-2 transition-all cursor-pointer self-start sm:self-auto"
         >
-          <FaSync className={loading ? "animate-spin text-amber-400" : ""} />
+          <FaSync className={loading ? "animate-spin text-amber-500 dark:text-amber-400" : "text-slate-400 dark:text-neutral-400"} />
           <span>Refresh</span>
         </button>
       </div>
 
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="p-4 sm:p-5 rounded-2xl bg-neutral-900/80 border border-neutral-800 space-y-1">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-            <FaStar className="text-amber-400" /> Average Rating
+        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#121216] border border-slate-200 dark:border-neutral-800 shadow-sm space-y-1">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 flex items-center gap-1.5">
+            <FaStar className="text-amber-500 dark:text-amber-400" /> Average Rating
           </span>
-          <div className="text-2xl sm:text-3xl font-black font-['Oswald',sans-serif] text-amber-400">
+          <div className="text-2xl sm:text-3xl font-black font-['Oswald',sans-serif] text-amber-600 dark:text-amber-400">
             {stats.average_rating} / 5.0
           </div>
-          <p className="text-[11px] text-neutral-500">Store-wide aggregate</p>
+          <p className="text-[11px] text-slate-400 dark:text-neutral-500">Store-wide aggregate</p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-neutral-900/80 border border-neutral-800 space-y-1">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-            <FaReceipt className="text-blue-400" /> Total Feedback
+        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#121216] border border-slate-200 dark:border-neutral-800 shadow-sm space-y-1">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 flex items-center gap-1.5">
+            <FaReceipt className="text-blue-500 dark:text-blue-400" /> Total Feedback
           </span>
-          <div className="text-2xl sm:text-3xl font-black font-['Oswald',sans-serif] text-white">
+          <div className="text-2xl sm:text-3xl font-black font-['Oswald',sans-serif] text-slate-900 dark:text-white">
             {stats.total_reviews}
           </div>
-          <p className="text-[11px] text-neutral-500">Verified buyer submissions</p>
+          <p className="text-[11px] text-slate-400 dark:text-neutral-500">Verified buyer submissions</p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-neutral-900/80 border border-neutral-800 space-y-1">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-            <FaCheckCircle className="text-emerald-400" /> Public Approved
+        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#121216] border border-slate-200 dark:border-neutral-800 shadow-sm space-y-1">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 flex items-center gap-1.5">
+            <FaCheckCircle className="text-emerald-500 dark:text-emerald-400" /> Public Approved
           </span>
-          <div className="text-2xl sm:text-3xl font-black font-['Oswald',sans-serif] text-emerald-400">
+          <div className="text-2xl sm:text-3xl font-black font-['Oswald',sans-serif] text-emerald-600 dark:text-emerald-400">
             {stats.approved_reviews}
           </div>
-          <p className="text-[11px] text-neutral-500">Live on customer store</p>
+          <p className="text-[11px] text-slate-400 dark:text-neutral-500">Live on customer store</p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-neutral-900/80 border border-neutral-800 space-y-1">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-            <FaThumbtack className="text-purple-400" /> Pinned Featured
+        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#121216] border border-slate-200 dark:border-neutral-800 shadow-sm space-y-1">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 flex items-center gap-1.5">
+            <FaThumbtack className="text-purple-500 dark:text-purple-400" /> Pinned Featured
           </span>
-          <div className="text-2xl sm:text-3xl font-black font-['Oswald',sans-serif] text-purple-400">
+          <div className="text-2xl sm:text-3xl font-black font-['Oswald',sans-serif] text-purple-600 dark:text-purple-400">
             {stats.featured_reviews}
           </div>
-          <p className="text-[11px] text-neutral-500">Highlighted social proof</p>
+          <p className="text-[11px] text-slate-400 dark:text-neutral-500">Highlighted social proof</p>
         </div>
       </div>
 
       {/* ═══════════════════════════════════════
           SEARCH & FILTER CONTROLS
           ═══════════════════════════════════════ */}
-      <div className="p-4 rounded-2xl bg-neutral-900/60 border border-neutral-800/80 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="p-4 rounded-2xl bg-white dark:bg-[#121216] border border-slate-200 dark:border-neutral-800 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
         {/* Search */}
         <div className="relative w-full sm:w-80">
-          <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 text-xs" />
+          <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-neutral-500 text-xs" />
           <input
             type="text"
             placeholder="Search by customer, order #ID, tag, or keyword..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-3.5 py-2 bg-neutral-950 border border-neutral-800 focus:border-amber-500 rounded-xl text-white text-xs placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+            className="w-full pl-9 pr-3.5 py-2 bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800 focus:border-amber-500 rounded-xl text-slate-900 dark:text-white text-xs placeholder:text-slate-400 dark:placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
           />
         </div>
 
@@ -268,8 +268,8 @@ export default function ReviewsManagement() {
               onClick={() => setStatusFilter(f.id)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap border ${
                 statusFilter === f.id
-                  ? "bg-amber-400 text-black border-amber-400 shadow-xs"
-                  : "bg-neutral-950 text-neutral-400 border-neutral-800 hover:text-white"
+                  ? "bg-amber-500 text-neutral-950 border-amber-500 shadow-xs"
+                  : "bg-slate-100 dark:bg-neutral-950 text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-800 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               {f.label}
@@ -282,19 +282,19 @@ export default function ReviewsManagement() {
           REVIEWS LIST / CARDS
           ═══════════════════════════════════════ */}
       {loading ? (
-        <div className="py-24 text-center text-neutral-500 flex flex-col items-center justify-center gap-3">
-          <FaSpinner className="text-3xl animate-spin text-amber-400" />
+        <div className="py-24 text-center text-slate-400 dark:text-neutral-500 flex flex-col items-center justify-center gap-3">
+          <FaSpinner className="text-3xl animate-spin text-amber-500 dark:text-amber-400" />
           <span className="text-xs font-bold uppercase tracking-wider">
             Loading customer feedback...
           </span>
         </div>
       ) : filteredReviews.length === 0 ? (
-        <div className="py-20 text-center text-neutral-500 border border-dashed border-neutral-800 rounded-3xl p-8 bg-neutral-900/30 space-y-2">
-          <FaStar className="text-4xl text-neutral-700 mx-auto" />
-          <h4 className="font-['Oswald',sans-serif] font-bold text-base text-white uppercase">
+        <div className="py-20 text-center text-slate-400 dark:text-neutral-500 border border-dashed border-slate-200 dark:border-neutral-800 rounded-3xl p-8 bg-slate-50/50 dark:bg-neutral-900/30 space-y-2">
+          <FaStar className="text-4xl text-slate-300 dark:text-neutral-700 mx-auto" />
+          <h4 className="font-['Oswald',sans-serif] font-bold text-base text-slate-900 dark:text-white uppercase">
             No Reviews Found
           </h4>
-          <p className="text-xs text-neutral-400 max-w-sm mx-auto">
+          <p className="text-xs text-slate-500 dark:text-neutral-400 max-w-sm mx-auto">
             {searchTerm
               ? `No feedback matching "${searchTerm}". Try resetting your filter.`
               : "No verified customer reviews have been recorded yet."}
@@ -318,33 +318,33 @@ export default function ReviewsManagement() {
             return (
               <div
                 key={rev.id}
-                className={`p-5 rounded-3xl bg-[#141418] border transition-all flex flex-col justify-between gap-4 shadow-sm relative ${
+                className={`p-5 rounded-3xl bg-white dark:bg-[#121216] border transition-all flex flex-col justify-between gap-4 shadow-sm relative ${
                   isFeatured
-                    ? "border-amber-500/50 bg-gradient-to-b from-amber-500/[0.03] to-[#141418]"
+                    ? "border-amber-500/50 bg-gradient-to-b from-amber-500/[0.04] to-white dark:to-[#121216]"
                     : rev.status === "hidden"
-                    ? "border-neutral-800 opacity-60"
-                    : "border-neutral-800/80 hover:border-neutral-700"
+                    ? "border-slate-200 dark:border-neutral-800 opacity-60"
+                    : "border-slate-200 dark:border-neutral-800 hover:border-slate-300 dark:hover:border-neutral-700"
                 }`}
               >
                 {/* Top Row: User & Order Info + Star Rating */}
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-sm font-mono shrink-0">
+                      <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-sm font-mono shrink-0">
                         <FaUser />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="font-['Oswald',sans-serif] font-bold text-sm text-white uppercase m-0">
+                          <h4 className="font-['Oswald',sans-serif] font-bold text-sm text-slate-900 dark:text-white uppercase m-0">
                             {rev.customer_name || "Verified Foodie"}
                           </h4>
                           {isFeatured && (
-                            <span className="text-[9px] font-bold font-mono uppercase bg-purple-500/20 text-purple-400 px-2 py-0.2 rounded-full border border-purple-500/30 flex items-center gap-1">
+                            <span className="text-[9px] font-bold font-mono uppercase bg-purple-500/20 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30 flex items-center gap-1">
                               <FaThumbtack className="text-[8px]" /> PINNED
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-[11px] text-neutral-500 font-mono mt-0.5">
+                        <div className="flex items-center gap-2 text-[11px] text-slate-400 dark:text-neutral-500 font-mono mt-0.5">
                           <span>Order #{rev.order_id}</span>
                           <span>•</span>
                           <span>{rev.created_at ? new Date(rev.created_at).toLocaleDateString() : "Recent"}</span>
@@ -358,11 +358,11 @@ export default function ReviewsManagement() {
                         <FaStar
                           key={s}
                           className={`text-xs ${
-                            s <= rev.rating ? "text-amber-400" : "text-neutral-700"
+                            s <= rev.rating ? "text-amber-500 dark:text-amber-400" : "text-slate-200 dark:text-neutral-700"
                           }`}
                         />
                       ))}
-                      <span className="font-mono font-bold text-xs text-amber-400 ml-1">
+                      <span className="font-mono font-bold text-xs text-amber-600 dark:text-amber-400 ml-1">
                         {rev.rating}.0
                       </span>
                     </div>
@@ -370,7 +370,7 @@ export default function ReviewsManagement() {
 
                   {/* Review Text */}
                   {rev.review_text && (
-                    <div className="my-2.5 p-3 rounded-2xl bg-neutral-900/70 border border-neutral-800/60 text-xs text-neutral-300 leading-relaxed italic">
+                    <div className="my-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-neutral-900/70 border border-slate-200 dark:border-neutral-800/60 text-xs text-slate-700 dark:text-neutral-300 leading-relaxed italic">
                       <FaQuoteLeft className="text-[9px] text-amber-500/60 mr-1 inline" />
                       "{rev.review_text}"
                     </div>
@@ -382,7 +382,7 @@ export default function ReviewsManagement() {
                       {tagsList.map((tag, idx) => (
                         <span
                           key={idx}
-                          className="px-2 py-0.5 rounded-lg bg-neutral-900 text-neutral-400 border border-neutral-800 text-[10px] font-semibold"
+                          className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-neutral-900 text-slate-700 dark:text-neutral-400 border border-slate-200 dark:border-neutral-800 text-[10px] font-semibold"
                         >
                           {tag}
                         </span>
@@ -392,20 +392,20 @@ export default function ReviewsManagement() {
 
                   {/* Item-level Ratings Breakdown */}
                   {itemRatingsList.length > 0 && (
-                    <div className="mt-3 pt-2.5 border-t border-neutral-800/60 space-y-1 text-xs">
-                      <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wide block">
+                    <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-neutral-800/60 space-y-1 text-xs">
+                      <span className="text-[10px] font-mono text-slate-400 dark:text-neutral-500 uppercase tracking-wide block">
                         Dish Ratings:
                       </span>
                       <div className="flex flex-wrap gap-2">
                         {itemRatingsList.map((it, i) => (
                           <div
                             key={i}
-                            className="px-2 py-1 rounded-lg bg-neutral-900/60 border border-neutral-800/40 text-[11px] text-neutral-300 flex items-center gap-1.5"
+                            className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-neutral-900/60 border border-slate-200 dark:border-neutral-800/40 text-[11px] text-slate-700 dark:text-neutral-300 flex items-center gap-1.5"
                           >
                             <span className="font-medium truncate max-w-[120px]">
                               {it.item_name}
                             </span>
-                            <span className="text-amber-400 font-bold flex items-center gap-0.5">
+                            <span className="text-amber-600 dark:text-amber-400 font-bold flex items-center gap-0.5">
                               ⭐ {it.rating}
                             </span>
                           </div>
@@ -416,14 +416,14 @@ export default function ReviewsManagement() {
                 </div>
 
                 {/* Bottom Row Actions */}
-                <div className="pt-3 border-t border-neutral-800/80 flex items-center justify-between gap-2 text-xs">
+                <div className="pt-3 border-t border-slate-100 dark:border-neutral-800/80 flex items-center justify-between gap-2 text-xs">
                   <div className="flex items-center gap-2">
                     {/* Status Badge */}
                     <span
                       className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono border ${
                         rev.status === "approved"
-                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                          : "bg-red-500/10 text-red-400 border-red-500/30"
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                          : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30"
                       }`}
                     >
                       {rev.status}
@@ -439,8 +439,8 @@ export default function ReviewsManagement() {
                       onClick={() => handleToggleFeatured(rev.id, isFeatured ? 1 : 0)}
                       className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer border ${
                         isFeatured
-                          ? "bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border-purple-500/40"
-                          : "bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white border-neutral-700"
+                          ? "bg-purple-500/20 hover:bg-purple-500/30 text-purple-600 dark:text-purple-300 border-purple-500/40"
+                          : "bg-slate-100 hover:bg-slate-200 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-slate-700 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white border-slate-200 dark:border-neutral-700"
                       }`}
                       title={isFeatured ? "Unpin review" : "Pin to featured"}
                     >
@@ -454,7 +454,7 @@ export default function ReviewsManagement() {
                         type="button"
                         disabled={isLoading}
                         onClick={() => handleUpdateStatus(rev.id, "hidden")}
-                        className="px-2.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-700 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
+                        className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-slate-700 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-neutral-700 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
                         title="Hide from public view"
                       >
                         <FaEyeSlash className="text-[10px]" />
@@ -465,7 +465,7 @@ export default function ReviewsManagement() {
                         type="button"
                         disabled={isLoading}
                         onClick={() => handleUpdateStatus(rev.id, "approved")}
-                        className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/40 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
+                        className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
                         title="Approve for public view"
                       >
                         <FaCheckCircle className="text-[10px]" />
@@ -478,7 +478,7 @@ export default function ReviewsManagement() {
                       type="button"
                       disabled={isLoading}
                       onClick={() => handleDeleteReview(rev.id)}
-                      className="p-1.5 rounded-xl text-neutral-500 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer border-none bg-transparent"
+                      className="p-1.5 rounded-xl text-slate-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer border-none bg-transparent"
                       title="Delete review"
                     >
                       <FaTrashAlt className="text-xs" />

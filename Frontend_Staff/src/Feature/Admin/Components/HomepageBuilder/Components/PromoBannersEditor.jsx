@@ -10,8 +10,8 @@ export default function PromoBannersEditor({
   const liveCount = allBanners.filter((b) => b.is_featured_banner).length;
 
   return (
-    <div className="admin-card-surface bg-white dark:bg-[#161616] p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-white shadow-sm space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-200 dark:border-white/[0.06]">
+    <div className="admin-card-surface bg-white dark:bg-[#121216] p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white shadow-sm space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-200 dark:border-neutral-800">
         <div>
           <div className="flex items-center gap-2">
             <IconImage className="text-amber-500 text-sm" />
@@ -37,15 +37,15 @@ export default function PromoBannersEditor({
           return (
             <div
               key={`${item.type}-${item.id}`}
-              className={`admin-card-surface bg-white dark:bg-[#161616] p-3.5 rounded-2xl border transition-all flex flex-col justify-between gap-3 text-slate-900 dark:text-white shadow-sm ${
-                isLive ? 'border-amber-500/40 bg-amber-500/[0.03]' : 'border-slate-200 dark:border-white/5'
+              className={`admin-card-surface bg-white dark:bg-[#16161a] p-3.5 rounded-2xl border transition-all flex flex-col justify-between gap-3 text-slate-900 dark:text-white shadow-sm ${
+                isLive ? 'border-amber-500/40 bg-amber-500/[0.03]' : 'border-slate-200 dark:border-neutral-800'
               }`}
             >
               <div className="flex gap-3 items-center">
                 <img
                   src={bannerImg}
                   alt={item.name || item.title}
-                  className="w-16 h-12 object-cover rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black shrink-0"
+                  className="w-16 h-12 object-cover rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-100 dark:bg-black shrink-0"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = 'https://placehold.co/180x110?text=Banner';
@@ -72,7 +72,7 @@ export default function PromoBannersEditor({
                 </div>
               </div>
 
-              <div className="flex justify-between items-center pt-2.5 border-t border-slate-200 dark:border-white/5">
+              <div className="flex justify-between items-center pt-2.5 border-t border-slate-200 dark:border-neutral-800">
                 <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-neutral-400">
                   <span className="text-[10px] font-bold">Order:</span>
                   <input
@@ -80,7 +80,7 @@ export default function PromoBannersEditor({
                     min="0"
                     defaultValue={item.banner_order || 0}
                     onBlur={(e) => handleUpdateMasterBannerOrder(item, item.type, e.target.value)}
-                    className="w-12 p-1 bg-slate-100 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-lg text-center text-xs font-mono"
+                    className="w-12 p-1 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white rounded-lg text-center text-xs font-mono"
                   />
                 </div>
 

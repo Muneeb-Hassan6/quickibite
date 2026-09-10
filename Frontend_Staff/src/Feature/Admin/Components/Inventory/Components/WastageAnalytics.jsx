@@ -116,7 +116,8 @@ export default function WastageAnalytics() {
     if (formValues) {
       try {
         const user = JSON.parse(
-          localStorage.getItem("user") ||
+          sessionStorage.getItem("staff_user") ||
+            sessionStorage.getItem("staff_session") ||
             sessionStorage.getItem("user") ||
             "{}"
         );
@@ -169,7 +170,8 @@ export default function WastageAnalytics() {
   const handleVerify = async (logId) => {
     try {
       const user = JSON.parse(
-        localStorage.getItem("user") ||
+        sessionStorage.getItem("staff_user") ||
+          sessionStorage.getItem("staff_session") ||
           sessionStorage.getItem("user") ||
           "{}"
       );

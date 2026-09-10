@@ -16,33 +16,29 @@ if (!$db) {
 try {
     $type = isset($_GET['type']) ? trim($_GET['type']) : 'active';
 
-    if ($type === 'all') {
+    if ($type === 'all' || $type === 'cashier') {
         $query = "SELECT o.*, 
-                         COALESCE(p.status, 'Pending') as payment_status, 
-                         COALESCE(p.method, 'Cash') as payment_method,
+                         COALESCE(p.status, o.payment_status, 'Pending') as payment_status, 
+                         COALESCE(p.method, o.payment_method, 'Cash') as payment_method,
                          DATE_FORMAT(o.created_at, '%h:%i %p') as time,
-                         DATE_FORMAT(o.created_at, '%d/%m/%Y') as date
+                         DATE_FORMAT(o.created_at, '%d/%m/%Y') as date,
+                         s.name as rider_name,
+                         s.phone as rider_phone
                   FROM orders o 
                   LEFT JOIN payments p ON o.id = p.order_id 
-                  ORDER BY o.id DESC";
-    } elseif ($type === 'cashier') {
-        $query = "SELECT o.*, 
-                         COALESCE(p.status, 'Pending') as payment_status, 
-                         COALESCE(p.method, 'Cash') as payment_method,
-                         DATE_FORMAT(o.created_at, '%h:%i %p') as time,
-                         DATE_FORMAT(o.created_at, '%d/%m/%Y') as date
-                  FROM orders o 
-                  LEFT JOIN payments p ON o.id = p.order_id 
-                  WHERE COALESCE(p.status, '') != 'Paid' 
+                  LEFT JOIN staff s ON o.rider_id = s.id
                   ORDER BY o.id DESC";
     } else {
         $query = "SELECT o.*, 
-                         COALESCE(p.status, 'Pending') as payment_status, 
-                         COALESCE(p.method, 'Cash') as payment_method,
+                         COALESCE(p.status, o.payment_status, 'Pending') as payment_status, 
+                         COALESCE(p.method, o.payment_method, 'Cash') as payment_method,
                          DATE_FORMAT(o.created_at, '%h:%i %p') as time,
-                         DATE_FORMAT(o.created_at, '%d/%m/%Y') as date
+                         DATE_FORMAT(o.created_at, '%d/%m/%Y') as date,
+                         s.name as rider_name,
+                         s.phone as rider_phone
                   FROM orders o 
                   LEFT JOIN payments p ON o.id = p.order_id 
+                  LEFT JOIN staff s ON o.rider_id = s.id
                   WHERE o.status NOT IN ('Delivered', 'Completed', 'Dispatched', 'Cancelled', 'Declined') 
                   ORDER BY o.id DESC";
     }

@@ -125,9 +125,12 @@ io.on("connection", (socket) => {
     io.emit("refresh_kitchen");        // Admin orders panel update
   });
 
-  // Rider location update
-  socket.on("rider_location_update", () => {
-    io.emit("refresh_rider_location"); // Map updates (if used)
+  // 💰 Cashier updated payment status or reconciled rider COD
+  socket.on("payment_status_updated", (data) => {
+    console.log(`💰 Payment status updated by ${socket.id} → broadcasting to clients`, data || "");
+    io.emit("refresh_kitchen");
+    io.emit("refresh_orders");
+    io.emit("payment_status_updated", data);
   });
 
   socket.on("disconnect", (reason) => {

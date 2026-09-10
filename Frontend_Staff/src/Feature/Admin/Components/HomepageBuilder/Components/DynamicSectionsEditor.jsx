@@ -14,8 +14,8 @@ export default function DynamicSectionsEditor({
   handleDelete,
 }) {
   return (
-    <div className="admin-card-surface bg-white dark:bg-[#161616] p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-white shadow-sm space-y-4">
-      <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-white/[0.06]">
+    <div className="admin-card-surface bg-white dark:bg-[#121216] p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white shadow-sm space-y-4">
+      <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-neutral-800">
         <div className="flex items-center gap-2">
           <IconListUl className="text-amber-500 text-sm" />
           <h3 className="m-0 text-sm sm:text-base font-black text-slate-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
@@ -38,8 +38,8 @@ export default function DynamicSectionsEditor({
           return (
             <div
               key={sec.id}
-              className={`admin-card-surface bg-slate-50 dark:bg-[#111111] p-4 rounded-2xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
-                isSecActive ? 'border-slate-200 dark:border-white/10' : 'border-slate-200 dark:border-white/5 opacity-50'
+              className={`admin-card-surface bg-slate-50 dark:bg-[#16161a] p-4 rounded-2xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                isSecActive ? 'border-slate-200 dark:border-neutral-800' : 'border-slate-200 dark:border-neutral-800/60 opacity-50'
               }`}
             >
               <div className="flex items-center gap-3 min-w-0">
@@ -71,7 +71,7 @@ export default function DynamicSectionsEditor({
                 <button
                   type="button"
                   onClick={() => handleEdit(sec, 'section')}
-                  className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white text-slate-700 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-neutral-950 border border-slate-300 dark:border-white/10 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-sm"
+                  className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-neutral-800/80 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-neutral-700 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-sm"
                   title="Edit Section"
                 >
                   <IconEdit className="text-xs" />

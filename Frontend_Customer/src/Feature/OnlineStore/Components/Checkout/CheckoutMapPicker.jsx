@@ -368,7 +368,7 @@ export default function CheckoutMapPicker({
               <div className="bg-neutral-950 text-white font-['Oswald',sans-serif] text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md uppercase tracking-wider border border-amber-400 mb-1 flex items-center gap-1 whitespace-nowrap">
                 <span>📍 Drop-off Pin</span>
               </div>
-              <div className="w-10 h-10 rounded-full bg-white border-2 border-red-500 shadow-xl flex items-center justify-center p-1.5 animate-bounce">
+              <div className="w-10 h-10 rounded-full bg-white dark:bg-neutral-900 border-2 border-red-500 dark:border-red-400 shadow-xl flex items-center justify-center p-1.5 animate-bounce">
                 <img
                   src="https://cdn-icons-png.flaticon.com/512/2776/2776067.png"
                   className="w-full h-full object-contain"
@@ -380,7 +380,7 @@ export default function CheckoutMapPicker({
         </Map>
 
         {/* Pin Helper Badge */}
-        <div className="absolute top-2 left-2 bg-neutral-950/80 backdrop-blur-xs text-white text-[10px] font-medium px-2.5 py-1 rounded-lg border border-neutral-700 pointer-events-none">
+        <div className="absolute top-2 left-2 bg-white/90 dark:bg-neutral-950/80 backdrop-blur-xs text-zinc-900 dark:text-white text-[10px] font-medium px-2.5 py-1 rounded-lg border border-gray-200 dark:border-neutral-700 pointer-events-none shadow-sm">
           👆 Click or drag the marker to your doorstep
         </div>
       </div>

@@ -30,12 +30,12 @@ const AdminDashboard = () => {
   const { logout } = useStaffAuth();
 
   const [activeTab, setActiveTab] = useState(() => {
-    const savedTab = localStorage.getItem("adminActiveTab");
+    const savedTab = sessionStorage.getItem("adminActiveTab");
     return savedTab ? savedTab : "dashboard";
   });
 
   useEffect(() => {
-    localStorage.setItem("adminActiveTab", activeTab);
+    sessionStorage.setItem("adminActiveTab", activeTab);
   }, [activeTab]);
 
   const handleLogout = () => {

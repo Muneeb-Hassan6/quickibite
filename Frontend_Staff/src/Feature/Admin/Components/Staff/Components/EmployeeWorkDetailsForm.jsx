@@ -4,7 +4,11 @@ import { FaUserLock, FaMotorcycle } from "react-icons/fa";
 export default function EmployeeWorkDetailsForm({
   formData,
   handleChange,
+  customRoleName,
+  setCustomRoleName,
 }) {
+  const isCustomRole = formData.role === "__CUSTOM__";
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -20,12 +24,30 @@ export default function EmployeeWorkDetailsForm({
           >
             <option className="bg-white dark:bg-[#171717]" value="Admin">Admin</option>
             <option className="bg-white dark:bg-[#171717]" value="Manager">Manager</option>
-            <option className="bg-white dark:bg-[#171717]" value="Chef">Chef</option>
             <option className="bg-white dark:bg-[#171717]" value="Cashier">Cashier</option>
+            <option className="bg-white dark:bg-[#171717]" value="Chef">Chef / Kitchen</option>
             <option className="bg-white dark:bg-[#171717]" value="Rider">Rider</option>
             <option className="bg-white dark:bg-[#171717]" value="Waiter">Waiter</option>
-            <option className="bg-white dark:bg-[#171717]" value="Dispatcher">Dispatcher</option>
+            <option className="bg-white dark:bg-[#171717] font-bold text-amber-600 dark:text-amber-400" value="__CUSTOM__">
+              + Enter Custom Role...
+            </option>
           </select>
+          {isCustomRole && (
+            <div className="mt-2.5 animate-slide-up">
+              <label className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block mb-1">
+                Custom Role Title *
+              </label>
+              <input
+                type="text"
+                placeholder="Specify Role Title (e.g. Security Guard, Cleaner, Barista)"
+                value={customRoleName}
+                onChange={(e) => setCustomRoleName(e.target.value)}
+                required
+                autoFocus
+                className="w-full px-3.5 py-2 bg-white dark:bg-[#171717] border border-amber-500 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/30 placeholder-slate-400 dark:placeholder-neutral-500"
+              />
+            </div>
+          )}
         </div>
 
         <div>

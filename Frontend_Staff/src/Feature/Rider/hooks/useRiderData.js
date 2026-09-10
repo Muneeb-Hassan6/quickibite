@@ -12,8 +12,7 @@ export function useRiderData() {
   // 1. RIDER AUTH SESSION
   const [riderSession, setRiderSession] = useState(() => {
     const saved =
-      localStorage.getItem("staff_session") ||
-      localStorage.getItem("user") ||
+      sessionStorage.getItem("staff_user") ||
       sessionStorage.getItem("staff_session") ||
       sessionStorage.getItem("user");
     return saved ? JSON.parse(saved) : null;

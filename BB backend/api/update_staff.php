@@ -11,7 +11,17 @@ $data = json_decode(file_get_contents("php://input"));
 
 if(!empty($data->id) && !empty($data->name) && !empty($data->role)) {
     try {
-        $query = "UPDATE staff SET name = :name, role = :role, status = :status, phone = :phone, salary = :salary WHERE id = :id";
+        $username = isset($data->username) && trim((string)$data->username) !== '' ? trim((string)$data->username) : null;
+        if ($username !== null) {
+            $check_user = $db->prepare("SELECT id FROM staff WHERE username = :username AND id != :id");
+            $check_user->execute([':username' => $username, ':id' => $data->id]);
+            if ($check_user->fetch()) {
+                echo json_encode(["success" => false, "message" => "This username is already taken by another staff member!"]);
+                exit();
+            }
+        }
+
+        $query = "UPDATE staff SET name = :name, role = :role, status = :status, phone = :phone, salary = :salary, username = :username WHERE id = :id";
         $stmt = $db->prepare($query);
         $stmt->bindParam(":name", $data->name);
         $stmt->bindParam(":role", $data->role);
@@ -19,12 +29,13 @@ if(!empty($data->id) && !empty($data->name) && !empty($data->role)) {
         $stmt->bindParam(":status", $status);
         $stmt->bindParam(":phone", $data->phone);
         $stmt->bindParam(":salary", $data->salary);
+        $stmt->bindParam(":username", $username);
         $stmt->bindParam(":id", $data->id);
         
         $stmt->execute();
         
-        if (!empty($data->password)) {
-            $hashed_password = password_hash($data->password, PASSWORD_DEFAULT);
+        if (isset($data->password) && trim((string)$data->password) !== '') {
+            $hashed_password = password_hash(trim((string)$data->password), PASSWORD_DEFAULT);
             $pass_query = "UPDATE staff SET password = :password WHERE id = :id";
             $pass_stmt = $db->prepare($pass_query);
             $pass_stmt->bindParam(":password", $hashed_password);
@@ -34,7 +45,11 @@ if(!empty($data->id) && !empty($data->name) && !empty($data->role)) {
 
         echo json_encode(["success" => true, "message" => "Staff member updated successfully."]);
     } catch(PDOException $e) {
-        echo json_encode(["success" => false, "message" => "Database error: " . $e->getMessage()]);
+        if ($e->getCode() == 23000) {
+            echo json_encode(["success" => false, "message" => "This username is already taken!"]);
+        } else {
+            echo json_encode(["success" => false, "message" => "Database error: " . $e->getMessage()]);
+        }
     }
 } else {
     echo json_encode(["success" => false, "message" => "Incomplete data provided."]);

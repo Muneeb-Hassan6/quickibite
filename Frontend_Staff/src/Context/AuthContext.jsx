@@ -5,7 +5,10 @@ const AuthContext = createContext(null);
 export const AUTH_STORAGE_KEYS = [
   "staff_session",
   "user",
+  "staff_user",
   "auth_token",
+  "token",
+  "staff_token",
   "adminActiveTab",
   "isAuth",
 ];
@@ -26,10 +29,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
       const raw =
+        sessionStorage.getItem("staff_user") ||
         sessionStorage.getItem("staff_session") ||
-        sessionStorage.getItem("user") ||
-        localStorage.getItem("staff_session") ||
-        localStorage.getItem("user");
+        sessionStorage.getItem("user");
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
@@ -38,55 +40,37 @@ export const AuthProvider = ({ children }) => {
 
   const [token, setToken] = useState(() => {
     return (
+      sessionStorage.getItem("token") ||
       sessionStorage.getItem("auth_token") ||
-      localStorage.getItem("auth_token") ||
+      sessionStorage.getItem("staff_token") ||
       null
     );
   });
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // Sync state if localStorage changes in other tabs
-  useEffect(() => {
-    const handleStorageChange = (e) => {
-      if (e.key === "staff_session" || e.key === "auth_token") {
-        try {
-          const raw = localStorage.getItem("staff_session");
-          setUser(raw ? JSON.parse(raw) : null);
-          setToken(localStorage.getItem("auth_token"));
-        } catch {
-          setUser(null);
-          setToken(null);
-        }
-      }
-    };
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
-
-  // Secure login handler
+  // Tab-isolated login: strictly persists to this tab's sessionStorage
   const login = useCallback((userData, authToken) => {
     if (!userData || !authToken) return;
     const jsonStr = JSON.stringify(userData);
 
-    sessionStorage.setItem("staff_session", jsonStr);
+    sessionStorage.setItem("staff_user", jsonStr);
     sessionStorage.setItem("user", jsonStr);
+    sessionStorage.setItem("staff_session", jsonStr);
+    sessionStorage.setItem("token", authToken);
     sessionStorage.setItem("auth_token", authToken);
-
-    localStorage.setItem("staff_session", jsonStr);
-    localStorage.setItem("user", jsonStr);
-    localStorage.setItem("auth_token", authToken);
+    sessionStorage.setItem("staff_token", authToken);
+    sessionStorage.setItem("isAuth", "true");
 
     setUser(userData);
     setToken(authToken);
   }, []);
 
-  // Complete, deep logout purge across all storage layers
+  // Tab-isolated logout: purges strictly this tab's sessionStorage without affecting other tabs
   const logout = useCallback(() => {
     AUTH_STORAGE_KEYS.forEach((key) => {
       try {
         sessionStorage.removeItem(key);
-        localStorage.removeItem(key);
       } catch (err) {
         console.error("Storage purge error:", err);
       }

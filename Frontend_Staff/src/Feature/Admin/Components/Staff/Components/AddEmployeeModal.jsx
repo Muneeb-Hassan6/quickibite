@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { FaTimes, FaUserPlus, FaSpinner } from "react-icons/fa";
 import Swal from "sweetalert2";
 import EmployeePersonalInfoForm from "./EmployeePersonalInfoForm";
@@ -16,6 +17,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
     license_number: "",
   });
 
+  const [customRoleName, setCustomRoleName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [phoneError, setPhoneError] = useState("");
 
@@ -41,6 +43,20 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
       return;
     }
 
+    const isCustomRole = formData.role === "__CUSTOM__";
+    if (isCustomRole && !customRoleName.trim()) {
+      Swal.fire({
+        icon: "error",
+        title: "Missing Role Title",
+        text: "Please specify the custom role title (e.g. Security Guard, Cleaner, Barista).",
+        background: "#171717",
+        color: "#fff",
+      });
+      return;
+    }
+
+    const finalRole = isCustomRole ? customRoleName.trim() : formData.role;
+
     setIsSubmitting(true);
 
     try {
@@ -49,7 +65,10 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({
+            ...formData,
+            role: finalRole,
+          }),
         }
       );
 
@@ -78,6 +97,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
           bike_number: "",
           license_number: "",
         });
+        setCustomRoleName("");
         onClose();
       } else {
         Swal.fire({
@@ -101,13 +121,13 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
     }
   };
 
-  return (
+  return createPortal(
     <div
-      className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 w-screen h-screen transition-opacity duration-300"
       onClick={onClose}
     >
       <div
-        className="modal-surface w-full max-w-lg md:max-w-xl p-5 sm:p-7 relative max-h-[90vh] overflow-y-auto space-y-4 animate-slide-up text-slate-900 dark:text-white"
+        className="relative z-[10000] w-full max-w-lg md:max-w-xl bg-white dark:bg-[#121216] shadow-2xl shadow-black/80 rounded-2xl border border-slate-200 dark:border-neutral-800 p-5 sm:p-7 max-h-[90vh] overflow-y-auto space-y-4 animate-slide-up text-slate-900 dark:text-white"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -139,6 +159,8 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
           <EmployeeWorkDetailsForm
             formData={formData}
             handleChange={handleChange}
+            customRoleName={customRoleName}
+            setCustomRoleName={setCustomRoleName}
           />
 
           {/* Footer Actions */}
@@ -166,7 +188,8 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

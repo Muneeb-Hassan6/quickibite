@@ -67,7 +67,8 @@ export default function ActiveOrderCard({ order, onComplete, onCancel, isComplet
       setIsFailing(true);
       try {
         const user = JSON.parse(
-          localStorage.getItem("user") ||
+          sessionStorage.getItem("staff_user") ||
+            sessionStorage.getItem("staff_session") ||
             sessionStorage.getItem("user") ||
             "{}"
         );

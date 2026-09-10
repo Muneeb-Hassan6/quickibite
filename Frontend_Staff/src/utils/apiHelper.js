@@ -10,7 +10,12 @@ const API_BASE = import.meta.env.VITE_API_BASE || `${import.meta.env.VITE_API_BA
  * Get the stored JWT token
  */
 const getToken = () => {
-  return sessionStorage.getItem("auth_token") || null;
+  return (
+    sessionStorage.getItem("token") ||
+    sessionStorage.getItem("auth_token") ||
+    sessionStorage.getItem("staff_token") ||
+    null
+  );
 };
 
 /**

@@ -302,14 +302,14 @@ const AuthModal = () => {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/80 backdrop-blur-md animate-fadeIn">
       {/* 2-Panel Split Sliding Modal Container */}
       <div
-        className="relative w-full max-w-4xl bg-[#111114] border border-neutral-800 rounded-3xl shadow-2xl overflow-hidden text-white flex flex-col md:flex-row transition-all duration-500 ease-in-out max-h-[92vh] overflow-y-auto md:overflow-hidden"
+        className="relative w-full max-w-4xl bg-white dark:bg-[#111114] border border-gray-200 dark:border-neutral-800 rounded-3xl shadow-2xl overflow-hidden text-zinc-900 dark:text-white max-h-[92vh] md:h-[680px] flex flex-col md:block transition-all duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Absolute Close Button */}
+        {/* Absolute Close Button (Always On Top) */}
         <button
           type="button"
           onClick={closeAuthModal}
-          className="absolute top-4 right-4 z-40 w-8 h-8 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-700/60 text-neutral-400 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-lg"
+          className="absolute top-4 right-4 z-50 w-8 h-8 rounded-full bg-gray-100/90 dark:bg-neutral-900/90 hover:bg-gray-200 dark:hover:bg-neutral-800 border border-gray-200 dark:border-neutral-700/60 text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-lg backdrop-blur-sm"
           aria-label="Close modal"
         >
           <FaTimes className="w-3.5 h-3.5" />
@@ -319,8 +319,10 @@ const AuthModal = () => {
             HIGH-RES ARTWORK & PROMO PANEL (Sliding Desktop Panel)
             ═══════════════════════════════════════════════════════════ */}
         <div
-          className={`hidden md:flex md:w-5/12 relative flex-col justify-between p-8 overflow-hidden transition-all duration-500 ease-in-out ${
-            isRegister ? "md:order-2 border-l border-neutral-800" : "md:order-1 border-r border-neutral-800"
+          className={`w-full md:w-1/2 md:h-full md:absolute md:top-0 md:left-0 z-30 transition-transform duration-[700ms] ease-in-out hidden md:flex flex-col justify-between p-8 lg:p-10 overflow-hidden ${
+            isRegister
+              ? "md:translate-x-full md:border-l border-gray-200 dark:border-neutral-800"
+              : "md:translate-x-0 md:border-r border-gray-200 dark:border-neutral-800"
           }`}
           style={{
             backgroundImage: `url("https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=900&auto=format&fit=crop")`,
@@ -377,9 +379,13 @@ const AuthModal = () => {
           </div>
 
           {/* Bottom Switch Button Inside Artwork Panel */}
-          <div className="relative z-10 pt-4 border-t border-white/10 text-center">
-            <p className="text-xs text-neutral-300 font-medium mb-2.5">
-              {isRegister ? "Already have an account?" : "New to QuickiBite?"}
+          <div className="relative z-10 pt-4 border-t border-white/15 text-center">
+            <p className="text-xs text-neutral-200 font-medium mb-2.5 transition-all">
+              {isRegister ? (
+                <span>Already have an account? <strong className="text-white">Sign In Now</strong></span>
+              ) : (
+                <span>New to QuickiBite? <strong className="text-white">Create New Account</strong></span>
+              )}
             </p>
             <button
               type="button"
@@ -398,8 +404,8 @@ const AuthModal = () => {
             FORM PANEL (Sliding Desktop / Full Mobile Column)
             ═══════════════════════════════════════════════════════════ */}
         <div
-          className={`w-full md:w-7/12 p-6 sm:p-8 md:p-10 flex flex-col justify-center bg-[#111114] relative transition-all duration-500 ease-in-out ${
-            isRegister ? "md:order-1" : "md:order-2"
+          className={`w-full md:w-1/2 md:h-full md:absolute md:top-0 md:left-1/2 z-20 transition-transform duration-[700ms] ease-in-out bg-white dark:bg-[#111114] p-6 sm:p-8 md:p-10 flex flex-col justify-center overflow-y-auto ${
+            isRegister ? "md:-translate-x-full" : "md:translate-x-0"
           }`}
         >
           {/* Header */}
@@ -408,19 +414,19 @@ const AuthModal = () => {
               <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center font-['Oswald',sans-serif] font-black text-black text-sm shadow-md">
                 QB
               </div>
-              <span className="font-['Oswald',sans-serif] font-black text-sm tracking-wider text-amber-400 uppercase">
+              <span className="font-['Oswald',sans-serif] font-black text-sm tracking-wider text-amber-500 dark:text-amber-400 uppercase">
                 QuickiBite Authentication
               </span>
             </div>
 
-            <h3 className="font-['Oswald',sans-serif] font-black text-2xl sm:text-3xl text-white uppercase tracking-tight">
+            <h3 className="font-['Oswald',sans-serif] font-black text-2xl sm:text-3xl text-zinc-900 dark:text-white uppercase tracking-tight">
               {authModalTab === "login"
                 ? "Welcome Back"
                 : authModalTab === "register"
                 ? "Create Account"
                 : "Reset Password"}
             </h3>
-            <p className="text-xs text-neutral-400 mt-1">
+            <p className="text-xs text-zinc-600 dark:text-neutral-400 mt-1">
               {authModalTab === "login"
                 ? "Access saved addresses, past orders, and instant 1-click reordering."
                 : authModalTab === "register"
@@ -431,7 +437,7 @@ const AuthModal = () => {
 
           {/* Error Banner */}
           {formError && (
-            <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2 animate-shake">
+            <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 dark:text-red-400 text-xs flex items-center gap-2 animate-shake">
               <span className="font-bold">⚠️</span>
               <span>{formError}</span>
             </div>
@@ -447,10 +453,10 @@ const AuthModal = () => {
                 type="button"
                 onClick={triggerGooglePrompt}
                 disabled={googleLoading}
-                className="w-full py-2.5 px-4 rounded-xl bg-neutral-900 hover:bg-neutral-800/90 border border-neutral-700 hover:border-[#F59E0B] text-white font-semibold text-xs flex items-center justify-center gap-3 transition-all duration-200 active:scale-98 shadow-xs cursor-pointer disabled:opacity-50 group"
+                className="w-full py-2.5 px-4 rounded-xl bg-gray-50 dark:bg-neutral-900 hover:bg-gray-100 dark:hover:bg-neutral-800/90 border border-gray-300 dark:border-neutral-700 hover:border-amber-500 dark:hover:border-[#F59E0B] text-zinc-800 dark:text-white font-semibold text-xs flex items-center justify-center gap-3 transition-all duration-200 active:scale-98 shadow-xs cursor-pointer disabled:opacity-50 group"
               >
                 {googleLoading ? (
-                  <FaSpinner className="animate-spin text-amber-400 text-sm" />
+                  <FaSpinner className="animate-spin text-amber-500 dark:text-amber-400 text-sm" />
                 ) : (
                   <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                     <path
@@ -471,17 +477,17 @@ const AuthModal = () => {
                     />
                   </svg>
                 )}
-                <span className="group-hover:text-amber-300 transition-colors">
+                <span className="group-hover:text-amber-500 dark:group-hover:text-amber-300 transition-colors">
                   {authModalTab === "login" ? "Continue with Google" : "Sign Up with Google"}
                 </span>
               </button>
 
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-[1px] bg-neutral-800"></div>
-                <span className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">
+                <div className="flex-1 h-[1px] bg-gray-200 dark:bg-neutral-800"></div>
+                <span className="text-[10px] uppercase font-bold text-gray-400 dark:text-neutral-500 tracking-wider">
                   or with credentials
                 </span>
-                <div className="flex-1 h-[1px] bg-neutral-800"></div>
+                <div className="flex-1 h-[1px] bg-gray-200 dark:bg-neutral-800"></div>
               </div>
             </div>
           )}
@@ -490,11 +496,11 @@ const AuthModal = () => {
           {authModalTab === "login" && (
             <form onSubmit={handleLoginSubmit} className="space-y-3.5">
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-neutral-400 mb-1">
                   Phone Number or Email
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-500">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 dark:text-neutral-500">
                     <FaUser className="text-xs" />
                   </div>
                   <input
@@ -503,14 +509,14 @@ const AuthModal = () => {
                     placeholder="03001234567 or email@domain.com"
                     value={loginIdentifier}
                     onChange={(e) => setLoginIdentifier(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-neutral-900 border border-neutral-700/80 focus:border-amber-500 rounded-xl text-white text-xs placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+                    className="w-full pl-9 pr-3.5 py-2.5 bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
                   />
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-neutral-400">
                     Password
                   </label>
                   <button
@@ -519,13 +525,13 @@ const AuthModal = () => {
                       setFormError("");
                       setAuthModalTab("forgot");
                     }}
-                    className="text-[11px] font-semibold text-amber-400 hover:underline bg-transparent border-none cursor-pointer"
+                    className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 hover:underline bg-transparent border-none cursor-pointer"
                   >
                     Forgot Password?
                   </button>
                 </div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-500">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 dark:text-neutral-500">
                     <FaLock className="text-xs" />
                   </div>
                   <input
@@ -534,12 +540,12 @@ const AuthModal = () => {
                     placeholder="••••••••"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
-                    className="w-full pl-9 pr-10 py-2.5 bg-neutral-900 border border-neutral-700/80 focus:border-amber-500 rounded-xl text-white text-xs placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+                    className="w-full pl-9 pr-10 py-2.5 bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-neutral-500 hover:text-white bg-transparent border-none cursor-pointer"
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 dark:text-neutral-500 hover:text-gray-700 dark:hover:text-white bg-transparent border-none cursor-pointer"
                   >
                     {showPassword ? <FaEyeSlash className="text-xs" /> : <FaEye className="text-xs" />}
                   </button>
@@ -556,15 +562,15 @@ const AuthModal = () => {
               </button>
 
               {/* Mobile Switch Link */}
-              <div className="md:hidden pt-3 text-center border-t border-neutral-800/80 mt-4">
-                <span className="text-xs text-neutral-400">Don't have an account? </span>
+              <div className="md:hidden pt-3 text-center border-t border-gray-200 dark:border-neutral-800/80 mt-4">
+                <span className="text-xs text-zinc-600 dark:text-neutral-400">Don't have an account? </span>
                 <button
                   type="button"
                   onClick={() => {
                     setFormError("");
                     setAuthModalTab("register");
                   }}
-                  className="text-xs font-bold text-amber-400 hover:underline bg-transparent border-none cursor-pointer"
+                  className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline bg-transparent border-none cursor-pointer"
                 >
                   Create Account
                 </button>
@@ -576,11 +582,11 @@ const AuthModal = () => {
           {authModalTab === "register" && (
             <form onSubmit={handleRegisterSubmit} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-neutral-400 mb-1">
                   Full Name *
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-500">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 dark:text-neutral-500">
                     <FaUser className="text-xs" />
                   </div>
                   <input
@@ -589,18 +595,18 @@ const AuthModal = () => {
                     placeholder="e.g. Muneeb Hassan"
                     value={regFullName}
                     onChange={(e) => setRegFullName(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-neutral-900 border border-neutral-700/80 focus:border-amber-500 rounded-xl text-white text-xs placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+                    className="w-full pl-9 pr-3.5 py-2.5 bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-neutral-400 mb-1">
                     Phone Number *
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-500">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 dark:text-neutral-500">
                       <FaPhone className="text-xs" />
                     </div>
                     <input
@@ -609,17 +615,17 @@ const AuthModal = () => {
                       placeholder="03001234567"
                       value={regPhone}
                       onChange={(e) => setRegPhone(e.target.value)}
-                      className="w-full pl-9 pr-3.5 py-2.5 bg-neutral-900 border border-neutral-700/80 focus:border-amber-500 rounded-xl text-white text-xs placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+                      className="w-full pl-9 pr-3.5 py-2.5 bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-neutral-400 mb-1">
                     Email Address (Optional)
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-500">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 dark:text-neutral-500">
                       <FaEnvelope className="text-xs" />
                     </div>
                     <input
@@ -627,7 +633,7 @@ const AuthModal = () => {
                       placeholder="you@email.com"
                       value={regEmail}
                       onChange={(e) => setRegEmail(e.target.value)}
-                      className="w-full pl-9 pr-3.5 py-2.5 bg-neutral-900 border border-neutral-700/80 focus:border-amber-500 rounded-xl text-white text-xs placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+                      className="w-full pl-9 pr-3.5 py-2.5 bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
                     />
                   </div>
                 </div>
@@ -635,11 +641,11 @@ const AuthModal = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-neutral-400 mb-1">
                     Password *
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-500">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 dark:text-neutral-500">
                       <FaLock className="text-xs" />
                     </div>
                     <input
@@ -648,17 +654,17 @@ const AuthModal = () => {
                       placeholder="Min 6 chars"
                       value={regPassword}
                       onChange={(e) => setRegPassword(e.target.value)}
-                      className="w-full pl-9 pr-3.5 py-2.5 bg-neutral-900 border border-neutral-700/80 focus:border-amber-500 rounded-xl text-white text-xs placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+                      className="w-full pl-9 pr-3.5 py-2.5 bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-neutral-400 mb-1">
                     Confirm Password *
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-500">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 dark:text-neutral-500">
                       <FaShieldAlt className="text-xs" />
                     </div>
                     <input
@@ -667,7 +673,7 @@ const AuthModal = () => {
                       placeholder="Repeat password"
                       value={regConfirmPassword}
                       onChange={(e) => setRegConfirmPassword(e.target.value)}
-                      className="w-full pl-9 pr-3.5 py-2.5 bg-neutral-900 border border-neutral-700/80 focus:border-amber-500 rounded-xl text-white text-xs placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+                      className="w-full pl-9 pr-3.5 py-2.5 bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
                     />
                   </div>
                 </div>
@@ -683,15 +689,15 @@ const AuthModal = () => {
               </button>
 
               {/* Mobile Switch Link */}
-              <div className="md:hidden pt-3 text-center border-t border-neutral-800/80 mt-3">
-                <span className="text-xs text-neutral-400">Already a member? </span>
+              <div className="md:hidden pt-3 text-center border-t border-gray-200 dark:border-neutral-800/80 mt-3">
+                <span className="text-xs text-zinc-600 dark:text-neutral-400">Already a member? </span>
                 <button
                   type="button"
                   onClick={() => {
                     setFormError("");
                     setAuthModalTab("login");
                   }}
-                  className="text-xs font-bold text-amber-400 hover:underline bg-transparent border-none cursor-pointer"
+                  className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline bg-transparent border-none cursor-pointer"
                 >
                   Sign In
                 </button>
@@ -705,11 +711,11 @@ const AuthModal = () => {
               {forgotStep === 1 ? (
                 <form onSubmit={handleForgotRequest} className="space-y-3.5">
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-neutral-400 mb-1">
                       Registered Phone or Email
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-500">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 dark:text-neutral-500">
                         <FaUser className="text-xs" />
                       </div>
                       <input
@@ -718,7 +724,7 @@ const AuthModal = () => {
                         placeholder="03001234567 or email@domain.com"
                         value={forgotIdentifier}
                         onChange={(e) => setForgotIdentifier(e.target.value)}
-                        className="w-full pl-9 pr-3.5 py-2.5 bg-neutral-900 border border-neutral-700/80 focus:border-amber-500 rounded-xl text-white text-xs placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+                        className="w-full pl-9 pr-3.5 py-2.5 bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
                       />
                     </div>
                   </div>
@@ -735,7 +741,7 @@ const AuthModal = () => {
               ) : (
                 <form onSubmit={handleForgotConfirm} className="space-y-3.5">
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-neutral-400 mb-1">
                       6-Digit Reset Code
                     </label>
                     <input
@@ -744,12 +750,12 @@ const AuthModal = () => {
                       placeholder="123456"
                       value={resetCode}
                       onChange={(e) => setResetCode(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-neutral-900 border border-neutral-700/80 focus:border-amber-500 rounded-xl text-white text-center font-mono font-black text-base tracking-widest focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+                      className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 rounded-xl text-zinc-900 dark:text-white text-center font-mono font-black text-base tracking-widest focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-neutral-400 mb-1">
                       New Password
                     </label>
                     <input
@@ -758,7 +764,7 @@ const AuthModal = () => {
                       placeholder="Minimum 6 characters"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-neutral-900 border border-neutral-700/80 focus:border-amber-500 rounded-xl text-white text-xs placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+                      className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
                     />
                   </div>
 
@@ -773,7 +779,7 @@ const AuthModal = () => {
                 </form>
               )}
 
-              <div className="pt-2 text-center border-t border-neutral-800/80">
+              <div className="pt-2 text-center border-t border-gray-200 dark:border-neutral-800/80">
                 <button
                   type="button"
                   onClick={() => {
@@ -781,7 +787,7 @@ const AuthModal = () => {
                     setAuthModalTab("login");
                     setForgotStep(1);
                   }}
-                  className="text-xs font-bold text-neutral-400 hover:text-white bg-transparent border-none cursor-pointer"
+                  className="text-xs font-bold text-zinc-500 dark:text-neutral-400 hover:text-zinc-800 dark:hover:text-white bg-transparent border-none cursor-pointer"
                 >
                   ← Back to Sign In
                 </button>

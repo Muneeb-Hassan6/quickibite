@@ -65,7 +65,7 @@ export default function GooglePhoneModal() {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
       <div 
-        className="relative w-full max-w-md bg-[#121212] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden animate-scale-up"
+        className="relative w-full max-w-md bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden animate-scale-up text-zinc-900 dark:text-white"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Glow accent */}
@@ -77,7 +77,7 @@ export default function GooglePhoneModal() {
           type="button"
           onClick={handleClose}
           disabled={loading}
-          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50"
+          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50"
           aria-label="Close modal"
         >
           <FaTimes className="text-xs" />
@@ -89,28 +89,28 @@ export default function GooglePhoneModal() {
             <FaPhoneAlt />
           </div>
           <div>
-            <h3 className="text-lg sm:text-xl font-black font-['Oswald',sans-serif] uppercase tracking-wide text-white m-0">
+            <h3 className="text-lg sm:text-xl font-black font-['Oswald',sans-serif] uppercase tracking-wide text-zinc-900 dark:text-white m-0">
               Complete Your Profile
             </h3>
-            <p className="text-xs text-neutral-400 mt-0.5">
+            <p className="text-xs text-zinc-600 dark:text-neutral-400 mt-0.5">
               Welcome, {customer?.full_name || "Foodie"}! 👋
             </p>
           </div>
         </div>
 
         {/* Description */}
-        <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed mb-6">
+        <p className="text-xs sm:text-sm text-zinc-600 dark:text-neutral-300 leading-relaxed mb-6">
           Please enter your active 11-digit mobile number for instant order dispatch, live GPS tracking, and delivery updates.
         </p>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-400 mb-2">
-              Mobile / WhatsApp Number <span className="text-amber-400">*</span>
+            <label className="block text-[11px] font-black uppercase tracking-wider text-zinc-600 dark:text-neutral-400 mb-2">
+              Mobile / WhatsApp Number <span className="text-amber-500 dark:text-amber-400">*</span>
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400 text-xs font-mono font-bold">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-600 dark:text-neutral-400 text-xs font-mono font-bold">
                 🇵🇰 +92
               </div>
               <input
@@ -120,27 +120,27 @@ export default function GooglePhoneModal() {
                 placeholder="03XXXXXXXXX"
                 disabled={loading}
                 autoFocus
-                className={`w-full pl-20 pr-10 py-3.5 bg-neutral-900/90 border rounded-2xl text-white text-sm font-mono tracking-wider placeholder:text-neutral-600 focus:outline-none transition-all ${
+                className={`w-full pl-20 pr-10 py-3.5 bg-gray-50 dark:bg-neutral-900/90 border rounded-2xl text-zinc-900 dark:text-white text-sm font-mono tracking-wider placeholder:text-gray-400 dark:placeholder:text-neutral-600 focus:outline-none transition-all ${
                   error
                     ? "border-red-500/70 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
                     : isValid
                     ? "border-emerald-500/70 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                    : "border-white/10 focus:border-amber-500/80 focus:ring-2 focus:ring-amber-500/20"
+                    : "border-gray-300 dark:border-white/10 focus:border-amber-500/80 focus:ring-2 focus:ring-amber-500/20"
                 }`}
               />
               {isValid && (
-                <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-emerald-400 text-sm">
+                <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-emerald-500 dark:text-emerald-400 text-sm">
                   <FaCheckCircle />
                 </div>
               )}
             </div>
 
             {error ? (
-              <p className="text-xs text-red-400 mt-2 font-medium flex items-center gap-1.5 animate-fade-in">
+              <p className="text-xs text-red-500 dark:text-red-400 mt-2 font-medium flex items-center gap-1.5 animate-fade-in">
                 <span>⚠️</span> {error}
               </p>
             ) : (
-              <p className="text-[11px] text-neutral-500 mt-2 flex items-center gap-1.5">
+              <p className="text-[11px] text-zinc-500 dark:text-neutral-500 mt-2 flex items-center gap-1.5">
                 <FaShieldAlt className="text-[10px]" /> Never shared with third parties. Used strictly for rider contact.
               </p>
             )}
@@ -154,7 +154,7 @@ export default function GooglePhoneModal() {
               className={`w-full py-3.5 px-4 rounded-2xl font-black font-['Oswald',sans-serif] uppercase tracking-wider text-sm transition-all flex items-center justify-center gap-2 shadow-lg ${
                 isValid && !loading
                   ? "bg-amber-400 hover:bg-amber-300 text-neutral-950 shadow-amber-500/20 cursor-pointer active:scale-[0.99]"
-                  : "bg-neutral-800 text-neutral-500 cursor-not-allowed border border-white/5"
+                  : "bg-gray-200 dark:bg-neutral-800 text-gray-400 dark:text-neutral-500 cursor-not-allowed border border-gray-300 dark:border-white/5"
               }`}
             >
               {loading ? (
@@ -171,7 +171,7 @@ export default function GooglePhoneModal() {
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="w-full text-center text-xs text-neutral-400 hover:text-white transition-colors py-1 cursor-pointer disabled:opacity-50"
+              className="w-full text-center text-xs text-zinc-500 dark:text-neutral-400 hover:text-zinc-900 dark:hover:text-white transition-colors py-1 cursor-pointer disabled:opacity-50"
             >
               Skip for now
             </button>

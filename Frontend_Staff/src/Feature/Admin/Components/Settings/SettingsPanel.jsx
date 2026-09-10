@@ -4,7 +4,6 @@ import {
   FaMotorcycle,
   FaDollarSign,
   FaBell,
-  FaLock,
   FaFileAlt,
 } from "react-icons/fa";
 
@@ -14,7 +13,6 @@ import OperationalSettings from "./Components/General/OperationalSettings";
 import FinancialSettings from "./Components/General/FinancialSettings";
 import NotificationSettings from "./Components/NotificationSettings";
 import LegalSettings from "./Components/Legal/LegalSettings";
-import SecuritySettings from "./Components/SecuritySettings";
 
 const SettingsPanel = () => {
   const [activeTab, setActiveTab] = useState("general");
@@ -25,7 +23,6 @@ const SettingsPanel = () => {
     { id: "finance", label: "Financial", icon: <FaDollarSign /> },
     { id: "notifications", label: "Notifications", icon: <FaBell /> },
     { id: "legal", label: "Legal & Content", icon: <FaFileAlt /> },
-    { id: "security", label: "Security", icon: <FaLock /> },
   ];
 
   return (
@@ -72,7 +69,6 @@ const SettingsPanel = () => {
           {activeTab === "finance" && <FinancialSettings />}
           {activeTab === "notifications" && <NotificationSettings />}
           {activeTab === "legal" && <LegalSettings />}
-          {activeTab === "security" && <SecuritySettings />}
         </div>
       </div>
     </div>

@@ -156,12 +156,16 @@ const InventoryManager = () => {
     }
   };
 
-  const handleSave = async (e) => {
-    e.preventDefault();
+  const handleSave = async (e, customData) => {
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+    }
     try {
+      const isEvent = e && typeof e.preventDefault === "function";
+      const dataToSave = customData || (!isEvent && e && typeof e === "object" ? e : form);
       const url = `${import.meta.env.VITE_API_BASE}/inventory_api.php`;
       const method = editingProduct ? "PUT" : "POST";
-      const payload = editingProduct ? { ...form, id: editingProduct.id } : form;
+      const payload = editingProduct ? { ...dataToSave, id: editingProduct.id } : dataToSave;
 
       const response = await fetch(url, {
         method,
