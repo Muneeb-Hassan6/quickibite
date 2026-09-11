@@ -38,6 +38,20 @@ const LoginForm = () => {
     }
   }, [isAuthenticated, user, navigate, location.state]);
 
+  const handleBackToStore = () => {
+    const configuredUrl = import.meta.env.VITE_CUSTOMER_URL;
+    if (configuredUrl) {
+      window.open(configuredUrl, "_blank");
+      return;
+    }
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      const targetPort = window.location.port === "5173" ? "5174" : "5173";
+      window.open(`http://${window.location.hostname}:${targetPort}`, "_blank");
+    } else {
+      window.open("/", "_blank");
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -119,23 +133,16 @@ const LoginForm = () => {
         {/* Top Branding & Version Pill */}
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center font-['Oswald',sans-serif] font-black text-black text-base shadow-lg shadow-amber-500/20">
-              QB
-            </div>
+            
             <div>
               <h1 className="font-['Oswald',sans-serif] font-black text-lg tracking-wider text-white uppercase m-0 leading-none">
-                QuickiBite Suite
+                Bigbite
               </h1>
-              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
-                Staff Operations Portal
-              </span>
+              
             </div>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-mono font-bold tracking-wider backdrop-blur-md">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-            <span>Enterprise Kitchen & POS Engine v2.0</span>
-          </div>
+          
         </div>
 
         {/* Center Hero Heading & Feature Badges */}
@@ -147,39 +154,20 @@ const LoginForm = () => {
                 Instant Dispatch.
               </span>
             </h2>
-            <p className="text-sm text-neutral-300 mt-3 leading-relaxed drop-shadow-sm font-sans">
-              Centralized command center for Cashiers, Kitchen Chefs, Dispatchers, and Delivery Riders with live WebSocket synchronization.
-            </p>
+            
           </div>
 
           {/* Operational Feature Badges */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md">
-              <FaBolt className="text-amber-400 text-sm shrink-0" />
-              <span className="text-xs font-bold text-neutral-200">Real-time KDS</span>
-            </div>
-            <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md">
-              <FaShieldAlt className="text-amber-400 text-sm shrink-0" />
-              <span className="text-xs font-bold text-neutral-200">Multi-Role RBAC</span>
-            </div>
-            <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md">
-              <FaMotorcycle className="text-amber-400 text-sm shrink-0" />
-              <span className="text-xs font-bold text-neutral-200">Live Rider Dispatch</span>
-            </div>
-            <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md">
-              <FaBoxes className="text-amber-400 text-sm shrink-0" />
-              <span className="text-xs font-bold text-neutral-200">Inventory & Wastage</span>
-            </div>
-          </div>
+          
         </div>
 
         {/* Bottom Security Footer */}
         <div className="relative z-10 pt-6 border-t border-white/10 flex items-center justify-between text-neutral-400 text-xs font-mono">
           <div className="flex items-center gap-2">
             <FaUserShield className="text-amber-400 text-sm" />
-            <span>Encrypted Session (Strict Tab-Isolation)</span>
+            <span>Encrypted Session</span>
           </div>
-          <span className="text-[11px] text-neutral-400 font-sans">© {new Date().getFullYear()} QuickiBite</span>
+          <span className="text-[11px] text-neutral-400 font-sans">© {new Date().getFullYear()} QuickBite</span>
         </div>
       </div>
 
@@ -191,10 +179,10 @@ const LoginForm = () => {
         <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={() => navigate("/")}
-            className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-amber-500 dark:text-neutral-400 dark:hover:text-amber-400 transition-colors cursor-pointer bg-transparent border-none p-0"
+            onClick={handleBackToStore}
+            className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-amber-500 dark:text-neutral-400 dark:hover:text-amber-400 transition-colors cursor-pointer bg-transparent border-none p-0 group"
           >
-            <FaArrowLeft className="text-xs" />
+            <FaArrowLeft className="text-xs transition-transform group-hover:-translate-x-1" />
             <span>Back to Store</span>
           </button>
 
@@ -212,16 +200,14 @@ const LoginForm = () => {
         {/* Centered Form Wrapper */}
         <div className="w-full max-w-md mx-auto my-auto py-8">
           {/* Header Card */}
-          <div className="mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 dark:bg-amber-500/15 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/10 mb-5">
+          <div className="mb-16"> 
+            {/* <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 dark:bg-amber-500/15 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/10 ">
               <FaUserShield />
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black font-['Oswald',sans-serif] uppercase tracking-wide text-slate-900 dark:text-white m-0">
-              Staff Authentication
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-neutral-400 mt-1.5 font-sans">
-              Enter your executive credentials to access your designated operations dashboard.
-            </p>
+            </div> */}
+            <h2 className="text-2xl sm:text-3xl font-black font-['Oswald',sans-serif] uppercase tracking-wide text-slate-900 dark:text-white m-0 text-center ">
+              Staff Login
+            </h2> 
+            
           </div>
 
           {/* Login Form */}
@@ -229,7 +215,7 @@ const LoginForm = () => {
             {/* Username Field */}
             <div className="space-y-1.5">
               <label className="block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-neutral-300">
-                Username or Staff ID
+                Username 
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 dark:text-neutral-500">
@@ -288,22 +274,18 @@ const LoginForm = () => {
               ) : (
                 <>
                   <FaUserShield className="text-sm" />
-                  <span>Authenticate Securely</span>
+                  <span>Login</span>
                 </>
               )}
             </button>
           </form>
 
-          {/* Quick Role Guidance Note */}
-          <div className="mt-8 p-3.5 rounded-xl bg-slate-100 dark:bg-neutral-900/60 border border-slate-200 dark:border-neutral-800 text-[11px] text-slate-600 dark:text-neutral-400 flex items-center gap-2">
-            <span className="font-bold text-amber-500 shrink-0">💡 Note:</span>
-            <span>Role-based portal (Admin, Cashier, Kitchen, Dispatcher, Rider) is automatically assigned upon authentication.</span>
-          </div>
+          
         </div>
 
         {/* Footer Note */}
         <div className="text-center text-xs text-slate-400 dark:text-neutral-600 pt-4">
-          QuickiBite Hospitality Multi-Role Systems • Internal Use Only
+          QuickBite Multi-Role Systems • Internal Use Only
         </div>
       </div>
     </div>
