@@ -20,7 +20,8 @@ if($db) {
             $cat_item = array(
                 "id" => $row['id'],
                 "name" => $row['name'],
-                "img" => $row['img']
+                "img" => $row['img'],
+                "show_on_hero" => (int)($row['show_on_hero'] ?? 0)
             );
             array_push($cat_arr, $cat_item);
         }

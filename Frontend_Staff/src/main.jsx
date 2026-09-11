@@ -4,10 +4,15 @@ import './style/index.css'
 import App from './App.jsx'
 import { ThemeProvider } from './Context/ThemeContext.jsx'
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 // --- GLOBAL FETCH INTERCEPTOR FOR JWT AUTHENTICATION ---
 const originalFetch = window.fetch;
 window.fetch = async function (resource, options) {
-  const token = sessionStorage.getItem("auth_token");
+  const token =
+    sessionStorage.getItem("token") ||
+    sessionStorage.getItem("auth_token") ||
+    sessionStorage.getItem("staff_token");
   if (token) {
     let url = "";
     if (typeof resource === "string") {
@@ -16,13 +21,13 @@ window.fetch = async function (resource, options) {
       url = resource.url;
     }
 
-    // Intercept only calls destined for our BB backend
+    // Intercept only calls destined for our BB backend (supporting subfolders & relative paths)
     const isBackendCall =
-      url.includes("localhost/BB%20backend") ||
-      url.includes("localhost/BB backend") ||
-      url.includes("/BB%20backend/api/") ||
-      url.includes("/BB backend/api/") ||
+      url.includes("/BB%20backend/") ||
+      url.includes("/BB backend/") ||
+      url.includes("/quickibite/") ||
       url.includes("/backend/api") ||
+      url.includes("/api/") ||
       url.includes("alwaysdata.net") ||
       url.includes("infinityfreeapp.com");
 
@@ -65,10 +70,22 @@ window.fetch = async function (resource, options) {
   return originalFetch(resource, options);
 };
 
+// Create a query client for React Query caching
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // Cache data for 5 minutes
+      refetchOnWindowFocus: true, // Refresh data when switching back to the tab
+    },
+  },
+});
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ThemeProvider>
-      <App />
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
+    </QueryClientProvider>
   </StrictMode>,
 )

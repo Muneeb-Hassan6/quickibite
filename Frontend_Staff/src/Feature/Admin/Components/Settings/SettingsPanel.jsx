@@ -1,114 +1,76 @@
 import React, { useState } from "react";
-import "./styles/index.css";
 import {
   FaStore,
   FaMotorcycle,
   FaDollarSign,
   FaBell,
-  FaLock,
-  FaSave,
-  FaUndo,
+  FaFileAlt,
 } from "react-icons/fa";
 
 // Import All Tab Components
-import GeneralSettings from "./Components/GeneralSettings";
-import OperationalSettings from "./Components/OperationalSettings";
-import FinancialSettings from "./Components/FinancialSettings";
+import GeneralSettings from "./Components/General/GeneralSettings";
+import OperationalSettings from "./Components/General/OperationalSettings";
+import FinancialSettings from "./Components/General/FinancialSettings";
 import NotificationSettings from "./Components/NotificationSettings";
-import SecuritySettings from "./Components/SecuritySettings";
+import LegalSettings from "./Components/Legal/LegalSettings";
 
 const SettingsPanel = () => {
   const [activeTab, setActiveTab] = useState("general");
-
-  // Global Centralized State
-  const [settings, setSettings] = useState({
-    storeName: "QuickBite Restaurant",
-    phone: "+92 300 1234567",
-    address: "Gulberg III, Lahore",
-    minOrder: "500",
-    deliveryRadius: "10",
-    taxRate: "16",
-    deliveryFee: "150",
-    acceptOrders: true,
-    acceptCards: true,
-    soundAlert: true,
-    emailNotif: false,
-    stockAlerts: true,
-  });
-
-  const handleChange = (e) =>
-    setSettings({ ...settings, [e.target.name]: e.target.value });
-  const handleToggle = (e) =>
-    setSettings({ ...settings, [e.target.name]: e.target.checked });
-
-  const handleSave = () => {
-    alert("Settings Updated Successfully!");
-    console.log("Saving Data to API:", settings);
-  };
 
   const tabs = [
     { id: "general", label: "General Info", icon: <FaStore /> },
     { id: "operations", label: "Operations", icon: <FaMotorcycle /> },
     { id: "finance", label: "Financial", icon: <FaDollarSign /> },
     { id: "notifications", label: "Notifications", icon: <FaBell /> },
-    { id: "security", label: "Security", icon: <FaLock /> },
+    { id: "legal", label: "Legal & Content", icon: <FaFileAlt /> },
   ];
 
   return (
-    <div>
-      <div style={{ marginBottom: "30px" }}>
-        <h2 className="section-header" style={{ marginBottom: "5px" }}>
-          System Settings
-        </h2>
-        <p style={{ color: "var(--admin-muted)", fontSize: "14px", margin: 0 }}>
-          Configure your restaurant operations and preferences.
-        </p>
+    <div className="animate-slide-up space-y-5">
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-2 border-b border-slate-200 dark:border-white/[0.06]">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-4 bg-red-600 rounded-full shrink-0" />
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
+              Store Configuration & System Settings
+            </h2>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-neutral-400 m-0 mt-0.5 font-sans">
+            Configure restaurant identity, operating hours, delivery parameters, tax rates, and legal policies.
+          </p>
+        </div>
       </div>
 
-      <div className="settings-page-wrapper">
-        {/* Left Sidebar Tabs */}
-        <div className="settings-sidebar-nav">
+      <div className="flex flex-col md:flex-row gap-6 items-start w-full pb-16">
+        {/* Left Vertical Sub-Sidebar */}
+        <div className="w-full md:w-64 shrink-0 admin-card-surface bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] rounded-2xl p-3 flex flex-col gap-1.5 md:sticky md:top-4 shadow-sm">
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              className={`settings-tab-btn ${activeTab === tab.id ? "active" : ""}`}
+              type="button"
               onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-bold text-sm text-left transition-all border-none cursor-pointer ${
+                activeTab === tab.id
+                  ? "btn-brand-cta"
+                  : "text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] bg-transparent"
+              }`}
             >
-              {tab.icon} {tab.label}
+              <span className="text-base shrink-0">{tab.icon}</span>
+              <span className="truncate">{tab.label}</span>
             </button>
           ))}
         </div>
 
-        {/* Right Content Area */}
-        <div className="settings-content-area">
-          {activeTab === "general" && (
-            <GeneralSettings settings={settings} handleChange={handleChange} />
-          )}
-          {activeTab === "operations" && (
-            <OperationalSettings
-              settings={settings}
-              handleChange={handleChange}
-              handleToggle={handleToggle}
-            />
-          )}
-          {activeTab === "finance" && (
-            <FinancialSettings
-              settings={settings}
-              handleChange={handleChange}
-              handleToggle={handleToggle}
-            />
-          )}
-          {activeTab === "notifications" && (
-            <NotificationSettings
-              settings={settings}
-              handleToggle={handleToggle}
-            />
-          )}
-          {activeTab === "security" && <SecuritySettings />}
+        {/* Right Active Content Panel */}
+        <div className="flex-1 w-full min-w-0">
+          {activeTab === "general" && <GeneralSettings />}
+          {activeTab === "operations" && <OperationalSettings />}
+          {activeTab === "finance" && <FinancialSettings />}
+          {activeTab === "notifications" && <NotificationSettings />}
+          {activeTab === "legal" && <LegalSettings />}
         </div>
       </div>
-
-      
     </div>
   );
 };

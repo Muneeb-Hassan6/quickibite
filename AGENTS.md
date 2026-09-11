@@ -1,9 +1,8 @@
 # QuickiBite Workspace Rules
 
-## Folder Modification Restrictions
-- **DO NOT** make any modifications inside the `Frontend` directory under any circumstances.
-- Only make changes in the following directories when requested:
-  - `Frontend_Customer`
-  - `Frontend_Staff`
-  - `BB backend` (or `backend`)
-  - `server`
+## Active Directories
+- `Frontend_Customer` (Customer-facing portal)
+- `Frontend_Staff` (Admin, Cashier, Kitchen, Rider portal)
+- `BB backend` (PHP API and backend logic)
+- `server` (WebSocket / Realtime service)
+- `archive` (Archived unused scripts and legacy components)

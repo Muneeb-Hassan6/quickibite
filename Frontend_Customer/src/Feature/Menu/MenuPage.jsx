@@ -1,75 +1,78 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Sidebar from "./Components/Sidebar";
 import SearchBar from "./Components/SearchBar";
 import MenuContent from "./Components/MenuContent";
-import Footer from "../OnlineStore/Components/Footer";
-import "./styles/index.css";
+import MenuHeroHeader from "./Components/MenuHeroHeader";
+import MenuSidebarDesktop from "./Components/MenuSidebarDesktop";
+import { API_BASE } from "../../config/api";
 
 const MenuPage = () => {
   const [activeCategory, setActiveCategory] = useState("");
   const [expandedCategory, setExpandedCategory] = useState("");
-  const [menuItems, setMenuItems] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
   const searchBoxRef = useRef(null);
-  const contentRef = useRef(null);
 
-  // --- API FETCHING ---
+  // API Fetching using React Query
+  const { data: rawCategories = [], isLoading: isCatLoading } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const res = await fetch(
+        `${API_BASE}/get_categories.php`
+      );
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+  });
+
+  const { data: menuItems = [], isLoading: isMenuLoading } = useQuery({
+    queryKey: ["menu"],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/get_menu.php`);
+      const data = await res.json();
+      return Array.isArray(data) ? data.filter((i) => i.isAvailable !== false) : [];
+    },
+  });
+
+  const categories = useMemo(() => {
+    if (!Array.isArray(rawCategories)) return [];
+    return rawCategories
+      .map((c) => (typeof c === "string" ? c : c?.name || ""))
+      .filter(Boolean);
+  }, [rawCategories]);
+
+  const isLoading = isCatLoading || isMenuLoading;
+
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const catRes = await fetch(`${import.meta.env.VITE_API_BASE}/get_categories.php`);
-        const catData = await catRes.json();
-        const catNames = Array.isArray(catData) ? catData.map((c) => c.name) : [];
-        setCategories(catNames);
-
-        const menuRes = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
-        const menuData = await menuRes.json();
-        setMenuItems(Array.isArray(menuData) ? menuData.filter(i => i.isAvailable) : []);
-
-        if (catNames.length > 0) {
-          setActiveCategory(catNames[0]);
-          setExpandedCategory(catNames[0]);
-        }
-      } catch (error) { console.error(error); } finally { setIsLoading(false); }
-    };
-    fetchData();
-  }, []);
-
-  // --- HELPER SCROLL FUNCTION ---
-  const performScroll = (el, offset = 160) => {
-    if (!el) return;
-    const isDesktop = window.innerWidth >= 992;
-    if (isDesktop && contentRef.current) {
-      const container = contentRef.current;
-      const containerRect = container.getBoundingClientRect();
-      const elRect = el.getBoundingClientRect();
-      const relativeTop = elRect.top - containerRect.top;
-      const targetScroll = container.scrollTop + relativeTop - 70; // 70px offset for sticky search bar inside main content container
-      container.scrollTo({
-        top: targetScroll,
-        behavior: "smooth"
-      });
-    } else {
-      window.scrollTo({
-        top: el.getBoundingClientRect().top + window.pageYOffset - offset,
-        behavior: "smooth"
-      });
+    if (categories.length > 0 && !activeCategory) {
+      setActiveCategory(categories[0]);
+      setExpandedCategory(categories[0]);
     }
+  }, [categories, activeCategory]);
+
+  const performScroll = (el, offset = 140) => {
+    if (!el) return;
+    const topPos = el.getBoundingClientRect().top + window.pageYOffset - offset;
+    window.scrollTo({
+      top: topPos,
+      behavior: "smooth",
+    });
   };
 
-  // --- HANDLE CATEGORY REDIRECT FROM OTHER PAGES ---
+  // Handle Category Redirect from other pages
   useEffect(() => {
-    if (!isLoading && location.state?.category && categories.length > 0) {
-      const targetCategory = location.state.category;
+    const rawTarget = location.state?.category;
+    const targetCategory =
+      typeof rawTarget === "object" ? rawTarget?.name : rawTarget;
+
+    if (!isLoading && targetCategory && categories.length > 0) {
       const matchedCat = categories.find(
         (cat) => cat.toLowerCase() === targetCategory.toLowerCase()
       );
@@ -78,56 +81,140 @@ const MenuPage = () => {
         setExpandedCategory(matchedCat);
         setSearchTerm("");
 
-        // Wait a small delay for content to render, then scroll to section
         setTimeout(() => {
           const el = document.getElementById(matchedCat);
           performScroll(el);
         }, 150);
 
-        // Clear location state to prevent scrolling again on page refreshes
         navigate(location.pathname, { replace: true, state: {} });
       }
     }
   }, [location.state, isLoading, categories, navigate]);
 
-  // --- HANDLE SEARCH QUERY REDIRECT ---
+  // Handle Search & Category Query Params
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && categories.length > 0) {
       const params = new URLSearchParams(location.search);
       const searchQuery = params.get("search");
+      const categoryQuery = params.get("category");
+
       if (searchQuery) {
         setSearchTerm(searchQuery);
+      } else if (categoryQuery) {
+        const normalizedQuery = categoryQuery
+          .toLowerCase()
+          .replace(/[-_]/g, " ")
+          .trim();
+        const matchedCat = categories.find((c) => {
+          const catLower = c.toLowerCase();
+          return (
+            catLower === normalizedQuery ||
+            catLower.includes(normalizedQuery) ||
+            normalizedQuery.includes(catLower) ||
+            (normalizedQuery.includes("wrap") &&
+              (catLower.includes("wrap") ||
+                catLower.includes("shawarma") ||
+                catLower.includes("roll"))) ||
+            (normalizedQuery.includes("potato") &&
+              (catLower.includes("potato") || catLower.includes("fries"))) ||
+            (normalizedQuery.includes("fries") &&
+              (catLower.includes("potato") || catLower.includes("fries"))) ||
+            (normalizedQuery.includes("pizza") && catLower.includes("pizza")) ||
+            (normalizedQuery.includes("burger") && catLower.includes("burger"))
+          );
+        });
+
+        if (matchedCat) {
+          setActiveCategory(matchedCat);
+          setExpandedCategory(matchedCat);
+          setSearchTerm("");
+
+          setTimeout(() => {
+            const el = document.getElementById(matchedCat);
+            performScroll(el);
+          }, 150);
+        }
       }
     }
-  }, [location.search, isLoading]);
+  }, [location.search, isLoading, categories]);
 
-  // --- LOGIC FUNCTIONS ---
-  const scrollToCategory = (catName) => {
-    setActiveCategory(catName);
+  const filteredMenuItems = useMemo(() => {
+    if (!searchTerm.trim()) return menuItems;
+    const lower = searchTerm.toLowerCase();
+    return menuItems.filter(
+      (item) =>
+        (item.name && item.name.toLowerCase().includes(lower)) ||
+        (item.description && item.description.toLowerCase().includes(lower)) ||
+        (item.category && item.category.toLowerCase().includes(lower))
+    );
+  }, [menuItems, searchTerm]);
+
+  const searchResults = useMemo(() => {
+    if (!searchTerm.trim()) return [];
+    return filteredMenuItems.slice(0, 8);
+  }, [filteredMenuItems, searchTerm]);
+
+  const scrollToCategory = (cat) => {
+    setActiveCategory(cat);
+    setExpandedCategory(cat);
     setSearchTerm("");
-    setExpandedCategory(expandedCategory === catName ? "" : catName);
-    const el = document.getElementById(catName);
-    performScroll(el);
+    const element = document.getElementById(cat);
+    performScroll(element);
   };
 
-  const scrollToProduct = (productName) => {
+  const scrollToProduct = (item) => {
+    setActiveCategory(item.category);
+    setExpandedCategory(item.category);
     setSearchTerm("");
-    setIsSidebarOpen(false);
-    const el = document.getElementById(`product-${productName}`);
-    performScroll(el);
+    setTimeout(() => {
+      const element = document.getElementById(`product-${item.id}`);
+      performScroll(element, 160);
+    }, 100);
   };
 
-  const searchResults = menuItems.filter(i =>
-    i.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    i.category?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        searchBoxRef.current &&
+        !searchBoxRef.current.contains(event.target)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
-  if (isLoading) return <div className="menu-loader-container"><span>Loading Delicious Food...</span></div>;
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-[60vh] text-amber-500 gap-3 font-bold text-lg tracking-wide font-['Oswald',sans-serif]">
+        <div className="w-4 h-4 bg-amber-400 rounded-full animate-bounce" />
+        <div
+          className="w-4 h-4 bg-amber-400 rounded-full animate-bounce"
+          style={{ animationDelay: "0.2s" }}
+        />
+        <div
+          className="w-4 h-4 bg-amber-400 rounded-full animate-bounce"
+          style={{ animationDelay: "0.4s" }}
+        />
+        <span className="ml-2">Loading Delicious Menu...</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="menu-page-container">
-      {isSidebarOpen && <div className="mobile-sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>}
+    <div className="bg-slate-50 dark:bg-[#0a0a0c] min-h-screen text-gray-900 dark:text-neutral-100 transition-colors duration-300">
+      {/* Mobile Drawer Overlay Backdrop */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
 
+      {/* Mobile Sidebar Drawer */}
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
@@ -135,43 +222,53 @@ const MenuPage = () => {
         activeCategory={activeCategory}
         expandedCategory={expandedCategory}
         menuItems={menuItems}
-        onCategoryClick={scrollToCategory}
+        onCategoryClick={(c) => {
+          scrollToCategory(c);
+          setIsSidebarOpen(false);
+        }}
         onProductClick={scrollToProduct}
       />
 
-      <div className="menu-master-layout">
-        <aside className="desktop-sidebar-wrapper d-none d-lg-block">
-          <Sidebar
-            isDesktop={true}
-            categories={categories}
-            activeCategory={activeCategory}
-            expandedCategory={expandedCategory}
-            menuItems={menuItems}
-            onCategoryClick={scrollToCategory}
-            onProductClick={scrollToProduct}
-          />
-        </aside>
+      {/* 1. 3D Menu Hero Header */}
+      <MenuHeroHeader />
 
-        <main className="menu-main-content" ref={contentRef}>
-          <SearchBar
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            searchResults={searchResults}
-            showDropdown={showDropdown}
-            setShowDropdown={setShowDropdown}
-            searchBoxRef={searchBoxRef}
-            onFilterOpen={() => setIsSidebarOpen(true)}
-          />
+      {/* 2. Sticky Top Control Bar */}
+      <SearchBar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        searchResults={searchResults}
+        showDropdown={showDropdown}
+        setShowDropdown={setShowDropdown}
+        searchBoxRef={searchBoxRef}
+        onFilterToggle={() => {
+          if (window.innerWidth < 1024) {
+            setIsSidebarOpen(true);
+          } else {
+            setIsDesktopSidebarVisible((prev) => !prev);
+          }
+        }}
+        isFilterActive={isDesktopSidebarVisible || isSidebarOpen}
+      />
 
+      {/* 3. Main Content with Animated Sticky Sidebar */}
+      <div className="flex items-start max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative w-full transition-all duration-300">
+        {/* Desktop Categories Sidebar */}
+        <MenuSidebarDesktop
+          isDesktopSidebarVisible={isDesktopSidebarVisible}
+          categories={categories}
+          activeCategory={activeCategory}
+          scrollToCategory={scrollToCategory}
+        />
+
+        {/* Dynamic Menu Product Grid Content */}
+        <main className="flex-1 min-w-0 w-full transition-all duration-300 ease-in-out">
           <MenuContent
             searchTerm={searchTerm}
             searchResults={searchResults}
             categories={categories}
             menuItems={menuItems}
+            isExpanded={!isDesktopSidebarVisible}
           />
-
-          {/* 4. Footer */}
-          <Footer style={{ marginTop: "40px" }} />
         </main>
       </div>
     </div>

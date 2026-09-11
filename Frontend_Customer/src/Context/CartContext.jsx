@@ -1,7 +1,8 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import toast from "react-hot-toast";
-import { io } from "socket.io-client"; // 🔥 SOCKET IMPORT ADDED
 import Swal from "sweetalert2";
+import { io } from "socket.io-client";
+import { API_BASE } from "../config/api";
 
 const CartContext = createContext();
 
@@ -122,33 +123,62 @@ export const CartProvider = ({ children }) => {
       return null;
     }
 
-    const orderTotal = cartItems.reduce(
-      (acc, item) => acc + parseFloat(item.price) * (item.qty || 1),
-      0,
-    );
+    let loggedUser = null;
+    try {
+      const saved = localStorage.getItem("quickbite_customer_user");
+      if (saved) loggedUser = JSON.parse(saved);
+    } catch {}
+
+    const customerId = customerDetails.customer_id || customerDetails.customerId || loggedUser?.id || null;
+    const customerEmail = customerDetails.customer_email || customerDetails.customerEmail || customerDetails.email || loggedUser?.email || "";
 
     // Prepare Data for Backend
     const orderData = {
-      order_type: customerDetails.orderType || "Takeaway",
-      customer_name: customerDetails.customerName || "",
-      customer_mobile: customerDetails.customerMobile || "",
-      customer_address: customerDetails.customerAddress || "",
-      table_number: customerDetails.tableNumber || "",
+      customer_id: customerId,
+      customerId: customerId,
+      customer_email: customerEmail,
+      customerEmail: customerEmail,
+      email: customerEmail,
+      order_type: customerDetails.orderType || customerDetails.order_type || "Takeaway",
+      customer_name: customerDetails.customerName || customerDetails.customer_name || loggedUser?.full_name || "Walk-in",
+      customer_mobile: customerDetails.customerMobile || customerDetails.customer_mobile || customerDetails.mobile || customerDetails.phone || loggedUser?.phone || "",
+      customer_address: customerDetails.customerAddress || customerDetails.customer_address || customerDetails.address || "",
+      table_number: customerDetails.tableNumber || customerDetails.table_number || "",
       
-      // 🔥 YEH 3 LINES ADD KI HAIN TAAYKE ADDRESS BHI SATH JAYE
+      // Address Breakdown & GPS
       house_no: customerDetails.house_no || null,
       street: customerDetails.street || null,
       area: customerDetails.area || null,
+      customer_lat: customerDetails.customer_lat || customerDetails.lat || null,
+      customer_lng: customerDetails.customer_lng || customerDetails.lng || null,
 
-      total: orderTotal,
-      cart: cartItems,
+      // Promo & Tips
+      delivery_fee: customerDetails.delivery_fee || customerDetails.deliveryFee || 0,
+      rider_tip: customerDetails.rider_tip || customerDetails.riderTip || 0,
+      coupon_code: customerDetails.coupon_code || customerDetails.couponCode || null,
+      discount_amount: customerDetails.discount_amount || customerDetails.discountAmount || 0,
+
+      // Payment Details
+      payment_method: customerDetails.paymentMethod || customerDetails.payment_method || "Cash on Delivery",
+      payment_status: customerDetails.paymentStatus || customerDetails.payment_status || "Pending",
+      transaction_id: customerDetails.transaction_id || customerDetails.transactionId || customerDetails.txn_id || null,
+
+      total:
+        customerDetails.total !== undefined && customerDetails.total !== null
+          ? Number(customerDetails.total)
+          : cartItems.reduce(
+              (sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1),
+              0
+            ),
+      cart: customerDetails.items || customerDetails.cart || cartItems,
+      items: customerDetails.items || customerDetails.cart || cartItems,
     };
 
     const loadingToast = toast.loading("Placing your order...");
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/create_order.php`,
+        `${API_BASE}/create_order.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -158,38 +188,7 @@ export const CartProvider = ({ children }) => {
 
       const result = await response.json();
 
-      if (result.success) {
-        const newLocalOrder = {
-          ...orderData,
-          id: result.order_id, // 🔥 Database ki asli ID
-          status: "Pending",
-          time: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          date: new Date().toLocaleDateString(),
-        };
-
-        // Orders history update karein
-        setOrders([newLocalOrder, ...orders]);
-
-        clearCart();
-        setIsCartOpen(false);
-
-        toast.success("Order Placed Successfully!", {
-          id: loadingToast,
-          duration: 4000,
-          style: { background: "#10b981", color: "#fff" },
-        });
-
-        // 🔥 SOCKET EMIT: Node Server ko directly frontend se batao!
-        const socket = io(import.meta.env.VITE_SOCKET_URL);
-        socket.emit("new_order_placed");
-        setTimeout(() => socket.disconnect(), 1000); // Disconnect after emitting
-
-        // 🔥 BULLETPROOF: Newly placed order wapis bhejo taake Checkout page foran popup show kare
-        return newLocalOrder;
-      } else {
+      if (!result.success || !result.order_id) {
         toast.dismiss(loadingToast);
         if (result.code === "RESTAURANT_CLOSED") {
           Swal.fire({
@@ -199,13 +198,71 @@ export const CartProvider = ({ children }) => {
             confirmButtonColor: "#ef4444",
           });
         } else {
-          toast.error("Error: " + result.message);
+          const errMsg = result.message || result.error || "Failed to insert order into MySQL database";
+          toast.error("Database Error: " + errMsg);
+          Swal.fire({
+            title: "Order Failed",
+            text: errMsg,
+            icon: "error",
+            confirmButtonColor: "#ef4444",
+          });
         }
         return null;
       }
+
+      // Store ONLY the real backend order_id and order object
+      const realOrderId = result.order_id;
+      localStorage.setItem("activeOrderId", realOrderId.toString());
+
+      const newLocalOrder = {
+        ...orderData,
+        id: realOrderId, // Real MySQL DB ID
+        order_id: realOrderId,
+        orderId: realOrderId,
+        success: true,
+        status: "Pending",
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        date: new Date().toLocaleDateString(),
+      };
+
+      localStorage.setItem("latestOrder", JSON.stringify(newLocalOrder));
+
+      // Orders history update karein
+      setOrders([newLocalOrder, ...orders]);
+
+      clearCart();
+      setIsCartOpen(false);
+
+      toast.success(`Order #${realOrderId} Placed Successfully!`, {
+        id: loadingToast,
+        duration: 4000,
+        style: { background: "#10b981", color: "#fff" },
+      });
+
+      // 🔥 SOCKET EMIT: Node Server ko directly frontend se batao!
+      try {
+        const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
+        const socket = io(socketUrl);
+        socket.emit("new_order_placed");
+        setTimeout(() => socket.disconnect(), 1000);
+      } catch (sockErr) {
+        console.warn("Socket notification warning:", sockErr);
+      }
+
+      return newLocalOrder;
     } catch (error) {
-      console.error("Order Failed:", error);
-      toast.error("Failed to connect to the server.", { id: loadingToast });
+      console.error("Order Insertion Error:", error);
+      toast.dismiss(loadingToast);
+      toast.error("Database Connection Error: " + error.message);
+      Swal.fire({
+        title: "Connection Error",
+        text: "Could not reach database server: " + error.message,
+        icon: "error",
+        confirmButtonColor: "#ef4444",
+      });
       return null;
     }
   };

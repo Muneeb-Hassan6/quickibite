@@ -1,182 +1,193 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import "./header.css";
-import OrderTracking from "../../Feature/Order/Components/OrderTracker";
 import { useCart } from "../../Context/CartContext";
-
-// 🔥 Bolt ki jagah FaFire import kiya
-import { FaBox, FaSearch, FaFire } from "react-icons/fa";
-import { optimizeCloudinaryImage } from "../../utils/imageOptimizer";
+import { useTheme } from "../../Context/ThemeContext";
+import {
+  FaShoppingBag,
+  FaSun,
+  FaMoon,
+  FaMapMarkerAlt,
+  FaBars,
+  FaTimes,
+} from "react-icons/fa";
+import HeaderNavLinks from "./HeaderNavLinks";
+import HeaderMobileDrawer from "./HeaderMobileDrawer";
+import HeaderUserMenu from "./HeaderUserMenu";
 
 const Header = () => {
-  const [showOrders, setShowOrders] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [cartBounce, setCartBounce] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { orders } = useCart();
-  const searchRef = useRef(null);
-
-  const [menuItems, setMenuItems] = useState([]);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-
-  const isMenuPage = location.pathname.toLowerCase().includes("menu");
+  const { orders, cartItems, toggleCart } = useCart();
+  const { theme, toggleTheme } = useTheme();
+  const prevCartCount = useRef(0);
 
   const currentPath = location.pathname.toLowerCase();
-  const shouldHideIcon =
-    currentPath.includes("kitchen") ||
-    currentPath.includes("cashier") ||
-    currentPath.includes("admin") ||
-    currentPath.includes("login");
+  const isCheckoutPage = currentPath.includes("/checkout");
+  const shouldHideNav = isCheckoutPage;
+
+  const totalCartQty = (cartItems || []).reduce(
+    (sum, item) => sum + (item.qty || 1),
+    0
+  );
 
   useEffect(() => {
-    if (isMenuPage) {
-      const params = new URLSearchParams(location.search);
-      setSearchTerm(params.get("search") || "");
-    } else {
-      setSearchTerm("");
+    if (totalCartQty > prevCartCount.current && prevCartCount.current >= 0) {
+      setCartBounce(true);
+      const timer = setTimeout(() => setCartBounce(false), 500);
+      return () => clearTimeout(timer);
     }
-  }, [location.search, isMenuPage]);
+    prevCartCount.current = totalCartQty;
+  }, [totalCartQty]);
 
-  // Fetch Menu for Dynamic Search
   useEffect(() => {
-    const fetchMenu = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
-        const result = await response.json();
-        if (result.success && result.data) {
-          setMenuItems(result.data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch menu for search", err);
-      }
-    };
-    fetchMenu();
-  }, []);
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
-  // Handle outside click for search dropdown
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
-        setIsSearchFocused(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const navItems = [
+    { label: "Home", to: "/" },
+    { label: "Menu", to: "/menu" },
+    { label: "Deals", to: "/deals" },
+    { label: "Track Order", to: "/track-order" },
+    { label: "About Us", to: "/about-us" },
+  ];
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    setIsSearchFocused(false);
-    if (searchTerm.trim()) {
-      navigate(`/menu?search=${searchTerm.trim()}`);
-    } else {
-      navigate(`/menu`);
-    }
-  };
+  const desktopNavItems = [
+    { label: "Home", to: "/" },
+    { label: "Menu", to: "/menu" },
+    { label: "Deals", to: "/deals" },
+  ];
 
-  const filteredItems = searchTerm.trim() 
-    ? menuItems.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    : [];
+  const isNavActive = (to) =>
+    to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+
+  if (shouldHideNav) {
+    return null;
+  }
 
   return (
-    <>
-      <header className="main-header-wrapper">
-        <div className="header-container">
-          <div className="top-nav">
-            {/* 1. LEFT SECTION (Logo with Fire Icon) */}
-            <div className="left-section-wrapper">
-              <div className="logo-section" onClick={() => navigate("/")}>
-                <div className="logo-icon animated-logo">
-                  <FaFire /> {/* 🔥 Yahan Fire Icon laga diya */}
-                </div>
-                <div className="logo-text">
-                  <h1>
-                    Big<span>Bite</span>
-                  </h1>
-                </div>
-              </div>
-            </div>
-
-            {/* 2. MIDDLE SECTION (Dynamic Search) */}
-            <div className="header-search-box desktop-only" ref={searchRef}>
-              <form onSubmit={handleSearchSubmit} className={`dynamic-search-form ${isSearchFocused ? 'active' : 'dull'}`}>
-                <FaSearch className="search-icon" />
-                <input
-                  type="text"
-                  placeholder="Search your favorite food..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
-                />
-              </form>
-
-              {/* Dynamic Search Dropdown */}
-              {isSearchFocused && searchTerm.trim() !== "" && (
-                <div className="dynamic-search-dropdown">
-                  {filteredItems.length > 0 ? (
-                    filteredItems.map(item => (
-                      <div 
-                        key={item.id} 
-                        className="search-dropdown-item"
-                        onClick={() => {
-                          setSearchTerm("");
-                          setIsSearchFocused(false);
-                          navigate(`/menu?search=${encodeURIComponent(item.name)}`);
-                        }}
-                      >
-                        <img src={optimizeCloudinaryImage(item.img, 100)} alt={item.name} />
-                        <div className="item-details">
-                          <span className="item-name">{item.name}</span>
-                          <span className="item-price">Rs {Number(item.price).toFixed(2)}</span>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="search-dropdown-empty">No products found...</div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* 3. RIGHT SECTION */}
-            <div className="right-section-wrapper">
-              <div className="right-actions">
-                {!shouldHideIcon && (
-                  <div
-                    className="header-icon"
-                    onClick={() => setShowOrders(true)}
-                    title="Live Tracking"
-                  >
-                    <FaBox />
-                    {orders?.length > 0 && (
-                      <span className="order-badge">{orders.length}</span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* 4. MOBILE SEARCH ROW */}
-          {isMenuPage && (
-            <div className="mobile-search-row">
-              <form onSubmit={handleSearchSubmit}>
-                <FaSearch className="search-icon-inside" />
-                <input
-                  type="text"
-                  placeholder="Search item or category..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </form>
-            </div>
-          )}
+    <header className="fixed top-0 left-0 right-0 w-full h-14 sm:h-16 z-50 px-4 sm:px-6 transition-all duration-300 backdrop-blur-md bg-white/95 text-zinc-900 border-b border-zinc-200/80 shadow-xs dark:bg-[#0d0d0d]/95 dark:text-white dark:border-white/10 dark:shadow-md flex items-center">
+      <div className="flex items-center justify-between w-full max-w-7xl mx-auto">
+        {/* Left: Typographic Wordmark */}
+        <div
+          className="flex items-center cursor-pointer group flex-shrink-0"
+          onClick={() => navigate("/")}
+        >
+          <span className="font-['Oswald',sans-serif] font-black text-2xl sm:text-3xl tracking-wider leading-none text-zinc-950 dark:text-white group-hover:opacity-90 transition-opacity duration-200">
+            BIG
+            <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+              BITE
+            </span>
+          </span>
         </div>
-      </header>
 
-      <OrderTracking isOpen={showOrders} onClose={() => setShowOrders(false)} />
-    </>
+        {/* Right: Desktop Nav + Action Buttons */}
+        <div className="flex items-center gap-2 sm:gap-6 flex-shrink-0">
+          {/* Desktop Nav Links */}
+          <HeaderNavLinks
+            navItems={desktopNavItems}
+            isNavActive={isNavActive}
+            navigate={navigate}
+          />
+
+          {/* Action Icon Buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Theme Toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="relative overflow-hidden group w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-zinc-100 dark:bg-[#1c1c1c] border border-zinc-200/80 dark:border-neutral-800 flex items-center justify-center active:scale-90 transition-all cursor-pointer shadow-xs"
+              aria-label="Toggle theme"
+            >
+              <span className="absolute inset-0 w-full h-full bg-orange-500 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-0" />
+              <span className="relative z-10 text-zinc-800 dark:text-zinc-200 group-hover:text-white transition-colors duration-200 flex items-center justify-center">
+                {theme === "dark" ? (
+                  <FaSun className="text-orange-400 text-xs sm:text-sm group-hover:text-white transition-colors duration-200" />
+                ) : (
+                  <FaMoon className="text-zinc-700 text-xs sm:text-sm group-hover:text-white transition-colors duration-200" />
+                )}
+              </span>
+            </button>
+
+            {/* Track Order Icon (Desktop only shortcut) */}
+            {!shouldHideNav && (
+              <button
+                type="button"
+                onClick={() => navigate("/track-order")}
+                className="hidden sm:flex relative overflow-visible group w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-zinc-100 dark:bg-[#1c1c1c] border border-zinc-200/80 dark:border-neutral-800 items-center justify-center active:scale-90 transition-all cursor-pointer shadow-xs"
+                aria-label="Track orders"
+              >
+                <span className="absolute inset-0 w-full h-full rounded-2xl overflow-hidden pointer-events-none">
+                  <span className="absolute inset-0 w-full h-full bg-orange-500 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-0" />
+                </span>
+                <span className="relative z-10 text-zinc-800 dark:text-zinc-200 group-hover:text-white transition-colors duration-200 flex items-center justify-center">
+                  <FaMapMarkerAlt className="text-xs sm:text-sm group-hover:text-white transition-colors duration-200" />
+                </span>
+                {orders?.length > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 z-20 pointer-events-none">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+                  </span>
+                )}
+              </button>
+            )}
+
+            {/* Cart Button */}
+            <button
+              type="button"
+              onClick={toggleCart}
+              className={`relative overflow-visible group w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-zinc-100 dark:bg-[#1c1c1c] border border-zinc-200/80 dark:border-neutral-800 flex items-center justify-center active:scale-90 transition-all cursor-pointer shadow-xs ${
+                cartBounce ? "animate-bounce" : ""
+              }`}
+              aria-label="Open cart"
+            >
+              <span className="absolute inset-0 w-full h-full rounded-2xl overflow-hidden pointer-events-none">
+                <span className="absolute inset-0 w-full h-full bg-orange-500 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-0" />
+              </span>
+              <span className="relative z-10 text-orange-500 dark:text-orange-400 group-hover:text-white transition-colors duration-200 flex items-center justify-center">
+                <FaShoppingBag className="text-xs sm:text-sm group-hover:text-white transition-colors duration-200" />
+              </span>
+              {totalCartQty > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 bg-amber-500 text-white text-[11px] font-bold rounded-full flex items-center justify-center leading-none shadow-md z-10 pointer-events-none border-2 border-white dark:border-neutral-950">
+                  {totalCartQty}
+                </span>
+              )}
+            </button>
+
+            {/* Customer User / Sign In Menu */}
+            <HeaderUserMenu />
+
+            {/* Mobile Hamburger Button */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden relative overflow-hidden group w-9 h-9 rounded-2xl bg-zinc-100 dark:bg-[#1c1c1c] border border-zinc-200/80 dark:border-neutral-800 flex items-center justify-center active:scale-90 transition-all cursor-pointer shadow-xs"
+              aria-label="Toggle navigation menu"
+            >
+              <span className="absolute inset-0 w-full h-full bg-orange-500 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-0" />
+              <span className="relative z-10 text-zinc-800 dark:text-zinc-200 group-hover:text-white transition-colors duration-200 flex items-center justify-center">
+                {mobileMenuOpen ? (
+                  <FaTimes className="text-sm text-orange-500 dark:text-orange-400 group-hover:text-white" />
+                ) : (
+                  <FaBars className="text-sm text-zinc-800 dark:text-zinc-200 group-hover:text-white" />
+                )}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Drawer */}
+      <HeaderMobileDrawer
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
+        navItems={navItems}
+        isNavActive={isNavActive}
+        navigate={navigate}
+      />
+    </header>
   );
 };
 

@@ -1,14 +1,22 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { FaBoxes, FaFire } from "react-icons/fa";
 import Swal from "sweetalert2";
-import "./styles/index.css"
 
 // Components
 import InventoryStats from "./Components/InventoryStats";
 import InventoryControls from "./Components/InventoryControls";
 import InventoryTable from "./Components/InventoryTable";
 import InventoryModal from "./Components/InventoryModal";
+import WastageAnalytics from "./Components/WastageAnalytics";
+import ServerPaginationControls from "../SharedComponents/ServerPaginationControls";
+import { apiFetch } from "../../../../utils/apiHelper";
+
+const PAGE_SIZE = 25;
 
 const InventoryManager = () => {
+  const queryClient = useQueryClient();
+  const [mainView, setMainView] = useState("stock"); // "stock" | "wastage"
   const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,6 +26,18 @@ const InventoryManager = () => {
     direction: "asc",
   });
 
+  const [products, setProducts] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [serverStats, setServerStats] = useState({ total_items: 0, low_stock: 0, total_value: "0.00" });
+
+  const productsRef = useRef(products);
+  useEffect(() => {
+    productsRef.current = products;
+  }, [products]);
+
   const defaultForm = {
     name: "",
     price: "",
@@ -26,32 +46,60 @@ const InventoryManager = () => {
     threshold: "10",
   };
   const [form, setForm] = useState(defaultForm);
-  const [products, setProducts] = useState([]); // 🔥 Dummy data removed
 
-  // 🔥 1. FETCH DATA FROM DATABASE
-  const fetchInventory = async () => {
+  const fetchInventoryBatch = useCallback(async (offset = 0, isAppend = false) => {
+    if (isAppend) {
+      setIsLoadingMore(true);
+    } else if (productsRef.current.length === 0) {
+      setIsLoading(true);
+    }
+
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/inventory_api.php`,
-      );
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        setProducts(data);
+      const response = await apiFetch(`inventory_api.php?limit=${PAGE_SIZE}&offset=${offset}`);
+      const result = await response.json();
+
+      if (result.success || result.status === "success") {
+        const fetched = Array.isArray(result.items) ? result.items : (Array.isArray(result) ? result : []);
+        const sTotal = result.total !== undefined ? result.total : fetched.length;
+        setTotalCount(sTotal);
+        if (result.stats) {
+          setServerStats(result.stats);
+        }
+
+        if (isAppend) {
+          setProducts((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id));
+            const newUnique = fetched.filter((p) => !existingIds.has(p.id));
+            const merged = [...prev, ...newUnique];
+            setHasMore(merged.length < sTotal);
+            return merged;
+          });
+        } else {
+          setProducts(fetched);
+          setHasMore(result.has_more !== undefined ? result.has_more : fetched.length < sTotal);
+        }
       }
-    } catch (error) {
-      console.error("Error fetching inventory:", error);
+    } catch (err) {
+      console.error("Inventory fetch error:", err);
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchInventoryBatch(0, false);
+  }, [fetchInventoryBatch]);
+
+  const handleLoadMore = () => {
+    if (!isLoadingMore && hasMore) {
+      fetchInventoryBatch(products.length, true);
     }
   };
 
-  useEffect(() => {
-    fetchInventory();
-  }, []);
-
-  const totalItems = products.length;
-  const lowStock = products.filter((p) => p.stock <= 10 && p.stock > 0).length;
-  const totalValue = products
-    .reduce((acc, p) => acc + parseFloat(p.price) * p.stock, 0)
-    .toFixed(2);
+  const totalItems = serverStats.total_items || totalCount;
+  const lowStock = serverStats.low_stock;
+  const totalValue = serverStats.total_value;
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name
@@ -59,10 +107,12 @@ const InventoryManager = () => {
       .includes(searchQuery.toLowerCase());
     if (!matchesSearch) return false;
 
-    if (activeTab === "In Stock") return product.stock > 10;
-    if (activeTab === "Low Stock")
-      return product.stock <= 10 && product.stock > 0;
-    if (activeTab === "Out of Stock") return product.stock == 0;
+    const s = parseFloat(product.stock || 0);
+    const t = parseFloat(product.threshold || 10);
+
+    if (activeTab === "In Stock") return s > t;
+    if (activeTab === "Low Stock") return s <= t && s > 0;
+    if (activeTab === "Out of Stock") return s === 0;
     return true;
   });
 
@@ -74,8 +124,8 @@ const InventoryManager = () => {
         let bValue = b[sortConfig.key];
 
         if (sortConfig.key === "price" || sortConfig.key === "stock") {
-          aValue = parseFloat(aValue);
-          bValue = parseFloat(bValue);
+          aValue = parseFloat(aValue || 0);
+          bValue = parseFloat(bValue || 0);
         } else {
           aValue = aValue ? aValue.toString().toLowerCase() : "";
           bValue = bValue ? bValue.toString().toLowerCase() : "";
@@ -109,74 +159,76 @@ const InventoryManager = () => {
 
   const handleEditClick = (product) => {
     setEditingProduct(product);
-    setForm(product);
+    setForm({
+      name: product.name,
+      price: product.price,
+      stock: product.stock,
+      unit: product.unit || "kg",
+      threshold: product.threshold || "10",
+    });
     setIsModalOpen(true);
   };
 
-  // 🔥 2. DELETE FROM DATABASE
   const handleDelete = async (id) => {
     const result = await Swal.fire({
-      title: "Delete Item?",
+      title: "Are you sure?",
       text: "You won't be able to revert this!",
       icon: "warning",
       showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
       confirmButtonText: "Yes, delete it!",
-      background: "var(--admin-panel)",
+      background: "#171717",
       color: "#fff",
     });
 
     if (result.isConfirmed) {
       try {
-        await fetch(
+        const response = await fetch(
           `${import.meta.env.VITE_API_BASE}/inventory_api.php?id=${id}`,
-          {
-            method: "DELETE",
-          },
+          { method: "DELETE" }
         );
-        setProducts(products.filter((p) => p.id !== id));
-        Swal.fire({
-          icon: "success",
-          title: "Deleted!",
-          timer: 1500,
-          showConfirmButton: false,
-          background: "var(--admin-panel)",
-          color: "#fff",
-        });
+        const res = await response.json();
+        if (res.status === "success") {
+          fetchInventoryBatch(0, false);
+          queryClient.invalidateQueries({ queryKey: ['inventory'] });
+          Swal.fire({
+            icon: "success",
+            title: "Deleted!",
+            text: "Item has been deleted.",
+            timer: 1500,
+            showConfirmButton: false,
+            background: "#171717",
+            color: "#fff",
+          });
+        }
       } catch (error) {
-        console.error("Error deleting:", error);
+        console.error("Delete error:", error);
       }
     }
   };
 
-  // 🔥 3. SAVE / UPDATE IN DATABASE
-  const handleSave = async () => {
-    if (!form.name || !form.price || form.stock === "") {
-      return Swal.fire({
-        icon: "error",
-        title: "Missing Fields",
-        text: "Please fill all required fields.",
-        background: "var(--admin-panel)",
-        color: "#fff",
-      });
+  const handleSave = async (e, customData) => {
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
     }
-
-    const method = editingProduct ? "PUT" : "POST";
-    const payload = editingProduct ? { ...form, id: editingProduct.id } : form;
-
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/inventory_api.php`,
-        {
-          method: method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
+      const isEvent = e && typeof e.preventDefault === "function";
+      const dataToSave = customData || (!isEvent && e && typeof e === "object" ? e : form);
+      const url = `${import.meta.env.VITE_API_BASE}/inventory_api.php`;
+      const method = editingProduct ? "PUT" : "POST";
+      const payload = editingProduct ? { ...dataToSave, id: editingProduct.id } : dataToSave;
 
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
       const result = await response.json();
 
       if (result.status === "success") {
-        fetchInventory(); // Reload fresh data
+        fetchInventoryBatch(0, false);
+        queryClient.invalidateQueries({ queryKey: ['inventory'] });
         setIsModalOpen(false);
         Swal.fire({
           icon: "success",
@@ -184,15 +236,15 @@ const InventoryManager = () => {
           text: "Inventory updated successfully.",
           timer: 1500,
           showConfirmButton: false,
-          background: "var(--admin-panel)",
+          background: "#171717",
           color: "#fff",
         });
       } else {
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: "Failed to save to database.",
-          background: "var(--admin-panel)",
+          text: result.message || "Failed to save to database.",
+          background: "#171717",
           color: "#fff",
         });
       }
@@ -202,38 +254,98 @@ const InventoryManager = () => {
   };
 
   return (
-    <div style={{ paddingBottom: "50px" }}>
-      <div style={{ marginBottom: "25px" }}>
-        <h2 className="section-header" style={{ marginBottom: "5px" }}>
-          Inventory Management
-        </h2>
-        <p style={{ color: "var(--admin-muted)", fontSize: "14px", margin: 0 }}>
-          Manage your products, stock, and prices efficiently.
-        </p>
+    <div className="space-y-6 animate-slide-up pb-12 w-full max-w-full overflow-x-hidden">
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-zinc-200 dark:border-neutral-800">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-4 bg-amber-500 rounded-full shrink-0" />
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-zinc-900 dark:text-white m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
+              Inventory & Raw Materials Control
+            </h2>
+          </div>
+          <p className="text-xs text-zinc-500 dark:text-neutral-400 m-0 mt-0.5 font-sans">
+            Track ingredients, unit costs, live stock depletion, and role-based wastage loss audits.
+          </p>
+        </div>
+
+        {/* View Switcher Tabs */}
+        <div className="flex items-center gap-1.5 p-1 bg-zinc-100 dark:bg-neutral-800/80 rounded-xl border border-zinc-200 dark:border-neutral-700">
+          <button
+            type="button"
+            onClick={() => setMainView("stock")}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider font-['Oswald',sans-serif] flex items-center gap-1.5 cursor-pointer transition-all ${
+              mainView === "stock"
+                ? "bg-amber-500 text-neutral-950 shadow-xs"
+                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+            }`}
+          >
+            <FaBoxes className="text-xs" />
+            <span>Raw Stock & Valuation</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMainView("wastage")}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider font-['Oswald',sans-serif] flex items-center gap-1.5 cursor-pointer transition-all ${
+              mainView === "wastage"
+                ? "bg-rose-500 text-white shadow-xs"
+                : "text-zinc-600 dark:text-zinc-400 hover:text-rose-500 dark:hover:text-rose-400"
+            }`}
+          >
+            <FaFire className="text-xs" />
+            <span>Wastage & Loss Audit</span>
+          </button>
+        </div>
       </div>
 
-      <InventoryStats
-        totalItems={totalItems}
-        lowStock={lowStock}
-        totalValue={totalValue}
-      />
+      {mainView === "wastage" ? (
+        <WastageAnalytics />
+      ) : (
+        <>
+          {isLoading && (
+            <div className="py-12 text-center text-xs text-zinc-500 dark:text-neutral-400 font-bold uppercase tracking-wider">
+              Loading Raw Inventory...
+            </div>
+          )}
 
-      <InventoryControls
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        onAddClick={handleAddClick}
-      />
+          {/* KPI Stats */}
+          <InventoryStats
+            totalItems={totalItems}
+            lowStock={lowStock}
+            totalValue={totalValue}
+          />
 
-      <InventoryTable
-        products={sortedAndFilteredProducts}
-        onEdit={handleEditClick}
-        onDelete={handleDelete}
-        requestSort={requestSort}
-        sortConfig={sortConfig}
-      />
+          {/* Filter Tabs & Search */}
+          <InventoryControls
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            onAddClick={handleAddClick}
+          />
 
+          {/* Inventory Table */}
+          <InventoryTable
+            products={sortedAndFilteredProducts}
+            onEdit={handleEditClick}
+            onDelete={handleDelete}
+            requestSort={requestSort}
+            sortConfig={sortConfig}
+          />
+
+          {/* Server-side Pagination Load More */}
+          <ServerPaginationControls
+            loadedCount={products.length}
+            totalCount={totalCount}
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={handleLoadMore}
+            itemLabel="items"
+          />
+        </>
+      )}
+
+      {/* Modal */}
       <InventoryModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

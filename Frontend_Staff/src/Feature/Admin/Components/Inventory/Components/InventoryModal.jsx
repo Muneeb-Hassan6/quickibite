@@ -1,5 +1,5 @@
 import React from "react";
-import { FaTimes } from "react-icons/fa";
+import { FaTimes, FaSave, FaCube } from "react-icons/fa";
 
 const InventoryModal = ({
   isOpen,
@@ -12,52 +12,84 @@ const InventoryModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="admin-modal-overlay override-zindex" onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center p-3 sm:p-5 z-[99999]"
+      onClick={onClose}
+    >
       <div
-        className="admin-modal-box inventory-modal-box animate-slide-up"
+        className="w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 shadow-2xl relative animate-slide-up max-h-[90vh] overflow-y-auto text-zinc-900 dark:text-white"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* HEADER */}
-        <div className="modal-header-flex">
-          <h3 className="modal-title">
-            {editingProduct ? "Edit Ingredient" : "Add New Ingredient"}
-          </h3>
-          <button className="btn-close-modal-clean" onClick={onClose}>
-            <FaTimes />
+        {/* Header */}
+        <div className="flex justify-between items-center pb-4 mb-5 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center gap-2.5">
+            <span className="w-1.5 h-5 bg-amber-500 rounded-full" />
+            <h3 className="m-0 text-base sm:text-lg font-black text-zinc-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
+              {editingProduct ? "Edit Raw Ingredient" : "Add New Raw Ingredient"}
+            </h3>
+          </div>
+          <button
+            type="button"
+            className="w-8 h-8 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center justify-center border-none cursor-pointer transition-all active:scale-90"
+            onClick={onClose}
+          >
+            <FaTimes className="text-sm" />
           </button>
         </div>
 
-        {/* FORM FIELDS */}
-        <div className="modal-form-layout">
-          <div className="admin-input-group">
-            <label>Ingredient Name</label>
+        {/* Form Fields */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (typeof onSave === "function") {
+              onSave(e, form);
+            }
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider block mb-1.5">
+              Ingredient Name *
+            </label>
             <input
               type="text"
-              className="admin-input-field custom-admin-input"
+              required
+              className="w-full p-3 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g., Chicken Breast, Cheddar Cheese..."
+              placeholder="e.g. Mozzarella Cheese, Chicken Fillet, Tomato Paste"
             />
           </div>
 
-          {/* STOCK & UNIT ROW */}
-          <div className="modal-form-row">
-            <div className="admin-input-group input-col">
-              <label>Current Stock</label>
+          {/* Stock & Unit Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider block mb-1.5">
+                Current Stock *
+              </label>
               <input
                 type="number"
                 step="0.01"
-                className="admin-input-field custom-admin-input"
+                min="0"
+                required
+                className="w-full p-3 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl text-xs font-bold focus:outline-none focus:border-amber-500 font-mono"
                 value={form.stock}
-                onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    stock: e.target.value === "" ? "" : Math.max(0, parseFloat(e.target.value) || 0),
+                  })
+                }
                 placeholder="0.00"
               />
             </div>
 
-            <div className="admin-input-group input-col">
-              <label>Unit</label>
+            <div>
+              <label className="text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider block mb-1.5">
+                Measurement Unit *
+              </label>
               <select
-                className="admin-input-field custom-admin-input"
+                className="w-full p-3 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
                 value={form.unit || "kg"}
                 onChange={(e) => setForm({ ...form, unit: e.target.value })}
               >
@@ -71,45 +103,69 @@ const InventoryModal = ({
             </div>
           </div>
 
-          {/* PRICE & THRESHOLD ROW */}
-          <div className="modal-form-row">
-            <div className="admin-input-group input-col">
-              <label>Unit Price (Rs)</label>
+          {/* Price & Threshold Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider block mb-1.5">
+                Cost Price Per Unit (Rs.) *
+              </label>
               <input
                 type="number"
                 step="0.01"
-                className="admin-input-field custom-admin-input"
+                min="0"
+                required
+                className="w-full p-3 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl text-xs font-bold focus:outline-none focus:border-amber-500 font-mono"
                 value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
-                placeholder="e.g., 500"
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    price: e.target.value === "" ? "" : Math.max(0, parseFloat(e.target.value) || 0),
+                  })
+                }
+                placeholder="e.g. 850.00"
               />
             </div>
 
-            <div className="admin-input-group input-col">
-              <label>Low Stock Alert (Threshold)</label>
+            <div>
+              <label className="text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider block mb-1.5">
+                Low Stock Alert Threshold *
+              </label>
               <input
                 type="number"
                 step="0.01"
-                className="admin-input-field custom-admin-input"
+                min="0"
+                required
+                className="w-full p-3 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl text-xs font-bold focus:outline-none focus:border-amber-500 font-mono"
                 value={form.threshold}
                 onChange={(e) =>
-                  setForm({ ...form, threshold: e.target.value })
+                  setForm({
+                    ...form,
+                    threshold: e.target.value === "" ? "" : Math.max(0, parseFloat(e.target.value) || 0),
+                  })
                 }
-                placeholder="e.g., 5"
+                placeholder="e.g. 5.00"
               />
             </div>
           </div>
-        </div>
 
-        {/* FOOTER ACTIONS (Fixed Layout) */}
-        <div className="modal-footer-actions">
-          <button className="btn-cancel-modal-clean" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="btn-save-modal-clean" onClick={onSave}>
-            {editingProduct ? "Update Ingredient" : "Save Ingredient"}
-          </button>
-        </div>
+          {/* Footer Actions */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+            <button
+              type="button"
+              className="px-4 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 text-xs font-bold uppercase tracking-wider cursor-pointer transition-all"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-500/20 active:scale-95 border-none cursor-pointer flex items-center gap-2 transition-all"
+            >
+              <FaSave className="text-xs" />
+              <span>{editingProduct ? "Update Ingredient" : "Save Ingredient"}</span>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-import {
-  FaTimes,
-  FaPlus,
-  FaTrash,
-  FaCheckSquare,
-  FaRegSquare,
-  FaSpinner,
-} from "react-icons/fa";
+import { FaTimes, FaSpinner } from "react-icons/fa";
+import RecipeVariantTabs from "./RecipeVariantTabs";
+import RecipeIngredientsMatrix from "./RecipeIngredientsMatrix";
 
 const RecipeModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
   const [ingredients, setIngredients] = useState([]);
@@ -34,7 +29,7 @@ const RecipeModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
         setIsFetching(true);
         try {
           const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/get_recipe.php?menu_item_id=${menuItem.id}&variant_name=${selectedVariant}`,
+            `${import.meta.env.VITE_API_BASE}/get_recipe.php?menu_item_id=${menuItem.id}&variant_name=${selectedVariant}`
           );
           const data = await response.json();
 
@@ -87,15 +82,15 @@ const RecipeModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
 
   const handleSaveRecipe = async () => {
     const validIngredients = ingredients.filter(
-      (ing) => ing.inventory_id !== "" && ing.qty > 0,
+      (ing) => ing.inventory_id !== "" && Number(ing.qty) > 0
     );
 
     if (validIngredients.length === 0) {
       return Swal.fire({
         icon: "warning",
         title: "Empty Recipe",
-        text: "Please add at least one valid ingredient.",
-        background: "#141414",
+        text: "Please add at least one valid ingredient with quantity greater than 0.",
+        background: "#171717",
         color: "#fff",
       });
     }
@@ -114,7 +109,7 @@ const RecipeModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        },
+        }
       );
 
       const data = await response.json();
@@ -123,23 +118,22 @@ const RecipeModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
         Swal.fire({
           icon: "success",
           title: "Recipe Saved!",
-          text: `Recipe for ${menuItem.name} (${selectedVariant}) updated.`,
+          text: `Recipe for ${menuItem.name} (${selectedVariant}) updated successfully.`,
           timer: 1500,
           showConfirmButton: false,
-          background: "#141414",
+          background: "#171717",
           color: "#fff",
         });
-        // 🔥 FIX: Modal ab save hone ke baad band ho jayega
         onClose();
       } else {
-        throw new Error(data.message);
+        throw new Error(data.message || "Failed to save recipe");
       }
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Failed to save recipe.",
-        background: "#141414",
+        text: error.message || "Failed to save recipe.",
+        background: "#171717",
         color: "#fff",
       });
     } finally {
@@ -148,178 +142,72 @@ const RecipeModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
   };
 
   return (
-    <div className="admin-modal-overlay" onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center p-3 sm:p-5 z-[99999]"
+      onClick={onClose}
+    >
       <div
-        className="admin-modal-box animate-slide-up"
+        className="w-full max-w-lg md:max-w-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-2xl max-h-[88vh] flex flex-col animate-slide-up text-zinc-900 dark:text-white"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: "650px" }}
       >
-        <div className="modal-header rm-header">
+        {/* Header */}
+        <div className="flex justify-between items-center pb-4 mb-4 border-b border-zinc-200 dark:border-zinc-800">
           <div>
-            <h3 className="modal-title">
-              <span
-                style={{
-                  display: "inline-block",
-                  width: "4px",
-                  height: "20px",
-                  background: "#f59e0b",
-                  marginRight: "10px",
-                }}
-              ></span>
-              SET RECIPE
-            </h3>
-            <p className="rm-item-title">{menuItem.name}</p>
-          </div>
-          <button onClick={onClose} className="btn-close-modal">
-            <FaTimes />
-          </button>
-        </div>
-
-        {menuItem.variants && menuItem.variants.length > 0 && (
-          <div className="rm-variants-row">
-            {menuItem.variants.map((variant, index) => (
-              <button
-                key={index}
-                onClick={() => setSelectedVariant(variant.size)}
-                className={`rm-variant-btn ${selectedVariant === variant.size ? "active" : "inactive"}`}
-              >
-                {variant.size}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className="rm-table-header">
-          <div style={{ flex: 2 }}>Ingredient Name</div>
-          <div style={{ flex: 1 }}>Quantity</div>
-          <div style={{ flex: 0.8, textAlign: "center" }}>Optional?</div>
-          <div style={{ width: "48px" }}></div>{" "}
-          {/* Spacer for trash icon alignment */}
-        </div>
-
-        <div className="rm-table-body">
-          {isFetching ? (
-            <div
-              style={{ textAlign: "center", padding: "20px", color: "#888" }}
-            >
-              Loading recipe...
+            <div className="flex items-center gap-2.5">
+              <span className="w-1.5 h-5 bg-amber-500 rounded-full" />
+              <h3 className="m-0 text-base sm:text-lg md:text-xl font-black text-zinc-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
+                Inventory Portion Recipe
+              </h3>
             </div>
-          ) : (
-            ingredients.map((ing, index) => {
-              const selectedItemData = inventoryItems?.find(
-                (item) => item.id == ing.inventory_id,
-              );
-              const unitLabel = selectedItemData
-                ? selectedItemData.unit
-                : "Qty";
-
-              return (
-                <div key={index} className="rm-ingredient-row">
-                  {/* Custom select class applied here */}
-                  <select
-                    className="rm-select-input"
-                    value={ing.inventory_id}
-                    onChange={(e) =>
-                      handleIngredientChange(
-                        index,
-                        "inventory_id",
-                        e.target.value,
-                      )
-                    }
-                  >
-                    <option value="" disabled>
-                      Select Ingredient
-                    </option>
-                    {inventoryItems &&
-                      inventoryItems.map((invItem) => (
-                        <option key={invItem.id} value={invItem.id}>
-                          {invItem.name} ({invItem.stock} {invItem.unit})
-                        </option>
-                      ))}
-                  </select>
-
-                  <div className="rm-qty-box">
-                    <input
-                      type="number"
-                      className="rm-qty-input"
-                      placeholder="0.00"
-                      value={ing.qty}
-                      onChange={(e) =>
-                        handleIngredientChange(index, "qty", e.target.value)
-                      }
-                      min="0"
-                      step="0.01"
-                    />
-                    <span className="rm-unit-label">{unitLabel}</span>
-                  </div>
-
-                  <div
-                    className={`rm-checkbox-box ${ing.is_removable ? "checked" : "unchecked"}`}
-                    onClick={() =>
-                      handleIngredientChange(
-                        index,
-                        "is_removable",
-                        !ing.is_removable,
-                      )
-                    }
-                  >
-                    {ing.is_removable ? (
-                      <FaCheckSquare size={24} />
-                    ) : (
-                      <FaRegSquare size={24} />
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => removeIngredient(index)}
-                    className="rm-btn-trash"
-                    title="Remove Item"
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              );
-            })
-          )}
+            <p className="text-xs text-amber-600 dark:text-amber-400 font-bold mt-1 m-0">
+              Product: {menuItem.name}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="w-8 h-8 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center justify-center border-none cursor-pointer transition-all active:scale-90"
+            onClick={onClose}
+          >
+            <FaTimes className="text-sm" />
+          </button>
         </div>
 
-        {!isFetching && (
-          <button onClick={addIngredientRow} className="rm-btn-add">
-            <FaPlus /> Add Ingredient
-          </button>
-        )}
+        {/* Variant Tabs */}
+        <RecipeVariantTabs
+          variants={menuItem.variants}
+          selectedVariant={selectedVariant}
+          setSelectedVariant={setSelectedVariant}
+        />
 
-        <div
-          className="modal-footer modal-actions"
-          style={{
-            marginTop: "25px",
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: "15px",
-          }}
-        >
-          <button className="btn-cancel" onClick={onClose} disabled={isSaving}>
-            Close
+        {/* Ingredients Rows */}
+        <div className="flex-1 overflow-y-auto pr-1">
+          <RecipeIngredientsMatrix
+            ingredients={ingredients}
+            inventoryItems={inventoryItems}
+            isFetching={isFetching}
+            addIngredientRow={addIngredientRow}
+            handleIngredientChange={handleIngredientChange}
+            removeIngredient={removeIngredient}
+          />
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          <button
+            type="button"
+            className="px-5 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 text-xs font-bold uppercase tracking-wider cursor-pointer transition-all"
+            onClick={onClose}
+          >
+            Cancel
           </button>
           <button
-            className="btn-save"
+            type="button"
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-500/20 active:scale-95 border-none cursor-pointer transition-all flex items-center gap-2"
             onClick={handleSaveRecipe}
             disabled={isSaving}
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: "8px",
-              minWidth: "160px",
-            }}
           >
-            {isSaving ? (
-              <>
-                <FaSpinner className="spin-animation" /> Saving...
-              </>
-            ) : (
-              `Save for ${selectedVariant}`
-            )}
+            {isSaving && <FaSpinner className="animate-spin text-xs" />}
+            <span>Save Recipe</span>
           </button>
         </div>
       </div>

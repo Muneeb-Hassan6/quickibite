@@ -1,5 +1,7 @@
 import React, { useRef } from "react";
-import { FaTimes, FaCloudUploadAlt, FaPlus, FaTrash } from "react-icons/fa";
+import { FaTimes } from "react-icons/fa";
+import ProductBasicInfoForm from "./ProductBasicInfoForm";
+import ProductVariantPricingTable from "./ProductVariantPricingTable";
 
 const MenuModal = ({
   isOpen,
@@ -9,9 +11,9 @@ const MenuModal = ({
   setMenuForm,
   onSave,
   categories,
-  customSliders = [],
 }) => {
   const fileInputRef = useRef(null);
+  const promoFileInputRef = useRef(null);
 
   if (!isOpen) return null;
 
@@ -22,265 +24,67 @@ const MenuModal = ({
     }
   };
 
-  const addVariantRow = () => {
-    setMenuForm({
-      ...menuForm,
-      variants: [
-        ...(menuForm.variants || []),
-        { size: "", price: "", inStock: true },
-      ],
-    });
-  };
-
-  const updateVariant = (index, field, value) => {
-    const updatedVariants = [...menuForm.variants];
-    updatedVariants[index][field] = value;
-    setMenuForm({ ...menuForm, variants: updatedVariants });
-  };
-
-  const removeVariant = (index) => {
-    const updatedVariants = menuForm.variants.filter((_, i) => i !== index);
-    setMenuForm({ ...menuForm, variants: updatedVariants });
-  };
-
   return (
-    <div className="admin-modal-overlay override-zindex" onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center p-3 sm:p-5 z-[99999]"
+      onClick={onClose}
+    >
       <div
-        className="admin-modal-box menu-modal-box animate-slide-up"
+        className="w-full max-w-lg md:max-w-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-2xl max-h-[88vh] overflow-y-auto flex flex-col animate-slide-up text-zinc-900 dark:text-white"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="modal-header-flex">
-          <h3 className="modal-title">
-            <span className="modal-title-bar"></span>
-            {editingItem ? "EDIT MENU ITEM" : "ADD NEW MENU ITEM"}
-          </h3>
-          <button className="btn-close-modal-clean" onClick={onClose}>
-            <FaTimes />
+        {/* Header */}
+        <div className="flex justify-between items-center pb-4 mb-5 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center gap-2.5">
+            <span className="w-1.5 h-5 bg-amber-500 rounded-full shrink-0" />
+            <h3 className="m-0 text-base sm:text-lg md:text-xl font-black text-zinc-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
+              {editingItem ? "Edit Menu Item" : "Create New Menu Item"}
+            </h3>
+          </div>
+          <button
+            type="button"
+            className="w-8 h-8 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center justify-center border-none cursor-pointer transition-all active:scale-90"
+            onClick={onClose}
+            aria-label="Close modal"
+          >
+            <FaTimes className="text-sm" />
           </button>
         </div>
 
-        <div className="modal-split-layout">
-          {/* LEFT SIDE: Image Upload & Status Flags */}
-          <div className="modal-left-col">
-            <div className="admin-input-group menu-image-group">
-              <label className="menu-image-label">PRODUCT IMAGE</label>
-              <div
-                className="image-upload-wrapper"
-                onClick={() => fileInputRef.current.click()}
-              >
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={fileInputRef}
-                  className="hidden-file-input"
-                  onChange={handleImageChange}
-                />
-                {menuForm.img ? (
-                  <>
-                    <img
-                      src={
-                        typeof menuForm.img === "string"
-                          ? menuForm.img
-                          : URL.createObjectURL(menuForm.img)
-                      }
-                      alt="Preview"
-                      className="menu-preview-img"
-                    />
-                    <div className="image-overlay">
-                      <FaCloudUploadAlt size={35} />
-                      <span>Change Image</span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="menu-upload-placeholder">
-                    <FaCloudUploadAlt className="menu-upload-icon" size={45} />
-                    <p>Click to upload image</p>
-                    <span>PNG, JPG up to 5MB</span>
-                  </div>
-                )}
-              </div>
-            </div>
+        {/* Content Body */}
+        <div className="w-full flex-1">
+          <ProductBasicInfoForm
+            menuForm={menuForm}
+            setMenuForm={setMenuForm}
+            categories={categories}
+            fileInputRef={fileInputRef}
+            promoFileInputRef={promoFileInputRef}
+            handleImageChange={handleImageChange}
+          />
+        </div>
 
-            <div className="menu-flags-section">
-              <h4 className="flags-heading">Item Visibility</h4>
-
-              <label
-                className={`flag-checkbox-label ${menuForm.isAvailable !== false ? "active-flag" : ""}`}
-              >
-                <input
-                  type="checkbox"
-                  checked={menuForm.isAvailable !== false}
-                  onChange={(e) =>
-                    setMenuForm({ ...menuForm, isAvailable: e.target.checked })
-                  }
-                />
-                Available (In Stock)
-              </label>
-
-              <label
-                className={`flag-checkbox-label ${menuForm.isTopDeal ? "active-flag" : ""}`}
-              >
-                <input
-                  type="checkbox"
-                  checked={menuForm.isTopDeal || false}
-                  onChange={(e) =>
-                    setMenuForm({ ...menuForm, isTopDeal: e.target.checked })
-                  }
-                />
-                Mark as Top Deal
-              </label>
-
-              <label
-                className={`flag-checkbox-label ${menuForm.isBestSeller ? "active-flag" : ""}`}
-              >
-                <input
-                  type="checkbox"
-                  checked={menuForm.isBestSeller || false}
-                  onChange={(e) =>
-                    setMenuForm({ ...menuForm, isBestSeller: e.target.checked })
-                  }
-                />
-                Mark as Best Seller
-              </label>
-
-              {customSliders.length > 0 && (
-                <>
-                  <div className="flags-divider" style={{ margin: '15px 0', borderBottom: '1px solid #333' }}></div>
-                  <h4 className="flags-heading" style={{ fontSize: '12px', color: '#888' }}>Custom Sliders</h4>
-                  {customSliders.map(slider => {
-                    const isChecked = menuForm.slider_placements?.includes(slider.id);
-                    return (
-                      <label
-                        key={slider.id}
-                        className={`flag-checkbox-label ${isChecked ? "active-flag" : ""}`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isChecked || false}
-                          onChange={(e) => {
-                            const currentPlacements = menuForm.slider_placements || [];
-                            if (e.target.checked) {
-                              setMenuForm({ ...menuForm, slider_placements: [...currentPlacements, slider.id] });
-                            } else {
-                              setMenuForm({ ...menuForm, slider_placements: currentPlacements.filter(id => id !== slider.id) });
-                            }
-                          }}
-                        />
-                        Add to "{slider.title}" Slider
-                      </label>
-                    );
-                  })}
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* RIGHT SIDE: Inputs & Variants */}
-          <div className="modal-right-col">
-            <div className="admin-input-group">
-              <label>Item Name</label>
-              <input
-                type="text"
-                className="admin-input-field custom-admin-input dark-input-box"
-                value={menuForm.name}
-                onChange={(e) =>
-                  setMenuForm({ ...menuForm, name: e.target.value })
-                }
-                placeholder="e.g. Zinger Burger, Extra Cheese..."
-              />
-            </div>
-
-            <div className="admin-input-group">
-              <label>Category</label>
-              <select
-                className="admin-input-field custom-admin-input dark-input-box"
-                value={menuForm.category}
-                onChange={(e) =>
-                  setMenuForm({ ...menuForm, category: e.target.value })
-                }
-              >
-                <option value="" disabled>
-                  Select Category
-                </option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.name}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-              <p className="menu-hint-text">
-                *Note: Paid Add-ons banane ke liye category mein "Add-ons"
-                select karein.
-              </p>
-            </div>
-
-            {/* VARIANTS SECTION */}
-            <div className="variants-section-box">
-              <label className="variants-label">Sizes & Prices</label>
-
-              {menuForm.variants &&
-                menuForm.variants.map((variant, index) => (
-                  <div key={index} className="variant-flex-row align-center">
-                    <input
-                      type="text"
-                      className="admin-input-field custom-admin-input variant-input-size dark-input-box"
-                      placeholder="Size (e.g. Regular)"
-                      value={variant.size}
-                      onChange={(e) =>
-                        updateVariant(index, "size", e.target.value)
-                      }
-                    />
-                    <input
-                      type="number"
-                      className="admin-input-field custom-admin-input variant-input-price dark-input-box"
-                      placeholder="Price (Rs)"
-                      value={variant.price}
-                      onChange={(e) =>
-                        updateVariant(index, "price", e.target.value)
-                      }
-                    />
-
-                    <label className="variant-stock-label">
-                      <input
-                        type="checkbox"
-                        checked={variant.inStock !== false}
-                        onChange={(e) =>
-                          updateVariant(index, "inStock", e.target.checked)
-                        }
-                      />
-                      In Stock
-                    </label>
-
-                    {menuForm.variants.length > 1 && (
-                      <button
-                        className="btn-remove-variant rm-btn-trash small-trash-btn"
-                        onClick={() => removeVariant(index)}
-                      >
-                        <FaTrash />
-                      </button>
-                    )}
-                  </div>
-                ))}
-
-              <button
-                className="btn-add-variant rm-btn-add"
-                onClick={addVariantRow}
-              >
-                <FaPlus /> Add Another Size
-              </button>
-            </div>
-          </div>
+        {/* Variants Repeater Section */}
+        <div className="mt-4">
+          <ProductVariantPricingTable
+            menuForm={menuForm}
+            setMenuForm={setMenuForm}
+          />
         </div>
 
         {/* FOOTER ACTIONS */}
-        <div className="menu-modal-footer">
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800">
           <button
-            className="btn-cancel-modal-clean btn-cancel"
+            type="button"
+            className="px-5 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 text-xs font-bold uppercase tracking-wider cursor-pointer transition-all"
             onClick={onClose}
           >
             Cancel
           </button>
-          <button className="btn-save-modal-clean btn-save" onClick={onSave}>
+          <button
+            type="button"
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 text-xs font-black uppercase tracking-wider shadow-md shadow-amber-500/20 active:scale-95 border-none cursor-pointer transition-all"
+            onClick={onSave}
+          >
             {editingItem ? "Update Item" : "Save Item"}
           </button>
         </div>

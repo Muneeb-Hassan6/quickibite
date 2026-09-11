@@ -1,51 +1,42 @@
 import React, { useState, useEffect } from "react";
-import { FaBell, FaSave } from "react-icons/fa";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { FaBell, FaSave, FaSpinner } from "react-icons/fa";
 import Swal from "sweetalert2";
 
 const NotificationSettings = () => {
-  // 1. State for Notification Settings
+  const queryClient = useQueryClient();
   const [settings, setSettings] = useState({
     sound_alert: true,
     email_notif: false,
     stock_alerts: true,
   });
 
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // 2. Fetch Data from Database
+  const { data: settingsData = {}, isLoading } = useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
+      const result = await response.json();
+      return result.success ? result.data : {};
+    }
+  });
+
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_settings.php`,
-        );
-        const result = await response.json();
+    if (settingsData && Object.keys(settingsData).length > 0) {
+      setSettings({
+        sound_alert: settingsData.sound_alert === "true",
+        email_notif: settingsData.email_notif === "true",
+        stock_alerts: settingsData.stock_alerts === "true",
+      });
+    }
+  }, [settingsData]);
 
-        if (result.success) {
-          setSettings({
-            sound_alert: result.data.sound_alert === "true",
-            email_notif: result.data.email_notif === "true",
-            stock_alerts: result.data.stock_alerts === "true",
-          });
-        }
-      } catch (error) {
-        console.error("Failed to load notification settings:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSettings();
-  }, []);
-
-  // 3. Handle Toggle (Checkbox)
   const handleToggle = (e) => {
     const { name, checked } = e.target;
     setSettings((prev) => ({ ...prev, [name]: checked }));
   };
 
-  // 4. Save Settings to Database
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -72,7 +63,10 @@ const NotificationSettings = () => {
           title: "Notifications Updated!",
           showConfirmButton: false,
           timer: 1500,
+          background: "#171717",
+          color: "#fff",
         });
+        queryClient.invalidateQueries({ queryKey: ['settings'] });
       } else {
         Swal.fire("Error", result.message, "error");
       }
@@ -84,85 +78,101 @@ const NotificationSettings = () => {
   };
 
   if (isLoading)
-    return <div style={{ padding: "20px" }}>Loading Notifications...</div>;
+    return (
+      <div className="py-12 text-center text-xs text-[var(--admin-muted,#888)] font-bold uppercase tracking-wider">
+        Loading Notifications Settings...
+      </div>
+    );
 
   return (
-    <div className="settings-card">
-      <div
-        className="settings-section-title"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <div>
-          <FaBell /> Notifications & Alerts
+    <div className="admin-card-surface bg-white dark:bg-[#161616] rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-white shadow-sm space-y-6 animate-slide-up">
+      {/* Card Header */}
+      <div className="flex justify-between items-center pb-4 border-b border-slate-200 dark:border-white/[0.06]">
+        <div className="flex items-center gap-2.5">
+          <FaBell className="text-amber-500 text-sm" />
+          <h3 className="m-0 text-sm sm:text-base font-black text-slate-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
+            Sound Chimes & Staff Alert Triggers
+          </h3>
         </div>
 
-        {/* 🔥 SAVE BUTTON */}
         <button
-          className="btn-save-modal-clean"
+          type="button"
           onClick={handleSave}
           disabled={isSaving}
-          style={{
-            padding: "8px 15px",
-            margin: 0,
-            width: "auto",
-            background: "#3b82f6",
-          }}
+          className="btn-brand-cta px-5 py-2.5 flex items-center gap-2 text-xs uppercase tracking-wider cursor-pointer border-none disabled:opacity-50 active:scale-95"
         >
-          <FaSave style={{ marginRight: "5px" }} />{" "}
-          {isSaving ? "Saving..." : "Save Changes"}
+          {isSaving ? <FaSpinner className="animate-spin text-xs" /> : <FaSave className="text-xs" />}
+          <span>Save Alerts</span>
         </button>
       </div>
 
-      <div className="toggles-container">
-        <div className="toggle-control-group">
-          <div className="toggle-text-area">
-            <h4>Dashboard Sound Alerts</h4>
-            <p>Play a sound when a new order arrives.</p>
+      <div className="space-y-3.5">
+        {/* Sound Alert Toggle */}
+        <div className="p-4 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5 flex items-center justify-between gap-4">
+          <div>
+            <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider block">
+              POS Order Bell Chime (Sound Alert)
+            </span>
+            <span className="text-[11px] text-slate-500 dark:text-neutral-400">
+              Play sound notification audio chime whenever a new online order arrives.
+            </span>
           </div>
-          <label className="switch">
+
+          <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
               name="sound_alert"
               checked={settings.sound_alert}
               onChange={handleToggle}
+              className="sr-only peer"
             />
-            <span className="slider"></span>
+            <div className="w-11 h-6 bg-slate-300 dark:bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
           </label>
         </div>
 
-        <div className="toggle-control-group">
-          <div className="toggle-text-area">
-            <h4>Email Receipts</h4>
-            <p>Automatically send receipts to customers via email.</p>
+        {/* Email Notification Toggle */}
+        <div className="p-4 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5 flex items-center justify-between gap-4">
+          <div>
+            <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider block">
+              Email Order Receipts to Admin
+            </span>
+            <span className="text-[11px] text-slate-500 dark:text-neutral-400">
+              Send an email copy of each finalized order invoice to the store admin email.
+            </span>
           </div>
-          <label className="switch">
+
+          <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
               name="email_notif"
               checked={settings.email_notif}
               onChange={handleToggle}
+              className="sr-only peer"
             />
-            <span className="slider"></span>
+            <div className="w-11 h-6 bg-slate-300 dark:bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
           </label>
         </div>
 
-        <div className="toggle-control-group">
-          <div className="toggle-text-area">
-            <h4>Low Stock Warnings</h4>
-            <p>Get notified when inventory items are running low.</p>
+        {/* Low Stock Warning Alert */}
+        <div className="p-4 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5 flex items-center justify-between gap-4">
+          <div>
+            <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider block">
+              Low Stock Level Warning Badges
+            </span>
+            <span className="text-[11px] text-slate-500 dark:text-neutral-400">
+              Highlight inventory items and recipe ingredients in red when stock falls below reorder threshold.
+            </span>
           </div>
-          <label className="switch">
+
+          <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
               name="stock_alerts"
               checked={settings.stock_alerts}
               onChange={handleToggle}
+              className="sr-only peer"
             />
-            <span className="slider"></span>
+            <div className="w-11 h-6 bg-slate-300 dark:bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
           </label>
         </div>
       </div>

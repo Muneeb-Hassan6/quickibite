@@ -1,295 +1,276 @@
 import React, { useState, useEffect } from "react";
-import HomeHero from "./Components/HomeHero";
-import HomeProductSlider from "./Components/HomeProductSlider";
-import ExploreMenu from "../Menu/Components/ExploreMenu";
-import HomeBanners from "./Components/HomeBanners"; // 🔥 Imported Banners
-import { optimizeCloudinaryImage } from "../../utils/imageOptimizer";
-
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Pagination, Navigation } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/pagination";
-import "swiper/css/navigation";
-
-import "./styles/index.css";
-import { useNavigate } from "react-router-dom"; // 🔥 Yeh add karein
-import { FaArrowRight, FaBoxOpen } from "react-icons/fa"; // 🔥 Yeh icon add karein
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import ReactDOM from "react-dom";
+import DynamicSectionResolver from "./Components/DynamicSectionResolver";
 import PopupCard from "../../Components/UI/PopupCard";
+import { API_BASE } from "../../config/api";
 
 const HomePage = () => {
-  // --- STATES ---
   const navigate = useNavigate();
-  const [menuItems, setMenuItems] = useState([]);
-  const [comboDeals, setComboDeals] = useState([]);
-  const [homepageData, setHomepageData] = useState({ hero: [], sections: [] });
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedPopupItem, setSelectedPopupItem] = useState(null);
 
-  // --- FETCH DATA FROM API ---
+  // Centralized Modal Scroll Management
   useEffect(() => {
-    const fetchHomeData = async () => {
-      try {
-        // 🔥 Promise.all use kia hy taa k dono APIs ek sath hit hon (Speed fast rahay)
-        const [menuResponse, dealsResponse, homepageResponse] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`),
-          fetch(`${import.meta.env.VITE_API_BASE}/get_active_deals.php`),
-          fetch(`${import.meta.env.VITE_API_BASE}/get_homepage_data.php`),
-        ]);
-
-        const menuData = await menuResponse.json();
-        const dealsData = await dealsResponse.json();
-        const homeData = await homepageResponse.json();
-
-        // 1. Homepage Dynamic Data
-        if (homeData.success) {
-          setHomepageData(homeData.data);
-        }
-
-        // 2. Menu Data Set
-        if (Array.isArray(menuData)) {
-          setMenuItems(menuData);
-        }
-
-        // 2. Deals Data Set (Format kr rahy hain taa k Slider isy easily show kr saky)
-        if (dealsData.success && dealsData.data) {
-          const formattedDeals = dealsData.data.map((deal) => ({
-            id: deal.id,
-            name: deal.title,
-            title: deal.title,
-            price: parseFloat(deal.price),
-            image: deal.img,
-            img: deal.img,
-            items_description: deal.items_description, // 🔥 Yeh add karna hai
-            isAvailable: true,
-            is_deal: true,
-            size: "Combo",
-          }));
-          setComboDeals(formattedDeals);
-        }
-      } catch (error) {
-        console.error("Error fetching homepage data:", error);
-      } finally {
-        setIsLoading(false);
+    if (selectedPopupItem) {
+      const scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
       }
-    };
-
-    fetchHomeData();
-  }, []);
-
-  const handleBannerClick = (linkUrl) => {
-    if (!linkUrl) return;
-    
-    if (linkUrl.startsWith('product:')) {
-      const id = linkUrl.split(':')[1];
-      const foundItem = menuItems.find(item => item.id.toString() === id);
-      if (foundItem) {
-        setSelectedPopupItem(foundItem);
-        document.body.style.overflow = "hidden";
-      }
-    } else if (linkUrl.startsWith('deal:')) {
-      const id = linkUrl.split(':')[1];
-      const foundDeal = comboDeals.find(deal => deal.id.toString() === id);
-      if (foundDeal) {
-        setSelectedPopupItem({ ...foundDeal, is_deal: true, name: foundDeal.title, desc: foundDeal.description });
-        document.body.style.overflow = "hidden";
-      }
+      document.body.style.overflow = "hidden";
     } else {
-      navigate(linkUrl);
+      document.body.style.overflow = "auto";
+      document.body.style.removeProperty("overflow");
+      document.body.style.removeProperty("padding-right");
     }
+
+    return () => {
+      document.body.style.overflow = "auto";
+      document.body.style.removeProperty("overflow");
+      document.body.style.removeProperty("padding-right");
+    };
+  }, [selectedPopupItem]);
+
+  // Fetch Data from API using React Query
+  const { data: menuItems = [], isLoading: isMenuLoading } = useQuery({
+    queryKey: ["menu"],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/get_menu.php`);
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+  });
+
+  const { data: comboDeals = [], isLoading: isDealsLoading } = useQuery({
+    queryKey: ["active_deals"],
+    queryFn: async () => {
+      const res = await fetch(
+        `${API_BASE}/get_active_deals.php`
+      );
+      const data = await res.json();
+      if (data.success && data.data) {
+        return data.data.map((deal) => ({
+          id: deal.id,
+          deal_id: deal.id,
+          name: deal.title,
+          title: deal.title,
+          price: parseFloat(deal.price),
+          original_price: deal.original_price
+            ? parseFloat(deal.original_price)
+            : null,
+          badge_tag: deal.badge_tag || deal.tag || "HOT DEAL",
+          tag: deal.badge_tag || deal.tag || "HOT DEAL",
+          image: deal.img,
+          img: deal.img,
+          promo_banner_image: deal.promo_banner_image,
+          is_featured_banner: deal.is_featured_banner == 1,
+          items: deal.items || [],
+          items_description: deal.items_description,
+          description: deal.description || deal.items_description,
+          isAvailable: true,
+          is_deal: true,
+          size: "Combo",
+        }));
+      }
+      return [];
+    },
+  });
+
+  const {
+    data: homepageData = { hero: [], sections: [], featured_banners: [] },
+    isLoading: isHomeLoading,
+  } = useQuery({
+    queryKey: ["homepage_data"],
+    queryFn: async () => {
+      const res = await fetch(
+        `${API_BASE}/get_homepage_data.php`
+      );
+      const data = await res.json();
+      return data.success
+        ? data.data
+        : { hero: [], sections: [], featured_banners: [] };
+    },
+  });
+
+  const isLoading = isMenuLoading || isDealsLoading || isHomeLoading;
+
+  const handleOpenDealModal = async (deal) => {
+    if (!deal) return;
+    const dealId = deal.deal_id || deal.id;
+    let fullDeal = comboDeals.find((d) => d.id.toString() === dealId.toString());
+
+    if (!fullDeal || !fullDeal.items || fullDeal.items.length === 0) {
+      try {
+        const res = await fetch(
+          `${API_BASE}/get_deal_details.php?id=${dealId}`
+        );
+        const data = await res.json();
+        if (data.success && data.deal) {
+          fullDeal = {
+            ...data.deal,
+            id: data.deal.id,
+            deal_id: data.deal.id,
+            name: data.deal.title,
+            title: data.deal.title,
+            price: parseFloat(data.deal.price),
+            original_price: data.deal.original_price
+              ? parseFloat(data.deal.original_price)
+              : null,
+            image: data.deal.img,
+            img: data.deal.img,
+            is_deal: true,
+            isAvailable: true,
+            size: "Combo",
+          };
+        }
+      } catch (e) {
+        console.error("Error fetching deal details", e);
+      }
+    }
+
+    const itemToOpen = fullDeal || deal;
+    setSelectedPopupItem({
+      ...itemToOpen,
+      is_deal: true,
+      name: itemToOpen.title || itemToOpen.name,
+      desc: itemToOpen.description || itemToOpen.items_description,
+    });
   };
 
-  // --- FILTERING DATA (Dynamic) ---
+  const handleBannerClick = async (bannerOrUrl, extraBanner) => {
+    const banner =
+      typeof bannerOrUrl === "object" && bannerOrUrl !== null
+        ? bannerOrUrl
+        : extraBanner;
+    const linkUrl =
+      typeof bannerOrUrl === "string"
+        ? bannerOrUrl
+        : banner?.link || banner?.link_url;
+
+    if (banner) {
+      const isExplicitProduct =
+        banner.type === "product" ||
+        String(banner.id || "").startsWith("prod-") ||
+        Boolean(banner.category || banner.category_id);
+      const isExplicitDeal =
+        banner.type === "deal" ||
+        banner.is_deal === true ||
+        String(banner.id || "").startsWith("deal-") ||
+        Boolean(banner.deal_id);
+
+      if (isExplicitProduct && !isExplicitDeal) {
+        const rawId =
+          banner.target_id ||
+          (banner.raw_data && banner.raw_data.id) ||
+          String(banner.id).replace("prod-", "");
+        const matchedItem = menuItems.find(
+          (item) => item.id.toString() === rawId.toString()
+        );
+        const fullProduct = matchedItem || banner.raw_data || banner;
+
+        setSelectedPopupItem({
+          ...fullProduct,
+          is_deal: false,
+          name: fullProduct.name || banner.title,
+          title: fullProduct.name || banner.title,
+          price: fullProduct.price || banner.price,
+          image:
+            fullProduct.img ||
+            fullProduct.image ||
+            banner.promo_banner_image ||
+            banner.image,
+        });
+        return;
+      }
+
+      if (isExplicitDeal) {
+        const rawId =
+          banner.target_id ||
+          (banner.raw_data &&
+            (banner.raw_data.id || banner.raw_data.deal_id)) ||
+          String(banner.id).replace("deal-", "");
+        const matchedDeal = comboDeals.find(
+          (d) => d.id.toString() === rawId.toString()
+        );
+        const fullDeal = matchedDeal || banner.raw_data || banner;
+        await handleOpenDealModal(fullDeal);
+        return;
+      }
+    }
+
+    if (!linkUrl) return;
+
+    if (linkUrl.startsWith("product:")) {
+      const pId = linkUrl.split(":")[1];
+      const foundItem = menuItems.find(
+        (item) => item.id.toString() === pId.toString()
+      );
+      if (foundItem) {
+        setSelectedPopupItem({ ...foundItem, is_deal: false });
+        return;
+      }
+    } else if (linkUrl.startsWith("deal:") || linkUrl.includes("selected=")) {
+      let dId = linkUrl.startsWith("deal:")
+        ? linkUrl.split(":")[1]
+        : (linkUrl.match(/selected=([^&]+)/) || [])[1];
+      if (dId) {
+        await handleOpenDealModal({ id: dId, deal_id: dId });
+        return;
+      }
+    }
+
+    navigate(linkUrl);
+  };
+
   const bestSellersData = menuItems.filter(
-    (item) => item.isBestSeller === true && item.isAvailable === true,
+    (item) => item.isBestSeller === true && item.isAvailable === true
   );
-
-  // Menu items jo Top Deal hain
   const menuTopDeals = menuItems.filter(
-    (item) => item.isTopDeal === true && item.isAvailable === true,
+    (item) => item.isTopDeal === true && item.isAvailable === true
   );
-
-  // 🔥 Yahan humne naye Combos aur Purani menu Top Deals dono ko mila diya!
-  const allTopDeals = [...comboDeals, ...menuTopDeals];
+  const sliderDeals = comboDeals.filter((deal) => !deal.is_featured_banner);
+  const allTopDeals = [...sliderDeals, ...menuTopDeals];
 
   return (
-    <div className="home-container home-page-wrapper">
+    <div className="bg-slate-50 dark:bg-[#0A0A0C] min-h-[100vh] text-gray-900 dark:text-white pb-[10vh] md:pb-[3.125rem] font-['Segoe_UI',Tahoma,Geneva,Verdana,sans-serif] m-0 pt-0 transition-colors duration-300">
       {isLoading ? (
-        <div className="container-fluid px-3 px-md-5 py-4">
-          <div style={{ display: "flex", justifyContent: "center", padding: "50px 0" }}>
+        <div className="w-full px-4 md:px-12 py-6">
+          <div className="flex justify-center py-[3.125rem]">
             <div className="dot-loader">
-              <div className="dot" style={{ width: "12px", height: "12px" }}></div>
-              <div className="dot" style={{ width: "12px", height: "12px" }}></div>
-              <div className="dot" style={{ width: "12px", height: "12px" }}></div>
+              <div className="dot w-3 h-3"></div>
+              <div className="dot w-3 h-3"></div>
+              <div className="dot w-3 h-3"></div>
             </div>
           </div>
         </div>
       ) : (
-        <>
-          {(() => {
-            const elements = [];
-
-            // Render Sections in Order
-            homepageData.sections.forEach((section, index) => {
-              let sectionComponent = null;
-
-              if (section.section_type === 'hero') {
-                sectionComponent = <HomeHero slides={homepageData.hero_sliders || []} onBannerClick={handleBannerClick} />;
-              }
-
-              if (section.section_type === 'explore_menu') {
-                sectionComponent = <ExploreMenu key={`exp-${section.id}`} title={section.title || "EXPLORE MENU"} subtitle={section.subtitle || "VIEW ALL"} />;
-              }
-
-              if (section.section_type === 'product_slider') {
-                // Determine which data to pass
-                let items = [];
-                if (section.content_data === 'filter:best_sellers') {
-                  items = bestSellersData;
-                } else if (section.content_data === 'filter:top_deals') {
-                  items = allTopDeals;
-                } else if (section.content_data && section.content_data.startsWith('category:')) {
-                  const categoryName = section.content_data.split(':')[1];
-                  items = menuItems.filter(item => item.category === categoryName && item.isAvailable === true);
-                } else if (section.content_data && section.content_data.startsWith('custom:')) {
-                  const idsStr = section.content_data.split(':')[1];
-                  if (idsStr) {
-                    const ids = idsStr.split(',').map(id => parseInt(id));
-                    items = menuItems.filter(item => ids.includes(parseInt(item.id)) && item.isAvailable === true);
-                  }
-                }
-
-                sectionComponent = (
-                  <div key={`prod-${section.id}`} style={{ position: "relative", paddingBottom: "20px" }}>
-                    <HomeProductSlider title={section.title} items={items} sliderType={section.slider_type || 'regular'} />
-                    {section.content_data === 'filter:top_deals' && (
-                      <div style={{ textAlign: "center", marginTop: "15px" }}>
-                        <button onClick={() => navigate("/deals")} className="btn-view-all-deals">
-                          {section.subtitle || "Explore All Deals"} <FaArrowRight style={{ marginLeft: "8px" }} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              if (section.section_type === 'banner') {
-                let isSlider = false;
-                let slideUrls = [];
-                
-                try {
-                  if (section.content_data && section.content_data.startsWith('[')) {
-                    slideUrls = JSON.parse(section.content_data);
-                    if (Array.isArray(slideUrls) && slideUrls.length > 1) {
-                      isSlider = true;
-                    }
-                  }
-                } catch (e) {
-                  console.error("Error parsing banner slider data", e);
-                }
-
-                if (isSlider) {
-                  sectionComponent = (
-                    <div className="home-banners-container" key={`ban-${section.id}`} style={{ margin: '30px 0' }}>
-                      <Swiper
-                        modules={[Autoplay, Pagination, Navigation]}
-                        spaceBetween={0}
-                        slidesPerView={1}
-                        autoplay={{ delay: 3000, disableOnInteraction: false }}
-                        pagination={{ clickable: true }}
-                        navigation={true}
-                        className="banner-swiper"
-                        style={{ borderRadius: '15px', overflow: 'hidden' }}
-                      >
-                        {slideUrls.map((slide, idx) => {
-                          const isObject = typeof slide === 'object' && slide !== null;
-                          const bgImage = optimizeCloudinaryImage(isObject ? slide.image_url : slide, 1200);
-                          const title = isObject ? (slide.title || section.title) : section.title;
-                          const subtitle = isObject ? (slide.subtitle || section.subtitle) : section.subtitle;
-                          const linkUrl = isObject ? (slide.link_url || section.link_url) : section.link_url;
-
-                          return (
-                            <SwiperSlide key={idx} onClick={() => linkUrl && handleBannerClick(linkUrl)}>
-                              <div 
-                                className="promo-banner-card"
-                                style={{ backgroundImage: `url(${bgImage})`, cursor: linkUrl ? 'pointer' : 'default', height: '100%', margin: 0 }}
-                              >
-                              </div>
-                            </SwiperSlide>
-                          );
-                        })}
-                      </Swiper>
-                    </div>
-                  );
-                } else {
-                  // Default static banner
-                  sectionComponent = (
-                    <div className="home-banners-container" key={`ban-${section.id}`} style={{ margin: '30px 0' }}>
-                      <div 
-                        className="promo-banner-card"
-                        style={{ backgroundImage: `url(${optimizeCloudinaryImage(section.image_url, 1200)})`, cursor: section.link_url ? 'pointer' : 'default' }}
-                        onClick={() => section.link_url && handleBannerClick(section.link_url)}
-                      >
-                      </div>
-                    </div>
-                  );
-                }
-              }
-
-              // Push section
-              if (sectionComponent) {
-                if (section.section_type === 'hero') {
-                  elements.push(
-                    <div key={`wrapper-${section.id}`} className="w-100 mb-2 mt-2">
-                      {sectionComponent}
-                    </div>
-                  );
-                } else {
-                  elements.push(
-                    <div key={`wrapper-${section.id}`} className="container-fluid px-3 px-md-5 pt-3 pb-2">
-                      {sectionComponent}
-                    </div>
-                  );
-                }
-              }
-            });
-
-            // Empty state message
-            if (elements.length === 0) {
-              elements.push(
-                <div key="empty" className="container-fluid px-3 px-md-5 py-5" style={{ minHeight: "50vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ textAlign: "center", animation: "fadeIn 1s ease-out" }}>
-                    <div style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: "80px",
-                      height: "80px",
-                      borderRadius: "50%",
-                      background: "rgba(239, 68, 68, 0.1)",
-                      color: "#ef4444",
-                      marginBottom: "20px",
-                      animation: "bounceIcon 2s infinite ease-in-out"
-                    }}>
-                      <FaBoxOpen size={40} />
-                    </div>
-                    <h3 style={{ color: "#fff", marginBottom: "10px", fontWeight: "600", letterSpacing: "1px" }}>Nothing Here Yet!</h3>
-                    <p style={{ color: "#94a3b8", maxWidth: "400px", margin: "0 auto", lineHeight: "1.6" }}>
-                      {homepageData.settings?.empty_homepage_message || "We are currently updating our menu and offers. Please check back soon!"}
-                    </p>
-                  </div>
-                  <style>{`
-                    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-                    @keyframes bounceIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-                  `}</style>
-                </div>
-              );
-            }
-
-            return elements;
-          })()}
-        </>
+        <DynamicSectionResolver
+          homepageData={homepageData}
+          menuItems={menuItems}
+          bestSellersData={bestSellersData}
+          allTopDeals={allTopDeals}
+          handleBannerClick={handleBannerClick}
+        />
       )}
+
+      {/* Root Modal Portal */}
+      {selectedPopupItem &&
+        ReactDOM.createPortal(
+          <PopupCard
+            item={selectedPopupItem}
+            title={selectedPopupItem.title || selectedPopupItem.name}
+            description={
+              selectedPopupItem.description ||
+              selectedPopupItem.desc ||
+              selectedPopupItem.items_description
+            }
+            price={selectedPopupItem.price}
+            image={selectedPopupItem.image || selectedPopupItem.img}
+            closePopup={() => setSelectedPopupItem(null)}
+          />,
+          document.body
+        )}
     </div>
   );
 };

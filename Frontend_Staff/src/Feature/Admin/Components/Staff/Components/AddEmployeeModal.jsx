@@ -1,19 +1,27 @@
 import React, { useState } from "react";
-import { FaTimes, FaSave, FaUserLock, FaKey } from "react-icons/fa";
+import { createPortal } from "react-dom";
+import { FaTimes, FaUserPlus, FaSpinner } from "react-icons/fa";
 import Swal from "sweetalert2";
+import EmployeePersonalInfoForm from "./EmployeePersonalInfoForm";
+import EmployeeWorkDetailsForm from "./EmployeeWorkDetailsForm";
+import { apiFetch } from "../../../../../utils/apiHelper";
+
+const initialFormData = {
+  name: "",
+  role: "Waiter",
+  phone: "",
+  salary: "",
+  username: "",
+  password: "",
+  confirm_password: "",
+  bike_number: "",
+  license_number: "",
+};
 
 const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    name: "",
-    role: "Waiter",
-    phone: "",
-    salary: "",
-    username: "",
-    password: "",
-    bike_number: "",
-    license_number: "",
-  });
+  const [formData, setFormData] = useState(initialFormData);
 
+  const [customRoleName, setCustomRoleName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [phoneError, setPhoneError] = useState("");
 
@@ -33,266 +41,174 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
         icon: "error",
         title: "Invalid Mobile Number",
         text: "Please enter exactly 11 digits starting with 03 (e.g. 03001234567).",
-        confirmButtonColor: "#ef4444",
+        background: "#171717",
+        color: "#fff",
       });
       return;
     }
 
+    const isCustomRole = formData.role === "__CUSTOM__";
+    if (isCustomRole && !customRoleName.trim()) {
+      Swal.fire({
+        icon: "error",
+        title: "Missing Role Title",
+        text: "Please specify the custom role title (e.g. Security Guard, Cleaner, Barista).",
+        background: "#171717",
+        color: "#fff",
+      });
+      return;
+    }
+
+    const pwd = (formData.password || "").trim();
+    const cpwd = (formData.confirm_password || "").trim();
+
+    // Strong password validation rules
+    if (!pwd || pwd.length < 8) {
+      Swal.fire({
+        icon: "warning",
+        title: "Password Too Short",
+        text: "Password must be at least 8 characters long.",
+        background: "#171717",
+        color: "#fff",
+      });
+      return;
+    }
+
+    if (!/[A-Z]/.test(pwd)) {
+      Swal.fire({
+        icon: "warning",
+        title: "Capital Letter Required",
+        text: "Password must contain at least one capital letter (A-Z).",
+        background: "#171717",
+        color: "#fff",
+      });
+      return;
+    }
+
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) {
+      Swal.fire({
+        icon: "warning",
+        title: "Special Character Required",
+        text: "Password must contain at least one special character (!@#$%^&* etc.).",
+        background: "#171717",
+        color: "#fff",
+      });
+      return;
+    }
+
+    if (pwd !== cpwd) {
+      Swal.fire({
+        icon: "error",
+        title: "Passwords Do Not Match",
+        text: "Please make sure your password and confirm password match.",
+        background: "#171717",
+        color: "#fff",
+      });
+      return;
+    }
+
+    const finalRole = isCustomRole ? customRoleName.trim() : formData.role;
+
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/add_staff.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        },
-      );
+      const response = await apiFetch("add_staff.php", {
+        method: "POST",
+        body: JSON.stringify({
+          ...formData,
+          password: pwd,
+          confirm_password: cpwd,
+          role: finalRole,
+        }),
+      });
 
       const result = await response.json();
-
-      // 🔥 DEEP DEBUGGING: Browser Console me check karein ke Backend se kya aaya
-      console.log("Backend Response:", result);
 
       if (result.success) {
         Swal.fire({
           icon: "success",
-          title: "Hired!",
-          text: result.message,
+          title: "Staff Enrolled!",
+          text: result.message || "New staff member added.",
           timer: 1500,
           showConfirmButton: false,
+          background: "#171717",
+          color: "#fff",
         });
 
-        if (onSave) onSave(); // Parent ko refresh karega
+        if (onSave) onSave();
 
-        // Reset Form
-        setFormData({
-          name: "",
-          role: "Waiter",
-          phone: "",
-          salary: "",
-          username: "",
-          password: "",
-          bike_number: "", // 🔥 Reset here
-          license_number: "",
-        });
+        setFormData(initialFormData);
+        setCustomRoleName("");
         onClose();
       } else {
-        // Agar masla aaye toh proper message dikhayega
         Swal.fire({
           icon: "error",
           title: "Action Failed",
           text: result.message,
+          background: "#171717",
+          color: "#fff",
         });
       }
     } catch (error) {
-      console.error("Fetch Error:", error);
       Swal.fire({
         icon: "error",
         title: "System Error",
-        text: "Failed to read response from server. Check console.",
+        text: "Failed to connect with server.",
+        background: "#171717",
+        color: "#fff",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return (
-    <div className="admin-modal-overlay override-zindex" onClick={onClose}>
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 w-screen h-screen transition-opacity duration-300"
+      onClick={onClose}
+    >
       <div
-        className="admin-modal-box staff-modal-box animate-slide-up"
+        className="relative z-[10000] w-full max-w-lg md:max-w-xl bg-white dark:bg-[#121216] shadow-2xl shadow-black/80 rounded-2xl border border-slate-200 dark:border-neutral-800 p-5 sm:p-7 max-h-[90vh] overflow-y-auto space-y-4 animate-slide-up text-slate-900 dark:text-white"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxHeight: "90vh", overflowY: "auto" }} // 🔥 YEH LINE ADD KARNI HY
       >
-        <div className="modal-header-flex">
-          <h3 className="modal-title">Add New Employee</h3>
+        {/* Header */}
+        <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-white/[0.06]">
+          <div className="flex items-center gap-2.5">
+            <span className="w-1.5 h-5 bg-amber-500 rounded-full" />
+            <h3 className="m-0 text-base sm:text-lg font-black font-['Oswald',sans-serif] uppercase tracking-wide">
+              Enroll New Staff Member
+            </h3>
+          </div>
           <button
             type="button"
-            className="btn-close-modal-clean"
+            className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center border-none cursor-pointer transition-all active:scale-90"
             onClick={onClose}
           >
-            <FaTimes />
+            <FaTimes className="text-sm" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="admin-input-group">
-            <label>Full Name</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              className="admin-input-field custom-admin-input"
-              placeholder="e.g. Ali Khan"
-            />
-          </div>
-
-          <div className="modal-form-row">
-            <div className="admin-input-group input-col">
-              <label>Role</label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="admin-input-field custom-admin-input"
-              >
-                <option value="Admin">Admin</option>
-                <option value="Cashier">Cashier</option>
-                <option value="Chef">Chef</option>
-                <option value="Manager">Manager</option>
-                <option value="Rider">Rider</option>
-                <option value="Waiter">Waiter</option>
-                <option value="Dispatcher">Dispatcher</option>
-              </select>
-            </div>
-            <div className="admin-input-group input-col">
-              <label>Monthly Salary (Rs)</label>
-              <input
-                type="number"
-                name="salary"
-                value={formData.salary}
-                onChange={handleChange}
-                required
-                className="admin-input-field custom-admin-input"
-                placeholder="e.g. 30000"
-              />
-            </div>
-          </div>
-
-          <div className="admin-input-group">
-            <label>Phone Number</label>
-            <input
-              type="tel"
-              name="phone"
-              maxLength="11"
-              value={formData.phone}
-              onChange={(e) => {
-                const val = e.target.value.replace(/[^0-9]/g, "");
-                setFormData({ ...formData, phone: val });
-                
-                if (val.length > 0 && val.length < 11) {
-                  setPhoneError("Please enter all 11 digits.");
-                } else if (val.length === 11 && !/^03\d{9}$/.test(val)) {
-                  setPhoneError("Number must start with 03 (e.g. 03001234567).");
-                } else {
-                  setPhoneError("");
-                }
-              }}
-              required
-              className={`admin-input-field custom-admin-input ${phoneError ? "border-red-500" : ""}`}
-              style={phoneError ? { borderColor: "#ef4444" } : {}}
-              placeholder="e.g. 03001234567"
-            />
-            {phoneError && (
-              <span style={{ color: "#ef4444", fontSize: "12px", marginTop: "5px", display: "inline-block" }}>
-                {phoneError}
-              </span>
-            )}
-          </div>
-
-          <hr
-            style={{
-              border: "1px solid var(--admin-border)",
-              margin: "20px 0",
-            }}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <EmployeePersonalInfoForm
+            formData={formData}
+            handleChange={handleChange}
+            phoneError={phoneError}
+            setPhoneError={setPhoneError}
+            setFormData={setFormData}
           />
 
-          <p
-            style={{
-              color: "var(--brand-red, #ef4444)",
-              fontSize: "12px",
-              marginTop: 0,
-              fontWeight: "bold",
-            }}
-          >
-            System Access Credentials (Required)
-          </p>
-          {/* 🔥 CONDITIONAL RENDERING: Sirf tab dikhega jab role 'Rider' hoga */}
-          {formData.role === "Rider" && (
-            <>
-              <hr
-                style={{
-                  border: "1px solid var(--admin-border)",
-                  margin: "20px 0",
-                }}
-              />
-              <p
-                style={{
-                  color: "var(--brand-yellow, #eab308)",
-                  fontSize: "12px",
-                  marginTop: 0,
-                  fontWeight: "bold",
-                }}
-              >
-                Rider Details (Required)
-              </p>
+          <EmployeeWorkDetailsForm
+            formData={formData}
+            handleChange={handleChange}
+            customRoleName={customRoleName}
+            setCustomRoleName={setCustomRoleName}
+          />
 
-              <div className="modal-form-row animate-slide-up">
-                <div className="admin-input-group input-col">
-                  <label>Bike Number</label>
-                  <input
-                    type="text"
-                    name="bike_number"
-                    value={formData.bike_number}
-                    onChange={handleChange}
-                    required={formData.role === "Rider"} // Rider ke liye lazmi
-                    className="admin-input-field custom-admin-input"
-                    placeholder="e.g. LEB-1234"
-                  />
-                </div>
-                <div className="admin-input-group input-col">
-                  <label>License Number</label>
-                  <input
-                    type="text"
-                    name="license_number"
-                    value={formData.license_number}
-                    onChange={handleChange}
-                    required={formData.role === "Rider"} // Rider ke liye lazmi
-                    className="admin-input-field custom-admin-input"
-                    placeholder="e.g. DL-9876543"
-                  />
-                </div>
-              </div>
-            </>
-          )}
-          <div className="modal-form-row">
-            <div className="admin-input-group input-col">
-              <label>
-                <FaUserLock style={{ marginRight: "5px" }} /> Username
-              </label>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                className="admin-input-field custom-admin-input"
-                placeholder="e.g. ali_cashier"
-              />
-            </div>
-            <div className="admin-input-group input-col">
-              <label>
-                <FaKey style={{ marginRight: "5px" }} /> Password
-              </label>
-              <input
-                type="text"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                className="admin-input-field custom-admin-input"
-                placeholder="Enter password"
-              />
-            </div>
-          </div>
-
-          <div className="modal-footer-actions">
+          {/* Footer Actions */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-white/[0.06]">
             <button
               type="button"
-              className="btn-cancel-modal-clean"
+              className="px-5 py-2.5 rounded-xl bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-white/10 text-xs font-bold uppercase tracking-wider cursor-pointer"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -300,16 +216,21 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
             </button>
             <button
               type="submit"
-              className="btn-save-modal-clean"
+              className="btn-brand-cta px-6 py-2.5 text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer border-none active:scale-95 disabled:opacity-50"
               disabled={isSubmitting}
             >
-              <FaSave style={{ marginRight: "5px" }} />{" "}
-              {isSubmitting ? "Saving..." : "Hire Staff"}
+              {isSubmitting ? (
+                <FaSpinner className="animate-spin text-xs" />
+              ) : (
+                <FaUserPlus className="text-xs" />
+              )}
+              <span>Enroll Staff</span>
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

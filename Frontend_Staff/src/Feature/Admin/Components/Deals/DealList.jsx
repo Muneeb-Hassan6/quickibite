@@ -1,313 +1,70 @@
-import React, { useState, useEffect } from "react";
-import Swal from "sweetalert2";
-import {
-  FaTrash,
-  FaPowerOff,
-  FaClock,
-  FaCheckCircle,
-  FaEdit,
-} from "react-icons/fa";
+import React from "react";
+import { FaFire, FaSearch } from "react-icons/fa";
+import DealCardItem from "./Components/DealCardItem";
+import { useDealList } from "./hooks/useDealList";
 
 const DealList = ({ onEdit }) => {
-  // 🔥 onEdit prop receive kia hy
-  const [deals, setDeals] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    searchTerm,
+    setSearchTerm,
+    filteredDeals,
+    isLoading,
+    handleToggleStatus,
+    handleDelete,
+  } = useDealList();
 
-  // Database se saari deals lana
-  const fetchAdminDeals = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_admin_deals.php`,
-      );
-      const data = await response.json();
-      if (data.success) {
-        setDeals(data.data);
-      }
-    } catch (error) {
-      console.error("Error fetching deals:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAdminDeals();
-  }, []);
-
-  // Deal ko On/Off (Active/Inactive) karna
-  const handleToggleStatus = async (id, currentStatus) => {
-    const newStatus = currentStatus === 1 ? 0 : 1;
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_deal_status.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id, is_active: newStatus }),
-        },
-      );
-      const data = await response.json();
-
-      if (data.success) {
-        setDeals(
-          deals.map((deal) =>
-            deal.id === id ? { ...deal, is_active: newStatus } : deal,
-          ),
-        );
-        Swal.fire({
-          toast: true,
-          position: "top-end",
-          icon: "success",
-          title: newStatus ? "Deal Activated" : "Deal Deactivated",
-          showConfirmButton: false,
-          timer: 1500,
-          background: "#141414",
-          color: "#fff",
-        });
-      }
-    } catch (error) {
-      Swal.fire("Error", "Could not update status", "error");
-    }
-  };
-
-  // Deal ko Delete karna
-  const handleDelete = (id) => {
-    Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#333",
-      confirmButtonText: "Yes, delete it!",
-      background: "#141414",
-      color: "#fff",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/delete_deal.php`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id }),
-            },
-          );
-          const data = await response.json();
-          if (data.success) {
-            setDeals(deals.filter((deal) => deal.id !== id));
-            Swal.fire({
-              title: "Deleted!",
-              text: "Deal has been removed.",
-              icon: "success",
-              background: "#141414",
-              color: "#fff",
-            });
-          }
-        } catch (error) {
-          Swal.fire("Error", "Could not delete deal", "error");
-        }
-      }
-    });
-  };
-
-  if (isLoading)
+  if (isLoading) {
     return (
-      <div style={{ color: "#fff", textAlign: "center", padding: "40px" }}>
-        Loading deals...
+      <div className="text-center py-20 flex flex-col items-center justify-center gap-3 text-[var(--admin-muted,#888)]">
+        <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin" />
+        <span className="text-xs font-bold uppercase tracking-wider">
+          Loading Deals Catalog...
+        </span>
       </div>
     );
+  }
 
   return (
-    <div className="animate-slide-up" style={{ marginTop: "20px" }}>
-      <div
-        style={{
-          background: "#111",
-          borderRadius: "12px",
-          border: "1px solid #2a2a2a",
-          overflow: "hidden",
-        }}
-      >
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            color: "#fff",
-            textAlign: "left",
-          }}
-        >
-          <thead
-            style={{ background: "#1a1a1a", borderBottom: "2px solid #333" }}
-          >
-            <tr>
-              <th style={{ padding: "15px" }}>Image</th>
-              <th style={{ padding: "15px" }}>Title & Price</th>
-              <th style={{ padding: "15px" }}>Type</th>
-              <th style={{ padding: "15px", textAlign: "center" }}>Status</th>
-              <th style={{ padding: "15px", textAlign: "center" }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {deals.length === 0 ? (
-              <tr>
-                <td
-                  colSpan="5"
-                  style={{
-                    textAlign: "center",
-                    padding: "30px",
-                    color: "#777",
-                  }}
-                >
-                  No deals found.
-                </td>
-              </tr>
-            ) : (
-              deals.map((deal) => (
-                <tr
-                  key={deal.id}
-                  style={{
-                    borderBottom: "1px solid #222",
-                    opacity: deal.is_active ? 1 : 0.5,
-                    transition: "0.3s",
-                  }}
-                >
-                  {/* 1. Image */}
-                  <td style={{ padding: "15px" }}>
-                    <img
-                      src={deal.img || "https://placehold.co/100"}
-                      alt="deal"
-                      style={{
-                        width: "60px",
-                        height: "60px",
-                        objectFit: "cover",
-                        borderRadius: "8px",
-                      }}
-                    />
-                  </td>
+    <div className="animate-slide-up space-y-4">
+      {/* Header Search Bar */}
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-white dark:bg-[#161616] p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-white shadow-sm">
+        <div className="flex items-center gap-2">
+          <FaFire className="text-amber-500 text-sm" />
+          <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white font-['Oswald',sans-serif]">
+            Active Combos & Deals ({filteredDeals.length})
+          </span>
+        </div>
 
-                  {/* 2. Title & Price */}
-                  <td style={{ padding: "15px" }}>
-                    <div style={{ fontWeight: "bold", fontSize: "16px" }}>
-                      {deal.title}
-                    </div>
-                    <div
-                      style={{
-                        color: "#ef4444",
-                        fontWeight: "bold",
-                        marginTop: "5px",
-                      }}
-                    >
-                      Rs {deal.price}
-                    </div>
-                  </td>
-
-                  {/* 3. Type (Permanent / Time-based) */}
-                  <td style={{ padding: "15px" }}>
-                    {deal.is_permanent ? (
-                      <span
-                        style={{
-                          background: "rgba(34, 197, 94, 0.1)",
-                          color: "#22c55e",
-                          padding: "5px 10px",
-                          borderRadius: "20px",
-                          fontSize: "12px",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        <FaCheckCircle /> Permanent
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          background: "rgba(245, 158, 11, 0.1)",
-                          color: "#f59e0b",
-                          padding: "5px 10px",
-                          borderRadius: "20px",
-                          fontSize: "12px",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        <FaClock /> {deal.start_time?.slice(0, 5)} -{" "}
-                        {deal.end_time?.slice(0, 5)}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* 4. Status (Active / Inactive Toggle) */}
-                  <td style={{ padding: "15px", textAlign: "center" }}>
-                    <button
-                      onClick={() =>
-                        handleToggleStatus(deal.id, deal.is_active)
-                      }
-                      style={{
-                        background: deal.is_active
-                          ? "rgba(34, 197, 94, 0.2)"
-                          : "rgba(239, 68, 68, 0.2)",
-                        color: deal.is_active ? "#22c55e" : "#ef4444",
-                        border: "none",
-                        padding: "8px 15px",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        fontWeight: "bold",
-                        width: "100px",
-                        transition: "0.3s",
-                      }}
-                    >
-                      <FaPowerOff style={{ marginRight: "5px" }} />{" "}
-                      {deal.is_active ? "Active" : "Inactive"}
-                    </button>
-                  </td>
-
-                  {/* 5. Actions (Edit & Delete) */}
-                  <td
-                    style={{
-                      padding: "15px",
-                      textAlign: "center",
-                      display: "flex",
-                      justifyContent: "center",
-                      gap: "15px",
-                      alignItems: "center",
-                      height: "100%",
-                    }}
-                  >
-                    {/* 🔥 VIP Edit Button */}
-                    <button
-                      onClick={() => onEdit(deal)}
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        color: "#3b82f6",
-                        fontSize: "18px",
-                        cursor: "pointer",
-                        transition: "0.2s",
-                      }}
-                      title="Edit Deal"
-                    >
-                      <FaEdit />
-                    </button>
-
-                    {/* Delete Button */}
-                    <button
-                      onClick={() => handleDelete(deal.id)}
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        color: "#ef4444",
-                        fontSize: "18px",
-                        cursor: "pointer",
-                        transition: "0.2s",
-                      }}
-                      title="Delete Deal"
-                    >
-                      <FaTrash />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <div className="flex items-center bg-slate-50 dark:bg-[#111111] px-3.5 py-2 rounded-xl border border-slate-300 dark:border-white/10 focus-within:border-amber-500 transition-colors w-full sm:w-72">
+          <FaSearch className="text-slate-400 dark:text-neutral-500 text-xs mr-2 shrink-0" />
+          <input
+            type="text"
+            placeholder="Search deals by title or tag..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="bg-transparent border-none text-slate-900 dark:text-white text-xs outline-none w-full placeholder:text-slate-400 dark:placeholder:text-neutral-500 font-medium"
+          />
+        </div>
       </div>
+
+      {/* Deals Grid */}
+      {filteredDeals.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+          {filteredDeals.map((deal) => (
+            <DealCardItem
+              key={deal.id}
+              deal={deal}
+              onEdit={onEdit}
+              handleToggleStatus={handleToggleStatus}
+              handleDelete={handleDelete}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="py-16 text-center text-[var(--admin-muted,#888)] text-xs sm:text-sm bg-[var(--admin-panel,#171717)] rounded-2xl border border-[var(--admin-border,rgba(255,255,255,0.06))]">
+          No combo deals match your search criteria.
+        </div>
+      )}
     </div>
   );
 };

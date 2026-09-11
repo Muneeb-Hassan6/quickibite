@@ -1,13 +1,32 @@
 <?php
 include_once __DIR__ . '/../config/cors_headers.php';
 include_once __DIR__ . '/../config/auth_middleware.php';
-include_once '../config/Database.php';
+include_once __DIR__ . '/../config/Database.php';
 
 $database = new Database();
 $db = $database->getConnection();
 $data = json_decode(file_get_contents("php://input"));
 
 if(!empty($data->new_password)) {
+    $rawPassword = trim((string)$data->new_password);
+
+    if (strlen($rawPassword) < 8) {
+        echo json_encode(["success" => false, "message" => "New password must be at least 8 characters long."]);
+        exit();
+    }
+    if (!preg_match('/[A-Z]/', $rawPassword)) {
+        echo json_encode(["success" => false, "message" => "New password must contain at least one capital letter (A-Z)."]);
+        exit();
+    }
+    if (!preg_match('/[!@#$%^&*(),.?":{}|<>]/', $rawPassword)) {
+        echo json_encode(["success" => false, "message" => "New password must contain at least one special character."]);
+        exit();
+    }
+    if (isset($data->confirm_password) && $rawPassword !== trim((string)$data->confirm_password)) {
+        echo json_encode(["success" => false, "message" => "New password and confirm password do not match."]);
+        exit();
+    }
+
     // 1. Identify the target account and verify authorization (IDOR Prevention)
     $target_id = !empty($data->staff_id) ? intval($data->staff_id) : $auth_user['user_id'];
     $is_admin = (strtolower($auth_user['role']) === 'admin');

@@ -1,8 +1,8 @@
-// src/pages/Admin/AdminDashboard.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // 🔥 Navigate import kiya
-import Swal from "sweetalert2"; // 🔥 Premium Alerts ke liye Swal import kiya
-import "./styles/index.css";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import { useTheme } from "../../Context/ThemeContext";
+import { useStaffAuth } from "../../Context/AuthContext";
 
 // Components Import
 import AdminSidebar from "./Components/SharedComponents/AdminSidebar";
@@ -14,56 +14,46 @@ import InventoryDashboard from "./Components/Inventory/InventoryManager";
 import StaffDashboard from "./Components/Staff/StaffDashboard";
 import AnalyticsPanel from "./Components/Analytics/AnalyticsPanel";
 import SettingsPanel from "./Components/Settings/SettingsPanel";
-import DealsDashboard from "./Components/Deals/DealsDashboard"; // 🔥 Deals Dashboard Import
-import HomepageBuilder from "./Components/HomepageBuilder/HomepageBuilder"; // 🔥 Homepage Builder Import
-import TableManager from "./Components/Tables/TableManager"; // 🔥 Table Manager Import
-import ProductProfitTab from "./Components/ProductProfitTab/ProductProfitTab"; // 🔥 Product Profit Import
+import DealsDashboard from "./Components/Deals/DealsDashboard";
+import HomepageBuilder from "./Components/HomepageBuilder/HomepageBuilder";
+import TableManager from "./Components/Tables/TableManager";
+import ProductProfitTab from "./Components/ProductProfitTab/ProductProfitTab";
+import CouponsManagement from "./Components/Coupons/CouponsManagement";
+import CustomersCRM from "./Components/Customers/CustomersCRM";
+import ReviewsManagement from "./Components/Reviews/ReviewsManagement";
 
 const AdminDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const navigate = useNavigate(); // 🔥 Hook initialize kiya
+  const { theme, toggleTheme } = useTheme();
+  const isDarkMode = theme === "dark";
+  const navigate = useNavigate();
+  const { logout } = useStaffAuth();
 
-  // 1. Initial state ab localStorage se aayegi
   const [activeTab, setActiveTab] = useState(() => {
-    const savedTab = localStorage.getItem("adminActiveTab");
+    const savedTab = sessionStorage.getItem("adminActiveTab");
     return savedTab ? savedTab : "dashboard";
   });
 
-  // 2. Jab bhi tab change ho, usey localStorage mein save kar lo
   useEffect(() => {
-    localStorage.setItem("adminActiveTab", activeTab);
+    sessionStorage.setItem("adminActiveTab", activeTab);
   }, [activeTab]);
-
-  // Theme Toggle Logic
-  const toggleTheme = () => setIsDarkMode((prev) => !prev);
-
-  useEffect(() => {
-    document.documentElement.setAttribute(
-      "data-theme",
-      isDarkMode ? "dark" : "light",
-    );
-  }, [isDarkMode]);
 
   const handleLogout = () => {
     Swal.fire({
       title: "Logout?",
-      text: "Are you sure you want to end your session?",
+      text: "Are you sure you want to end your executive session?",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#333",
-      confirmButtonText: "Yes, Logout",
+      confirmButtonText: "Yes, Sign Out",
+      cancelButtonText: "Stay Logged In",
+      customClass: {
+        popup: "swal2-popup",
+        confirmButton: "swal2-confirm",
+        cancelButton: "swal2-cancel",
+      },
     }).then((result) => {
       if (result.isConfirmed) {
-        // 1. Dono Sessions ko jarr se khatam karein (Unified Auth wale)
-        sessionStorage.removeItem("staff_session");
-        sessionStorage.removeItem("user");
-
-        // 2. Active tab ka data bhi remove karein taake agla banda fresh start kare
-        sessionStorage.removeItem("adminActiveTab");
-
-        // 3. Wapis Login page par bhej dein (replace: true se browser history clear ho jayegi)
+        logout();
         navigate("/login", { replace: true });
       }
     });
@@ -92,16 +82,22 @@ const AdminDashboard = () => {
         return <DealsDashboard />;
       case "tables":
         return <TableManager />;
+      case "coupons":
+        return <CouponsManagement />;
       case "homepage_builder":
         return <HomepageBuilder />;
+      case "customers":
+        return <CustomersCRM />;
+      case "reviews":
+        return <ReviewsManagement />;
       default:
         return <DashboardHome />;
     }
   };
 
   return (
-    <div className="admin-container">
-      {/* Sidebar Component */}
+    <div className="admin-scope h-screen w-full overflow-hidden flex bg-slate-50 dark:bg-[#0D0D0D] text-slate-900 dark:text-neutral-100 font-['Inter',sans-serif]">
+      {/* 1. Fixed Sidebar Navigation */}
       <AdminSidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -110,8 +106,9 @@ const AdminDashboard = () => {
         handleLogout={handleLogout}
       />
 
-      <div className="admin-main">
-        {/* Header Component */}
+      {/* 2. Main App-Shell Column */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
+        {/* Fixed Top Header (Never Scrolls Away) */}
         <AdminHeader
           activeTab={activeTab}
           setIsSidebarOpen={setIsSidebarOpen}
@@ -119,8 +116,12 @@ const AdminDashboard = () => {
           toggleTheme={toggleTheme}
         />
 
-        {/* Dynamic Content */}
-        {renderContent()}
+        {/* Independent Scrollable Content Body */}
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-5 xl:p-6 2xl:p-8">
+          <div className="max-w-[1600px] mx-auto pb-12">
+            {renderContent()}
+          </div>
+        </main>
       </div>
     </div>
   );

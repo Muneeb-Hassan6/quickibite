@@ -1,60 +1,112 @@
-import React, { useState, useEffect } from "react";
-import { FaEdit, FaTrash, FaPhone, FaTimes } from "react-icons/fa";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
+import EmployeeFilterBar from "./EmployeeFilterBar";
+import EmployeeTableRow from "./EmployeeTableRow";
+import EditEmployeeModal from "./EditEmployeeModal";
+import ServerPaginationControls from "../../SharedComponents/ServerPaginationControls";
+import { apiFetch } from "../../../../../utils/apiHelper";
+
+const PAGE_SIZE = 20;
 
 const EmployeeList = () => {
+  const queryClient = useQueryClient();
   const [employees, setEmployees] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingEmp, setEditingEmp] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [phoneError, setPhoneError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchEmployees = async () => {
+  const employeesRef = useRef(employees);
+  useEffect(() => {
+    employeesRef.current = employees;
+  }, [employees]);
+
+  const fetchStaffBatch = useCallback(async (offset = 0, isAppend = false) => {
+    if (isAppend) {
+      setIsLoadingMore(true);
+    } else if (employeesRef.current.length === 0) {
+      setIsLoading(true);
+    }
+
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_staff.php`,
-      );
+      const response = await apiFetch(`get_staff.php?limit=${PAGE_SIZE}&offset=${offset}`);
       const result = await response.json();
-      if (result.success) {
-        setEmployees(result.data);
-      } else {
-        setEmployees([]);
+
+      if (result.success && Array.isArray(result.data)) {
+        const fetched = result.data;
+        const sTotal = result.total !== undefined ? result.total : fetched.length;
+        setTotalCount(sTotal);
+
+        if (isAppend) {
+          setEmployees((prev) => {
+            const existingIds = new Set(prev.map((e) => e.id));
+            const newUnique = fetched.filter((e) => !existingIds.has(e.id));
+            const merged = [...prev, ...newUnique];
+            setHasMore(merged.length < sTotal);
+            return merged;
+          });
+        } else {
+          setEmployees(fetched);
+          setHasMore(result.has_more !== undefined ? result.has_more : fetched.length < sTotal);
+        }
       }
-    } catch (error) {
-      console.error("Error fetching staff:", error);
+    } catch (err) {
+      console.error("Staff fetch error:", err);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  }, []);
+
+  const staffQueryState = queryClient.getQueryState(["staff"]);
+  const staffDataUpdatedAt = staffQueryState?.dataUpdatedAt;
+
+  useEffect(() => {
+    fetchStaffBatch(0, false);
+  }, [fetchStaffBatch, staffDataUpdatedAt]);
+
+  const handleLoadMore = () => {
+    if (!isLoadingMore && hasMore) {
+      fetchStaffBatch(employees.length, true);
     }
   };
 
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
-
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, name) => {
     Swal.fire({
-      title: "Are you sure?",
-      text: "You want to remove this employee from the system?",
+      title: `Delete ${name}?`,
+      text: "This employee record and history will be removed from the system.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#333",
-      confirmButtonText: "Yes, Delete!",
+      cancelButtonColor: "#71717a",
+      confirmButtonText: "Yes, Delete",
+      background: "#171717",
+      color: "#fff",
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/delete_staff.php`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id }),
-            },
-          );
+          const response = await apiFetch("delete_staff.php", {
+            method: "POST",
+            body: JSON.stringify({ id }),
+          });
           const resData = await response.json();
           if (resData.success) {
-            Swal.fire("Deleted!", "Employee has been removed.", "success");
-            fetchEmployees();
+            Swal.fire({
+              icon: "success",
+              title: "Deleted!",
+              text: "Employee has been removed.",
+              timer: 1500,
+              showConfirmButton: false,
+              background: "#171717",
+              color: "#fff",
+            });
+            fetchStaffBatch(0, false);
+            queryClient.invalidateQueries({ queryKey: ["staff"] });
           } else {
             Swal.fire("Error!", resData.message, "error");
           }
@@ -66,7 +118,11 @@ const EmployeeList = () => {
   };
 
   const handleEditClick = (emp) => {
-    setEditingEmp(emp);
+    setEditingEmp({
+      ...emp,
+      password: "",
+      confirm_password: "",
+    });
     setPhoneError("");
     setIsEditModalOpen(true);
   };
@@ -84,262 +140,200 @@ const EmployeeList = () => {
         icon: "error",
         title: "Invalid Mobile Number",
         text: "Please enter exactly 11 digits starting with 03 (e.g. 03001234567).",
-        confirmButtonColor: "#ef4444",
+        background: "#171717",
+        color: "#fff",
       });
       return;
     }
 
+    const pwd = (editingEmp.password || "").trim();
+    const cpwd = (editingEmp.confirm_password || "").trim();
+
+    if (pwd) {
+      if (pwd.length < 8) {
+        Swal.fire({
+          icon: "warning",
+          title: "Password Too Short",
+          text: "New password must be at least 8 characters long.",
+          background: "#171717",
+          color: "#fff",
+        });
+        return;
+      }
+
+      if (!/[A-Z]/.test(pwd)) {
+        Swal.fire({
+          icon: "warning",
+          title: "Capital Letter Required",
+          text: "New password must contain at least one capital letter (A-Z).",
+          background: "#171717",
+          color: "#fff",
+        });
+        return;
+      }
+
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) {
+        Swal.fire({
+          icon: "warning",
+          title: "Special Character Required",
+          text: "New password must contain at least one special character (!@#$%^&* etc.).",
+          background: "#171717",
+          color: "#fff",
+        });
+        return;
+      }
+
+      if (pwd !== cpwd) {
+        Swal.fire({
+          icon: "error",
+          title: "Passwords Do Not Match",
+          text: "Please make sure your new password and confirm password match.",
+          background: "#171717",
+          color: "#fff",
+        });
+        return;
+      }
+    }
+
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_staff.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(editingEmp),
-        },
-      );
+      const response = await apiFetch("update_staff.php", {
+        method: "POST",
+        body: JSON.stringify({
+          ...editingEmp,
+          password: pwd,
+          confirm_password: cpwd,
+        }),
+      });
       const result = await response.json();
 
       if (result.success) {
         Swal.fire({
           icon: "success",
           title: "Updated!",
-          text: "Employee details updated.",
+          text: result.message || "Employee details updated.",
           timer: 1500,
           showConfirmButton: false,
+          background: "#171717",
+          color: "#fff",
         });
         setIsEditModalOpen(false);
-        fetchEmployees();
+        fetchStaffBatch(0, false);
+        queryClient.invalidateQueries({ queryKey: ["staff"] });
       } else {
-        Swal.fire({ icon: "error", title: "Oops!", text: result.message });
+        Swal.fire({
+          icon: "error",
+          title: "Update Failed",
+          text: result.message || "Failed to update employee.",
+          background: "#171717",
+          color: "#fff",
+        });
       }
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Failed to connect to server.",
+        text: "Server connection failed.",
+        background: "#171717",
+        color: "#fff",
       });
     }
   };
 
-  // 🔥 CLEAN LOGIC: Returns pure CSS class name based on role
-  const getRoleClass = (roleName) => {
-    const role = (roleName || "").toLowerCase();
-    const knownRoles = [
-      "manager",
-      "chef",
-      "cashier",
-      "dispatcher",
-      "waiter",
-      "rider",
-    ];
+  const filteredEmployees = employees.filter(
+    (emp) =>
+      (emp.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (emp.role || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (emp.phone || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-    if (knownRoles.includes(role)) {
-      return `role-${role}`;
-    }
-    // Agar koi naya role hy toh default VIP gray class milegi
-    return "role-default";
-  };
-
-  if (isLoading)
-    return <div className="loading-state-text">Loading Staff Data...</div>;
+  if (isLoading) {
+    return (
+      <div className="py-20 text-center text-[var(--admin-muted,#888)] text-xs font-bold uppercase tracking-wider">
+        Loading Staff Directory...
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div className="premium-table-wrapper animate-slide-up">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Role</th>
-              <th>Phone</th>
-              <th>Salary</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {employees.length > 0 ? (
-              employees.map((emp) => (
-                <tr key={emp.id}>
-                  <td>
-                    <div className="item-profile">
-                      <div className="staff-avatar">
-                        {(emp.name || "U").charAt(0).toUpperCase()}
-                      </div>
-                      <div className="item-info">
-                        <span className="item-name">{emp.name}</span>
-                        <span className="item-id">ID: #{emp.id}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    {/* 🔥 Pure CSS class based on dynamic role */}
-                    <span className={`role-badge ${getRoleClass(emp.role)}`}>
-                      {emp.role || "Unassigned"}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="phone-cell">
-                      <FaPhone className="phone-icon" /> {emp.phone}
-                    </div>
-                  </td>
-                  <td className="salary-cell">
-                    Rs. {Number(emp.salary || 0).toLocaleString()}
-                  </td>
-                  <td>
-                    <span
-                      className={`status-badge ${emp.status === "Active" ? "delivered" : "pending"}`}
-                    >
-                      {emp.status}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      className="btn-action-pill edit-btn"
-                      onClick={() => handleEditClick(emp)}
-                    >
-                      <FaEdit /> Edit
-                    </button>
-                    <button
-                      className="btn-action-pill delete-btn"
-                      onClick={() => handleDelete(emp.id)}
-                    >
-                      <FaTrash />
-                    </button>
+    <div className="space-y-4 animate-slide-up">
+      {/* Search and Filters Bar */}
+      <EmployeeFilterBar
+        totalCount={filteredEmployees.length}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+      />
+
+      {/* Staff Table */}
+      <div className="admin-card-surface rounded-2xl overflow-hidden shadow-sm">
+        <div className="table-responsive-container">
+          <table className="min-w-[760px] lg:min-w-full w-full border-collapse text-left text-xs">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                  Staff Member
+                </th>
+                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                  Designation
+                </th>
+                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                  Phone Contact
+                </th>
+                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                  Monthly Salary
+                </th>
+                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
+                  Status
+                </th>
+                <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider text-right">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-white/[0.06]">
+              {filteredEmployees.length > 0 ? (
+                filteredEmployees.map((emp) => (
+                  <EmployeeTableRow
+                    key={emp.id}
+                    emp={emp}
+                    handleEditClick={handleEditClick}
+                    handleDelete={handleDelete}
+                  />
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="6"
+                    className="p-8 text-center text-xs text-slate-500 dark:text-neutral-400 font-bold uppercase tracking-wider"
+                  >
+                    No staff members found matching criteria.
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="6" className="empty-state-cell">
-                  No employees found in the database.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* EDIT MODAL */}
-      {isEditModalOpen && editingEmp && (
-        <div className="admin-modal-overlay override-zindex">
-          <div className="admin-modal-box animate-slide-up">
-            <div className="modal-header-flex">
-              <h3 className="modal-title">EDIT EMPLOYEE</h3>
-              <button
-                className="btn-close-modal-clean"
-                onClick={() => setIsEditModalOpen(false)}
-              >
-                <FaTimes />
-              </button>
-            </div>
+      {/* Server-side Pagination Load More */}
+      <ServerPaginationControls
+        loadedCount={employees.length}
+        totalCount={totalCount}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        onLoadMore={handleLoadMore}
+        itemLabel="employees"
+      />
 
-            <form onSubmit={handleSave}>
-              <div className="admin-input-group">
-                <label>Full Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  className="admin-input-field custom-admin-input"
-                  value={editingEmp.name}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="modal-form-row">
-                <div className="admin-input-group input-col">
-                  <label>Role</label>
-                  <select
-                    name="role"
-                    className="admin-input-field custom-admin-input"
-                    value={editingEmp.role}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="Manager">Manager</option>
-                    <option value="Chef">Chef</option>
-                    <option value="Cashier">Cashier</option>
-                    <option value="Waiter">Waiter</option>
-                    <option value="Rider">Rider</option>
-                    <option value="Dispatcher">Dispatcher</option>
-                  </select>
-                </div>
-                <div className="admin-input-group input-col">
-                  <label>Status</label>
-                  <select
-                    name="status"
-                    className="admin-input-field custom-admin-input"
-                    value={editingEmp.status}
-                    onChange={handleChange}
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="modal-form-row">
-                <div className="admin-input-group input-col">
-                  <label>Phone Number</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    maxLength="11"
-                    className={`admin-input-field custom-admin-input ${phoneError ? "border-red-500" : ""}`}
-                    style={phoneError ? { borderColor: "#ef4444" } : {}}
-                    value={editingEmp.phone}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9]/g, "");
-                      setEditingEmp({ ...editingEmp, phone: val });
-                      
-                      if (val.length > 0 && val.length < 11) {
-                        setPhoneError("Please enter all 11 digits.");
-                      } else if (val.length === 11 && !/^03\d{9}$/.test(val)) {
-                        setPhoneError("Number must start with 03 (e.g. 03001234567).");
-                      } else {
-                        setPhoneError("");
-                      }
-                    }}
-                    required
-                  />
-                  {phoneError && (
-                    <span style={{ color: "#ef4444", fontSize: "12px", marginTop: "5px", display: "inline-block" }}>
-                      {phoneError}
-                    </span>
-                  )}
-                </div>
-                <div className="admin-input-group input-col">
-                  <label>Salary (Rs.)</label>
-                  <input
-                    type="number"
-                    name="salary"
-                    className="admin-input-field custom-admin-input"
-                    value={editingEmp.salary}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="modal-footer-actions">
-                <button
-                  type="button"
-                  className="btn-cancel-modal-clean"
-                  onClick={() => setIsEditModalOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn-save-modal-clean">
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </>
+      {/* Edit Employee Modal */}
+      <EditEmployeeModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        editingEmp={editingEmp}
+        handleChange={handleChange}
+        handleSave={handleSave}
+        phoneError={phoneError}
+      />
+    </div>
   );
 };
 

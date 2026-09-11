@@ -1,3 +1,5 @@
+import { API_BASE } from "../config/api";
+
 /**
  * Optimizes a Cloudinary image URL by injecting quality, format, and width parameters.
  * If the URL is not a valid Cloudinary upload URL, it returns the original URL.
@@ -22,3 +24,29 @@ export const optimizeCloudinaryImage = (url, width = 600) => {
   // Return original URL if it's not a Cloudinary upload URL
   return url;
 };
+
+/**
+ * Resolves full URL for Cloudinary, absolute URLs, or local backend static assets.
+ * 
+ * @param {string} img - The image path or URL
+ * @param {number} width - Desired width for optimization (optional)
+ * @returns {string} - The fully-qualified image URL
+ */
+export const resolveImageUrl = (img, width = 600) => {
+  if (!img || typeof img !== "string" || img.trim() === "") {
+    return "https://placehold.co/600x400?text=Delicious+Food";
+  }
+  const cleanImg = img.trim();
+  if (cleanImg.startsWith("http://") || cleanImg.startsWith("https://")) {
+    return optimizeCloudinaryImage(cleanImg, width);
+  }
+  if (cleanImg.startsWith("data:") || cleanImg.startsWith("blob:")) {
+    return cleanImg;
+  }
+  const apiBase = API_BASE || "";
+  const serverBase = apiBase.replace(/\/api\/?$/, "");
+  const cleanPath = cleanImg.startsWith("/") ? cleanImg : `/${cleanImg}`;
+  return `${serverBase}${cleanPath}`;
+};
+
+export const getOptimizedImageUrl = resolveImageUrl;

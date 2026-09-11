@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { FaClock, FaSun, FaMoon, FaCoffee, FaCog } from "react-icons/fa";
+import { FaGear } from "react-icons/fa6";
 import Swal from "sweetalert2";
+import ShiftCardItem from "./ShiftCardItem";
+import ShiftTable from "./ShiftTable";
+import { apiFetch } from "../../../../../utils/apiHelper";
 
 const ShiftManager = () => {
   const [employees, setEmployees] = useState([]);
@@ -11,15 +14,13 @@ const ShiftManager = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🔥 Fetch Staff and Timings
+  // Fetch Staff and Timings
   const fetchShifts = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_shifts.php`,
-      );
+      const response = await apiFetch("get_shifts.php");
       const result = await response.json();
       if (result.success) {
-        setEmployees(result.data);
+        setEmployees(result.data || []);
         if (result.timings) setShiftTimings(result.timings);
       }
     } catch (error) {
@@ -33,22 +34,18 @@ const ShiftManager = () => {
     fetchShifts();
   }, []);
 
-  // 🔥 Update Individual Staff Shift
+  // Update Individual Staff Shift
   const handleShiftChange = async (id, newShift) => {
     const updatedEmployees = employees.map((emp) =>
-      emp.id === id ? { ...emp, shift: newShift } : emp,
+      emp.id === id ? { ...emp, shift: newShift } : emp
     );
     setEmployees(updatedEmployees);
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_shift.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ staff_id: id, shift: newShift }),
-        },
-      );
+      const response = await apiFetch("update_shift.php", {
+        method: "POST",
+        body: JSON.stringify({ staff_id: id, shift: newShift }),
+      });
       const result = await response.json();
 
       if (result.success) {
@@ -56,9 +53,11 @@ const ShiftManager = () => {
           toast: true,
           position: "top-end",
           icon: "success",
-          title: "Shift Updated",
+          title: `Shift Updated to ${newShift}`,
           showConfirmButton: false,
           timer: 1500,
+          background: "#171717",
+          color: "#fff",
         });
       } else {
         Swal.fire("Error", result.message, "error");
@@ -70,27 +69,29 @@ const ShiftManager = () => {
     }
   };
 
-  // 🔥 ADMIN FEATURE: Set Global Shift Timings
+  // Set Global Shift Timings
   const handleSetTimings = () => {
     Swal.fire({
-      title: "Set Shift Timings",
+      title: "Configure Global Shift Hours",
       html: `
-        <div style="text-align: left; margin-bottom: 10px;">
-          <label style="font-size: 13px; color: #888; font-weight: bold;">☀️ Morning Shift</label>
-          <input id="swal-morning" class="swal2-input" value="${shiftTimings.Morning}" style="width: 80%; margin-top: 5px;">
+        <div style="text-align: left; margin-bottom: 12px;">
+          <label style="font-size: 12px; color: #f59e0b; font-weight: bold;">Morning Shift</label>
+          <input id="swal-morning" class="swal2-input" value="${shiftTimings.Morning}" style="width: 100%; margin-top: 4px; background: #222; color: #fff;">
         </div>
-        <div style="text-align: left; margin-bottom: 10px;">
-          <label style="font-size: 13px; color: #888; font-weight: bold;">🌤️ Evening Shift</label>
-          <input id="swal-evening" class="swal2-input" value="${shiftTimings.Evening}" style="width: 80%; margin-top: 5px;">
+        <div style="text-align: left; margin-bottom: 12px;">
+          <label style="font-size: 12px; color: #fb923c; font-weight: bold;">Evening Shift</label>
+          <input id="swal-evening" class="swal2-input" value="${shiftTimings.Evening}" style="width: 100%; margin-top: 4px; background: #222; color: #fff;">
         </div>
-        <div style="text-align: left; margin-bottom: 10px;">
-          <label style="font-size: 13px; color: #888; font-weight: bold;">🌙 Night Shift</label>
-          <input id="swal-night" class="swal2-input" value="${shiftTimings.Night}" style="width: 80%; margin-top: 5px;">
+        <div style="text-align: left; margin-bottom: 12px;">
+          <label style="font-size: 12px; color: #818cf8; font-weight: bold;">Night Shift</label>
+          <input id="swal-night" class="swal2-input" value="${shiftTimings.Night}" style="width: 100%; margin-top: 4px; background: #222; color: #fff;">
         </div>
       `,
       showCancelButton: true,
-      confirmButtonText: "Save Timings",
-      confirmButtonColor: "#10b981",
+      confirmButtonText: "Save Shift Hours",
+      confirmButtonColor: "#f59e0b",
+      background: "#171717",
+      color: "#fff",
       preConfirm: () => {
         return {
           Morning: document.getElementById("swal-morning").value,
@@ -101,157 +102,62 @@ const ShiftManager = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/update_shift_timings.php`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(result.value),
-            },
-          );
-          const resData = await response.json();
-          if (resData.success) {
-            Swal.fire("Saved!", "Shift timings have been updated.", "success");
-            fetchShifts(); // Refresh data
-          } else {
-            Swal.fire("Error", resData.message, "error");
+          const response = await apiFetch("update_shift_timings.php", {
+            method: "POST",
+            body: JSON.stringify(result.value),
+          });
+          const data = await response.json();
+          if (data.success) {
+            setShiftTimings(result.value);
+            Swal.fire({
+              icon: "success",
+              title: "Saved!",
+              text: "Shift schedule timings updated.",
+              timer: 1500,
+              showConfirmButton: false,
+              background: "#171717",
+              color: "#fff",
+            });
           }
         } catch (error) {
-          Swal.fire("Error", "Could not connect to server.", "error");
+          Swal.fire("Error", "Could not save shift timings", "error");
         }
       }
     });
   };
 
-  // 🔥 Get details dynamically based on API timings
-  const getShiftDetails = (shift) => {
-    const currentShift = shift || "Morning";
-    if (currentShift === "Morning")
-      return {
-        icon: <FaCoffee />,
-        color: "#f59e0b",
-        time: shiftTimings.Morning,
-        bg: "rgba(245, 158, 11, 0.1)",
-      };
-    if (currentShift === "Evening")
-      return {
-        icon: <FaSun />,
-        color: "#3b82f6",
-        time: shiftTimings.Evening,
-        bg: "rgba(59, 130, 246, 0.1)",
-      };
-    return {
-      icon: <FaMoon />,
-      color: "#8b5cf6",
-      time: shiftTimings.Night,
-      bg: "rgba(139, 92, 246, 0.1)",
-    };
-  };
-
   if (isLoading)
-    return <div className="loading-state-text">Loading Shift Data...</div>;
+    return (
+      <div className="py-20 text-center text-[var(--admin-muted,#888)] text-xs font-bold uppercase tracking-wider">
+        Loading Shift Roster...
+      </div>
+    );
 
   return (
-    <div className="premium-table-wrapper animate-slide-up no-padding-wrapper">
-      <div
-        className="module-controls-header"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <div>
-          <h4 className="module-title">Shift Roster</h4>
-          <p className="module-subtitle">Assign daily shifts to staff.</p>
-        </div>
+    <div className="space-y-5 animate-slide-up">
+      {/* Shift Timing Cards */}
+      <ShiftCardItem shiftTimings={shiftTimings} />
 
-        <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
-          <div className="shift-legend" style={{ margin: 0 }}>
-            <span className="legend-morning">
-              <FaCoffee /> Morning
-            </span>
-            <span className="legend-evening">
-              <FaSun /> Evening
-            </span>
-            <span className="legend-night">
-              <FaMoon /> Night
-            </span>
-          </div>
-
-          {/* 🔥 ADMIN BUTTON TO SET TIMINGS */}
-          <button
-            className="btn-action-pill"
-            style={{ background: "#333", color: "#fff", padding: "8px 15px" }}
-            onClick={handleSetTimings}
-          >
-            <FaCog /> Setup Timings
-          </button>
+      {/* Header & Adjust Timing Button */}
+      <div className="admin-card-surface flex justify-between items-center p-4 rounded-2xl shadow-sm">
+        <div className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
+          Staff Shift Allocations ({employees.length} Members)
         </div>
+        <button
+          type="button"
+          onClick={handleSetTimings}
+          className="btn-brand-cta px-4 py-2 text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer border-none active:scale-95"
+        >
+          <FaGear className="w-3.5 h-3.5" />
+          <span>Configure Shift Hours</span>
+        </button>
       </div>
 
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th className="pad-left-20">Staff Member</th>
-            <th>Current Shift Status</th>
-            <th>Shift Timings</th>
-            <th>Change Shift</th>
-          </tr>
-        </thead>
-        <tbody>
-          {employees.length > 0 ? (
-            employees.map((emp) => {
-              const shiftInfo = getShiftDetails(emp.shift);
-              return (
-                <tr key={emp.id}>
-                  <td className="pad-left-20">
-                    <div className="item-profile">
-                      <div className="staff-avatar">
-                        {emp.name.charAt(0).toUpperCase()}
-                      </div>
-                      <span className="item-name">{emp.name}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div
-                      className="shift-badge"
-                      style={{
-                        color: shiftInfo.color,
-                        background: shiftInfo.bg,
-                      }}
-                    >
-                      {shiftInfo.icon} {emp.shift || "Morning"}
-                    </div>
-                  </td>
-                  <td className="shift-time-cell">{shiftInfo.time}</td>
-                  <td>
-                    <div className="shift-select-wrapper">
-                      <select
-                        className="shift-select"
-                        value={emp.shift || "Morning"}
-                        onChange={(e) =>
-                          handleShiftChange(emp.id, e.target.value)
-                        }
-                      >
-                        <option value="Morning">Morning</option>
-                        <option value="Evening">Evening</option>
-                        <option value="Night">Night</option>
-                      </select>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })
-          ) : (
-            <tr>
-              <td colSpan="4" className="empty-state-cell">
-                No active staff found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      {/* Shift Table */}
+      <ShiftTable
+        employees={employees}
+        handleShiftChange={handleShiftChange}
+      />
     </div>
   );
 };

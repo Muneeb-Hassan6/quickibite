@@ -17,6 +17,27 @@ if(isset($data->name) && isset($data->role) && isset($data->phone) && isset($dat
         exit();
     }
 
+    // 🔥 Strong Password Validation
+    if (!empty($data->password)) {
+        $rawPassword = (string)$data->password;
+        if (strlen($rawPassword) < 8) {
+            echo json_encode(["success" => false, "message" => "Password must be at least 8 characters long."]);
+            exit();
+        }
+        if (!preg_match('/[A-Z]/', $rawPassword)) {
+            echo json_encode(["success" => false, "message" => "Password must contain at least one capital letter (A-Z)."]);
+            exit();
+        }
+        if (!preg_match('/[!@#$%^&*(),.?":{}|<>]/', $rawPassword)) {
+            echo json_encode(["success" => false, "message" => "Password must contain at least one special character."]);
+            exit();
+        }
+        if (isset($data->confirm_password) && $rawPassword !== (string)$data->confirm_password) {
+            echo json_encode(["success" => false, "message" => "Password and confirm password do not match."]);
+            exit();
+        }
+    }
+
     try {
         // 🔥 Transaction Start (Dono tables me data ikatha safe tarikay se jayega)
         $db->beginTransaction(); 

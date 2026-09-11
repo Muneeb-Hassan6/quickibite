@@ -1,43 +1,31 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { API_BASE } from "../config/api";
 
 const OrderContext = createContext();
 
 export const useOrders = () => useContext(OrderContext);
 
 export const OrderProvider = ({ children }) => {
-  const [orders, setOrders] = useState([]);
+  const queryClient = useQueryClient();
 
   // 🔥 1. FETCH ORDERS FROM BACKEND
-  const fetchOrders = async () => {
-    const token = sessionStorage.getItem("auth_token");
-    if (!token) return; // Don't fetch if no token is found (e.g., normal website visitors)
+  const { data: orders = [], refetch: fetchOrders } = useQuery({
+    queryKey: ['customer_orders'],
+    queryFn: async () => {
+      const token = sessionStorage.getItem("auth_token");
+      if (!token) return [];
 
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php`,
-        {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        }
-      );
-      if (!response.ok) return; // Ignore 401s or other errors silently
+      const response = await fetch(`${API_BASE}/get_orders.php`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!response.ok) return [];
 
       const data = await response.json();
-      if (Array.isArray(data)) {
-        setOrders(data);
-      }
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-    }
-  };
-
-  // Jab app load ho toh orders fetch karo, aur har 5 second baad check karo (Real-time feel ke liye)
-  useEffect(() => {
-    fetchOrders();
-    const interval = setInterval(fetchOrders, 5000);
-    return () => clearInterval(interval);
-  }, []);
+      return Array.isArray(data) ? data : [];
+    },
+    refetchInterval: 5000,
+  });
 
   // 🔥 2. PLACE NEW ORDER FUNCTION (Sends to Backend)
   // 🔥 2. PLACE NEW ORDER FUNCTION (Sends to Backend)
@@ -65,21 +53,19 @@ export const OrderProvider = ({ children }) => {
       customer_name: orderData.customer_name || "Online Customer",
     };
 
-    // 🕵️‍♂️ Debugging ke liye: Console mein check karein ke backend ko kya ja raha hai
-    console.log("Sending to Database:", safeOrderData);
-
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/create_order.php`,
+        `${API_BASE}/create_order.php`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(safeOrderData), // Ab safe data backend ko jayega
-        },
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(safeOrderData),
+        }
       );
 
       const result = await response.json();
-      console.log(result.message);
 
       // Order place hone ke baad list ko dobara fresh karo
       fetchOrders();
@@ -90,15 +76,15 @@ export const OrderProvider = ({ children }) => {
   // 🔥 3. UPDATE STATUS FUNCTION (Sends to Backend)
   const updateOrderStatus = async (orderId, newStatus) => {
     // UI mein foran update dikhane ke liye (Optimistic update)
-    setOrders((prevOrders) =>
-      prevOrders.map((order) =>
-        order.id === orderId ? { ...order, status: newStatus } : order,
-      ),
+    queryClient.setQueryData(['customer_orders'], (old = []) => 
+      old.map((order) =>
+        order.id === orderId ? { ...order, status: newStatus } : order
+      )
     );
 
     // Database mein update bhejna
     try {
-      await fetch(`${import.meta.env.VITE_API_BASE}/update_order_status.php`, {
+      await fetch(`${API_BASE}/update_order_status.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: orderId, status: newStatus }),

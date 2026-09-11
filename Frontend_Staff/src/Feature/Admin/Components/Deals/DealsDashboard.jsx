@@ -1,80 +1,72 @@
 import React, { useState } from "react";
 import DealMaker from "./DealMaker";
 import DealList from "./DealList";
-import { FaTag, FaList } from "react-icons/fa";
+import { LuLayers, LuCirclePlus } from "react-icons/lu";
+import { FaTag } from "react-icons/fa";
 
 const DealsDashboard = () => {
   const [activeSubTab, setActiveSubTab] = useState("manage");
-  const [dealToEdit, setDealToEdit] = useState(null); // 🔥 Edit Data State
+  const [dealToEdit, setDealToEdit] = useState(null);
 
-  // Jab edit button press ho
   const handleEditDeal = (deal) => {
     setDealToEdit(deal);
-    setActiveSubTab("create"); // Create walay tab par bhej do
+    setActiveSubTab("create");
   };
 
-  // Jab edit pura ho jaye ya cancel ho jaye
   const clearEdit = () => {
     setDealToEdit(null);
     setActiveSubTab("manage");
   };
 
   return (
-    <div style={{ padding: "20px", width: "100%" }}>
-      <div
-        style={{
-          display: "flex",
-          gap: "15px",
-          marginBottom: "25px",
-          borderBottom: "1px solid #333",
-          paddingBottom: "15px",
-        }}
-      >
-        <button
-          onClick={clearEdit} // Is par click karny se reset ho jayega
-          style={{
-            background: activeSubTab === "manage" ? "#ef4444" : "transparent",
-            color: activeSubTab === "manage" ? "#fff" : "#888",
-            border: "1px solid",
-            borderColor: activeSubTab === "manage" ? "#ef4444" : "#333",
-            padding: "10px 20px",
-            borderRadius: "8px",
-            fontWeight: "bold",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            transition: "0.3s",
-          }}
-        >
-          <FaList /> Manage Deals
-        </button>
+    <div className="w-full space-y-5 animate-slide-up">
+      {/* Header & Sub-Tabs Switcher */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-slate-200 dark:border-white/[0.06]">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-4 bg-red-600 rounded-full shrink-0" />
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
+              Combos & Deals Engine
+            </h2>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-neutral-400 m-0 mt-0.5 font-sans">
+            Build bundled food combos, dynamic discount packages, and time-restricted offers.
+          </p>
+        </div>
 
-        <button
-          onClick={() => {
-            setDealToEdit(null);
-            setActiveSubTab("create");
-          }} // Fresh deal bnany k liay
-          style={{
-            background: activeSubTab === "create" ? "#ef4444" : "transparent",
-            color: activeSubTab === "create" ? "#fff" : "#888",
-            border: "1px solid",
-            borderColor: activeSubTab === "create" ? "#ef4444" : "#333",
-            padding: "10px 20px",
-            borderRadius: "8px",
-            fontWeight: "bold",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            transition: "0.3s",
-          }}
-        >
-          <FaTag /> {dealToEdit ? "Edit Deal" : "Create New Deal"}
-        </button>
+        {/* Tab Buttons */}
+        <div className="inline-flex bg-white dark:bg-[#161616] border border-slate-200 dark:border-white/[0.06] p-1 rounded-2xl shadow-sm gap-1">
+          <button
+            type="button"
+            onClick={clearEdit}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer border-none ${
+              activeSubTab === "manage"
+                ? "bg-amber-400/90 dark:bg-amber-500 text-neutral-950 shadow-sm"
+                : "bg-transparent text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
+            }`}
+          >
+            <LuLayers className="w-3.5 h-3.5" />
+            <span>Manage Deals</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setDealToEdit(null);
+              setActiveSubTab("create");
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer border-none ${
+              activeSubTab === "create"
+                ? "bg-amber-400/90 dark:bg-amber-500 text-neutral-950 shadow-sm"
+                : "bg-transparent text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
+            }`}
+          >
+            <LuCirclePlus className="w-3.5 h-3.5" />
+            <span>{dealToEdit ? "Edit Deal" : "Create New Deal"}</span>
+          </button>
+        </div>
       </div>
 
-      {/* 🔥 Props Pass Kar Diye */}
+      {/* Content View */}
       {activeSubTab === "manage" ? (
         <DealList onEdit={handleEditDeal} />
       ) : (

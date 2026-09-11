@@ -1,29 +1,44 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-// 🔥 FaSpinner ko import me add kar liya
-import { FaTimes, FaPlus, FaTrash, FaSpinner } from "react-icons/fa";
+import { FaTimes, FaSpinner, FaUtensils } from "react-icons/fa";
+import AddonSubItemsTable from "./AddonSubItemsTable";
 
-const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
+const AddonModal = ({
+  isOpen,
+  onClose,
+  menuItem,
+  menuItems = [],
+  inventoryItems = [],
+  onSaved,
+}) => {
+  const [selectedItem, setSelectedItem] = useState(menuItem);
   const [addons, setAddons] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // 🔥 1. Naya state loader ko control karne ke liye
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (isOpen && menuItem) {
+    if (menuItem) {
+      setSelectedItem(menuItem);
+    } else if (menuItems.length > 0 && !selectedItem) {
+      setSelectedItem(menuItems[0]);
+    }
+  }, [menuItem, menuItems]);
+
+  useEffect(() => {
+    if (isOpen && selectedItem?.id) {
       setLoading(true);
       fetch(
-        `${import.meta.env.VITE_API_BASE}/get_addons.php?menu_item_id=${menuItem.id}`,
+        `${import.meta.env.VITE_API_BASE}/admin_manage_addons.php?action=get_product_addons&menu_item_id=${selectedItem.id}`
       )
         .then((res) => res.json())
-        .then((data) => {
-          if (data.addons.length > 0) {
-            const mapped = data.addons.map((a) => ({
-              addon_name: a.addon_name,
-              addon_price: a.addon_price,
-              inventory_id: a.inventory_id,
-              qty: a.qty_to_deduct,
+        .then((resData) => {
+          const list = resData.data || resData.addons || [];
+          if (Array.isArray(list) && list.length > 0) {
+            const mapped = list.map((a) => ({
+              addon_name: a.title || a.addon_name || "",
+              addon_price: a.price || a.addon_price || "",
+              inventory_id: a.inventory_id || "",
+              qty: a.qty_to_deduct || a.qty || "",
             }));
             setAddons(mapped);
           } else {
@@ -32,9 +47,13 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
             ]);
           }
           setLoading(false);
+        })
+        .catch((err) => {
+          console.error("Failed to load addons", err);
+          setLoading(false);
         });
     }
-  }, [isOpen, menuItem]);
+  }, [isOpen, selectedItem]);
 
   const handleAddRow = () => {
     setAddons([
@@ -49,36 +68,67 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
     setAddons(updated);
   };
 
+  const handleRemoveRow = (index) => {
+    const updated = addons.filter((_, i) => i !== index);
+    setAddons(
+      updated.length > 0
+        ? updated
+        : [{ addon_name: "", addon_price: "", inventory_id: "", qty: "" }]
+    );
+  };
+
   const handleSave = async () => {
-    // 🔥 2. API hit hone se pehle loader On karein
+    if (!selectedItem?.id) {
+      Swal.fire("Error", "Please select a product first", "error");
+      return;
+    }
+
     setIsSaving(true);
 
+    const filteredAddons = addons
+      .filter((a) => a.addon_name.trim() !== "")
+      .map((a) => ({
+        title: a.addon_name.trim(),
+        addon_name: a.addon_name.trim(),
+        price: a.addon_price !== "" ? Number(a.addon_price) : 0,
+        addon_price: a.addon_price !== "" ? Number(a.addon_price) : 0,
+        inventory_id: a.inventory_id ? Number(a.inventory_id) : null,
+        qty_to_deduct: a.qty ? Number(a.qty) : null,
+      }));
+
     const payload = {
-      menu_item_id: menuItem.id,
-      addons: addons.filter((a) => a.addon_name !== ""),
+      action: "save_product_addons",
+      menu_item_id: selectedItem.id,
+      addons: filteredAddons,
     };
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/save_addons.php`,
+        `${import.meta.env.VITE_API_BASE}/admin_manage_addons.php`,
         {
           method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        },
+        }
       );
-      if (res.ok) {
-        Swal.fire({ icon: "success", title: "Saved!", timer: 1500 });
+      const result = await res.json();
+      if (res.ok && (result.success || result.status === "success")) {
+        Swal.fire({
+          icon: "success",
+          title: "Saved!",
+          text: `Custom add-ons for "${selectedItem.name}" updated successfully`,
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        if (onSaved) onSaved();
         onClose();
+      } else {
+        throw new Error(result.message || "Failed to save addons");
       }
     } catch (error) {
-      console.error("Save failed", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to save addons",
-      });
+      console.error(error);
+      Swal.fire("Error", error.message || "Network Error", "error");
     } finally {
-      // 🔥 3. Save ho jaye ya error aye, dono suraton me loader Off kar dein
       setIsSaving(false);
     }
   };
@@ -86,99 +136,90 @@ const AddonModal = ({ isOpen, onClose, menuItem, inventoryItems }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="pos-modal-overlay">
-      <div className="pos-modal-box addon-modal-container">
-        <div className="pos-modal-header">
-          <h3 className="pos-modal-title">Add-ons for {menuItem.name}</h3>
-          <button className="btn-close-modal" onClick={onClose}>
-            <FaTimes />
+    <div
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center p-3 sm:p-5 z-[99999]"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg md:max-w-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-2xl max-h-[88vh] flex flex-col animate-slide-up text-zinc-900 dark:text-white"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex justify-between items-center pb-4 mb-4 border-b border-zinc-200 dark:border-zinc-800">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <span className="w-1.5 h-5 bg-amber-500 rounded-full" />
+              <h3 className="m-0 text-base sm:text-lg md:text-xl font-black text-zinc-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
+                Product Custom Add-ons & Modifiers
+              </h3>
+            </div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 m-0">
+              Configure product-level upgrades (e.g. Extra Cheese, Bacon, Special Sauces).
+            </p>
+          </div>
+          <button
+            type="button"
+            className="w-8 h-8 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center justify-center border-none cursor-pointer transition-all active:scale-90"
+            onClick={onClose}
+          >
+            <FaTimes className="text-sm" />
           </button>
         </div>
 
-        <div className="pos-modal-section">
-          {loading ? (
-            <p>Loading...</p>
-          ) : (
-            addons.map((addon, index) => (
-              <div key={index} className="addon-row">
-                <input
-                  type="text"
-                  placeholder="Name (e.g. Extra Cheese)"
-                  className="pos-custom-note-input addon-name-input"
-                  value={addon.addon_name}
-                  onChange={(e) =>
-                    handleFieldChange(index, "addon_name", e.target.value)
-                  }
-                />
-                <input
-                  type="number"
-                  placeholder="Price"
-                  className="pos-custom-note-input addon-price-input"
-                  value={addon.addon_price}
-                  onChange={(e) =>
-                    handleFieldChange(index, "addon_price", e.target.value)
-                  }
-                />
-                <select
-                  className="pos-category-dropdown addon-inv-select"
-                  value={addon.inventory_id}
-                  onChange={(e) =>
-                    handleFieldChange(index, "inventory_id", e.target.value)
-                  }
-                >
-                  <option value="">Link Inventory</option>
-                  {inventoryItems.map((inv) => (
-                    <option key={inv.id} value={inv.id}>
-                      {inv.name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  placeholder="Qty"
-                  className="pos-custom-note-input addon-qty-input"
-                  value={addon.qty}
-                  onChange={(e) =>
-                    handleFieldChange(index, "qty", e.target.value)
-                  }
-                />
-                <button
-                  onClick={() =>
-                    setAddons(addons.filter((_, i) => i !== index))
-                  }
-                  className="btn-cart-remove"
-                >
-                  <FaTrash />
-                </button>
-              </div>
-            ))
-          )}
+        {/* Product Selector Dropdown if multiple products available */}
+        {menuItems.length > 0 && (
+          <div className="mb-4 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5 shrink-0">
+              <FaUtensils className="text-[10px]" /> Select Target Product:
+            </label>
+            <select
+              value={selectedItem?.id || ""}
+              onChange={(e) => {
+                const found = menuItems.find((m) => String(m.id) === String(e.target.value));
+                if (found) setSelectedItem(found);
+              }}
+              className="w-full sm:w-auto flex-1 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white text-xs font-bold py-2 px-3 rounded-xl focus:outline-none focus:border-amber-500"
+            >
+              {menuItems.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name} ({m.category || "General"}) - Rs {parseFloat(m.price || 0).toLocaleString()}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
-          <button className="btn-add-row" onClick={handleAddRow}>
-            <FaPlus /> Add Option
-          </button>
+        {/* Content Body */}
+        <div className="flex-1 overflow-y-auto pr-1">
+          <AddonSubItemsTable
+            addons={addons}
+            inventoryItems={inventoryItems}
+            loading={loading}
+            handleAddRow={handleAddRow}
+            handleFieldChange={handleFieldChange}
+            handleRemoveRow={handleRemoveRow}
+          />
         </div>
 
-        {/* 🔥 4. Save Button UI Logic */}
-        <button
-          className="btn-confirm-add addon-save-btn"
-          onClick={handleSave}
-          disabled={isSaving} // Jab save ho raha ho toh button click hona band ho jaye
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: "10px",
-          }}
-        >
-          {isSaving ? (
-            <>
-              <FaSpinner className="spin-animation" /> Saving...
-            </>
-          ) : (
-            "Save Settings"
-          )}
-        </button>
+        {/* Footer Actions */}
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          <button
+            type="button"
+            className="px-5 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 text-xs font-bold uppercase tracking-wider cursor-pointer transition-all"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-500/20 active:scale-95 border-none cursor-pointer transition-all flex items-center gap-2"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
+            {isSaving && <FaSpinner className="animate-spin text-xs" />}
+            <span>Save Add-ons</span>
+          </button>
+        </div>
       </div>
     </div>
   );

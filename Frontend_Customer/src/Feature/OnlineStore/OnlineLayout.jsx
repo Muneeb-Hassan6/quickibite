@@ -1,30 +1,28 @@
 import React from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import OnlineNavbar from "./Components/OnlineNavbar";
-import CartPopup from "../Order/Components/CartPopup";
+import { Outlet, useLocation } from "react-router-dom";
+import Header from "../../Components/Layout/Header";
+import CartPopup from "./Components/CartPopup";
 import Footer from "./Components/Footer";
-import "./styles/index.css";
 
 const OnlineLayout = () => {
-  const navigate = useNavigate();
   const location = useLocation();
-  const isMenuPage = location.pathname.toLowerCase() === "/menu";
+  const isCheckoutPage = location.pathname.toLowerCase().includes("/checkout");
 
   return (
-    <div className="online-store-wrapper">
-      {/* 1. Navbar */}
-      <OnlineNavbar />
+    <div className="bg-white dark:bg-[#0a0a0c] w-full min-h-screen text-zinc-900 dark:text-white flex flex-col justify-between font-['Segoe_UI',Tahoma,Geneva,Verdana,sans-serif] relative transition-colors duration-300">
+      {/* 1. Fixed Header Navbar */}
+      <Header />
 
-      {/* 2. Main Content */}
-      <div className="online-main-content">
+      {/* 2. Main Content Viewport with exact top offset matching header height */}
+      <div className={`flex-1 w-full ${isCheckoutPage ? "pt-0 mt-0" : "pt-14 sm:pt-16"}`}>
         <Outlet />
       </div>
 
       {/* 3. Cart Popup */}
       <CartPopup />
 
-      {/* 4. Footer */}
-      {!isMenuPage && <Footer />}
+      {/* 4. Global Persistent Footer across all customer routes */}
+      <Footer />
     </div>
   );
 };

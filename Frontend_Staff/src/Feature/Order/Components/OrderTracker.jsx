@@ -232,19 +232,65 @@ const OrderTracker = () => {
                   <h4 className="otp-receipt-title">Order Details</h4>
                   <div className="otp-items-list">
                     {order.cart &&
-                      order.cart.map((i, idx) => (
-                        <div key={idx} className="otp-item-row">
-                          <div className="otp-item-left">
-                            <span className="otp-item-qty">{i.qty}x</span>
-                            <span className="otp-item-name">
-                              {i.name || i.title}
-                            </span>
+                      order.cart.map((i, idx) => {
+                        let rawAddons =
+                          i.selected_addons ||
+                          i.selectedAddons ||
+                          i.addons ||
+                          i.selected_addons_json ||
+                          [];
+                        if (typeof rawAddons === "string") {
+                          try {
+                            rawAddons = JSON.parse(rawAddons);
+                          } catch {
+                            rawAddons = [];
+                          }
+                        }
+                        const addons = Array.isArray(rawAddons) ? rawAddons : [];
+                        const qty = parseInt(i.qty || 1, 10);
+                        const addonsUnitTotal = addons.reduce(
+                          (sum, a) => sum + parseFloat(a.price || a.addon_price || 0),
+                          0
+                        );
+                        let basePrice =
+                          i.base_price !== undefined && parseFloat(i.base_price) > 0
+                            ? parseFloat(i.base_price)
+                            : parseFloat(i.price || 0) > addonsUnitTotal
+                            ? parseFloat(i.price || 0) - addonsUnitTotal
+                            : parseFloat(i.price || 0);
+
+                        return (
+                          <div key={idx} className="otp-item-container" style={{ marginBottom: "6px" }}>
+                            <div className="otp-item-row">
+                              <div className="otp-item-left">
+                                <span className="otp-item-qty">{qty}x</span>
+                                <span className="otp-item-name">
+                                  {i.name || i.title}
+                                </span>
+                              </div>
+                              <span className="otp-item-price">
+                                Rs. {basePrice * qty}
+                              </span>
+                            </div>
+                            {addons.map((a, aIdx) => (
+                              <div
+                                key={aIdx}
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  fontSize: "11px",
+                                  opacity: 0.75,
+                                  paddingLeft: "18px",
+                                  marginTop: "2px",
+                                }}
+                              >
+                                <span>+ {a.name || a.title || a.addon_name}</span>
+                                <span>Rs. {parseFloat(a.price || a.addon_price || 0) * qty}</span>
+                              </div>
+                            ))}
                           </div>
-                          <span className="otp-item-price">
-                            Rs. {i.price * i.qty}
-                          </span>
-                        </div>
-                      ))}
+                        );
+                      })}
                   </div>
 
                   <div className="otp-total-row">

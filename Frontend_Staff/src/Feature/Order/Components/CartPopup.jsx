@@ -13,6 +13,7 @@ import {
   FaChevronDown,
   FaChevronUp,
 } from "react-icons/fa";
+import { resolveImageUrl } from "../../../utils/imageOptimizer";
 
 const CartPopup = () => {
   const navigate = useNavigate();
@@ -78,9 +79,13 @@ const CartPopup = () => {
               >
                 <div className="cart-img-box">
                   <img
-                    src={item.img || item.image}
+                    src={resolveImageUrl(item.img || item.image, 150)}
                     alt={item.title}
-                    className="cart-item-img"
+                    className="cart-item-img object-contain"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "https://placehold.co/100x100?text=Food";
+                    }}
                   />
                 </div>
 

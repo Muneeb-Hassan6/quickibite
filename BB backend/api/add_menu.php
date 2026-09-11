@@ -8,41 +8,52 @@ $database = new Database();
 $conn = $database->getConnection(); 
 
 if (!$conn) {
+    http_response_code(500);
     echo json_encode(["success" => false, "message" => "Database connection failed."]);
     exit();
 }
 
 $data = json_decode(file_get_contents("php://input"));
 
-if(!empty($data->name) && !empty($data->variants)) {
-    $name = $data->name;
-    $description = isset($data->description) ? $data->description : '';
-    $category = isset($data->category) ? $data->category : '';
+if (!empty($data->name) && !empty($data->variants)) {
+    $name = trim($data->name);
+    $description = isset($data->description) ? trim($data->description) : '';
+    $category = isset($data->category) ? trim($data->category) : '';
     $img = isset($data->img) ? $data->img : '';
     $isAvailable = !empty($data->isAvailable) ? 1 : 0;
     $isTopDeal = !empty($data->isTopDeal) ? 1 : 0;
     $isBestSeller = !empty($data->isBestSeller) ? 1 : 0;
+    $promo_banner_image = isset($data->promo_banner_image) ? $data->promo_banner_image : null;
+    $is_featured_banner = !empty($data->is_featured_banner) ? 1 : 0;
+    $banner_order = isset($data->banner_order) ? intval($data->banner_order) : 0;
+    $has_spice_option = isset($data->has_spice_option) ? (!empty($data->has_spice_option) ? 1 : 0) : 1;
     
     $slider_placements = isset($data->slider_placements) && is_array($data->slider_placements) ? $data->slider_placements : [];
 
     try {
-        // 1. Insert Main Item
-        $query1 = "INSERT INTO menu_items (name, description, category, img, isAvailable, isTopDeal, isBestSeller) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        $stmt1 = $conn->prepare($query1);
-        $stmt1->execute([$name, $description, $category, $img, $isAvailable, $isTopDeal, $isBestSeller]);
-        
-        $menu_id = $conn->lastInsertId(); // PDO method for insert id
+        $conn->beginTransaction();
 
-        // 2. Insert Variants
-        $query2 = "INSERT INTO menu_variants (menu_id, size_name, price) VALUES (?, ?, ?)";
+        // 1. Insert Main Item with price fallback
+        $basePrice = isset($data->variants[0]->price) ? strval($data->variants[0]->price) : '0';
+        $query1 = "INSERT INTO menu_items (name, description, price, category, img, isAvailable, isTopDeal, isBestSeller, promo_banner_image, is_featured_banner, banner_order, has_spice_option) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt1 = $conn->prepare($query1);
+        $stmt1->execute([$name, $description, $basePrice, $category, $img, $isAvailable, $isTopDeal, $isBestSeller, $promo_banner_image, $is_featured_banner, $banner_order, $has_spice_option]);
+        
+        $menu_id = $conn->lastInsertId();
+
+        // 2. Insert Variants with consistent in_stock column
+        $query2 = "INSERT INTO menu_variants (menu_id, size_name, price, in_stock) VALUES (?, ?, ?, ?)";
         $stmt2 = $conn->prepare($query2);
 
         foreach ($data->variants as $variant) {
-            $stmt2->execute([$menu_id, $variant->size, $variant->price]);
+            $size = !empty($variant->size) ? trim($variant->size) : 'Regular';
+            $price = isset($variant->price) && $variant->price !== '' ? floatval($variant->price) : 0.0;
+            $inStock = (isset($variant->inStock) && $variant->inStock !== false) ? 1 : 0;
+
+            $stmt2->execute([$menu_id, $size, $price, $inStock]);
         }
 
         // 3. Update Custom Sliders (slider_placements)
-        // Fetch all custom product sliders
         $sliderQuery = "SELECT id, content_data FROM homepage_sections WHERE section_type = 'product_slider' AND content_data LIKE 'custom:%'";
         $sliderStmt = $conn->prepare($sliderQuery);
         $sliderStmt->execute();
@@ -51,7 +62,6 @@ if(!empty($data->name) && !empty($data->variants)) {
         $updateSliderStmt = $conn->prepare("UPDATE homepage_sections SET content_data = ? WHERE id = ?");
 
         foreach ($customSliders as $slider) {
-            // e.g. "custom:1,4,10" -> "1,4,10" -> array(1, 4, 10)
             $contentStr = str_replace('custom:', '', $slider['content_data']);
             $currentIds = $contentStr !== '' ? explode(',', $contentStr) : [];
             $currentIds = array_map('intval', $currentIds);
@@ -61,23 +71,24 @@ if(!empty($data->name) && !empty($data->variants)) {
             $currentIndex = array_search((int)$menu_id, $currentIds);
             
             if ($shouldInclude && $currentIndex === false) {
-                // Add product to slider
                 $currentIds[] = (int)$menu_id;
             } elseif (!$shouldInclude && $currentIndex !== false) {
-                // Remove product from slider
                 unset($currentIds[$currentIndex]);
             }
 
-            // Always recreate the string and update
-            $newContentData = 'custom:' . implode(',', $currentIds);
+            $newContentData = 'custom:' . implode(',', array_values($currentIds));
             $updateSliderStmt->execute([$newContentData, $sliderId]);
         }
 
-        echo json_encode(["success" => true, "message" => "Item added successfully."]);
+        $conn->commit();
+        echo json_encode(["success" => true, "message" => "Item added successfully.", "id" => $menu_id]);
     } catch (PDOException $e) {
+        $conn->rollBack();
+        http_response_code(500);
         echo json_encode(["success" => false, "message" => "Database Error: " . $e->getMessage()]);
     }
 } else {
+    http_response_code(400);
     echo json_encode(["success" => false, "message" => "Incomplete data. Name and at least one size required."]);
 }
 $conn = null;
