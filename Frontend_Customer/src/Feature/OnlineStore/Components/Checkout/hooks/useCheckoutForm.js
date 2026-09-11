@@ -6,11 +6,11 @@ import { useCart } from "../../../../../Context/CartContext";
 import { useAuth } from "../../../../../Context/AuthContext";
 import { useOrderSession } from "../../../../../Hooks/useOrderSession";
 import { useCheckoutValidation } from "./useCheckoutValidation";
-import { resolveAddressCoordinates } from "../../../../../Utils/geocode";
+import { resolveAddressCoordinates } from "../../../../../utils/geocode";
 import {
   getAccuratePosition,
   resolveCoordinatesToAddress,
-} from "../../../../../Utils/geoHydrator";
+} from "../../../../../utils/geoHydrator";
 import { API_BASE } from "../../../../../config/api";
 
 export const RESTAURANT_COORDS = { lat: 31.5204, lng: 74.3587 };

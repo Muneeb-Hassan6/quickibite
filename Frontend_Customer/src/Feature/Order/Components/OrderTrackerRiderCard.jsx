@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaPhoneAlt, FaMapMarkerAlt, FaExternalLinkAlt } from "react-icons/fa";
-import { resolveCoordinatesToAddress } from "../../../Utils/geoHydrator";
+import { resolveCoordinatesToAddress } from "../../../utils/geoHydrator";
 
 export default function OrderTrackerRiderCard({ order, restaurantPhone }) {
   const [hydratedAddress, setHydratedAddress] = useState(null);

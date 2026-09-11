@@ -4,7 +4,7 @@ import { useRiderSocket } from "./useRiderSocket";
 import { useRiderLocation } from "./useRiderLocation";
 import { useRiderMutations } from "./useRiderMutations";
 import { resolveAddressCoordinates } from "../utils/geocode";
-import { resolveCoordinatesToAddress } from "../../../Utils/geoHydrator";
+import { resolveCoordinatesToAddress } from "../../../utils/geoHydrator";
 
 export function useRiderData() {
   const queryClient = useQueryClient();

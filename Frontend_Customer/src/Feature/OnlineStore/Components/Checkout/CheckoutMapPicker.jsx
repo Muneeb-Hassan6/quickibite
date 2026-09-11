@@ -7,7 +7,7 @@ import {
   FaSearch,
   FaCheckCircle,
 } from "react-icons/fa";
-import { LAHORE_LOCALITY_COORDINATES } from "../../../../Utils/geocode";
+import { LAHORE_LOCALITY_COORDINATES } from "../../../../utils/geocode";
 
 export default function CheckoutMapPicker({
   coordinates = { lat: 31.5204, lng: 74.3587 },
