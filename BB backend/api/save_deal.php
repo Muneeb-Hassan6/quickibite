@@ -31,10 +31,15 @@ if (!empty($data->title) && isset($data->price) && $data->price !== '') {
         $isPermanent = !empty($data->is_permanent) ? 1 : 0;
         $startTime = ($isPermanent || empty($data->start_time)) ? null : trim($data->start_time);
         $endTime = ($isPermanent || empty($data->end_time)) ? null : trim($data->end_time);
+        $dayLimit = (isset($data->day_limit) && $data->day_limit !== '' && intval($data->day_limit) > 0) ? intval($data->day_limit) : null;
+        $expiresAt = null;
+        if ($dayLimit !== null) {
+            $expiresAt = date('Y-m-d H:i:s', strtotime("+$dayLimit days"));
+        }
 
         // 1. Deal Insert
-        $query = "INSERT INTO deals (title, description, price, original_price, badge_tag, tag, img, promo_banner_image, is_featured_banner, banner_order, is_permanent, start_time, end_time, is_active) 
-                  VALUES (:title, :description, :price, :original_price, :badge_tag, :tag, :img, :promo_img, :is_featured, :b_order, :is_p, :s_time, :e_time, 1)";
+        $query = "INSERT INTO deals (title, description, price, original_price, badge_tag, tag, img, promo_banner_image, is_featured_banner, banner_order, is_permanent, start_time, end_time, day_limit, expires_at, is_active) 
+                  VALUES (:title, :description, :price, :original_price, :badge_tag, :tag, :img, :promo_img, :is_featured, :b_order, :is_p, :s_time, :e_time, :day_limit, :expires_at, 1)";
         $stmt = $db->prepare($query);
         
         $stmt->execute([
@@ -50,7 +55,9 @@ if (!empty($data->title) && isset($data->price) && $data->price !== '') {
             ':b_order' => $bannerOrder,
             ':is_p'  => $isPermanent,
             ':s_time'=> $startTime,
-            ':e_time'=> $endTime
+            ':e_time'=> $endTime,
+            ':day_limit' => $dayLimit,
+            ':expires_at' => $expiresAt
         ]);
         
         $deal_id = $db->lastInsertId();

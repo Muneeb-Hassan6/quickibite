@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { io } from "socket.io-client";
 import toast from "react-hot-toast";
+import { apiFetch } from "../../../utils/apiHelper";
 
 // Module-Level Singleton Socket Instance
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
@@ -47,9 +48,7 @@ export function useDispatcherData() {
   const { data: rawOrders = [], isLoading: isOrdersLoading } = useQuery({
     queryKey: ["dispatcher_orders"],
     queryFn: async () => {
-      const orderRes = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=all`
-      );
+      const orderRes = await apiFetch("get_orders.php?type=all");
       const orderData = await orderRes.json();
       return Array.isArray(orderData) ? orderData : orderData.data || [];
     },
@@ -61,9 +60,7 @@ export function useDispatcherData() {
   const { data: rawStaff = [], isLoading: isStaffLoading } = useQuery({
     queryKey: ["dispatcher_staff"],
     queryFn: async () => {
-      const staffRes = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_staff.php`
-      );
+      const staffRes = await apiFetch("get_staff.php");
       const staffJson = await staffRes.json();
       return staffJson.success && Array.isArray(staffJson.data)
         ? staffJson.data

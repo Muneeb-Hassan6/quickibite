@@ -16,6 +16,7 @@ import {
   FaUserShield,
   FaUsers,
   FaStar,
+  FaExternalLinkAlt,
 } from "react-icons/fa";
 
 const AdminSidebar = ({
@@ -66,6 +67,20 @@ const AdminSidebar = ({
     fetchLogo();
   }, []);
 
+  const handleViewStore = () => {
+    const configuredUrl = import.meta.env.VITE_CUSTOMER_URL;
+    if (configuredUrl) {
+      window.open(configuredUrl, "_blank");
+      return;
+    }
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      const targetPort = window.location.port === "5173" ? "5174" : "5173";
+      window.open(`http://${window.location.hostname}:${targetPort}`, "_blank");
+    } else {
+      window.open("/", "_blank");
+    }
+  };
+
   const menuSections = [
     {
       title: "Core Operations",
@@ -110,34 +125,37 @@ const AdminSidebar = ({
 
       {/* Main Sidebar Shell (Fixed Drawer on < lg, Static on lg+) */}
       <aside
-        className={`w-64 sm:w-72 bg-[var(--admin-panel,#171717)] border-r border-[var(--admin-border,rgba(255,255,255,0.06))] shadow-2xl flex flex-col transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 fixed inset-y-0 left-0 h-full z-[1050] select-none shrink-0 ${
+        className={`w-64 lg:w-60 xl:w-64 2xl:w-72 bg-white dark:bg-[#161616] border-r border-slate-200 dark:border-white/[0.08] shadow-2xl flex flex-col transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 fixed inset-y-0 left-0 h-full z-[1050] select-none shrink-0 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        {/* Brand Header */}
-        <div className="p-5 border-b border-[var(--admin-border,rgba(255,255,255,0.06))] flex items-center justify-between shrink-0 bg-slate-50 dark:bg-white/[0.01]">
-          <div className="flex items-center gap-3">
+        {/* Brand Header with Admin Profile */}
+        <div className="p-3.5 sm:p-4 border-b border-slate-200 dark:border-white/[0.08] flex items-center justify-between gap-2.5 shrink-0 bg-slate-50/80 dark:bg-white/[0.02]">
+          {/* Logo */}
+          <div className="flex items-center gap-2 min-w-0">
             {storeLogo ? (
               <img
                 src={storeLogo}
                 alt="Store Logo"
-                className="max-w-[130px] max-h-9 object-contain"
+                className="max-h-9 max-w-[85px] sm:max-w-[95px] object-contain shrink-0"
               />
             ) : (
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-500 text-neutral-950 flex items-center justify-center font-black text-sm shadow-md shadow-amber-500/20">
-                  BB
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-black text-[var(--admin-text,#fff)] tracking-wider font-['Oswald',sans-serif] uppercase">
-                    BigBite Suite
-                  </span>
-                  <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest">
-                    Staff Portal
-                  </span>
-                </div>
+              <div className="w-8 h-8 rounded-xl bg-amber-500 text-neutral-950 flex items-center justify-center font-black text-xs shadow-md shadow-amber-500/20 shrink-0">
+                BigBite
               </div>
             )}
+          </div>
+
+          {/* Admin User Info (Top next to Logo) */}
+          <div className="flex items-center gap-2 min-w-0 flex-1 justify-start pl-2.5 border-l border-slate-200 dark:border-white/10">
+            <div className="min-w-0 text-left">
+              <div className="text-xs font-black text-slate-900 dark:text-white truncate leading-tight">
+                {userData.name}
+              </div>
+              <div className="text-[9px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider leading-tight">
+                {userData.role}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -145,7 +163,7 @@ const AdminSidebar = ({
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-5">
           {menuSections.map((sec, sIdx) => (
             <div key={sIdx} className="space-y-1.5">
-              <div className="px-3 text-[10px] font-extrabold uppercase tracking-widest text-[var(--admin-muted,#9ca3af)]">
+              <div className="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-neutral-500">
                 {sec.title}
               </div>
               <ul className="list-none p-0 m-0 space-y-1">
@@ -167,7 +185,7 @@ const AdminSidebar = ({
                       >
                         <span
                           className={`text-sm shrink-0 transition-transform duration-200 ${
-                            isActive ? "scale-110 text-neutral-950 font-black" : "text-[var(--admin-muted,#9ca3af)]"
+                            isActive ? "scale-110 text-neutral-950 font-black" : "text-slate-400 dark:text-neutral-500"
                           }`}
                         >
                           {item.icon}
@@ -185,26 +203,23 @@ const AdminSidebar = ({
           ))}
         </div>
 
-        {/* User Profile & Logout Footer */}
-        <div className="p-3 sm:p-4 border-t border-[var(--admin-border,rgba(255,255,255,0.06))] bg-slate-50 dark:bg-white/[0.01] shrink-0 space-y-2.5">
-          <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-100 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-500 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center text-xs font-black shrink-0">
-              <FaUserShield />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-black text-[var(--admin-text,#fff)] truncate">
-                {userData.name}
-              </div>
-              <div className="text-[10px] text-[var(--admin-muted,#9ca3af)] font-semibold uppercase tracking-wider">
-                {userData.role}
-              </div>
-            </div>
-          </div>
+        {/* View Store & Logout Footer */}
+        <div className="p-3 sm:p-4 border-t border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.02] shrink-0 space-y-2">
+          {/* View Customer Store Button */}
+          <button
+            type="button"
+            onClick={handleViewStore}
+            className="w-full py-2.5 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500 text-amber-600 dark:text-amber-400 hover:text-neutral-950 dark:hover:text-neutral-950 border border-amber-500/30 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 active:scale-95 shadow-sm group"
+          >
+            <FaExternalLinkAlt className="text-xs transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            <span>View Store</span>
+          </button>
 
+          {/* Sign Out Button */}
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full py-2 px-3 rounded-xl bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 shadow-sm"
+            className="w-full py-2 px-3 rounded-xl bg-red-500/10 hover:bg-red-600 text-red-500 dark:text-red-400 hover:text-white border border-red-500/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 shadow-sm"
           >
             <FaSignOutAlt className="text-xs" />
             <span>Sign Out</span>

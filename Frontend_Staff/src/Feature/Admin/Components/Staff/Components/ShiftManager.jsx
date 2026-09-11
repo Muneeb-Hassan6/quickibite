@@ -3,6 +3,7 @@ import { FaGear } from "react-icons/fa6";
 import Swal from "sweetalert2";
 import ShiftCardItem from "./ShiftCardItem";
 import ShiftTable from "./ShiftTable";
+import { apiFetch } from "../../../../../utils/apiHelper";
 
 const ShiftManager = () => {
   const [employees, setEmployees] = useState([]);
@@ -16,9 +17,7 @@ const ShiftManager = () => {
   // Fetch Staff and Timings
   const fetchShifts = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_shifts.php`
-      );
+      const response = await apiFetch("get_shifts.php");
       const result = await response.json();
       if (result.success) {
         setEmployees(result.data || []);
@@ -43,14 +42,10 @@ const ShiftManager = () => {
     setEmployees(updatedEmployees);
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_shift.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ staff_id: id, shift: newShift }),
-        }
-      );
+      const response = await apiFetch("update_shift.php", {
+        method: "POST",
+        body: JSON.stringify({ staff_id: id, shift: newShift }),
+      });
       const result = await response.json();
 
       if (result.success) {
@@ -107,14 +102,10 @@ const ShiftManager = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/update_shift_timings.php`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(result.value),
-            }
-          );
+          const response = await apiFetch("update_shift_timings.php", {
+            method: "POST",
+            body: JSON.stringify(result.value),
+          });
           const data = await response.json();
           if (data.success) {
             setShiftTimings(result.value);

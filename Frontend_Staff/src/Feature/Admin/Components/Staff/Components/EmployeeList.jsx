@@ -1,27 +1,80 @@
-import React, { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import EmployeeFilterBar from "./EmployeeFilterBar";
 import EmployeeTableRow from "./EmployeeTableRow";
 import EditEmployeeModal from "./EditEmployeeModal";
+import ServerPaginationControls from "../../SharedComponents/ServerPaginationControls";
+import { apiFetch } from "../../../../../utils/apiHelper";
+
+const PAGE_SIZE = 20;
 
 const EmployeeList = () => {
   const queryClient = useQueryClient();
+  const [employees, setEmployees] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingEmp, setEditingEmp] = useState(null);
   const [phoneError, setPhoneError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: employees = [], isLoading } = useQuery({
-    queryKey: ["staff"],
-    queryFn: async () => {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_staff.php`
-      );
+  const employeesRef = useRef(employees);
+  useEffect(() => {
+    employeesRef.current = employees;
+  }, [employees]);
+
+  const fetchStaffBatch = useCallback(async (offset = 0, isAppend = false) => {
+    if (isAppend) {
+      setIsLoadingMore(true);
+    } else if (employeesRef.current.length === 0) {
+      setIsLoading(true);
+    }
+
+    try {
+      const response = await apiFetch(`get_staff.php?limit=${PAGE_SIZE}&offset=${offset}`);
       const result = await response.json();
-      return result.success ? result.data : [];
-    },
-  });
+
+      if (result.success && Array.isArray(result.data)) {
+        const fetched = result.data;
+        const sTotal = result.total !== undefined ? result.total : fetched.length;
+        setTotalCount(sTotal);
+
+        if (isAppend) {
+          setEmployees((prev) => {
+            const existingIds = new Set(prev.map((e) => e.id));
+            const newUnique = fetched.filter((e) => !existingIds.has(e.id));
+            const merged = [...prev, ...newUnique];
+            setHasMore(merged.length < sTotal);
+            return merged;
+          });
+        } else {
+          setEmployees(fetched);
+          setHasMore(result.has_more !== undefined ? result.has_more : fetched.length < sTotal);
+        }
+      }
+    } catch (err) {
+      console.error("Staff fetch error:", err);
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  }, []);
+
+  const staffQueryState = queryClient.getQueryState(["staff"]);
+  const staffDataUpdatedAt = staffQueryState?.dataUpdatedAt;
+
+  useEffect(() => {
+    fetchStaffBatch(0, false);
+  }, [fetchStaffBatch, staffDataUpdatedAt]);
+
+  const handleLoadMore = () => {
+    if (!isLoadingMore && hasMore) {
+      fetchStaffBatch(employees.length, true);
+    }
+  };
 
   const handleDelete = async (id, name) => {
     Swal.fire({
@@ -37,14 +90,10 @@ const EmployeeList = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/delete_staff.php`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id }),
-            }
-          );
+          const response = await apiFetch("delete_staff.php", {
+            method: "POST",
+            body: JSON.stringify({ id }),
+          });
           const resData = await response.json();
           if (resData.success) {
             Swal.fire({
@@ -56,6 +105,7 @@ const EmployeeList = () => {
               background: "#171717",
               color: "#fff",
             });
+            fetchStaffBatch(0, false);
             queryClient.invalidateQueries({ queryKey: ["staff"] });
           } else {
             Swal.fire("Error!", resData.message, "error");
@@ -71,6 +121,7 @@ const EmployeeList = () => {
     setEditingEmp({
       ...emp,
       password: "",
+      confirm_password: "",
     });
     setPhoneError("");
     setIsEditModalOpen(true);
@@ -95,26 +146,64 @@ const EmployeeList = () => {
       return;
     }
 
-    if (editingEmp.password && editingEmp.password.length < 4) {
-      Swal.fire({
-        icon: "warning",
-        title: "Weak Password",
-        text: "New password must be at least 4 characters long.",
-        background: "#171717",
-        color: "#fff",
-      });
-      return;
+    const pwd = (editingEmp.password || "").trim();
+    const cpwd = (editingEmp.confirm_password || "").trim();
+
+    if (pwd) {
+      if (pwd.length < 8) {
+        Swal.fire({
+          icon: "warning",
+          title: "Password Too Short",
+          text: "New password must be at least 8 characters long.",
+          background: "#171717",
+          color: "#fff",
+        });
+        return;
+      }
+
+      if (!/[A-Z]/.test(pwd)) {
+        Swal.fire({
+          icon: "warning",
+          title: "Capital Letter Required",
+          text: "New password must contain at least one capital letter (A-Z).",
+          background: "#171717",
+          color: "#fff",
+        });
+        return;
+      }
+
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) {
+        Swal.fire({
+          icon: "warning",
+          title: "Special Character Required",
+          text: "New password must contain at least one special character (!@#$%^&* etc.).",
+          background: "#171717",
+          color: "#fff",
+        });
+        return;
+      }
+
+      if (pwd !== cpwd) {
+        Swal.fire({
+          icon: "error",
+          title: "Passwords Do Not Match",
+          text: "Please make sure your new password and confirm password match.",
+          background: "#171717",
+          color: "#fff",
+        });
+        return;
+      }
     }
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_staff.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(editingEmp),
-        }
-      );
+      const response = await apiFetch("update_staff.php", {
+        method: "POST",
+        body: JSON.stringify({
+          ...editingEmp,
+          password: pwd,
+          confirm_password: cpwd,
+        }),
+      });
       const result = await response.json();
 
       if (result.success) {
@@ -128,6 +217,7 @@ const EmployeeList = () => {
           color: "#fff",
         });
         setIsEditModalOpen(false);
+        fetchStaffBatch(0, false);
         queryClient.invalidateQueries({ queryKey: ["staff"] });
       } else {
         Swal.fire({
@@ -223,6 +313,16 @@ const EmployeeList = () => {
           </table>
         </div>
       </div>
+
+      {/* Server-side Pagination Load More */}
+      <ServerPaginationControls
+        loadedCount={employees.length}
+        totalCount={totalCount}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        onLoadMore={handleLoadMore}
+        itemLabel="employees"
+      />
 
       {/* Edit Employee Modal */}
       <EditEmployeeModal

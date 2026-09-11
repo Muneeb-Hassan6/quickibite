@@ -62,16 +62,39 @@ const MenuManager = () => {
       {/* Toast Feedback */}
       {toast.show && (
         <div
-          className={`fixed top-[20px] right-[20px] bg-[var(--admin-panel)] text-white p-[15px_25px] rounded-[10px] flex items-center gap-[12px] font-bold shadow-[0_5px_15px_rgba(0,0,0,0.3)] z-[9999] animate-slide-up border-l-[4px] ${
-            toast.type === "success" ? "border-green-500" : "border-red-500"
+          className={`fixed top-6 right-6 z-[99999] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl backdrop-blur-md transition-all duration-300 animate-slide-up select-none border ${
+            toast.type === "success"
+              ? "bg-white dark:bg-[#18181b] border-emerald-500/40 dark:border-emerald-500/40 text-slate-900 dark:text-white shadow-emerald-500/10 dark:shadow-black/60"
+              : "bg-white dark:bg-[#18181b] border-rose-500/40 dark:border-rose-500/40 text-slate-900 dark:text-white shadow-rose-500/10 dark:shadow-black/60"
           }`}
         >
-          {toast.type === "success" ? (
-            <FaCheckCircle size={20} className="text-green-500" />
-          ) : (
-            <FaExclamationCircle size={20} className="text-red-500" />
-          )}
-          <span>{toast.message}</span>
+          <div
+            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+              toast.type === "success"
+                ? "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30"
+                : "bg-rose-50 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30"
+            }`}
+          >
+            {toast.type === "success" ? (
+              <FaCheckCircle className="text-base text-emerald-600 dark:text-emerald-400" />
+            ) : (
+              <FaExclamationCircle className="text-base text-rose-600 dark:text-rose-400" />
+            )}
+          </div>
+          <div className="flex flex-col pr-1">
+            <span
+              className={`text-[10px] font-black uppercase tracking-widest ${
+                toast.type === "success"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-rose-600 dark:text-rose-400"
+              }`}
+            >
+              {toast.type === "success" ? "Success" : "Error"}
+            </span>
+            <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-snug">
+              {toast.message}
+            </span>
+          </div>
         </div>
       )}
 
@@ -141,6 +164,7 @@ const MenuManager = () => {
       ) : (
         <MenuCategoryTabs
           categories={categories}
+          menuItems={menuItems}
           onAddCategory={() => {
             setEditingCategory(null);
             setCategoryForm(defaultCategoryForm);
@@ -148,7 +172,11 @@ const MenuManager = () => {
           }}
           onEditCategory={(cat) => {
             setEditingCategory(cat);
-            setCategoryForm({ name: cat.name, img: cat.img });
+            setCategoryForm({
+              name: cat.name,
+              img: cat.img,
+              show_on_hero: Boolean(cat.show_on_hero === 1 || cat.show_on_hero === "1" || cat.show_on_hero === true),
+            });
             setIsCategoryModalOpen(true);
           }}
           onDeleteCategory={triggerDeleteCategory}

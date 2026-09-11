@@ -17,6 +17,7 @@ export default function DealPreviewCard({
   isPermanent = true,
   startTime = "12:00",
   endTime = "16:00",
+  dayLimit = "",
   includedItems = [],
 }) {
   return (
@@ -86,9 +87,16 @@ export default function DealPreviewCard({
                 )}
               </div>
 
-              <div className="text-[10px] font-bold text-slate-600 dark:text-neutral-400 flex items-center gap-1 bg-slate-100 dark:bg-white/5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/5">
-                <FaClock className="text-amber-500 dark:text-amber-400 text-[10px]" />
-                <span>{isPermanent ? "24/7" : `${startTime} - ${endTime}`}</span>
+              <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                {dayLimit > 0 && (
+                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/20">
+                    ⏳ {dayLimit} {parseInt(dayLimit) === 1 ? "Day" : "Days"} Limit
+                  </span>
+                )}
+                <div className="text-[10px] font-bold text-slate-600 dark:text-neutral-400 flex items-center gap-1 bg-slate-100 dark:bg-white/5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/5">
+                  <FaClock className="text-amber-500 dark:text-amber-400 text-[10px]" />
+                  <span>{isPermanent ? "24/7" : `${startTime} - ${endTime}`}</span>
+                </div>
               </div>
             </div>
 

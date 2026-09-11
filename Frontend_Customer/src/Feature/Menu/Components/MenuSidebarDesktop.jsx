@@ -11,11 +11,11 @@ export default function MenuSidebarDesktop({
     <aside
       className={`hidden lg:block shrink-0 lg:sticky lg:top-24 lg:self-start overflow-hidden transition-all duration-300 ease-in-out z-20 ${
         isDesktopSidebarVisible
-          ? "w-60 lg:w-64 opacity-100 translate-x-0 mr-6"
+          ? "w-52 lg:w-56 xl:w-64 opacity-100 translate-x-0 mr-4 xl:mr-6"
           : "w-0 opacity-0 -translate-x-6 mr-0 pointer-events-none"
       }`}
     >
-      <div className="w-60 lg:w-64 max-h-[calc(100vh-120px)] overflow-y-auto overflow-x-hidden custom-sidebar-scroll rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 p-3.5 sm:p-4 shadow-xs">
+      <div className="w-52 lg:w-56 xl:w-64 max-h-[calc(100vh-120px)] overflow-y-auto overflow-x-hidden custom-sidebar-scroll rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 p-3 sm:p-4 shadow-xs">
         <div className="w-full min-w-0 overflow-x-hidden">
           <div className="pb-2.5 mb-2.5 border-b border-gray-100 dark:border-neutral-800">
             <h3 className="font-['Oswald',sans-serif] text-base font-black text-gray-900 dark:text-white uppercase tracking-wide m-0">

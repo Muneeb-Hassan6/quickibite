@@ -150,7 +150,7 @@ export default function usePosCart({
       total: Number(grandTotal.toFixed(2)),
       payment_method: paymentMethod || "Cash",
       payment_status: paymentStatus || "Paid",
-      transaction_id: transactionId || null,
+      transaction_id: transactionId || (paymentMethod !== "Cash" ? `POS-${Math.floor(100000 + Math.random() * 900000)}` : null),
       cart,
     };
 

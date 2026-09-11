@@ -27,11 +27,11 @@ export default function AddonSubItemsTable({
         return (
           <div
             key={index}
-            className="p-3.5 rounded-2xl bg-white/[0.02] border border-[var(--admin-border,rgba(255,255,255,0.06))] flex flex-col sm:flex-row gap-3 items-stretch sm:items-center hover:border-amber-500/20 transition-all"
+            className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center hover:border-amber-500/30 transition-all shadow-sm"
           >
             {/* Addon Title */}
             <div className="flex-1 min-w-[140px]">
-              <label className="text-[10px] text-[var(--admin-muted,#888)] font-extrabold uppercase tracking-wider block mb-1">
+              <label className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider block mb-1">
                 Add-on Title *
               </label>
               <input
@@ -41,13 +41,13 @@ export default function AddonSubItemsTable({
                 onChange={(e) =>
                   handleFieldChange(index, "addon_name", e.target.value)
                 }
-                className="w-full p-2.5 text-xs bg-black/40 border border-white/10 text-white rounded-xl focus:outline-none focus:border-amber-500 font-semibold"
+                className="w-full p-2.5 text-xs bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl focus:outline-none focus:border-amber-500 font-semibold"
               />
             </div>
 
             {/* Price Input */}
             <div className="w-full sm:w-28">
-              <label className="text-[10px] text-[var(--admin-muted,#888)] font-extrabold uppercase tracking-wider block mb-1">
+              <label className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider block mb-1">
                 Price (Rs.)
               </label>
               <input
@@ -58,13 +58,13 @@ export default function AddonSubItemsTable({
                 onChange={(e) =>
                   handleFieldChange(index, "addon_price", e.target.value)
                 }
-                className="w-full p-2.5 text-xs bg-black/40 border border-white/10 text-white rounded-xl focus:outline-none focus:border-amber-500 font-bold"
+                className="w-full p-2.5 text-xs bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl focus:outline-none focus:border-amber-500 font-bold"
               />
             </div>
 
             {/* Linked Ingredient */}
             <div className="flex-1 min-w-[140px]">
-              <label className="text-[10px] text-[var(--admin-muted,#888)] font-extrabold uppercase tracking-wider block mb-1">
+              <label className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider block mb-1">
                 Linked Stock Item
               </label>
               <select
@@ -72,7 +72,7 @@ export default function AddonSubItemsTable({
                 onChange={(e) =>
                   handleFieldChange(index, "inventory_id", e.target.value)
                 }
-                className="w-full p-2.5 text-xs bg-black/40 border border-white/10 text-white rounded-xl focus:outline-none focus:border-amber-500 font-medium cursor-pointer"
+                className="w-full p-2.5 text-xs bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl focus:outline-none focus:border-amber-500 font-medium cursor-pointer"
               >
                 <option value="">None (No Stock Deduction)</option>
                 {inventoryItems.map((inv) => (
@@ -86,7 +86,7 @@ export default function AddonSubItemsTable({
             {/* Deduct Qty */}
             {addon.inventory_id && (
               <div className="w-full sm:w-24">
-                <label className="text-[10px] text-[var(--admin-muted,#888)] font-extrabold uppercase tracking-wider block mb-1">
+                <label className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider block mb-1">
                   Qty ({selectedInv?.unit || "Unit"})
                 </label>
                 <input
@@ -98,7 +98,7 @@ export default function AddonSubItemsTable({
                   onChange={(e) =>
                     handleFieldChange(index, "qty", e.target.value)
                   }
-                  className="w-full p-2.5 text-xs bg-black/40 border border-white/10 text-white rounded-xl focus:outline-none focus:border-amber-500 font-medium"
+                  className="w-full p-2.5 text-xs bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl focus:outline-none focus:border-amber-500 font-medium"
                 />
               </div>
             )}
@@ -108,7 +108,7 @@ export default function AddonSubItemsTable({
               <button
                 type="button"
                 onClick={() => handleRemoveRow(index)}
-                className="w-8 h-8 rounded-xl bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white flex items-center justify-center border-none cursor-pointer transition-colors"
+                className="w-8 h-8 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white flex items-center justify-center border-none cursor-pointer transition-colors"
                 title="Remove Add-on"
               >
                 <FaTrash className="text-xs" />
@@ -121,7 +121,7 @@ export default function AddonSubItemsTable({
       <button
         type="button"
         onClick={handleAddRow}
-        className="w-full py-2.5 bg-transparent text-amber-400 hover:text-amber-300 border border-dashed border-amber-500/30 hover:border-amber-500 rounded-2xl cursor-pointer font-bold text-xs flex justify-center items-center gap-2 transition-all mt-2"
+        className="w-full py-3 bg-amber-500/5 hover:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-dashed border-amber-500/30 hover:border-amber-500 rounded-2xl cursor-pointer font-bold text-xs flex justify-center items-center gap-2 transition-all mt-2"
       >
         <FaPlus className="text-[10px]" />
         <span>Add Another Add-on Option</span>

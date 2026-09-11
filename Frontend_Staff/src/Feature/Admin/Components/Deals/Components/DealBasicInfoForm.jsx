@@ -1,5 +1,5 @@
 import React from "react";
-import { FaTag } from "react-icons/fa";
+import { FaTag, FaCalendarAlt } from "react-icons/fa";
 import DealImageUploader from "./DealImageUploader";
 import DealPricingControls from "./DealPricingControls";
 
@@ -18,6 +18,8 @@ export default function DealBasicInfoForm({
   setStartTime,
   endTime = "16:00",
   setEndTime,
+  dayLimit = "",
+  setDayLimit,
   isFeaturedBanner = false,
   setIsFeaturedBanner,
   promoFileInputRef,
@@ -124,6 +126,79 @@ export default function DealBasicInfoForm({
             </div>
           </div>
         )}
+      </div>
+
+      {/* Deal Duration / Day Limit (Optional) */}
+      <div className="p-3.5 bg-slate-50 dark:bg-white/[0.02] rounded-2xl border border-slate-200 dark:border-white/[0.06] space-y-2.5">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider flex items-center gap-1.5">
+            <FaCalendarAlt className="text-amber-500" />
+            <span>Deal Duration Limit (Optional)</span>
+          </label>
+          {dayLimit > 0 && (
+            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+              Active for {dayLimit} {parseInt(dayLimit) === 1 ? "day" : "days"}
+            </span>
+          )}
+        </div>
+
+        <p className="text-[11px] text-slate-500 dark:text-neutral-400 m-0">
+          Set how many days this deal will stay active (e.g. 2, 3, 7 days). When the time completes, the deal will automatically deactivate. Leave empty for no time limit.
+        </p>
+
+        <div className="flex items-center gap-2">
+          <div className="flex-1 flex items-center bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 rounded-xl px-3 focus-within:border-amber-500">
+            <input
+              type="number"
+              min="1"
+              step="1"
+              value={dayLimit || ""}
+              onChange={(e) =>
+                setDayLimit(
+                  e.target.value === ""
+                    ? ""
+                    : Math.max(1, parseInt(e.target.value) || 0)
+                )
+              }
+              placeholder="e.g. 2, 3, 5 (Number of days)"
+              className="w-full py-2 bg-transparent text-slate-900 dark:text-white font-bold text-xs outline-none"
+            />
+            <span className="text-xs font-semibold text-slate-400 dark:text-neutral-500 ml-1">
+              Days
+            </span>
+          </div>
+
+          {dayLimit > 0 && (
+            <button
+              type="button"
+              onClick={() => setDayLimit("")}
+              className="px-3 py-2 text-[10px] font-bold text-red-500 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-xl border border-red-500/20 cursor-pointer transition-colors"
+            >
+              No Limit
+            </button>
+          )}
+        </div>
+
+        {/* Quick select buttons */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+          <span className="text-[10px] text-slate-500 dark:text-neutral-400 font-semibold mr-1">
+            Quick Select:
+          </span>
+          {[1, 2, 3, 4, 5, 7, 10, 14, 30].map((days) => (
+            <button
+              key={days}
+              type="button"
+              onClick={() => setDayLimit(days)}
+              className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border cursor-pointer transition-all ${
+                parseInt(dayLimit) === days
+                  ? "bg-amber-500 text-neutral-950 border-amber-500 shadow-sm"
+                  : "bg-white dark:bg-white/5 text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-white/5 hover:border-amber-500/40"
+              }`}
+            >
+              {days} {days === 1 ? "Day" : "Days"}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

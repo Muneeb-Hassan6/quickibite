@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaTrash as IconTrash } from 'react-icons/fa';
 import LinkTargetSelector from './LinkTargetSelector';
+import { compressImage, resolveImageUrl } from '../../../../../utils/imageOptimizer';
 
 export default function BannerSlidesEditor({
   bannerSlides = [],
@@ -78,18 +79,90 @@ export default function BannerSlidesEditor({
                 deals={deals}
               />
             </div>
-            <div className="sm:col-span-2">
-              <label className="text-[10px] font-bold text-slate-600 dark:text-neutral-400 block mb-1">Upload Slide Banner Image</label>
+            <div className="sm:col-span-2 space-y-1.5">
+              <div className="flex justify-between items-center">
+                <label className="text-[10px] font-bold text-slate-600 dark:text-neutral-400 block">Upload Slide Banner Image</label>
+                <span className="text-amber-600 dark:text-amber-400 text-[10px] font-semibold">⚡ Auto-compressed for fast upload</span>
+              </div>
               <input
                 type="file"
-                onChange={(e) => {
-                  const newSlides = [...bannerSlides];
-                  newSlides[index].file = e.target.files[0];
-                  setBannerSlides(newSlides);
+                accept="image/*"
+                onChange={async (e) => {
+                  const rawFile = e.target.files[0];
+                  if (!rawFile) return;
+
+                  const previewUrl = URL.createObjectURL(rawFile);
+                  const updatedSlides = [...bannerSlides];
+                  updatedSlides[index] = {
+                    ...updatedSlides[index],
+                    previewUrl,
+                    isOptimizing: true,
+                  };
+                  setBannerSlides(updatedSlides);
+
+                  try {
+                    const optimizedFile = await compressImage(rawFile, {
+                      maxWidth: 1920,
+                      maxHeight: 1080,
+                      quality: 0.82,
+                    });
+                    setBannerSlides((prev) => {
+                      const next = [...prev];
+                      if (next[index]) {
+                        next[index] = {
+                          ...next[index],
+                          file: optimizedFile,
+                          isOptimizing: false,
+                          optimizedSizeKb: Math.round(optimizedFile.size / 1024),
+                          originalSizeKb: Math.round(rawFile.size / 1024),
+                        };
+                      }
+                      return next;
+                    });
+                  } catch (err) {
+                    setBannerSlides((prev) => {
+                      const next = [...prev];
+                      if (next[index]) {
+                        next[index] = {
+                          ...next[index],
+                          file: rawFile,
+                          isOptimizing: false,
+                        };
+                      }
+                      return next;
+                    });
+                  }
                 }}
-                required={!slide.image_url}
+                required={!slide.image_url && !slide.file}
                 className="w-full p-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white rounded-lg text-xs"
               />
+
+              {(slide.previewUrl || slide.image_url) && (
+                <div className="flex items-center gap-3 p-2 bg-slate-100 dark:bg-neutral-900 rounded-lg border border-slate-200 dark:border-neutral-800">
+                  <img
+                    src={slide.previewUrl || resolveImageUrl(slide.image_url, 200)}
+                    alt="Preview"
+                    className="w-16 h-10 object-cover rounded border border-slate-300 dark:border-neutral-700 shrink-0"
+                  />
+                  <div className="text-[11px] min-w-0 flex-1">
+                    {slide.isOptimizing ? (
+                      <span className="text-amber-500 font-bold animate-pulse">⚡ Optimizing image in background...</span>
+                    ) : slide.optimizedSizeKb ? (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓ Ready for instant upload</span>
+                        <span className="text-[10px] text-slate-500 dark:text-neutral-400">
+                          ({slide.optimizedSizeKb} KB
+                          {slide.originalSizeKb > slide.optimizedSizeKb &&
+                            ` - saved ${Math.round((1 - slide.optimizedSizeKb / slide.originalSizeKb) * 100)}%`}
+                          )
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-500 dark:text-neutral-400">Active image configured</span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

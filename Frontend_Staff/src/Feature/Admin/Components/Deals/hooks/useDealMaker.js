@@ -36,6 +36,7 @@ export function useDealMaker({ editDeal, onSuccess }) {
   const [isPermanent, setIsPermanent] = useState(true);
   const [startTime, setStartTime] = useState("12:00");
   const [endTime, setEndTime] = useState("16:00");
+  const [dayLimit, setDayLimit] = useState("");
 
   // Dynamic Included Items & Choices Repeater State
   const [includedItems, setIncludedItems] = useState([
@@ -99,6 +100,7 @@ export function useDealMaker({ editDeal, onSuccess }) {
       if (editDeal.start_time)
         setStartTime(editDeal.start_time.substring(0, 5));
       if (editDeal.end_time) setEndTime(editDeal.end_time.substring(0, 5));
+      setDayLimit(editDeal.day_limit ? parseInt(editDeal.day_limit) : "");
 
       if (
         editDeal.items &&
@@ -147,6 +149,7 @@ export function useDealMaker({ editDeal, onSuccess }) {
       setIsPermanent(true);
       setStartTime("12:00");
       setEndTime("16:00");
+      setDayLimit("");
       setSelectedAddonCategories(["drinks", "Potato Corner", "Sauses", "Grilled Wings"]);
       setIncludedItems([
         {
@@ -247,6 +250,7 @@ export function useDealMaker({ editDeal, onSuccess }) {
         isPermanent,
         startTime,
         endTime,
+        dayLimit,
         isFeaturedBanner,
         finalPromoUrl,
         bannerOrder,
@@ -310,6 +314,8 @@ export function useDealMaker({ editDeal, onSuccess }) {
     setStartTime,
     endTime,
     setEndTime,
+    dayLimit,
+    setDayLimit,
     includedItems,
     handleAddItemRow,
     handleRemoveItemRow,

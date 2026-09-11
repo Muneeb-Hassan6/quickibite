@@ -47,7 +47,7 @@ export function useMenuManager() {
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const defaultCategoryForm = { name: "", img: "" };
+  const defaultCategoryForm = { name: "", img: "", show_on_hero: false };
   const [categoryForm, setCategoryForm] = useState(defaultCategoryForm);
 
   const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dovuegkwa";
@@ -260,6 +260,7 @@ export function useMenuManager() {
       const payload = {
         name: categoryForm.name,
         img: finalImgUrl || categoryForm.img,
+        show_on_hero: categoryForm.show_on_hero ? 1 : 0,
         auth_token: sessionStorage.getItem("auth_token"),
       };
       const url = editingCategory

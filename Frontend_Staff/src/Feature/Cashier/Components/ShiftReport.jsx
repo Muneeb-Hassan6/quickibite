@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Swal from "sweetalert2";
-import { FaPrint, FaCalendarAlt, FaStore, FaCheckCircle } from "react-icons/fa";
+import { FaPrint, FaCalendarAlt, FaStore } from "react-icons/fa";
 
 // Atomic Subcomponents
 import ZReportReceipt from "./Shift/ZReportReceipt";
@@ -81,7 +81,7 @@ export default function ShiftReport({ ordersData = [] }) {
         Swal.fire({
           icon: "success",
           title: "Shift Closed!",
-          text: "Z-Report generated and shift ended successfully.",
+          text: "Sales Report generated and shift ended successfully.",
           timer: 2000,
           showConfirmButton: false,
         });
@@ -99,7 +99,7 @@ export default function ShiftReport({ ordersData = [] }) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-800 mb-6">
         <div>
           <h2 className="m-0 font-['Oswald',sans-serif] text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white uppercase tracking-wide">
-            Shift & Z-Report
+            Sales Report
           </h2>
           <div className="flex flex-wrap items-center gap-4 mt-1.5 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
             <span className="flex items-center gap-1.5">
@@ -119,14 +119,7 @@ export default function ShiftReport({ ordersData = [] }) {
             className="flex-1 sm:flex-none py-2.5 px-5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"
           >
             <FaPrint className="text-xs text-amber-500" />
-            <span>Print Z-Report</span>
-          </button>
-          <button
-            onClick={handleCloseShift}
-            className="flex-1 sm:flex-none py-2.5 px-5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-extrabold text-xs uppercase tracking-wider shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer border-none active:scale-95"
-          >
-            <FaCheckCircle className="text-xs" />
-            <span>Close Shift</span>
+            <span>Print Sales Report</span>
           </button>
         </div>
       </div>

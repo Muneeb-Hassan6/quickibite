@@ -137,29 +137,29 @@ const AddonModal = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 backdrop-blur-md flex justify-center items-center p-3 sm:p-5 z-[99999]"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center p-3 sm:p-5 z-[99999]"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg md:max-w-2xl bg-[var(--admin-panel,#171717)] border border-[var(--admin-border,rgba(255,255,255,0.08))] rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-2xl max-h-[88vh] flex flex-col animate-slide-up"
+        className="w-full max-w-lg md:max-w-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-2xl max-h-[88vh] flex flex-col animate-slide-up text-zinc-900 dark:text-white"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex justify-between items-center pb-4 mb-4 border-b border-[var(--admin-border,rgba(255,255,255,0.06))]">
+        <div className="flex justify-between items-center pb-4 mb-4 border-b border-zinc-200 dark:border-zinc-800">
           <div>
             <div className="flex items-center gap-2.5">
               <span className="w-1.5 h-5 bg-amber-500 rounded-full" />
-              <h3 className="m-0 text-base sm:text-lg md:text-xl font-black text-[var(--admin-text,#fff)] font-['Oswald',sans-serif] uppercase tracking-wide">
+              <h3 className="m-0 text-base sm:text-lg md:text-xl font-black text-zinc-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
                 Product Custom Add-ons & Modifiers
               </h3>
             </div>
-            <p className="text-xs text-gray-400 mt-1 m-0">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 m-0">
               Configure product-level upgrades (e.g. Extra Cheese, Bacon, Special Sauces).
             </p>
           </div>
           <button
             type="button"
-            className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-[var(--admin-muted,#888)] hover:text-white flex items-center justify-center border-none cursor-pointer transition-all active:scale-90"
+            className="w-8 h-8 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center justify-center border-none cursor-pointer transition-all active:scale-90"
             onClick={onClose}
           >
             <FaTimes className="text-sm" />
@@ -168,8 +168,8 @@ const AddonModal = ({
 
         {/* Product Selector Dropdown if multiple products available */}
         {menuItems.length > 0 && (
-          <div className="mb-4 p-3 rounded-xl bg-white/5 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5 shrink-0">
+          <div className="mb-4 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5 shrink-0">
               <FaUtensils className="text-[10px]" /> Select Target Product:
             </label>
             <select
@@ -178,7 +178,7 @@ const AddonModal = ({
                 const found = menuItems.find((m) => String(m.id) === String(e.target.value));
                 if (found) setSelectedItem(found);
               }}
-              className="w-full sm:w-auto flex-1 bg-neutral-900 border border-neutral-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg focus:outline-hidden focus:border-amber-500"
+              className="w-full sm:w-auto flex-1 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white text-xs font-bold py-2 px-3 rounded-xl focus:outline-none focus:border-amber-500"
             >
               {menuItems.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -202,10 +202,10 @@ const AddonModal = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-[var(--admin-border,rgba(255,255,255,0.06))]">
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-800">
           <button
             type="button"
-            className="px-5 py-2.5 rounded-xl bg-transparent hover:bg-white/5 text-[var(--admin-muted,#888)] hover:text-white border border-[var(--admin-border,rgba(255,255,255,0.08))] text-xs font-bold uppercase tracking-wider cursor-pointer transition-all"
+            className="px-5 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 text-xs font-bold uppercase tracking-wider cursor-pointer transition-all"
             onClick={onClose}
           >
             Cancel

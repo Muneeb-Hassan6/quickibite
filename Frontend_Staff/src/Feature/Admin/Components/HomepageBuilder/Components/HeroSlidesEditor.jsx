@@ -19,7 +19,7 @@ export default function HeroSlidesEditor({
         <div className="flex items-center gap-2">
           <IconImage className="text-amber-500 text-sm" />
           <h3 className="m-0 text-sm sm:text-base font-black text-slate-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
-            Hero Carousel Slides ({heroSlides.length})
+            Hero Carousel Slides 
           </h3>
         </div>
         <button

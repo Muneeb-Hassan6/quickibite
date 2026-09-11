@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 import {
   FaUsers,
   FaUserCheck,
@@ -15,10 +16,16 @@ import {
   FaShieldAlt,
   FaGoogle,
 } from "react-icons/fa";
-import toast from "react-hot-toast";
+import ServerPaginationControls from "../SharedComponents/ServerPaginationControls";
+import { apiFetch } from "../../../../utils/apiHelper";
+
+const PAGE_SIZE = 25;
 
 const CustomersCRM = () => {
   const [customers, setCustomers] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [stats, setStats] = useState({
     total_customers: 0,
     active_customers: 0,
@@ -31,18 +38,27 @@ const CustomersCRM = () => {
   const [statusFilter, setStatusFilter] = useState("all"); // 'all' | 'active' | 'blocked'
   const [updatingId, setUpdatingId] = useState(null);
 
+  const customersRef = useRef(customers);
+  useEffect(() => {
+    customersRef.current = customers;
+  }, [customers]);
+
   const fetchCustomers = async (isManual = false) => {
     if (isManual) setRefreshing(true);
-    else setLoading(true);
+    else if (customersRef.current.length === 0) setLoading(true);
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_admin_customers.php`
+      const response = await apiFetch(
+        `get_admin_customers.php?limit=${PAGE_SIZE}&offset=0`
       );
       const result = await response.json();
 
       if (result && result.success) {
-        setCustomers(result.customers || []);
+        const fetched = result.customers || [];
+        setCustomers(fetched);
+        const sTotal = result.total || fetched.length;
+        setTotalCount(sTotal);
+        setHasMore(result.has_more !== undefined ? result.has_more : fetched.length < sTotal);
         if (result.stats) {
           setStats(result.stats);
         }
@@ -55,6 +71,37 @@ const CustomersCRM = () => {
     } finally {
       setLoading(false);
       if (isManual) setRefreshing(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+
+    try {
+      const currentOffset = customers.length;
+      const response = await apiFetch(
+        `get_admin_customers.php?limit=${PAGE_SIZE}&offset=${currentOffset}`
+      );
+      const result = await response.json();
+
+      if (result && result.success) {
+        const fetched = result.customers || [];
+        setCustomers((prev) => {
+          const existingIds = new Set(prev.map((c) => c.id));
+          const newUnique = fetched.filter((c) => !existingIds.has(c.id));
+          const merged = [...prev, ...newUnique];
+          setHasMore(merged.length < (result.total || totalCount));
+          return merged;
+        });
+        if (result.total !== undefined) {
+          setTotalCount(result.total);
+        }
+      }
+    } catch (err) {
+      console.error("CRM Load More error:", err);
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -454,6 +501,23 @@ const CustomersCRM = () => {
               </tbody>
             </table>
           </div>
+        )}
+
+        {/* Server Pagination & Load More Controls */}
+        {customers.length > 0 && (
+          <ServerPaginationControls
+            loadedCount={customers.length}
+            totalCount={totalCount}
+            filteredCount={
+              searchTerm || statusFilter !== "all"
+                ? filteredCustomers.length
+                : null
+            }
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={handleLoadMore}
+            itemLabel="customers"
+          />
         )}
       </div>
     </div>

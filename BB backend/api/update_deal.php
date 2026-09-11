@@ -32,6 +32,27 @@ if (!empty($data->id) && !empty($data->title) && isset($data->price) && $data->p
         $isPermanent = !empty($data->is_permanent) ? 1 : 0;
         $startTime = ($isPermanent || empty($data->start_time)) ? null : trim($data->start_time);
         $endTime = ($isPermanent || empty($data->end_time)) ? null : trim($data->end_time);
+        $dayLimit = (isset($data->day_limit) && $data->day_limit !== '' && intval($data->day_limit) > 0) ? intval($data->day_limit) : null;
+
+        $expiresAt = null;
+        if ($dayLimit !== null) {
+            $existingStmt = $db->prepare("SELECT day_limit, expires_at FROM deals WHERE id = :id");
+            $existingStmt->execute([':id' => $id]);
+            $existingDeal = $existingStmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($existingDeal) {
+                $wasExpired = !empty($existingDeal['expires_at']) && strtotime($existingDeal['expires_at']) <= time();
+                $limitChanged = intval($existingDeal['day_limit'] ?? 0) !== $dayLimit;
+                
+                if ($wasExpired || $limitChanged || empty($existingDeal['expires_at'])) {
+                    $expiresAt = date('Y-m-d H:i:s', strtotime("+$dayLimit days"));
+                } else {
+                    $expiresAt = $existingDeal['expires_at'];
+                }
+            } else {
+                $expiresAt = date('Y-m-d H:i:s', strtotime("+$dayLimit days"));
+            }
+        }
 
         // 1. Update deal master row
         $query = "UPDATE deals SET 
@@ -47,7 +68,9 @@ if (!empty($data->id) && !empty($data->title) && isset($data->price) && $data->p
                   banner_order = :b_order,
                   is_permanent = :is_p, 
                   start_time = :s_time, 
-                  end_time = :e_time
+                  end_time = :e_time,
+                  day_limit = :day_limit,
+                  expires_at = :expires_at
                   WHERE id = :id";
 
         $stmt = $db->prepare($query);
@@ -65,6 +88,8 @@ if (!empty($data->id) && !empty($data->title) && isset($data->price) && $data->p
             ':is_p'  => $isPermanent,
             ':s_time'=> $startTime,
             ':e_time'=> $endTime,
+            ':day_limit' => $dayLimit,
+            ':expires_at' => $expiresAt,
             ':id'    => $id
         ]);
 

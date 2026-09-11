@@ -143,7 +143,7 @@ export default function PosCart({
   return (
     <>
       <aside
-        className="hidden lg:flex flex-col w-[360px] xl:w-[380px] shrink-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 shadow-sm h-fit sticky top-4"
+        className="hidden lg:flex flex-col w-[310px] xl:w-[350px] 2xl:w-[380px] shrink-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-3.5 xl:p-4 shadow-sm h-fit sticky top-4"
         style={{
           transform: "none",
           perspective: "none",

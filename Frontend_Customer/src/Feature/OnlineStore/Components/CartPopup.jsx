@@ -127,7 +127,7 @@ const CartPopup = () => {
 
       {/* 2. Drawer Container */}
       <div
-        className={`fixed top-0 right-0 h-full w-full sm:max-w-md bg-white dark:bg-neutral-950 border-l border-gray-200/80 dark:border-white/10 shadow-2xl z-[100000] flex flex-col justify-between transform transition-transform duration-300 ease-out pointer-events-auto ${
+        className={`fixed top-0 right-0 h-full w-full sm:max-w-[390px] md:max-w-md bg-white dark:bg-neutral-950 border-l border-gray-200/80 dark:border-white/10 shadow-2xl z-[100000] flex flex-col justify-between transform transition-transform duration-300 ease-out pointer-events-auto ${
           isCartOpen ? "translate-x-0" : "translate-x-full"
         }`}
         onClick={(e) => e.stopPropagation()}

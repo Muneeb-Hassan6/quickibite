@@ -19,6 +19,8 @@ const DealMaker = ({ editDeal, onSuccess }) => {
     setStartTime,
     endTime,
     setEndTime,
+    dayLimit,
+    setDayLimit,
     includedItems,
     handleAddItemRow,
     handleRemoveItemRow,
@@ -61,6 +63,8 @@ const DealMaker = ({ editDeal, onSuccess }) => {
             setStartTime={setStartTime}
             endTime={endTime}
             setEndTime={setEndTime}
+            dayLimit={dayLimit}
+            setDayLimit={setDayLimit}
             isFeaturedBanner={isFeaturedBanner}
             setIsFeaturedBanner={setIsFeaturedBanner}
             promoFileInputRef={promoFileInputRef}
@@ -97,6 +101,7 @@ const DealMaker = ({ editDeal, onSuccess }) => {
           isPermanent={isPermanent}
           startTime={startTime}
           endTime={endTime}
+          dayLimit={dayLimit}
           includedItems={includedItems}
         />
       </div>

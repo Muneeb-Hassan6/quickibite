@@ -3,6 +3,7 @@ import { FaPrint, FaCog } from "react-icons/fa";
 import Swal from "sweetalert2";
 import PayrollSummaryCards from "./PayrollSummaryCards";
 import PayrollTable from "./PayrollTable";
+import { apiFetch } from "../../../../../utils/apiHelper";
 
 const Payroll = () => {
   const [employees, setEmployees] = useState([]);
@@ -16,9 +17,7 @@ const Payroll = () => {
   const fetchPayrollData = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_payroll_data.php`
-      );
+      const response = await apiFetch("get_payroll_data.php");
       const result = await response.json();
 
       if (result.success) {
@@ -68,14 +67,10 @@ const Payroll = () => {
       if (result.isConfirmed) {
         const newOffDays = parseInt(result.value);
         try {
-          const res = await fetch(
-            `${import.meta.env.VITE_API_BASE}/update_off_days.php`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ off_days: newOffDays }),
-            }
-          );
+          const res = await apiFetch("update_off_days.php", {
+            method: "POST",
+            body: JSON.stringify({ off_days: newOffDays }),
+          });
           const resData = await res.json();
           if (resData.success) {
             Swal.fire({
@@ -109,13 +104,15 @@ const Payroll = () => {
           <div style="display:flex;justify-content:space-between;color:#aaa"><span>Basic Salary:</span><strong style="color:#fff">Rs. ${Number(
             emp.salary
           ).toLocaleString()}</strong></div>
-          <div style="display:flex;justify-content:space-between;color:#aaa"><span>Working Days:</span><strong style="color:#fff">${workingDays} Days</strong></div>
-          <div style="display:flex;justify-content:space-between;color:#aaa"><span>Daily Rate:</span><strong style="color:#fff">Rs. ${dailyRate.toLocaleString()}</strong></div>
-          <div style="display:flex;justify-content:space-between;color:#ef4444"><span>Absences (${absents} days):</span><strong>- Rs. ${(
+          <div style="display:flex;justify-content:space-between;color:#aaa"><span>Absents (${absents}d):</span><strong style="color:#ef4444">-Rs. ${Math.round(
         absents * dailyRate
       ).toLocaleString()}</strong></div>
-          <hr style="border:0;border-top:1px solid #333;margin:8px 0" />
-          <div style="display:flex;justify-content:space-between;color:#10b981;font-size:15px;font-weight:bold"><span>Net Payable:</span><span>Rs. ${netPay.toLocaleString()}</span></div>
+          <div style="display:flex;justify-content:space-between;color:#aaa;border-top:1px solid #333;margin-top:6px;padding-top:6px">
+            <span style="font-weight:bold;color:#fff">Net Disbursement:</span>
+            <strong style="font-size:15px;color:#10b981">Rs. ${Math.round(
+              netPay
+            ).toLocaleString()}</strong>
+          </div>
         </div>
       `,
       icon: "question",
@@ -127,19 +124,15 @@ const Payroll = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/pay_salary.php`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                staff_id: emp.id,
-                salary: emp.salary,
-                absents: absents,
-                net_pay: netPay,
-              }),
-            }
-          );
+          const response = await apiFetch("pay_salary.php", {
+            method: "POST",
+            body: JSON.stringify({
+              staff_id: emp.id,
+              salary: emp.salary,
+              absents: absents,
+              net_pay: netPay,
+            }),
+          });
           const resData = await response.json();
           if (resData.success) {
             Swal.fire({

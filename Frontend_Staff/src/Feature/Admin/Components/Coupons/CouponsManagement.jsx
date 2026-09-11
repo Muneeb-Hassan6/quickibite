@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   FaTag,
   FaPlus,
@@ -14,13 +14,26 @@ import {
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import toast from "react-hot-toast";
+import ServerPaginationControls from "../SharedComponents/ServerPaginationControls";
+import { apiFetch } from "../../../../utils/apiHelper";
+
+const PAGE_SIZE = 15;
 
 const CouponsManagement = () => {
   const [coupons, setCoupons] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [serverStats, setServerStats] = useState({ total_coupons: 0, active_coupons: 0, total_used: 0 });
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState(null);
+
+  const couponsRef = useRef(coupons);
+  useEffect(() => {
+    couponsRef.current = coupons;
+  }, [coupons]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -35,15 +48,36 @@ const CouponsManagement = () => {
   });
   const [saving, setSaving] = useState(false);
 
-  const fetchCoupons = async () => {
-    try {
+  const fetchCoupons = useCallback(async (offset = 0, isAppend = false) => {
+    if (isAppend) {
+      setIsLoadingMore(true);
+    } else if (couponsRef.current.length === 0) {
       setLoading(true);
-      const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_admin_coupons.php`
-      );
+    }
+
+    try {
+      const res = await apiFetch(`get_admin_coupons.php?limit=${PAGE_SIZE}&offset=${offset}`);
       const data = await res.json();
-      if (data.success) {
-        setCoupons(data.data || []);
+      if (data.success && Array.isArray(data.data)) {
+        const fetched = data.data;
+        const sTotal = data.total !== undefined ? data.total : fetched.length;
+        setTotalCount(sTotal);
+        if (data.stats) {
+          setServerStats(data.stats);
+        }
+
+        if (isAppend) {
+          setCoupons((prev) => {
+            const existingIds = new Set(prev.map((c) => c.id));
+            const newUnique = fetched.filter((c) => !existingIds.has(c.id));
+            const merged = [...prev, ...newUnique];
+            setHasMore(merged.length < sTotal);
+            return merged;
+          });
+        } else {
+          setCoupons(fetched);
+          setHasMore(data.has_more !== undefined ? data.has_more : fetched.length < sTotal);
+        }
       } else {
         toast.error(data.message || "Failed to load coupons");
       }
@@ -51,12 +85,19 @@ const CouponsManagement = () => {
       toast.error("Network error fetching coupons");
     } finally {
       setLoading(false);
+      setIsLoadingMore(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchCoupons();
-  }, []);
+    fetchCoupons(0, false);
+  }, [fetchCoupons]);
+
+  const handleLoadMore = () => {
+    if (!isLoadingMore && hasMore) {
+      fetchCoupons(coupons.length, true);
+    }
+  };
 
   const openCreateModal = () => {
     setEditingCoupon(null);
@@ -212,11 +253,9 @@ const CouponsManagement = () => {
       c.discount_type.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const totalUsed = coupons.reduce(
-    (acc, c) => acc + parseInt(c.times_used || 0),
-    0
-  );
-  const activeCount = coupons.filter((c) => parseInt(c.is_active) === 1).length;
+  const totalCouponsCount = serverStats.total_coupons || totalCount;
+  const totalUsed = serverStats.total_used;
+  const activeCount = serverStats.active_coupons;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto h-[calc(100vh-80px)] overflow-y-auto">
@@ -252,7 +291,7 @@ const CouponsManagement = () => {
               Total Coupons
             </p>
             <h3 className="text-2xl font-black text-slate-900 dark:text-white m-0">
-              {coupons.length}
+              {totalCouponsCount}
             </h3>
           </div>
         </div>
@@ -413,6 +452,16 @@ const CouponsManagement = () => {
           </table>
         </div>
       </div>
+
+      {/* Server-side Pagination Load More */}
+      <ServerPaginationControls
+        loadedCount={coupons.length}
+        totalCount={totalCount}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        onLoadMore={handleLoadMore}
+        itemLabel="coupons"
+      />
 
       {/* ── Add / Edit Modal ── */}
       {isModalOpen && (

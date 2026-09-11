@@ -6,8 +6,12 @@ $database = new Database();
 $db = $database->getConnection();
 
 try {
+    // Auto-deactivate deals whose day limit has expired
+    $db->exec("UPDATE deals SET is_active = 0 WHERE is_active = 1 AND expires_at IS NOT NULL AND expires_at <= NOW()");
+
     $query = "SELECT * FROM deals 
               WHERE is_active = 1 
+              AND (expires_at IS NULL OR expires_at > NOW())
               AND (is_permanent = 1 OR (CURRENT_TIME() BETWEEN start_time AND end_time)) 
               ORDER BY id DESC";
 

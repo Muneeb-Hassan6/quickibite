@@ -17,7 +17,7 @@ if ($order_id <= 0) {
 }
 
 try {
-    $stmt = $db->prepare("SELECT id, order_type, customer_name, customer_mobile, customer_address, table_number, total, status, payment_method, payment_status, created_at FROM orders WHERE id = :id");
+    $stmt = $db->prepare("SELECT o.*, DATE_FORMAT(o.created_at, '%h:%i %p') as time, DATE_FORMAT(o.created_at, '%d/%m/%Y') as date FROM orders o WHERE o.id = :id");
     $stmt->execute([':id' => $order_id]);
     $order = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -30,9 +30,10 @@ try {
         exit();
     }
 
-    $itemStmt = $db->prepare("SELECT id, title as name, size, note, qty, price FROM order_items WHERE order_id = :oid");
+    $itemStmt = $db->prepare("SELECT id, title as name, size, note, qty, price, spice_level, selected_addons_json FROM order_items WHERE order_id = :oid");
     $itemStmt->execute([':oid' => $order_id]);
     $order['cart'] = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+    $order['items'] = $order['cart'];
 
     echo json_encode([
         "success" => true,

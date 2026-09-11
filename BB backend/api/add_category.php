@@ -15,6 +15,7 @@ $data = json_decode(file_get_contents("php://input"));
 if(!empty($data->name) && !empty($data->img)){
     $category->name = $data->name;
     $category->img = $data->img; // Cloudinary URL Handle
+    $category->show_on_hero = isset($data->show_on_hero) ? ($data->show_on_hero ? 1 : 0) : 0;
 
     if($category->create()){
         echo json_encode(["success" => true, "id" => $db->lastInsertId()]);

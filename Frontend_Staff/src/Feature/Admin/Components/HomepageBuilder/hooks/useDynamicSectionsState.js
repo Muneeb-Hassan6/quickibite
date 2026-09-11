@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import Swal from 'sweetalert2';
 import toast from 'react-hot-toast';
+import { compressImage } from '../../../../../utils/imageOptimizer';
 
 export function useDynamicSectionsState(getAuthHeaders, handleAuthError, heroSlides, sections) {
   const queryClient = useQueryClient();
@@ -30,8 +31,15 @@ export function useDynamicSectionsState(getAuthHeaders, handleAuthError, heroSli
   const [selectedProductIds, setSelectedProductIds] = useState([]);
 
   const uploadToCloudinary = async (file) => {
+    // 1. Client-side compression: shrinks raw 5-15MB files to ~150-250KB in milliseconds
+    const optimizedFile = await compressImage(file, {
+      maxWidth: 1920,
+      maxHeight: 1080,
+      quality: 0.82,
+    });
+
     const data = new FormData();
-    data.append('file', file);
+    data.append('file', optimizedFile);
     data.append(
       'upload_preset',
       import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
@@ -46,6 +54,9 @@ export function useDynamicSectionsState(getAuthHeaders, handleAuthError, heroSli
       }
     );
     const uploadedImg = await res.json();
+    if (!uploadedImg.secure_url) {
+      throw new Error(uploadedImg.error?.message || 'Failed to upload image to Cloudinary');
+    }
     return uploadedImg.secure_url;
   };
 
@@ -167,21 +178,25 @@ export function useDynamicSectionsState(getAuthHeaders, handleAuthError, heroSli
 
       // Handle dynamic slides for banners
       if (modalType === 'section' && formData.section_type === 'banner') {
-        const uploadedSlides = [];
-        for (let i = 0; i < bannerSlides.length; i++) {
-          let url = bannerSlides[i].image_url;
-          if (bannerSlides[i].file) {
-            url = await uploadToCloudinary(bannerSlides[i].file);
+        // Parallelized upload: all banner slides upload simultaneously
+        const slidePromises = bannerSlides.map(async (slide) => {
+          let url = slide.image_url;
+          if (slide.file) {
+            url = await uploadToCloudinary(slide.file);
           }
           if (url) {
-            uploadedSlides.push({
-              title: bannerSlides[i].title,
-              subtitle: bannerSlides[i].subtitle,
-              link_url: bannerSlides[i].link_url,
+            return {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              link_url: slide.link_url,
               image_url: url,
-            });
+            };
           }
-        }
+          return null;
+        });
+
+        const results = await Promise.all(slidePromises);
+        const uploadedSlides = results.filter(Boolean);
 
         if (uploadedSlides.length > 0) {
           finalImageUrl = uploadedSlides[0].image_url;

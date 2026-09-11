@@ -16,6 +16,7 @@ import Payroll from "./Components/Payroll";
 import ShiftManager from "./Components/ShiftManager";
 import AttendanceHistory from "./Components/AttendanceHistory";
 import AddEmployeeModal from "./Components/AddEmployeeModal";
+import { apiFetch } from "../../../../utils/apiHelper";
 
 const StaffDashboard = () => {
   const queryClient = useQueryClient();
@@ -25,9 +26,9 @@ const StaffDashboard = () => {
   const { data: staffData = [] } = useQuery({
     queryKey: ['staff'],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_staff.php`);
+      const response = await apiFetch("get_staff.php");
       const result = await response.json();
-      return result.success ? result.data : [];
+      return result.success && Array.isArray(result.data) ? result.data : [];
     }
   });
 
@@ -58,11 +59,11 @@ const StaffDashboard = () => {
         <div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-4 bg-red-600 rounded-full shrink-0" />
-            <h2 className="text-base sm:text-lg md:text-xl font-black text-[var(--admin-text,#fff)] m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
               Staff & HR Management
             </h2>
           </div>
-          <p className="text-xs text-[var(--admin-muted,#888)] m-0 mt-0.5 font-sans">
+          <p className="text-xs text-slate-500 dark:text-neutral-400 m-0 mt-0.5 font-sans">
             Manage employee records, daily attendance, payroll calculations, and shifts.
           </p>
         </div>

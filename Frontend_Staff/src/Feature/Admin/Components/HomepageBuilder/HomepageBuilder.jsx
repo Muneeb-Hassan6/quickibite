@@ -64,7 +64,7 @@ const HomepageBuilder = () => {
       )}
 
       {/* 1. Hero Static Content Settings */}
-      <HeroTextSettings />
+      {/* <HeroTextSettings /> */}
 
       {/* 2. Hero Carousel Slides */}
       <HeroSlidesEditor
@@ -76,11 +76,11 @@ const HomepageBuilder = () => {
       />
 
       {/* 4. Homepage Promo Banners Master Control */}
-      <PromoBannersEditor
+      {/* <PromoBannersEditor
         masterBanners={masterBanners}
         handleUpdateMasterBannerOrder={handleUpdateMasterBannerOrder}
         handleToggleMasterBanner={handleToggleMasterBanner}
-      />
+      /> */}
 
       {/* 5. Dynamic Homepage Sections */}
       <DynamicSectionsEditor

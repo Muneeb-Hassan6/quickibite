@@ -1,17 +1,32 @@
 import React from "react";
 import { optimizeCloudinaryImage } from "../../../utils/imageOptimizer";
 
-const HomeBanners = ({ banners, onBannerClick }) => {
+const HomeBanners = ({ banners, onBannerClick, title }) => {
   const bannerList = Array.isArray(banners) ? banners : [];
 
   if (bannerList.length === 0) {
     return null;
   }
 
+  const gridClass =
+    bannerList.length === 1
+      ? "grid-cols-1"
+      : bannerList.length === 3
+      ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+      : "grid-cols-1 md:grid-cols-2";
+
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {bannerList.slice(0, 2).map((banner, idx) => {
+    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+      {title && (
+        <div className="flex items-center gap-2 mb-4">
+          <span className="w-1.5 h-4 bg-red-600 rounded-full shrink-0" />
+          <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide m-0">
+            {title}
+          </h2>
+        </div>
+      )}
+      <div className={`grid ${gridClass} gap-6`}>
+        {bannerList.map((banner, idx) => {
           const bannerSrc = optimizeCloudinaryImage(
             banner.promo_banner_image || banner.image || banner.img || banner.image_url,
             1200
@@ -34,7 +49,11 @@ const HomeBanners = ({ banners, onBannerClick }) => {
               <img
                 src={bannerSrc}
                 alt={banner.title || banner.name || `Promo Banner ${idx + 1}`}
-                className="w-full h-auto object-cover aspect-[2.3/1] max-h-[320px] group-hover:scale-105 transition-transform duration-500 pointer-events-none"
+                className={`w-full h-auto object-cover ${
+                  bannerList.length === 1
+                    ? "aspect-[2.5/1] sm:aspect-[3/1] max-h-[360px]"
+                    : "aspect-[2.3/1] max-h-[320px]"
+                } group-hover:scale-105 transition-transform duration-500 pointer-events-none`}
               />
 
               {/* Gradient Overlay for Text Legibility */}

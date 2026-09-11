@@ -6,14 +6,8 @@ import DashboardKpiCards from "./Components/DashboardHome/DashboardKpiCards";
 import DashboardLiveOrdersFeed from "./Components/DashboardHome/DashboardLiveOrdersFeed";
 
 const DashboardHome = ({ setActiveTab }) => {
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [selectedOrderToView, setSelectedOrderToView] = useState(null);
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const { data: allOrders = [] } = useQuery({
     queryKey: ["admin_orders", "all"],
@@ -23,37 +17,95 @@ const DashboardHome = ({ setActiveTab }) => {
       );
       const data = await response.json();
       if (Array.isArray(data)) {
-        return data.map((dbOrder) => ({
-          id: `#${dbOrder.id}`,
-          rawId: dbOrder.id,
-          customerName: dbOrder.customer_name || "Guest",
-          type: dbOrder.order_type
-            ? dbOrder.order_type.replace("_", " ").toUpperCase()
-            : "DELIVERY",
-          items: (() => {
-            let itemsArray = [];
-            if (dbOrder.items) {
-              if (typeof dbOrder.items === "string") {
-                try {
-                  itemsArray = JSON.parse(dbOrder.items);
-                } catch (e) {}
-              } else if (Array.isArray(dbOrder.items)) {
-                itemsArray = dbOrder.items;
-              }
+        return data.map((dbOrder) => {
+          let itemsArray = [];
+          if (dbOrder.items) {
+            if (typeof dbOrder.items === "string") {
+              try {
+                itemsArray = JSON.parse(dbOrder.items);
+              } catch (e) {}
+            } else if (Array.isArray(dbOrder.items)) {
+              itemsArray = dbOrder.items;
             }
-            return Array.isArray(itemsArray)
-              ? itemsArray.map((i) => ({
-                  name: i ? i.name || i.title || "" : "",
-                  qty: i ? parseInt(i.qty || 0) : 0,
+          } else if (dbOrder.cart) {
+            if (typeof dbOrder.cart === "string") {
+              try {
+                itemsArray = JSON.parse(dbOrder.cart);
+              } catch (e) {}
+            } else if (Array.isArray(dbOrder.cart)) {
+              itemsArray = dbOrder.cart;
+            }
+          }
+
+          const parsedItems = Array.isArray(itemsArray)
+            ? itemsArray.map((i) => {
+                let parsedAddons =
+                  i.selected_addons ||
+                  i.selectedAddons ||
+                  i.addons ||
+                  i.selected_addons_json ||
+                  [];
+                if (typeof parsedAddons === "string") {
+                  try {
+                    parsedAddons = JSON.parse(parsedAddons);
+                  } catch {
+                    parsedAddons = [];
+                  }
+                }
+                if (!Array.isArray(parsedAddons)) parsedAddons = [];
+
+                return {
+                  ...i,
+                  name: i ? (i.title || i.name || "") : "",
+                  title: i ? (i.title || i.name || "") : "",
+                  qty: i ? parseInt(i.qty || i.quantity || 1, 10) : 1,
                   price: i ? parseFloat(i.price || 0) : 0,
-                }))
-              : [];
-          })(),
-          total: parseFloat(dbOrder.total || 0),
-          status: (dbOrder.status || "").toLowerCase(),
-          time: dbOrder.time,
-          date: dbOrder.date,
-        }));
+                  base_price: i && i.base_price !== undefined ? parseFloat(i.base_price) : undefined,
+                  size: i?.size || "",
+                  note: i?.note || "",
+                  spice_level: i?.spice_level || "",
+                  selected_addons: parsedAddons,
+                  selectedAddons: parsedAddons,
+                  addons: parsedAddons,
+                  selected_addons_json: parsedAddons,
+                };
+              })
+            : [];
+
+          const rawType = dbOrder.order_type || dbOrder.order_mode || "DELIVERY";
+          const formattedType = rawType.replace("_", " ").toUpperCase();
+
+          return {
+            ...dbOrder,
+            id: `#${dbOrder.id}`,
+            rawId: dbOrder.id,
+            order_id: dbOrder.id,
+            customerName: dbOrder.customer_name || dbOrder.customer || "Walk-in Customer",
+            customer_name: dbOrder.customer_name || dbOrder.customer || "Walk-in Customer",
+            customer_mobile: dbOrder.customer_mobile || "",
+            customer_address: dbOrder.customer_address || "",
+            table_number: dbOrder.table_number || "",
+            type: formattedType,
+            order_type: formattedType,
+            order_mode: formattedType,
+            payment_method: dbOrder.payment_method || "Cash",
+            payment_status: dbOrder.payment_status || "Pending",
+            transaction_id: dbOrder.transaction_id || "",
+            subtotal: parseFloat(dbOrder.subtotal || 0),
+            tax_amount: parseFloat(dbOrder.tax_amount || 0),
+            delivery_fee: parseFloat(dbOrder.delivery_fee || 0),
+            rider_tip: parseFloat(dbOrder.rider_tip || 0),
+            discount_amount: parseFloat(dbOrder.discount_amount || 0),
+            coupon_code: dbOrder.coupon_code || "",
+            total: parseFloat(dbOrder.total || 0),
+            status: (dbOrder.status || "").toLowerCase(),
+            time: dbOrder.time,
+            date: dbOrder.date,
+            created_at: dbOrder.created_at || dbOrder.time,
+            items: parsedItems,
+            cart: parsedItems,
+          };
+        });
       }
       return [];
     },
@@ -106,7 +158,7 @@ const DashboardHome = ({ setActiveTab }) => {
   return (
     <div className="space-y-5 animate-slide-up">
       {/* 1. Modern Welcome Hero Card */}
-      <DashboardWelcomeHero currentTime={currentTime} />
+      <DashboardWelcomeHero />
 
       {/* 2. Key Metric Cards */}
       <DashboardKpiCards

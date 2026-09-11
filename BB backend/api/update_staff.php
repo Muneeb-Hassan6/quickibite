@@ -35,7 +35,26 @@ if(!empty($data->id) && !empty($data->name) && !empty($data->role)) {
         $stmt->execute();
         
         if (isset($data->password) && trim((string)$data->password) !== '') {
-            $hashed_password = password_hash(trim((string)$data->password), PASSWORD_DEFAULT);
+            $rawPassword = trim((string)$data->password);
+
+            if (strlen($rawPassword) < 8) {
+                echo json_encode(["success" => false, "message" => "New password must be at least 8 characters long."]);
+                exit();
+            }
+            if (!preg_match('/[A-Z]/', $rawPassword)) {
+                echo json_encode(["success" => false, "message" => "New password must contain at least one capital letter (A-Z)."]);
+                exit();
+            }
+            if (!preg_match('/[!@#$%^&*(),.?":{}|<>]/', $rawPassword)) {
+                echo json_encode(["success" => false, "message" => "New password must contain at least one special character."]);
+                exit();
+            }
+            if (isset($data->confirm_password) && $rawPassword !== trim((string)$data->confirm_password)) {
+                echo json_encode(["success" => false, "message" => "New password and confirm password do not match."]);
+                exit();
+            }
+
+            $hashed_password = password_hash($rawPassword, PASSWORD_DEFAULT);
             $pass_query = "UPDATE staff SET password = :password WHERE id = :id";
             $pass_stmt = $db->prepare($pass_query);
             $pass_stmt->bindParam(":password", $hashed_password);

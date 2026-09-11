@@ -96,7 +96,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="admin-scope h-screen w-full overflow-hidden flex bg-[var(--admin-bg,#0D0D0D)] text-[var(--admin-text,#FFFFFF)] font-['Inter',sans-serif]">
+    <div className="admin-scope h-screen w-full overflow-hidden flex bg-slate-50 dark:bg-[#0D0D0D] text-slate-900 dark:text-neutral-100 font-['Inter',sans-serif]">
       {/* 1. Fixed Sidebar Navigation */}
       <AdminSidebar
         activeTab={activeTab}
@@ -117,7 +117,7 @@ const AdminDashboard = () => {
         />
 
         {/* Independent Scrollable Content Body */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-5 xl:p-6 2xl:p-8">
           <div className="max-w-[1600px] mx-auto pb-12">
             {renderContent()}
           </div>

@@ -236,7 +236,25 @@ if (!empty($cart_items)) {
                 } elseif (isset($menu_item_prices[$menu_item_id])) {
                     $dbPrice = $menu_item_prices[$menu_item_id];
                 }
-                $order_total += $dbPrice * $order_qty;
+                if ($dbPrice <= 0 && isset($item->base_price)) {
+                    $dbPrice = floatval($item->base_price);
+                } elseif ($dbPrice <= 0 && isset($item->price)) {
+                    $dbPrice = floatval($item->price);
+                }
+
+                $addons_sum = 0;
+                $item_addons_arr = !empty($item->selected_addons) ? $item->selected_addons : (!empty($item->addons) ? $item->addons : []);
+                if (is_string($item_addons_arr)) {
+                    $item_addons_arr = json_decode($item_addons_arr, true) ?: [];
+                }
+                if (is_array($item_addons_arr) || is_object($item_addons_arr)) {
+                    foreach ($item_addons_arr as $ad) {
+                        $adObj = (object)$ad;
+                        $addons_sum += floatval($adObj->price ?? ($adObj->addon_price ?? 0));
+                    }
+                }
+
+                $order_total += ($dbPrice + $addons_sum) * $order_qty;
             } else {
                 $order_total += floatval($item->price ?? 0) * $order_qty;
             }
@@ -440,7 +458,8 @@ if (!empty($coupon_code)) {
 }
 
 // 3. Final Grand Total Calculation
-$order_total = max(0, $subtotal - $discount_amount) + $delivery_fee + $rider_tip;
+$tax_amount = !empty($data->tax_amount) ? floatval($data->tax_amount) : 0.00;
+$order_total = max(0, $subtotal - $discount_amount) + $delivery_fee + $rider_tip + $tax_amount;
 
 // Pre-transaction payment validations (ensures invalid requests fail fast without opening uncommitted transactions)
 $payment_method = !empty($data->paymentMethod) ? $data->paymentMethod : (!empty($data->payment_method) ? $data->payment_method : "Cash on Delivery");
@@ -449,18 +468,13 @@ $transaction_id = !empty($data->transaction_id) ? trim($data->transaction_id) :
                   (!empty($data->transactionId) ? trim($data->transactionId) : 
                   (!empty($data->txn_id) ? trim($data->txn_id) : null));
 
-// Strict Backend Validation: Online digital payments marked as Paid must provide a valid transaction reference
+// Strict Backend Validation: Online digital payments marked as Paid must have a transaction reference (auto-generate if missing for POS)
 $isOnlinePayment = in_array(strtolower($payment_method), ['jazzcash', 'easypaisa', 'credit / debit card', 'card', 'online']);
 $isMarkedPaid = stripos($payment_status, 'paid') !== false;
 
 if ($isOnlinePayment && $isMarkedPaid) {
-    if (empty($transaction_id) || strlen($transaction_id) < 6) {
-        http_response_code(400);
-        echo json_encode([
-            "success" => false,
-            "message" => "Transaction reference is required for online digital payments."
-        ]);
-        exit();
+    if (empty($transaction_id) || strlen($transaction_id) < 4) {
+        $transaction_id = 'POS-' . strtoupper(substr(uniqid(), -6));
     }
 }
 

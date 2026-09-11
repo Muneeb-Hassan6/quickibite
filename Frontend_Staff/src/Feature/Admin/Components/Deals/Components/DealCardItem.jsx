@@ -6,6 +6,7 @@ import {
   FaLayerGroup,
   FaTag,
   FaPercent,
+  FaHourglassHalf,
 } from "react-icons/fa";
 import { resolveImageUrl } from "../../../../../utils/imageOptimizer";
 
@@ -24,6 +25,42 @@ export default function DealCardItem({
     origPrice > dealPrice
       ? Math.round(((origPrice - dealPrice) / origPrice) * 100)
       : 0;
+
+  const getExpiryStatus = () => {
+    if (!deal.day_limit || !deal.expires_at) return null;
+    const now = new Date().getTime();
+    const expiry = new Date(deal.expires_at).getTime();
+    const diff = expiry - now;
+
+    if (diff <= 0 || deal.is_expired) {
+      return {
+        label: "Expired",
+        colorClass: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30",
+        isExpired: true,
+      };
+    }
+
+    const daysLeft = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hoursLeft = Math.floor(
+      (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
+
+    let timeText = "";
+    if (daysLeft > 0) {
+      timeText = `${daysLeft}d ${hoursLeft}h left`;
+    } else {
+      timeText = `${hoursLeft}h left`;
+    }
+
+    return {
+      label: `${timeText} (${deal.day_limit}d limit)`,
+      colorClass:
+        "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
+      isExpired: false,
+    };
+  };
+
+  const expiryInfo = getExpiryStatus();
 
   return (
     <div className="admin-card-surface bg-white dark:bg-[#161616] rounded-2xl border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-white overflow-hidden shadow-sm flex flex-col justify-between hover:border-amber-500/40 transition-all group">
@@ -71,6 +108,14 @@ export default function DealCardItem({
         {/* Card Content */}
         <div className="p-4 sm:p-5 space-y-3">
           <div>
+            {expiryInfo && (
+              <div
+                className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full border mb-1.5 ${expiryInfo.colorClass}`}
+              >
+                <FaHourglassHalf className="text-[9px]" />
+                <span>{expiryInfo.label}</span>
+              </div>
+            )}
             <h4 className="m-0 text-base font-black text-slate-900 dark:text-white uppercase tracking-wide font-['Oswald',sans-serif]">
               {deal.title}
             </h4>

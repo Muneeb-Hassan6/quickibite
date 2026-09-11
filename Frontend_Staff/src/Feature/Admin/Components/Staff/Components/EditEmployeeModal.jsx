@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { FaTimes, FaUserLock } from "react-icons/fa";
+import { FaTimes, FaUserLock, FaEye, FaEyeSlash, FaCheck } from "react-icons/fa";
 
 const STANDARD_ROLES = ["Admin", "Manager", "Cashier", "Chef", "Rider", "Waiter"];
 
@@ -14,6 +14,8 @@ export default function EditEmployeeModal({
 }) {
   const [isCustomRole, setIsCustomRole] = useState(false);
   const [customRoleInput, setCustomRoleInput] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (editingEmp) {
@@ -41,6 +43,14 @@ export default function EditEmployeeModal({
     setCustomRoleInput(val);
     handleChange({ target: { name: "role", value: val } });
   };
+
+  const pwd = editingEmp.password || "";
+  const cpwd = editingEmp.confirm_password || "";
+
+  const hasLength = pwd.length >= 8;
+  const hasUpper = /[A-Z]/.test(pwd);
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(pwd);
+  const isMatch = pwd.length > 0 && cpwd.length > 0 && pwd === cpwd;
 
   return createPortal(
     <div
@@ -168,39 +178,162 @@ export default function EditEmployeeModal({
           </div>
 
           {/* Portal Login Credentials */}
-          <div className="p-3.5 bg-slate-50 dark:bg-white/[0.02] rounded-2xl border border-slate-200 dark:border-white/5 space-y-3">
-            <div className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-neutral-400 flex items-center gap-1.5">
-              <FaUserLock className="text-amber-500" />
-              <span>Portal Login Credentials</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 block mb-1">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  name="username"
-                  value={editingEmp.username || ""}
-                  onChange={handleChange}
-                  placeholder="e.g. ali_staff"
-                  className="w-full px-3 py-2 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
-                />
+          <div className="p-4 bg-slate-50 dark:bg-white/[0.02] rounded-2xl border border-slate-200 dark:border-white/5 space-y-3.5">
+            <div className="flex items-center justify-between pb-1">
+              <div className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-neutral-300 flex items-center gap-2">
+                <FaUserLock className="text-amber-500" />
+                <span>Portal Login Credentials</span>
               </div>
+              <span className="text-[10px] font-bold text-slate-500 dark:text-neutral-400">
+                Optional: Leave blank to retain existing password
+              </span>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-extrabold text-slate-600 dark:text-neutral-400 block mb-1 uppercase tracking-wider">
+                Username
+              </label>
+              <input
+                type="text"
+                name="username"
+                value={editingEmp.username || ""}
+                onChange={handleChange}
+                placeholder="e.g. ali_staff"
+                className="w-full px-3.5 py-2.5 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-medium focus:outline-none focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-neutral-600"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* New Password */}
               <div>
-                <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 block mb-1">
+                <label className="text-[11px] font-extrabold text-slate-600 dark:text-neutral-400 block mb-1 uppercase tracking-wider">
                   New Password
                 </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={editingEmp.password || ""}
-                  onChange={handleChange}
-                  placeholder="Leave blank to keep current password"
-                  className="w-full px-3 py-2 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-neutral-600"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={editingEmp.password || ""}
+                    onChange={handleChange}
+                    placeholder="Leave blank to keep current"
+                    className="w-full pl-3.5 pr-10 py-2.5 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-medium focus:outline-none focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-neutral-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-neutral-500 dark:hover:text-neutral-200 border-none bg-transparent cursor-pointer p-1 transition-colors"
+                    title={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <FaEyeSlash className="text-xs" /> : <FaEye className="text-xs" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm New Password */}
+              <div>
+                <label className="text-[11px] font-extrabold text-slate-600 dark:text-neutral-400 block mb-1 uppercase tracking-wider">
+                  Confirm New Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirm_password"
+                    value={editingEmp.confirm_password || ""}
+                    onChange={handleChange}
+                    placeholder={pwd ? "Re-enter new password" : "Leave blank"}
+                    disabled={!pwd}
+                    className={`w-full pl-3.5 pr-10 py-2.5 bg-white dark:bg-black/40 border ${
+                      pwd && cpwd && !isMatch
+                        ? "border-red-500 focus:border-red-500"
+                        : pwd && cpwd && isMatch
+                        ? "border-emerald-500 focus:border-emerald-500"
+                        : "border-slate-300 dark:border-white/10 focus:border-amber-500"
+                    } text-slate-900 dark:text-white rounded-xl text-xs font-medium focus:outline-none placeholder:text-slate-400 dark:placeholder:text-neutral-600 disabled:opacity-40`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    disabled={!pwd}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-neutral-500 dark:hover:text-neutral-200 border-none bg-transparent cursor-pointer p-1 transition-colors disabled:opacity-30"
+                    title={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? <FaEyeSlash className="text-xs" /> : <FaEye className="text-xs" />}
+                  </button>
+                </div>
               </div>
             </div>
+
+            {/* Live Checklist when password is being updated */}
+            {pwd.length > 0 && (
+              <div className="p-2.5 bg-slate-100/70 dark:bg-white/[0.03] rounded-xl border border-slate-200 dark:border-white/[0.06] space-y-1.5 animate-slide-up">
+                <p className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider m-0">
+                  New Password Requirements:
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  <div
+                    className={`flex items-center gap-1.5 text-[11px] font-semibold transition-colors ${
+                      hasLength
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-slate-400 dark:text-neutral-500"
+                    }`}
+                  >
+                    {hasLength ? (
+                      <FaCheck className="text-[10px] text-emerald-500 shrink-0" />
+                    ) : (
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-neutral-600 shrink-0" />
+                    )}
+                    <span>Min. 8 Letters</span>
+                  </div>
+
+                  <div
+                    className={`flex items-center gap-1.5 text-[11px] font-semibold transition-colors ${
+                      hasUpper
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-slate-400 dark:text-neutral-500"
+                    }`}
+                  >
+                    {hasUpper ? (
+                      <FaCheck className="text-[10px] text-emerald-500 shrink-0" />
+                    ) : (
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-neutral-600 shrink-0" />
+                    )}
+                    <span>1+ Capital (A-Z)</span>
+                  </div>
+
+                  <div
+                    className={`flex items-center gap-1.5 text-[11px] font-semibold transition-colors ${
+                      hasSpecial
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-slate-400 dark:text-neutral-500"
+                    }`}
+                  >
+                    {hasSpecial ? (
+                      <FaCheck className="text-[10px] text-emerald-500 shrink-0" />
+                    ) : (
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-neutral-600 shrink-0" />
+                    )}
+                    <span>1+ Special (!@#$)</span>
+                  </div>
+
+                  <div
+                    className={`flex items-center gap-1.5 text-[11px] font-semibold transition-colors ${
+                      isMatch
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : cpwd && !isMatch
+                        ? "text-red-500 dark:text-red-400"
+                        : "text-slate-400 dark:text-neutral-500"
+                    }`}
+                  >
+                    {isMatch ? (
+                      <FaCheck className="text-[10px] text-emerald-500 shrink-0" />
+                    ) : (
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-neutral-600 shrink-0" />
+                    )}
+                    <span>Both Match</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-white/[0.06]">

@@ -29,11 +29,11 @@ const PopupCard = ({ image, title, description, price, item, closePopup }) => {
       onClick={cardState.handleCloseModal}
     >
       <div
-        className="relative w-full max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-5xl max-h-[92vh] lg:h-[82vh] lg:max-h-[720px] bg-white dark:bg-neutral-900 border border-gray-200 dark:border-white/10 rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col lg:flex-row-reverse shadow-2xl transition-all duration-300"
+        className="relative w-full max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-5xl max-h-[90vh] lg:h-[82vh] lg:max-h-[640px] xl:max-h-[720px] bg-white dark:bg-neutral-900 border border-gray-200 dark:border-white/10 rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col lg:flex-row-reverse shadow-2xl transition-all duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ═══ 1. RIGHT COLUMN (Desktop Visual & Purchase Area) / TOP BANNER (Mobile) ═══ */}
-        <div className="relative w-full lg:w-[380px] xl:w-[420px] bg-gradient-to-b from-gray-100 to-white dark:from-neutral-800/80 dark:to-neutral-900 flex flex-col justify-between p-4 sm:p-6 lg:p-6 overflow-hidden shrink-0 lg:border-l lg:border-gray-200/80 dark:lg:border-neutral-800">
+        <div className="relative w-full lg:w-[320px] xl:w-[400px] bg-gradient-to-b from-gray-100 to-white dark:from-neutral-800/80 dark:to-neutral-900 flex flex-col justify-between p-4 sm:p-5 lg:p-5 xl:p-6 overflow-hidden shrink-0 lg:border-l lg:border-gray-200/80 dark:lg:border-neutral-800">
           <PopupImageGallery
             finalImage={cardState.finalImage}
             title={title}

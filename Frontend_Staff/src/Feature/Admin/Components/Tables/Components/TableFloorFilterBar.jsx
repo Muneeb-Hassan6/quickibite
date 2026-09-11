@@ -14,11 +14,11 @@ export default function TableFloorFilterBar({
         <div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-4 bg-red-600 rounded-full shrink-0" />
-            <h2 className="text-base sm:text-lg md:text-xl font-black text-[var(--admin-text,#fff)] m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white m-0 font-['Oswald',sans-serif] uppercase tracking-wide">
               Tables & Dine-In QR Generator
             </h2>
           </div>
-          <p className="text-xs text-[var(--admin-muted,#888)] m-0 mt-0.5 font-sans">
+          <p className="text-xs text-slate-500 dark:text-neutral-400 m-0 mt-0.5 font-sans">
             Manage restaurant tables and generate high-resolution QR codes for contactless Dine-In ordering.
           </p>
         </div>

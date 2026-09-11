@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { FaBoxes, FaFire } from "react-icons/fa";
 import Swal from "sweetalert2";
 
@@ -9,6 +9,10 @@ import InventoryControls from "./Components/InventoryControls";
 import InventoryTable from "./Components/InventoryTable";
 import InventoryModal from "./Components/InventoryModal";
 import WastageAnalytics from "./Components/WastageAnalytics";
+import ServerPaginationControls from "../SharedComponents/ServerPaginationControls";
+import { apiFetch } from "../../../../utils/apiHelper";
+
+const PAGE_SIZE = 25;
 
 const InventoryManager = () => {
   const queryClient = useQueryClient();
@@ -22,6 +26,18 @@ const InventoryManager = () => {
     direction: "asc",
   });
 
+  const [products, setProducts] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [serverStats, setServerStats] = useState({ total_items: 0, low_stock: 0, total_value: "0.00" });
+
+  const productsRef = useRef(products);
+  useEffect(() => {
+    productsRef.current = products;
+  }, [products]);
+
   const defaultForm = {
     name: "",
     price: "",
@@ -31,24 +47,59 @@ const InventoryManager = () => {
   };
   const [form, setForm] = useState(defaultForm);
 
-  const { data: products = [], isLoading } = useQuery({
-    queryKey: ['inventory'],
-    queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/inventory_api.php`);
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
+  const fetchInventoryBatch = useCallback(async (offset = 0, isAppend = false) => {
+    if (isAppend) {
+      setIsLoadingMore(true);
+    } else if (productsRef.current.length === 0) {
+      setIsLoading(true);
     }
-  });
 
-  const totalItems = products.length;
-  const lowStock = products.filter((p) => {
-    const s = parseFloat(p.stock || 0);
-    const t = parseFloat(p.threshold || 10);
-    return s <= t && s > 0;
-  }).length;
-  const totalValue = products
-    .reduce((acc, p) => acc + (parseFloat(p.price || 0) * parseFloat(p.stock || 0)), 0)
-    .toFixed(2);
+    try {
+      const response = await apiFetch(`inventory_api.php?limit=${PAGE_SIZE}&offset=${offset}`);
+      const result = await response.json();
+
+      if (result.success || result.status === "success") {
+        const fetched = Array.isArray(result.items) ? result.items : (Array.isArray(result) ? result : []);
+        const sTotal = result.total !== undefined ? result.total : fetched.length;
+        setTotalCount(sTotal);
+        if (result.stats) {
+          setServerStats(result.stats);
+        }
+
+        if (isAppend) {
+          setProducts((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id));
+            const newUnique = fetched.filter((p) => !existingIds.has(p.id));
+            const merged = [...prev, ...newUnique];
+            setHasMore(merged.length < sTotal);
+            return merged;
+          });
+        } else {
+          setProducts(fetched);
+          setHasMore(result.has_more !== undefined ? result.has_more : fetched.length < sTotal);
+        }
+      }
+    } catch (err) {
+      console.error("Inventory fetch error:", err);
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchInventoryBatch(0, false);
+  }, [fetchInventoryBatch]);
+
+  const handleLoadMore = () => {
+    if (!isLoadingMore && hasMore) {
+      fetchInventoryBatch(products.length, true);
+    }
+  };
+
+  const totalItems = serverStats.total_items || totalCount;
+  const lowStock = serverStats.low_stock;
+  const totalValue = serverStats.total_value;
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name
@@ -139,6 +190,7 @@ const InventoryManager = () => {
         );
         const res = await response.json();
         if (res.status === "success") {
+          fetchInventoryBatch(0, false);
           queryClient.invalidateQueries({ queryKey: ['inventory'] });
           Swal.fire({
             icon: "success",
@@ -175,6 +227,7 @@ const InventoryManager = () => {
       const result = await response.json();
 
       if (result.status === "success") {
+        fetchInventoryBatch(0, false);
         queryClient.invalidateQueries({ queryKey: ['inventory'] });
         setIsModalOpen(false);
         Swal.fire({
@@ -278,6 +331,16 @@ const InventoryManager = () => {
             onDelete={handleDelete}
             requestSort={requestSort}
             sortConfig={sortConfig}
+          />
+
+          {/* Server-side Pagination Load More */}
+          <ServerPaginationControls
+            loadedCount={products.length}
+            totalCount={totalCount}
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={handleLoadMore}
+            itemLabel="items"
           />
         </>
       )}

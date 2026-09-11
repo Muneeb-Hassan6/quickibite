@@ -20,10 +20,10 @@ const TopCategories = ({ data }) => {
   ];
 
   return (
-    <div className="bg-[var(--admin-panel,#171717)] rounded-2xl p-5 border border-[var(--admin-border,rgba(255,255,255,0.06))] shadow-sm flex flex-col justify-between h-[380px]">
-      <div className="flex items-center gap-2 pb-3 border-b border-[var(--admin-border,rgba(255,255,255,0.06))]">
-        <FaLayerGroup className="text-amber-400 text-sm" />
-        <h3 className="m-0 text-sm sm:text-base font-black text-white font-['Oswald',sans-serif] uppercase tracking-wide">
+    <div className="bg-white dark:bg-[#161616] rounded-2xl p-5 border border-slate-200 dark:border-white/[0.08] shadow-sm flex flex-col justify-between h-[380px]">
+      <div className="flex items-center gap-2 pb-3 border-b border-slate-200 dark:border-white/[0.08]">
+        <FaLayerGroup className="text-amber-500 text-sm" />
+        <h3 className="m-0 text-sm sm:text-base font-black text-slate-900 dark:text-white font-['Oswald',sans-serif] uppercase tracking-wide">
           Sales by Category
         </h3>
       </div>
@@ -34,21 +34,21 @@ const TopCategories = ({ data }) => {
           return (
             <div key={idx} className="space-y-1.5">
               <div className="flex justify-between items-center text-xs">
-                <span className="font-extrabold text-neutral-300 truncate max-w-[180px]">
+                <span className="font-extrabold text-slate-800 dark:text-neutral-200 truncate max-w-[180px]">
                   {cat.name}
                 </span>
                 <div className="flex items-center gap-2">
                   {cat.qty !== undefined && (
-                    <span className="text-[10px] text-[var(--admin-muted,#888)] font-semibold">
+                    <span className="text-[10px] text-slate-500 dark:text-neutral-400 font-semibold">
                       {cat.qty} sold
                     </span>
                   )}
-                  <span className="font-black text-white font-mono">
+                  <span className="font-black text-slate-900 dark:text-white font-mono">
                     {cat.percent}%
                   </span>
                 </div>
               </div>
-              <div className="w-full h-2 bg-black/50 rounded-full overflow-hidden border border-white/5">
+              <div className="w-full h-2 bg-slate-100 dark:bg-neutral-800/80 rounded-full overflow-hidden border border-slate-200/80 dark:border-white/5">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${color}`}
                   style={{ width: `${Math.max(5, cat.percent)}%` }}
@@ -59,7 +59,7 @@ const TopCategories = ({ data }) => {
         })}
       </div>
 
-      <div className="pt-3 border-t border-[var(--admin-border,rgba(255,255,255,0.06))] text-[11px] text-[var(--admin-muted,#888)] font-medium">
+      <div className="pt-3 border-t border-slate-200 dark:border-white/[0.08] text-[11px] text-slate-500 dark:text-neutral-400 font-medium">
         Calculated from completed orders across catalog categories.
       </div>
     </div>

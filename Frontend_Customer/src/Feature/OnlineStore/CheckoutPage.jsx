@@ -43,7 +43,7 @@ const CheckoutPage = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0c] text-neutral-900 dark:text-white transition-colors duration-300 pb-20">
       {/* ── Page Header ── */}
-      <section className="relative overflow-hidden pt-8 pb-8 sm:pt-12 sm:pb-10 border-b border-gray-200/80 dark:border-neutral-800/80 bg-gradient-to-b from-amber-500/10 via-amber-500/5 to-transparent dark:from-amber-500/15 dark:via-amber-500/5">
+      <section className="relative overflow-hidden pt-6 pb-6 sm:pt-10 sm:pb-8 border-b border-gray-200/80 dark:border-neutral-800/80 bg-gradient-to-b from-amber-500/10 via-amber-500/5 to-transparent dark:from-amber-500/15 dark:via-amber-500/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -51,7 +51,7 @@ const CheckoutPage = () => {
                 <LuLock className="w-3.5 h-3.5 text-amber-500" />
                 <span>SECURE ENCRYPTED CHECKOUT</span>
               </div>
-              <h1 className="font-['Oswald',sans-serif] font-black text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight text-neutral-950 dark:text-white m-0">
+              <h1 className="font-['Oswald',sans-serif] font-black text-2xl sm:text-4xl md:text-5xl uppercase tracking-tight text-neutral-950 dark:text-white m-0">
                 FINALIZE YOUR{" "}
                 <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
                   ORDER
@@ -69,8 +69,8 @@ const CheckoutPage = () => {
       </section>
 
       {/* ── 2-Column Main Layout ── */}
-      <main className="max-w-7xl mx-auto px-3.5 sm:px-8 py-6 sm:py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-start">
+      <main className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-6 xl:px-8 py-5 sm:py-8 xl:py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-6 xl:gap-8 items-start">
           {/* ════ LEFT COLUMN: CUSTOMER & ORDER CONFIGURATION (7 Cols) ════ */}
           <div className="lg:col-span-7 space-y-4 sm:space-y-6">
             <DeliveryAddressForm

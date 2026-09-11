@@ -24,12 +24,12 @@ export default function ProductBasicInfoForm({
       {/* RIGHT COLUMN: General Info & Metadata Controls */}
       <div className="md:col-span-8 flex flex-col gap-4">
         <div>
-          <label className="text-xs font-extrabold text-[var(--admin-muted,#888)] uppercase tracking-wider mb-1.5 block">
+          <label className="text-xs font-extrabold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-1.5 block">
             Item Title *
           </label>
           <input
             type="text"
-            className="w-full p-3 bg-white/5 border border-[var(--admin-border,rgba(255,255,255,0.08))] text-[var(--admin-text,#fff)] rounded-xl focus:outline-hidden focus:border-amber-500 text-sm font-semibold"
+            className="w-full p-3 bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl focus:outline-hidden focus:border-amber-500 text-sm font-semibold placeholder:text-zinc-400 dark:placeholder:text-zinc-500 transition-all"
             value={menuForm.name}
             onChange={(e) =>
               setMenuForm({ ...menuForm, name: e.target.value })
@@ -40,22 +40,22 @@ export default function ProductBasicInfoForm({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-extrabold text-[var(--admin-muted,#888)] uppercase tracking-wider mb-1.5 block">
+            <label className="text-xs font-extrabold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-1.5 block">
               Category *
             </label>
             <select
-              className="w-full p-3 bg-white/5 border border-[var(--admin-border,rgba(255,255,255,0.08))] text-[var(--admin-text,#fff)] rounded-xl focus:outline-hidden focus:border-amber-500 text-sm font-semibold cursor-pointer"
+              className="w-full p-3 bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl focus:outline-hidden focus:border-amber-500 text-sm font-semibold cursor-pointer transition-all"
               value={menuForm.category}
               onChange={(e) =>
                 setMenuForm({ ...menuForm, category: e.target.value })
               }
             >
-              <option className="bg-[var(--admin-panel,#171717)]" value="" disabled>
+              <option className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white" value="" disabled>
                 Select Category
               </option>
               {categories.map((cat) => (
                 <option
-                  className="bg-[var(--admin-panel,#171717)]"
+                  className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white"
                   key={cat.id}
                   value={cat.name}
                 >
@@ -66,12 +66,12 @@ export default function ProductBasicInfoForm({
           </div>
 
           <div>
-            <label className="text-xs font-extrabold text-[var(--admin-muted,#888)] uppercase tracking-wider mb-1.5 block">
+            <label className="text-xs font-extrabold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-1.5 block">
               Description (Optional)
             </label>
             <textarea
               rows={1}
-              className="w-full p-2.5 bg-white/5 border border-[var(--admin-border,rgba(255,255,255,0.08))] text-[var(--admin-text,#fff)] rounded-xl focus:outline-hidden focus:border-amber-500 text-sm resize-none"
+              className="w-full p-2.5 bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl focus:outline-hidden focus:border-amber-500 text-sm resize-none placeholder:text-zinc-400 dark:placeholder:text-zinc-500 transition-all"
               value={menuForm.description || ""}
               onChange={(e) =>
                 setMenuForm({ ...menuForm, description: e.target.value })

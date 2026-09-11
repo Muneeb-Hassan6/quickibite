@@ -30,12 +30,14 @@ $homepage_sections = $stmt_sections->fetchAll(PDO::FETCH_ASSOC);
 // ═══════════════════════════════════════════════════════════════
 // 3. UNIFIED PROMO BANNERS (DEALS + MENU PRODUCTS)
 // ═══════════════════════════════════════════════════════════════
+$db->exec("UPDATE deals SET is_active = 0 WHERE is_active = 1 AND expires_at IS NOT NULL AND expires_at <= NOW()");
+
 $featured_banners = [];
 
 // A. Fetch Deals with is_featured_banner = 1
 $query_deal_banners = "SELECT id, title, description, price, original_price, badge_tag, img, promo_banner_image, is_featured_banner, banner_order 
                        FROM deals 
-                       WHERE is_featured_banner = 1 AND is_active = 1 
+                       WHERE is_featured_banner = 1 AND is_active = 1 AND (expires_at IS NULL OR expires_at > NOW())
                        ORDER BY banner_order ASC, id DESC";
 $stmt_deal_banners = $db->prepare($query_deal_banners);
 $stmt_deal_banners->execute();
@@ -199,10 +201,23 @@ foreach ($settings_result as $row) {
     }
 }
 
+// Fetch Hero Categories (show_on_hero = 1)
+$stmt_hero_cats = $db->prepare("SELECT id, name, img FROM categories WHERE show_on_hero = 1 AND img IS NOT NULL AND img != '' ORDER BY id ASC");
+$stmt_hero_cats->execute();
+$hero_categories = $stmt_hero_cats->fetchAll(PDO::FETCH_ASSOC);
+
+// If none explicitly selected, fallback to active categories with images
+if (empty($hero_categories)) {
+    $stmt_fallback = $db->prepare("SELECT id, name, img FROM categories WHERE img IS NOT NULL AND img != '' ORDER BY id DESC LIMIT 8");
+    $stmt_fallback->execute();
+    $hero_categories = $stmt_fallback->fetchAll(PDO::FETCH_ASSOC);
+}
+
 echo json_encode([
     "success" => true,
     "data" => [
         "hero_sliders" => $hero_sliders,
+        "hero_categories" => $hero_categories,
         "sections" => $homepage_sections,
         "featured_banners" => $featured_banners,
         "settings" => $homepage_settings

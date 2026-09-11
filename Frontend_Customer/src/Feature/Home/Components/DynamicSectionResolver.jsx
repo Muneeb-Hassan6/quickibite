@@ -23,6 +23,7 @@ export default function DynamicSectionResolver({
       sectionComponent = (
         <HomeHero
           slides={homepageData.hero_sliders || []}
+          heroCategories={homepageData.hero_categories || []}
           onBannerClick={handleBannerClick}
         />
       );
@@ -90,56 +91,80 @@ export default function DynamicSectionResolver({
 
     if (section.section_type === "banner") {
       let bannerItems = [];
+
+      // 1. First priority: Section's own custom banner slides from content_data
+      try {
+        if (
+          section.content_data &&
+          section.content_data.startsWith("[")
+        ) {
+          const parsed = JSON.parse(section.content_data);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            bannerItems = parsed.map((item, idx) => {
+              const imgUrl =
+                typeof item === "object"
+                  ? item.image_url || item.image || item.img
+                  : item;
+              const link =
+                typeof item === "object"
+                  ? item.link_url || item.link || section.link_url
+                  : section.link_url;
+              const t =
+                typeof item === "object"
+                  ? item.title || section.title
+                  : section.title;
+              const sub =
+                typeof item === "object"
+                  ? item.subtitle || section.subtitle
+                  : section.subtitle;
+
+              return {
+                id: `${section.id}-${idx}`,
+                image: imgUrl,
+                img: imgUrl,
+                image_url: imgUrl,
+                link: link,
+                link_url: link,
+                title: t,
+                subtitle: sub,
+              };
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Error parsing banner data", e);
+      }
+
+      // 2. Second priority: Section's single image_url
+      if (bannerItems.length === 0 && section.image_url) {
+        bannerItems = [
+          {
+            id: `${section.id}-single`,
+            image: section.image_url,
+            img: section.image_url,
+            image_url: section.image_url,
+            link: section.link_url || "/deals",
+            link_url: section.link_url || "/deals",
+            title: section.title || "Special Deals",
+            subtitle: section.subtitle || "",
+          },
+        ];
+      }
+
+      // 3. Fallback: Master featured_banners ONLY if section has no custom slides
       if (
+        bannerItems.length === 0 &&
         homepageData.featured_banners &&
         homepageData.featured_banners.length > 0
       ) {
         bannerItems = homepageData.featured_banners;
-      } else {
-        try {
-          if (
-            section.content_data &&
-            section.content_data.startsWith("[")
-          ) {
-            const parsed = JSON.parse(section.content_data);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              bannerItems = parsed.map((item, idx) => ({
-                id: idx,
-                image:
-                  typeof item === "object"
-                    ? item.image_url || item.image
-                    : item,
-                link:
-                  typeof item === "object"
-                    ? item.link_url || section.link_url
-                    : section.link_url,
-                title:
-                  typeof item === "object"
-                    ? item.title || section.title
-                    : section.title,
-              }));
-            }
-          }
-        } catch (e) {
-          console.error("Error parsing banner data", e);
-        }
-
-        if (bannerItems.length === 0 && section.image_url) {
-          bannerItems = [
-            {
-              id: 1,
-              image: section.image_url,
-              link: section.link_url || "/deals",
-              title: section.title || "Special Deals",
-            },
-          ];
-        }
       }
 
       if (bannerItems.length > 0) {
         sectionComponent = (
           <HomeBanners
             key={`ban-${section.id}`}
+            title={section.title}
             banners={bannerItems}
             onBannerClick={handleBannerClick}
           />

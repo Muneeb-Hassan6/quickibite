@@ -128,7 +128,27 @@ const MainContent = () => {
         transition: "0.3s",
       }}
     >
-      <Toaster position="top-center" reverseOrder={false} />
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          className:
+            "!bg-white dark:!bg-[#18181b] !text-slate-900 dark:!text-white !border !border-slate-200 dark:!border-white/10 !rounded-2xl !shadow-xl !font-bold !text-xs sm:!text-sm !py-3 !px-4",
+          duration: 3000,
+          success: {
+            iconTheme: {
+              primary: "#10b981",
+              secondary: "#ffffff",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#ef4444",
+              secondary: "#ffffff",
+            },
+          },
+        }}
+      />
 
       <React.Suspense fallback={<LoadingFallback />}>
         <Routes>

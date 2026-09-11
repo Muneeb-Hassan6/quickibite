@@ -4,18 +4,22 @@ import { FaTimes, FaUserPlus, FaSpinner } from "react-icons/fa";
 import Swal from "sweetalert2";
 import EmployeePersonalInfoForm from "./EmployeePersonalInfoForm";
 import EmployeeWorkDetailsForm from "./EmployeeWorkDetailsForm";
+import { apiFetch } from "../../../../../utils/apiHelper";
+
+const initialFormData = {
+  name: "",
+  role: "Waiter",
+  phone: "",
+  salary: "",
+  username: "",
+  password: "",
+  confirm_password: "",
+  bike_number: "",
+  license_number: "",
+};
 
 const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    name: "",
-    role: "Waiter",
-    phone: "",
-    salary: "",
-    username: "",
-    password: "",
-    bike_number: "",
-    license_number: "",
-  });
+  const [formData, setFormData] = useState(initialFormData);
 
   const [customRoleName, setCustomRoleName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,22 +59,68 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
       return;
     }
 
+    const pwd = (formData.password || "").trim();
+    const cpwd = (formData.confirm_password || "").trim();
+
+    // Strong password validation rules
+    if (!pwd || pwd.length < 8) {
+      Swal.fire({
+        icon: "warning",
+        title: "Password Too Short",
+        text: "Password must be at least 8 characters long.",
+        background: "#171717",
+        color: "#fff",
+      });
+      return;
+    }
+
+    if (!/[A-Z]/.test(pwd)) {
+      Swal.fire({
+        icon: "warning",
+        title: "Capital Letter Required",
+        text: "Password must contain at least one capital letter (A-Z).",
+        background: "#171717",
+        color: "#fff",
+      });
+      return;
+    }
+
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) {
+      Swal.fire({
+        icon: "warning",
+        title: "Special Character Required",
+        text: "Password must contain at least one special character (!@#$%^&* etc.).",
+        background: "#171717",
+        color: "#fff",
+      });
+      return;
+    }
+
+    if (pwd !== cpwd) {
+      Swal.fire({
+        icon: "error",
+        title: "Passwords Do Not Match",
+        text: "Please make sure your password and confirm password match.",
+        background: "#171717",
+        color: "#fff",
+      });
+      return;
+    }
+
     const finalRole = isCustomRole ? customRoleName.trim() : formData.role;
 
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/add_staff.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...formData,
-            role: finalRole,
-          }),
-        }
-      );
+      const response = await apiFetch("add_staff.php", {
+        method: "POST",
+        body: JSON.stringify({
+          ...formData,
+          password: pwd,
+          confirm_password: cpwd,
+          role: finalRole,
+        }),
+      });
 
       const result = await response.json();
 
@@ -87,16 +137,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
 
         if (onSave) onSave();
 
-        setFormData({
-          name: "",
-          role: "Waiter",
-          phone: "",
-          salary: "",
-          username: "",
-          password: "",
-          bike_number: "",
-          license_number: "",
-        });
+        setFormData(initialFormData);
         setCustomRoleName("");
         onClose();
       } else {

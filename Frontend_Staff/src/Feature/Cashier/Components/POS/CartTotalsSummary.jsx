@@ -1,5 +1,5 @@
 import React from "react";
-import { FaCheck, FaMoneyBillWave, FaCreditCard, FaRandom } from "react-icons/fa";
+import { FaCheck, FaMoneyBillWave, FaCreditCard, FaGlobe, FaRandom } from "react-icons/fa";
 
 export default function CartTotalsSummary({
   subtotal = 0,
@@ -96,60 +96,44 @@ export default function CartTotalsSummary({
         </div>
 
         {setPaymentMethod && (
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-3 gap-1.5">
             <button
               type="button"
-              onClick={() => {
-                setPaymentMethod("Cash");
-                if (setTransactionId) setTransactionId("");
-              }}
-              className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+              onClick={() => setPaymentMethod("Cash")}
+              className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                 paymentMethod === "Cash"
-                  ? "bg-amber-500/15 border-amber-500 text-amber-600 dark:text-amber-400 shadow-xs"
+                  ? "bg-amber-500/15 border-amber-500 text-amber-600 dark:text-amber-400 shadow-xs ring-1 ring-amber-500/30"
                   : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300"
               }`}
             >
-              <FaMoneyBillWave className="text-xs" />
+              <FaMoneyBillWave className="text-xs shrink-0" />
               <span>Cash</span>
             </button>
 
             <button
               type="button"
-              onClick={() => {
-                setPaymentMethod("Card");
-                if (setTransactionId && !transactionId) {
-                  generateRandomTxn();
-                }
-              }}
-              className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                paymentMethod === "Card" || paymentMethod === "Online"
-                  ? "bg-amber-500/15 border-amber-500 text-amber-600 dark:text-amber-400 shadow-xs"
+              onClick={() => setPaymentMethod("Card")}
+              className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                paymentMethod === "Card"
+                  ? "bg-amber-500/15 border-amber-500 text-amber-600 dark:text-amber-400 shadow-xs ring-1 ring-amber-500/30"
                   : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300"
               }`}
             >
-              <FaCreditCard className="text-xs" />
-              <span>Card / POS</span>
+              <FaCreditCard className="text-xs shrink-0" />
+              <span>Card</span>
             </button>
-          </div>
-        )}
 
-        {/* Transaction Reference for Card / Online */}
-        {(paymentMethod === "Card" || paymentMethod === "Online") && setTransactionId && (
-          <div className="flex items-center gap-1.5 pt-0.5">
-            <input
-              type="text"
-              placeholder="Ref / Transaction ID (e.g. TXN-12345)"
-              value={transactionId}
-              onChange={(e) => setTransactionId(e.target.value)}
-              className="flex-1 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 py-1.5 px-2.5 rounded-xl text-xs font-mono text-zinc-900 dark:text-white outline-none focus:border-amber-500"
-            />
             <button
               type="button"
-              onClick={generateRandomTxn}
-              className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-amber-500 border border-zinc-200 dark:border-zinc-700 cursor-pointer"
-              title="Generate reference"
+              onClick={() => setPaymentMethod("Online")}
+              className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                paymentMethod === "Online"
+                  ? "bg-amber-500/15 border-amber-500 text-amber-600 dark:text-amber-400 shadow-xs ring-1 ring-amber-500/30"
+                  : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300"
+              }`}
             >
-              <FaRandom className="text-xs" />
+              <FaGlobe className="text-xs shrink-0" />
+              <span>Online</span>
             </button>
           </div>
         )}

@@ -16,6 +16,7 @@ if(!empty($data->id) && !empty($data->name) && !empty($data->img)){
     $category->id = $data->id;
     $category->name = $data->name;
     $category->img = $data->img; // Yeh Naya URL hai jo frontend se aya
+    $category->show_on_hero = isset($data->show_on_hero) ? ($data->show_on_hero ? 1 : 0) : 0;
 
     // --- STEP 1: Update karne se pehle purani image aur naam nikalna ---
     $query = "SELECT name, img FROM categories WHERE id = ?";

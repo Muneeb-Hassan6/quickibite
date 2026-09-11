@@ -1,75 +1,111 @@
 import React from "react";
-import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaUtensils } from "react-icons/fa";
+import { resolveImageUrl } from "../../../../../utils/imageOptimizer";
 
 export default function MenuCategoryTabs({
   categories = [],
+  menuItems = [],
   onAddCategory,
   onEditCategory,
   onDeleteCategory,
 }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pt-4 animate-slide-up">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3.5 sm:gap-4.5 pt-4 animate-slide-up">
+      {/* 1. Add Category Action Card */}
       <div
-        className="border-2 border-dashed border-slate-300 dark:border-white/15 rounded-2xl hover:border-amber-500/50 hover:bg-amber-500/[0.03] transition-all flex flex-col items-center justify-center min-h-[140px] cursor-pointer text-slate-500 dark:text-neutral-400 hover:text-amber-500 dark:hover:text-amber-400 group p-4"
+        className="border-2 border-dashed border-amber-500/40 hover:border-amber-500 bg-amber-500/[0.03] hover:bg-amber-500/[0.08] rounded-3xl p-4 flex flex-col items-center justify-center min-h-[190px] cursor-pointer group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg shadow-sm"
         onClick={onAddCategory}
       >
-        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-amber-500/10 transition-colors mb-2">
-          <FaPlus className="text-sm" />
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-400 text-neutral-950 flex items-center justify-center text-base shadow-md shadow-amber-500/25 group-hover:scale-110 group-hover:rotate-6 transition-transform mb-3">
+          <FaPlus />
         </div>
-        <p className="m-0 text-xs font-bold uppercase tracking-wider text-center">
+        <span className="font-['Oswald',sans-serif] font-black text-xs sm:text-sm text-slate-900 dark:text-white uppercase tracking-wider text-center">
           Add Category
-        </p>
+        </span>
+        <span className="text-[10px] text-slate-400 dark:text-neutral-500 font-bold mt-1 text-center">
+          New catalog group
+        </span>
       </div>
 
-      {categories.map((cat) => (
-        <div
-          key={cat.id}
-          className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-white/[0.06] bg-slate-100 dark:bg-[#161616] group transition-all min-h-[140px] flex items-center justify-center shadow-sm hover:border-amber-500/40 hover:-translate-y-1 hover:shadow-lg"
-        >
-          <img
-            src={cat.img}
-            alt={cat.name}
-            className="absolute inset-0 w-full h-full object-cover z-[1] opacity-70 dark:opacity-50 transition-all duration-500 group-hover:scale-110 group-hover:opacity-30"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = "https://via.placeholder.com/150?text=No+Image";
-            }}
-          />
+      {/* 2. Category Cards */}
+      {categories.map((cat) => {
+        const catItemsCount = menuItems.filter(
+          (m) =>
+            String(m.category || "")
+              .toLowerCase()
+              .trim() ===
+            String(cat.name || "")
+              .toLowerCase()
+              .trim()
+        ).length;
+
+        const imgSrc = resolveImageUrl(cat.img, 400);
+
+        return (
           <div
-            className="relative z-[2] font-black text-sm text-white uppercase tracking-wider text-center px-3 transition-opacity duration-300 group-hover:opacity-0 group-hover:invisible"
-            style={{
-              textShadow:
-                "0 2px 10px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.9)",
-            }}
+            key={cat.id}
+            className="group relative rounded-3xl p-3 bg-white dark:bg-[#151518] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-xl hover:border-amber-500/50 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between overflow-hidden"
           >
-            {cat.name}
+            {/* Top Stage with Food Image & Soft Ambient Glow */}
+            <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-gradient-to-b from-amber-500/[0.06] via-slate-100/60 to-slate-200/40 dark:from-amber-500/[0.08] dark:via-neutral-900/90 dark:to-neutral-950 flex items-center justify-center p-3 border border-slate-100 dark:border-white/5">
+              {/* Featured on Hero Badge */}
+              {Boolean(cat.show_on_hero == 1 || cat.show_on_hero === true || cat.show_on_hero === "1") && (
+                <div className="absolute top-2 left-2 z-10 pointer-events-none">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-neutral-950 shadow-sm shadow-amber-500/30">
+                    ★ Hero
+                  </span>
+                </div>
+              )}
+
+              {/* Action Buttons (Hover overlay) */}
+              <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditCategory(cat);
+                  }}
+                  className="w-7 h-7 rounded-lg bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center cursor-pointer border-none shadow-md shadow-blue-500/20 active:scale-95 transition-transform"
+                  title="Edit Category"
+                >
+                  <FaEdit className="text-[10px]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteCategory(cat.id);
+                  }}
+                  className="w-7 h-7 rounded-lg bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center cursor-pointer border-none shadow-md shadow-rose-500/20 active:scale-95 transition-transform"
+                  title="Delete Category"
+                >
+                  <FaTrash className="text-[10px]" />
+                </button>
+              </div>
+
+              {/* Crisp Vibrant Food Image without washed-out fog */}
+              <img
+                src={imgSrc}
+                alt={cat.name}
+                className="w-full h-full object-contain filter drop-shadow-md group-hover:scale-110 group-hover:rotate-1 transition-all duration-500"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src =
+                    "https://via.placeholder.com/200?text=No+Image";
+                }}
+              />
+            </div>
+
+            {/* Bottom Category Name Footer */}
+            <div className="pt-3 pb-1 px-1 text-center">
+              <h3 className="m-0 font-['Oswald',sans-serif] font-black text-xs sm:text-sm md:text-base text-slate-900 dark:text-white uppercase tracking-wide truncate group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors">
+                {cat.name}
+              </h3>
+            </div>
           </div>
-          <div className="absolute inset-0 bg-black/75 flex justify-center items-center gap-3 opacity-0 transition-opacity duration-300 z-10 group-hover:opacity-100 p-2">
-            <button
-              type="button"
-              className="w-9 h-9 rounded-xl bg-blue-500/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-sm"
-              title="Edit Category"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditCategory(cat);
-              }}
-            >
-              <FaEdit className="text-xs" />
-            </button>
-            <button
-              type="button"
-              className="w-9 h-9 rounded-xl bg-rose-500/20 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/30 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-sm"
-              title="Delete Category"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDeleteCategory(cat.id);
-              }}
-            >
-              <FaTrash className="text-xs" />
-            </button>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
+

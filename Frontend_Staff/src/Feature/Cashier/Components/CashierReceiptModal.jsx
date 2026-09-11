@@ -43,24 +43,86 @@ const CashierReceiptModal = ({ isOpen, onClose, order }) => {
     ? JSON.parse(order.cart || "[]")
     : order.cart || [];
 
-  const calculatedSubtotal = items.reduce(
-    (s, i) => s + parseFloat(i.price || 0) * parseInt(i.qty || i.quantity || 1, 10),
-    0
-  );
+  const getItemDetails = (item) => {
+    let rawAddons =
+      item.selected_addons ||
+      item.selectedAddons ||
+      item.addons ||
+      item.selected_addons_json ||
+      [];
+    if (typeof rawAddons === "string") {
+      try {
+        rawAddons = JSON.parse(rawAddons);
+      } catch {
+        rawAddons = [];
+      }
+    }
+    const addons = Array.isArray(rawAddons) ? rawAddons : [];
+    const qty = parseInt(item.qty || item.quantity || 1, 10);
+
+    const addonsUnitTotal = addons.reduce(
+      (sum, a) => sum + parseFloat(a.price || a.addon_price || 0),
+      0
+    );
+
+    let baseUnitPrice = 0;
+    if (item.base_price !== undefined && item.base_price !== null && parseFloat(item.base_price) > 0) {
+      baseUnitPrice = parseFloat(item.base_price);
+    } else if (parseFloat(item.price || 0) > addonsUnitTotal) {
+      baseUnitPrice = parseFloat(item.price || 0) - addonsUnitTotal;
+    } else {
+      baseUnitPrice = parseFloat(item.price || 0);
+    }
+
+    const baseLineTotal = baseUnitPrice * qty;
+    const addonsLineTotal = addonsUnitTotal * qty;
+    const itemTotalWithAddons = baseLineTotal + addonsLineTotal;
+
+    const spiceLevel = item.spice_level && item.spice_level !== "Medium Spicy" ? item.spice_level : null;
+    const note = item.note ? item.note.trim() : null;
+
+    let rawExcluded = item.excluded_ingredients || item.excluded || [];
+    if (typeof rawExcluded === "string") {
+      try {
+        rawExcluded = JSON.parse(rawExcluded);
+      } catch {
+        rawExcluded = [];
+      }
+    }
+    const excluded = Array.isArray(rawExcluded) ? rawExcluded : [];
+
+    return {
+      qty,
+      addons,
+      baseUnitPrice,
+      baseLineTotal,
+      addonsUnitTotal,
+      addonsLineTotal,
+      itemTotalWithAddons,
+      spiceLevel,
+      note,
+      excluded,
+    };
+  };
+
+  const calculatedSubtotal = items.reduce((s, i) => {
+    const d = getItemDetails(i);
+    return s + d.itemTotalWithAddons;
+  }, 0);
 
   const subtotal =
-    order.subtotal !== undefined && order.subtotal !== null && parseFloat(order.subtotal) > 0
-      ? parseFloat(order.subtotal)
-      : calculatedSubtotal || parseFloat(order.total || order.total_amount || 0);
+    calculatedSubtotal > 0
+      ? calculatedSubtotal
+      : parseFloat(order.subtotal || order.total || order.total_amount || 0);
 
   const discount = parseFloat(order.discount_amount || 0);
   const couponCode = order.coupon_code || "";
   const deliveryFee = parseFloat(order.delivery_fee || order.deliveryFee || 0);
   const riderTip = parseFloat(order.rider_tip || 0);
   const taxAmount = parseFloat(order.tax_amount || order.tax || 0);
-  const grandTotal = parseFloat(
-    order.total || order.total_amount || subtotal - discount + deliveryFee + riderTip + taxAmount
-  );
+
+  const computedGrand = Math.max(0, subtotal - discount) + deliveryFee + riderTip + taxAmount;
+  const grandTotal = computedGrand > 0 ? computedGrand : parseFloat(order.total || order.total_amount || 0);
 
   const orderDateTime =
     order.date && order.time
@@ -75,42 +137,44 @@ const CashierReceiptModal = ({ isOpen, onClose, order }) => {
 
     const itemsHtml = items
       .map((item) => {
-        let addons = item.selectedAddons || item.addons || [];
-        if (typeof addons === "string") {
-          try {
-            addons = JSON.parse(addons);
-          } catch {
-            addons = [];
-          }
+        const d = getItemDetails(item);
+
+        const addonsHtml = d.addons
+          .map((a) => {
+            const aPrice = parseFloat(a.price || a.addon_price || 0);
+            const aTotal = aPrice * d.qty;
+            return `
+              <div style="display: flex; justify-content: space-between; font-size: 11px; color: #444; margin-left: 14px; margin-top: 1px;">
+                <span>+ ${a.name || a.title || a.addon_name || "Addon"}</span>
+                <span style="font-family: monospace;">Rs. ${aTotal.toFixed(0)}</span>
+              </div>
+            `;
+          })
+          .join("");
+
+        const customRows = [];
+        if (d.spiceLevel) {
+          customRows.push(`<div style="font-size: 10px; color: #b91c1c; margin-left: 14px; margin-top: 1px;">• Spice: ${d.spiceLevel}</div>`);
         }
-        const addonsHtml =
-          Array.isArray(addons) && addons.length > 0
-            ? addons
-                .map(
-                  (a) =>
-                    `<div style="font-size: 10px; color: #444; margin-left: 12px;">+ ${
-                      a.name || a.addon_name || "Addon"
-                    } (Rs. ${Number(a.price || 0)})</div>`
-                )
-                .join("")
-            : "";
+        if (d.note) {
+          customRows.push(`<div style="font-size: 10px; color: #555; margin-left: 14px; margin-top: 1px; font-style: italic;">• Note: ${d.note}</div>`);
+        }
+        if (d.excluded && d.excluded.length > 0) {
+          customRows.push(`<div style="font-size: 10px; color: #b91c1c; margin-left: 14px; margin-top: 1px;">• Removed: ${d.excluded.length} ingredient(s)</div>`);
+        }
 
         return `
-        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 2px;">
-          <span style="flex: 2; word-break: break-word;">${item.qty || item.quantity || 1}x ${item.name || item.title || "Item"}${
-          item.size && item.size !== "Regular" ? ` (${item.size})` : ""
-        }</span>
-          <span style="flex: 1; text-align: right; font-family: monospace;">Rs. ${(
-            parseFloat(item.price || 0) * parseInt(item.qty || item.quantity || 1, 10)
-          ).toFixed(0)}</span>
-        </div>
-        ${addonsHtml}
-        ${
-          item.note
-            ? `<div style="font-size: 10px; color: #555; margin-left: 12px; margin-bottom: 3px;">Note: ${item.note}</div>`
-            : ""
-        }
-      `;
+          <div style="margin-bottom: 5px;">
+            <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 2px;">
+              <span style="flex: 2; word-break: break-word;">${d.qty}x ${item.name || item.title || "Item"}${
+                item.size && item.size !== "Regular" ? ` (${item.size})` : ""
+              }</span>
+              <span style="flex: 1; text-align: right; font-family: monospace;">Rs. ${d.baseLineTotal.toFixed(0)}</span>
+            </div>
+            ${addonsHtml}
+            ${customRows.join("")}
+          </div>
+        `;
       })
       .join("");
 
@@ -166,11 +230,11 @@ const CashierReceiptModal = ({ isOpen, onClose, order }) => {
           }
           <div class="row">
             <span>Cashier: ${cashierUser}</span>
-            <span>Pay: ${order.payment_method || "Cash"} (${order.payment_status || "Paid"})</span>
+            <span style="font-weight: bold;">Pay: ${(order.payment_method || "Cash").toUpperCase()} (${order.payment_status || "Paid"})</span>
           </div>
           ${
             order.transaction_id
-              ? `<div class="row"><span>Txn Ref:</span> <span style="font-family: monospace; font-weight: bold;">${order.transaction_id}</span></div>`
+              ? `<div class="row"><span>Txn / Ref:</span> <span style="font-family: monospace; font-weight: bold;">${order.transaction_id}</span></div>`
               : ""
           }
           
@@ -321,15 +385,15 @@ const CashierReceiptModal = ({ isOpen, onClose, order }) => {
               <span className="text-zinc-500 dark:text-zinc-400">Cashier:</span>
               <span className="font-semibold text-black dark:text-white">{cashierUser}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center py-0.5">
               <span className="text-zinc-500 dark:text-zinc-400">Payment:</span>
-              <span className="font-semibold text-black dark:text-white">
+              <span className="font-bold text-black dark:text-white uppercase px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded font-mono text-[10px]">
                 {order.payment_method || "Cash"} ({order.payment_status || "Paid"})
               </span>
             </div>
             {order.transaction_id && (
-              <div className="flex justify-between">
-                <span className="text-zinc-500 dark:text-zinc-400">Txn Ref:</span>
+              <div className="flex justify-between items-center py-0.5">
+                <span className="text-zinc-500 dark:text-zinc-400">Txn / Ref:</span>
                 <span className="font-semibold font-mono text-black dark:text-white">
                   {order.transaction_id}
                 </span>
@@ -346,21 +410,14 @@ const CashierReceiptModal = ({ isOpen, onClose, order }) => {
 
             {items && items.length > 0 ? (
               items.map((item, index) => {
-                let addons = item.selectedAddons || item.addons || [];
-                if (typeof addons === "string") {
-                  try {
-                    addons = JSON.parse(addons);
-                  } catch {
-                    addons = [];
-                  }
-                }
+                const d = getItemDetails(item);
 
                 return (
-                  <div key={index} className="py-1 border-b border-dotted border-zinc-200 dark:border-zinc-800 last:border-none">
+                  <div key={index} className="py-2 border-b border-dotted border-zinc-200 dark:border-zinc-800 last:border-none">
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-black dark:text-white font-bold" style={{ flex: 2 }}>
                         <span className="text-amber-600 dark:text-amber-400 font-mono mr-1">
-                          {item.qty || item.quantity || 1}x
+                          {d.qty}x
                         </span>
                         {item.title || item.name}
                         {item.size && item.size !== "Regular" && (
@@ -370,23 +427,44 @@ const CashierReceiptModal = ({ isOpen, onClose, order }) => {
                         )}
                       </span>
                       <span className="text-black dark:text-white font-mono font-bold shrink-0" style={{ flex: 1, textAlign: "right" }}>
-                        Rs. {(
-                          parseFloat(item.price || 0) * parseInt(item.qty || item.quantity || 1, 10)
-                        ).toFixed(0)}
+                        Rs. {d.baseLineTotal.toFixed(0)}
                       </span>
                     </div>
-                    {Array.isArray(addons) && addons.length > 0 && (
-                      <div className="space-y-0.5 mt-0.5">
-                        {addons.map((addon, aIdx) => (
-                          <div key={aIdx} className="text-[10px] text-zinc-500 dark:text-zinc-400 pl-3 font-mono">
-                            + {addon.name || addon.addon_name} (Rs. {Number(addon.price || 0)})
-                          </div>
-                        ))}
+
+                    {/* Addons listed with their own separate price */}
+                    {d.addons.length > 0 && (
+                      <div className="space-y-1 mt-1 pl-3">
+                        {d.addons.map((addon, aIdx) => {
+                          const aPrice = parseFloat(addon.price || addon.addon_price || 0);
+                          const aTotal = aPrice * d.qty;
+                          return (
+                            <div key={aIdx} className="flex justify-between items-center text-[11px] text-zinc-600 dark:text-zinc-400 font-mono">
+                              <span>+ {addon.name || addon.title || addon.addon_name}</span>
+                              <span>Rs. {aTotal.toFixed(0)}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
-                    {item.note && (
-                      <div className="text-[10px] text-zinc-500 dark:text-zinc-400 italic pl-3 mt-0.5">
-                        Note: {item.note}
+
+                    {/* Customizations (Spice level, Notes, Excluded Ingredients) */}
+                    {(d.spiceLevel || d.note || (d.excluded && d.excluded.length > 0)) && (
+                      <div className="space-y-0.5 mt-1 pl-3 text-[10px] font-mono">
+                        {d.spiceLevel && (
+                          <div className="text-rose-500 dark:text-rose-400 font-medium">
+                            • Spice: {d.spiceLevel}
+                          </div>
+                        )}
+                        {d.note && (
+                          <div className="text-zinc-500 dark:text-zinc-400 italic">
+                            • Note: "{d.note}"
+                          </div>
+                        )}
+                        {d.excluded && d.excluded.length > 0 && (
+                          <div className="text-rose-500 dark:text-rose-400">
+                            • Removed: {d.excluded.length} ingredient(s)
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

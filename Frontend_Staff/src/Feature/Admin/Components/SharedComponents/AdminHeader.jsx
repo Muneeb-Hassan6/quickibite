@@ -130,11 +130,11 @@ const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-4 bg-amber-500 rounded-full shrink-0" />
-            <h1 className="m-0 text-base sm:text-lg font-black text-[var(--admin-text,#fff)] tracking-wide font-['Oswald',sans-serif] uppercase truncate">
+            <h1 className="m-0 text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-wide font-['Oswald',sans-serif] uppercase truncate">
               {titleFormatted}
             </h1>
           </div>
-          <p className="hidden md:block text-[11px] text-[var(--admin-muted,#9ca3af)] m-0 mt-0.5 truncate font-sans">
+          <p className="hidden md:block text-[11px] text-slate-500 dark:text-neutral-400 m-0 mt-0.5 truncate font-sans">
             {TAB_DESCRIPTIONS[activeTab] || "Manage and configure your system"}
           </p>
         </div>

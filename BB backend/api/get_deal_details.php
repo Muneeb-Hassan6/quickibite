@@ -14,7 +14,7 @@ if ($deal_id <= 0) {
 }
 
 try {
-    $stmt = $db->prepare("SELECT * FROM deals WHERE id = :id AND is_active = 1");
+    $stmt = $db->prepare("SELECT * FROM deals WHERE id = :id AND is_active = 1 AND (expires_at IS NULL OR expires_at > NOW())");
     $stmt->execute([':id' => $deal_id]);
     $deal = $stmt->fetch(PDO::FETCH_ASSOC);
 

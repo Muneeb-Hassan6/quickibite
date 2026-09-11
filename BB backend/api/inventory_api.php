@@ -31,6 +31,47 @@ try {
 
     switch ($method) {
         case 'GET':
+            if (isset($_GET['limit'])) {
+                $limit = max(1, min(100, intval($_GET['limit'])));
+                $offset = max(0, intval($_GET['offset'] ?? 0));
+
+                $countStmt = $db->query("SELECT COUNT(*) FROM inventory");
+                $total = (int)$countStmt->fetchColumn();
+
+                $statsStmt = $db->query("
+                    SELECT 
+                        COUNT(*) as total_items,
+                        SUM(CASE WHEN stock <= threshold AND stock > 0 THEN 1 ELSE 0 END) as low_stock,
+                        SUM(price * stock) as total_value
+                    FROM inventory
+                ");
+                $statsRow = $statsStmt ? $statsStmt->fetch(PDO::FETCH_ASSOC) : [];
+
+                $query = "SELECT * FROM inventory ORDER BY id DESC LIMIT :limit OFFSET :offset";
+                $stmt = $db->prepare($query);
+                $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+                $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+                $stmt->execute();
+                $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                if (ob_get_level()) ob_clean();
+                echo json_encode([
+                    "success" => true,
+                    "status" => "success",
+                    "items" => $items ?: [],
+                    "total" => $total,
+                    "has_more" => ($offset + count($items)) < $total,
+                    "limit" => $limit,
+                    "offset" => $offset,
+                    "stats" => [
+                        "total_items" => (int)($statsRow['total_items'] ?? $total),
+                        "low_stock" => (int)($statsRow['low_stock'] ?? 0),
+                        "total_value" => number_format((float)($statsRow['total_value'] ?? 0), 2, '.', '')
+                    ]
+                ]);
+                exit();
+            }
+
             $query = "SELECT * FROM inventory ORDER BY id DESC";
             $stmt = $db->prepare($query);
             $stmt->execute();

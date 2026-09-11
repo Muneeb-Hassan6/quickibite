@@ -56,7 +56,7 @@ export default function ShiftBreakdownTable({
         </div>
 
         <div className="flex justify-between items-center py-3 border-t-2 border-dashed border-zinc-200 dark:border-zinc-700 text-sm sm:text-base font-extrabold text-zinc-900 dark:text-white font-['Oswald',sans-serif]">
-          <span>TOTAL SHIFT REVENUE:</span>
+          <span>TOTAL SALES REVENUE:</span>
           <span className="text-amber-500 font-mono">
             Rs. {Number(totalSales).toFixed(2)}
           </span>

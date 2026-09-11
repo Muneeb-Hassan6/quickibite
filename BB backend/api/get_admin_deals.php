@@ -6,6 +6,9 @@ $database = new Database();
 $db = $database->getConnection();
 
 try {
+    // Auto-deactivate deals whose day limit has expired
+    $db->exec("UPDATE deals SET is_active = 0 WHERE is_active = 1 AND expires_at IS NOT NULL AND expires_at <= NOW()");
+
     $query = "SELECT * FROM deals ORDER BY id DESC";
     $stmt = $db->prepare($query);
     $stmt->execute();
@@ -42,6 +45,9 @@ try {
 
         $deal['items'] = $itemsList;
         $deal['badge_tag'] = $deal['badge_tag'] ?? $deal['tag'] ?? 'DEAL';
+        $deal['day_limit'] = !empty($deal['day_limit']) ? intval($deal['day_limit']) : null;
+        $deal['expires_at'] = $deal['expires_at'] ?? null;
+        $deal['is_expired'] = (!empty($deal['expires_at']) && strtotime($deal['expires_at']) <= time());
     }
 
     echo json_encode(["success" => true, "data" => $deals]);

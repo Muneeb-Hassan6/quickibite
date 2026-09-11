@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import AttendanceHeaderControls from "./AttendanceHeaderControls";
 import AttendanceGridMatrix from "./AttendanceGridMatrix";
+import { apiFetch } from "../../../../../utils/apiHelper";
 
 const AttendanceSheet = () => {
   const [employees, setEmployees] = useState([]);
@@ -16,8 +17,8 @@ const AttendanceSheet = () => {
     const fetchAttendanceForDate = async () => {
       if (!selectedDate) return;
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/get_attendance.php?date=${selectedDate}`
+        const response = await apiFetch(
+          `get_attendance.php?date=${selectedDate}`
         );
         const result = await response.json();
 
@@ -33,9 +34,9 @@ const AttendanceSheet = () => {
           setAttendanceData(mapped);
         } else {
           // Fallback to active staff
-          const staffRes = await fetch(`${import.meta.env.VITE_API_BASE}/get_staff.php`);
+          const staffRes = await apiFetch("get_staff.php");
           const staffData = await staffRes.json();
-          if (staffData.success) {
+          if (staffData.success && Array.isArray(staffData.data)) {
             const active = staffData.data.filter((e) => e.status === "Active");
             setEmployees(active);
             const initialData = {};
@@ -91,14 +92,10 @@ const AttendanceSheet = () => {
     };
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/mark_attendance.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+      const response = await apiFetch("mark_attendance.php", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
       const result = await response.json();
 
       if (result.success) {

@@ -12,7 +12,7 @@ import "swiper/css/pagination";
 import "swiper/css/navigation";
 import "swiper/css/effect-fade";
 
-export default function HomeHero({ slides = [], onBannerClick }) {
+export default function HomeHero({ slides = [], heroCategories = [], onBannerClick }) {
   const navigate = useNavigate();
   const prevRef = useRef(null);
   const nextRef = useRef(null);
@@ -20,7 +20,7 @@ export default function HomeHero({ slides = [], onBannerClick }) {
 
   // If no dynamic slides from Admin, render 3D Rotating Orbit Stage
   if (!Array.isArray(slides) || slides.length === 0) {
-    return <HeroOrbitFallback />;
+    return <HeroOrbitFallback categories={heroCategories} />;
   }
 
   // 1. ADMIN HERO SLIDERS ACTIVE (Dynamic Interactive Carousel)
