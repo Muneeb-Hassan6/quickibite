@@ -84,17 +84,17 @@ try {
     }
 
     // 2. Fetch order items to calculate inventory restoration
-    $itemsStmt = $db->prepare("SELECT id, title, size, quantity, addons_json FROM order_items WHERE order_id = ?");
+    $itemsStmt = $db->prepare("SELECT id, title, size, qty, selected_addons_json FROM order_items WHERE order_id = ?");
     $itemsStmt->execute([$order_id]);
     $orderItems = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Fetch all recipes
     $recipeStmt = $db->query("
-        SELECT r.menu_id, r.variant_name, r.inventory_id, r.quantity, m.name as menu_name 
-        FROM menu_recipes r
-        JOIN menu_items m ON r.menu_id = m.id
+        SELECT r.menu_item_id, r.variant_name, r.inventory_id, r.quantity_to_deduct as quantity, m.name as menu_name 
+        FROM recipes r
+        JOIN menu_items m ON r.menu_item_id = m.id
     ");
-    $recipes = $recipeStmt->fetchAll(PDO::FETCH_ASSOC);
+    $recipes = $recipeStmt ? $recipeStmt->fetchAll(PDO::FETCH_ASSOC) : [];
     $recipesMap = [];
     foreach ($recipes as $r) {
         $key = strtolower(trim($r['menu_name'])) . '_' . strtolower(trim($r['variant_name']));
@@ -103,7 +103,7 @@ try {
 
     // Fetch custom addons catalog
     $addonStmt = $db->query("SELECT id, menu_item_id, title, inventory_id, qty_to_deduct FROM product_custom_addons");
-    $addonsCatalog = $addonStmt->fetchAll(PDO::FETCH_ASSOC);
+    $addonsCatalog = $addonStmt ? $addonStmt->fetchAll(PDO::FETCH_ASSOC) : [];
     $addonsMap = [];
     foreach ($addonsCatalog as $a) {
         $addonsMap[strtolower(trim($a['title']))] = $a;
@@ -112,8 +112,8 @@ try {
     $restorations = [];
 
     foreach ($orderItems as $item) {
-        $itemQty = intval($item['quantity'] ?: 1);
-        $title = trim($item['title']);
+        $itemQty = intval($item['qty'] ?? 1);
+        $title = trim($item['title'] ?? '');
         $size = trim($item['size'] ?: 'Regular');
         $key = strtolower($title) . '_' . strtolower($size);
 
@@ -128,8 +128,9 @@ try {
         }
 
         // B. Restore custom addons
-        if (!empty($item['addons_json'])) {
-            $parsedAddons = json_decode($item['addons_json'], true);
+        $addonsRaw = $item['selected_addons_json'] ?? null;
+        if (!empty($addonsRaw)) {
+            $parsedAddons = json_decode($addonsRaw, true);
             if (is_array($parsedAddons)) {
                 foreach ($parsedAddons as $addObj) {
                     $invId = !empty($addObj['inventory_id']) ? intval($addObj['inventory_id']) : 0;

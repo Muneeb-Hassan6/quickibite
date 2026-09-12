@@ -304,13 +304,13 @@ export default function CheckoutMapPicker({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search area (e.g. Shadipura, Daroghawala, Bund Road, Gulberg)..."
-            className="w-full pl-9 pr-20 py-2 rounded-xl bg-gray-100 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-xs text-neutral-900 dark:text-white focus:outline-none focus:border-amber-500"
+            className="w-full pl-9 pr-20 py-2 rounded-xl bg-gray-100 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-md text-neutral-900 dark:text-white focus:outline-none focus:border-amber-500"
           />
           <FaSearch className="absolute left-3 text-neutral-400 text-xs" />
           <button
             type="submit"
             disabled={isSearching}
-            className="absolute right-1.5 px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-[10px] uppercase rounded-lg border-none cursor-pointer transition-colors"
+            className="absolute right-1.5 px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-[12px] uppercase rounded-lg border-none cursor-pointer transition-colors"
           >
             {isSearching ? "Finding..." : "Jump"}
           </button>
@@ -336,7 +336,7 @@ export default function CheckoutMapPicker({
           ) : (
             <>
               <FaCrosshairs className="text-xs" />
-              <span>🎯 Locate Me</span>
+              <span>Locate Me</span>
             </>
           )}
         </button>
