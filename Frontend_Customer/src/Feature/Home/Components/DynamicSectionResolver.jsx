@@ -4,6 +4,7 @@ import HomeHero from "./HomeHero";
 import HomeProductSlider from "./HomeProductSlider";
 import ExploreMenu from "../../Menu/Components/ExploreMenu";
 import HomeBanners from "./HomeBanners";
+import HomeReviewsSection from "./HomeReviewsSection";
 
 export default function DynamicSectionResolver({
   homepageData,
@@ -170,6 +171,23 @@ export default function DynamicSectionResolver({
           />
         );
       }
+    }
+
+    if (section.section_type === "reviews") {
+      let filterMode = "all";
+      if (section.content_data && section.content_data.startsWith("filter:")) {
+        filterMode = section.content_data.split(":")[1];
+      }
+      sectionComponent = (
+        <HomeReviewsSection
+          key={`rev-${section.id}`}
+          title={section.title || "WHAT OUR FOODIES SAY"}
+          subtitle={section.subtitle || "Real stories & experiences from our verified food lovers"}
+          reviews={homepageData?.reviews || []}
+          summary={homepageData?.reviews_summary || { total_reviews: 0, average_rating: 5.0 }}
+          filterMode={filterMode}
+        />
+      );
     }
 
     // Push section container

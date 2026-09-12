@@ -213,6 +213,34 @@ if (empty($hero_categories)) {
     $hero_categories = $stmt_fallback->fetchAll(PDO::FETCH_ASSOC);
 }
 
+// Fetch Customer Reviews for Homepage
+$reviews_data = [];
+$total_approved_reviews = 0;
+$avg_rating = 5.0;
+
+try {
+    $reviews_query = "SELECT id, order_id, customer_name, rating, review_text, tags, item_ratings, is_featured, created_at 
+                      FROM order_reviews 
+                      WHERE status = 'approved' 
+                      ORDER BY is_featured DESC, id DESC 
+                      LIMIT 25";
+    $stmt_rev = $db->prepare($reviews_query);
+    $stmt_rev->execute();
+    $reviews_data = $stmt_rev->fetchAll(PDO::FETCH_ASSOC);
+
+    $rev_stats_query = "SELECT COUNT(*) as total_reviews, AVG(rating) as avg_rating 
+                        FROM order_reviews 
+                        WHERE status = 'approved'";
+    $stmt_stats = $db->query($rev_stats_query);
+    if ($stmt_stats) {
+        $rev_stats = $stmt_stats->fetch(PDO::FETCH_ASSOC);
+        $total_approved_reviews = intval($rev_stats['total_reviews'] ?? 0);
+        $avg_rating = $total_approved_reviews > 0 ? round(floatval($rev_stats['avg_rating']), 1) : 5.0;
+    }
+} catch (Exception $e) {
+    // Graceful fallback if table does not exist
+}
+
 echo json_encode([
     "success" => true,
     "data" => [
@@ -220,7 +248,12 @@ echo json_encode([
         "hero_categories" => $hero_categories,
         "sections" => $homepage_sections,
         "featured_banners" => $featured_banners,
-        "settings" => $homepage_settings
+        "settings" => $homepage_settings,
+        "reviews" => $reviews_data,
+        "reviews_summary" => [
+            "total_reviews" => $total_approved_reviews,
+            "average_rating" => $avg_rating
+        ]
     ]
 ]);
 ?>

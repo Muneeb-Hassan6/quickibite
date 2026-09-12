@@ -66,6 +66,7 @@ export default function SectionModal({
                 <option className="bg-white dark:bg-[#171717]" value="product_slider">Product Slider</option>
                 <option className="bg-white dark:bg-[#171717]" value="banner">Promotional Banner</option>
                 <option className="bg-white dark:bg-[#171717]" value="explore_menu">Explore Menu (Categories bubbles)</option>
+                <option className="bg-white dark:bg-[#171717]" value="reviews">Customer Reviews & Testimonials</option>
                 <option className="bg-white dark:bg-[#171717]" value="hero">Hero Slider Component</option>
               </select>
             </div>
@@ -128,6 +129,26 @@ export default function SectionModal({
               selectedProductIds={selectedProductIds}
               handleProductSelect={handleProductSelect}
             />
+          )}
+
+          {modalType === 'section' && formData.section_type === 'reviews' && (
+            <div className="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-500/5 border border-amber-500/20 space-y-2.5">
+              <label className="text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider block">
+                Reviews Filter Mode
+              </label>
+              <select
+                value={formData.content_data || 'filter:all'}
+                onChange={(e) => setFormData({ ...formData, content_data: e.target.value })}
+                className="w-full px-4 py-2.5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
+              >
+                <option value="filter:all">Show All Approved Reviews</option>
+                <option value="filter:featured">Show Featured / Pinned Reviews Only</option>
+                <option value="filter:top_rated">Show Top Rated (4★ & 5★ Only)</option>
+              </select>
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium m-0 leading-relaxed">
+                ⭐ <strong>Tip:</strong> Individual reviews can be approved, hidden, or pinned as <strong>Featured</strong> from the <strong>Customer Reviews</strong> tab in the sidebar.
+              </p>
+            </div>
           )}
 
           <div>
