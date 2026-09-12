@@ -156,7 +156,7 @@ const LoginForm = () => {
             </h2>
             
           </div>
-
+ 
           {/* Operational Feature Badges */}
           
         </div>
@@ -201,9 +201,6 @@ const LoginForm = () => {
         <div className="w-full max-w-md mx-auto my-auto py-8">
           {/* Header Card */}
           <div className="mb-16"> 
-            {/* <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 dark:bg-amber-500/15 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/10 ">
-              <FaUserShield />
-            </div> */}
             <h2 className="text-2xl sm:text-3xl font-black font-['Oswald',sans-serif] uppercase tracking-wide text-slate-900 dark:text-white m-0 text-center ">
               Staff Login
             </h2> 
@@ -214,7 +211,7 @@ const LoginForm = () => {
           <form onSubmit={handleLogin} className="space-y-5">
             {/* Username Field */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-neutral-300">
+              <label className="block text-sm font-black uppercase tracking-wider text-slate-700 dark:text-neutral-300">
                 Username 
               </label>
               <div className="relative">
@@ -227,14 +224,14 @@ const LoginForm = () => {
                   placeholder="e.g. admin, cashier1, chef"
                   value={loginId}
                   onChange={(e) => setLoginId(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3.5 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-all"
+                  className="w-full pl-11 pr-4 py-3.5 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-md font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-all"
                 />
               </div>
             </div>
 
             {/* Password Field */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-neutral-300">
+              <label className="block text-sm font-black uppercase tracking-wider text-slate-700 dark:text-neutral-300">
                 Password
               </label>
               <div className="relative">
@@ -247,7 +244,7 @@ const LoginForm = () => {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-12 py-3.5 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-all"
+                  className="w-full pl-11 pr-12 py-3.5 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-md font-medium text-slate-900 dark:text-white  placeholder:text-slate-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-all"
                 />
                 <button
                   type="button"
