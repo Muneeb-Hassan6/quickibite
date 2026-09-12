@@ -48,27 +48,14 @@ export default function DeliveryAddressForm({
               <LuUtensilsCrossed className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] sm:text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-                Fulfillment Method
-              </span>
               <h3 className="font-['Oswald',sans-serif] font-black text-lg sm:text-xl uppercase tracking-wide text-neutral-900 dark:text-white m-0">
-                Dine-In Table Order
+                Dine-In 
               </h3>
             </div>
           </div>
           <span className="text-[10px] sm:text-xs font-mono font-bold bg-amber-400/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 px-3 py-1 rounded-full uppercase">
-            Table #{tableNumber || "1"}
+            {tableNumber || "1"}
           </span>
-        </div>
-
-        <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-800/60 border border-gray-200 dark:border-neutral-700/60 space-y-2">
-          <p className="text-xs sm:text-sm text-neutral-700 dark:text-neutral-300 m-0 leading-relaxed font-medium">
-            You are ordering directly from <strong>Table #{tableNumber || "1"}</strong>. Your feast will be prepared fresh in the kitchen and brought directly to your table by our service staff.
-          </p>
-          <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400 pt-1">
-            <LuClock className="w-3.5 h-3.5 text-amber-500" />
-            <span>Estimated Kitchen Service: 15-20 mins</span>
-          </div>
         </div>
       </div>
     );
@@ -79,9 +66,9 @@ export default function DeliveryAddressForm({
     <>
       {/* 1. Order Type Selection (Strictly 2 Tabs: Delivery & Takeaway) */}
       <div className="bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-neutral-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-3 sm:space-y-4">
-        <h3 className="font-['Oswald',sans-serif] font-bold text-base sm:text-lg uppercase tracking-wide text-neutral-900 dark:text-white m-0 flex items-center gap-2">
+        <h3 className="font-['Oswald',sans-serif] font-bold text-base sm:text-lg uppercase tracking-wide text-neutral-900 dark:text-white m-0 flex items-center gap-2 mb-2">
           <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
-          1. Order Fulfillment Method
+          1. Order Type
         </h3>
 
         <div className="grid grid-cols-2 gap-2 sm:gap-4">
@@ -129,9 +116,9 @@ export default function DeliveryAddressForm({
           <div className="flex items-center justify-between">
             <h3 className="font-['Oswald',sans-serif] font-bold text-base sm:text-lg uppercase tracking-wide text-neutral-900 dark:text-white m-0 flex items-center gap-2">
               <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
-              2. Delivery Address & Pinpoint Location
+              2. Delivery Address 
             </h3>
-            <span className="text-[10px] sm:text-xs font-mono text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full font-bold">
+            <span className="text-[10px] sm:text-xs font-mono text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-1  rounded-full font-bold">
               MAP PIN ENABLED
             </span>
           </div>
@@ -155,7 +142,7 @@ export default function DeliveryAddressForm({
               }`}
             >
               <div className="flex items-center gap-2">
-                <span className="text-sm shrink-0">{isOutOfDeliveryRadius ? "⚠️" : "📍"}</span>
+                
                 <span>
                   Distance to restaurant:{" "}
                   <strong className="font-mono text-zinc-900 dark:text-white underline decoration-amber-500/50">
@@ -215,9 +202,9 @@ export default function DeliveryAddressForm({
           <div className="flex items-center justify-between">
             <h3 className="font-['Oswald',sans-serif] font-bold text-base sm:text-lg uppercase tracking-wide text-neutral-900 dark:text-white m-0 flex items-center gap-2">
               <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
-              2. Self-Pickup Station Details
+              2. Pickup Details
             </h3>
-            <span className="text-[10px] sm:text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 rounded-full uppercase">
+            <span className="text-[10px] sm:text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-full uppercase">
               Free Pickup
             </span>
           </div>
@@ -229,18 +216,15 @@ export default function DeliveryAddressForm({
               </div>
               <div>
                 <h4 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-white m-0">
-                  QuickBite Express Counter
+                 BigBite Restaurant 
                 </h4>
                 <p className="text-[11px] text-neutral-500 dark:text-neutral-400 m-0">
-                  Main Boulevard, Phase 2 Commercial Area, Lahore
+                  Abdali Chowk ,Sant Nagar, Lahore
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-xs font-semibold text-neutral-600 dark:text-neutral-300 pt-1 border-t border-gray-200/60 dark:border-neutral-700/60">
-              <LuClock className="w-3.5 h-3.5 text-amber-500" />
-              <span>Ready for pickup in approx. 15-20 minutes after order placement.</span>
-            </div>
+           
           </div>
         </div>
       )}
