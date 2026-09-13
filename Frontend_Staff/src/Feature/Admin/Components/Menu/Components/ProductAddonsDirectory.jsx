@@ -1,12 +1,33 @@
-import React from "react";
-import { FaPlus, FaEdit, FaTrash, FaLayerGroup, FaUtensils } from "react-icons/fa";
+import React, { useState, useMemo } from "react";
+import { FaPlus, FaEdit, FaTrash, FaLayerGroup, FaUtensils, FaSearch } from "react-icons/fa";
 import Swal from "sweetalert2";
 
 export default function ProductAddonsDirectory({
   productAddonsList = [],
+  categories = [],
   onEditProductAddons,
   onRefresh,
 }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const filteredList = useMemo(() => {
+    return productAddonsList.filter((item) => {
+      const matchesSearch =
+        !searchQuery.trim() ||
+        item.product_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.addons?.some((a) =>
+          a.title?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+      const matchesCat =
+        selectedCategory === "all" ||
+        (item.product_category || "").toLowerCase() === selectedCategory.toLowerCase();
+
+      return matchesSearch && matchesCat;
+    });
+  }, [productAddonsList, searchQuery, selectedCategory]);
+
   const handleDeleteAddon = async (productId, productName) => {
     if (
       await Swal.fire({
@@ -44,7 +65,7 @@ export default function ProductAddonsDirectory({
 
   return (
     <div className="mt-10 space-y-4 w-full max-w-full overflow-x-hidden">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-zinc-200 dark:border-neutral-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-zinc-200 dark:border-neutral-800">
         <div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-4 bg-amber-500 rounded-full shrink-0" />
@@ -57,23 +78,58 @@ export default function ProductAddonsDirectory({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onEditProductAddons && onEditProductAddons(null)}
-          className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all shadow-xs"
-        >
-          <FaPlus className="text-[10px]" />
-          <span>Add Product Add-on</span>
-        </button>
+        {/* Filter controls + Action Button */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Search Box */}
+          <div className="relative">
+            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400" />
+            <input
+              type="text"
+              placeholder="Search product or add-on..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-neutral-800 border border-zinc-300 dark:border-neutral-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-amber-500 w-44 sm:w-52"
+            />
+          </div>
+
+          {/* Category Filter */}
+          {categories.length > 0 && (
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="py-1.5 px-3 text-xs bg-white dark:bg-neutral-800 border border-zinc-300 dark:border-neutral-700 rounded-xl text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500 font-semibold cursor-pointer"
+            >
+              <option value="all">All Categories</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <button
+            type="button"
+            onClick={() => onEditProductAddons && onEditProductAddons(null)}
+            className="px-3.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all shadow-xs shrink-0"
+          >
+            <FaPlus className="text-[10px]" />
+            <span>Add Product Add-on</span>
+          </button>
+        </div>
       </div>
 
       {productAddonsList.length === 0 ? (
         <div className="p-8 text-center bg-zinc-50 dark:bg-neutral-900 rounded-2xl border border-dashed border-zinc-300 dark:border-neutral-800 text-zinc-500 dark:text-neutral-400 text-xs">
           No product-specific custom add-ons configured yet. Click above to add some!
         </div>
+      ) : filteredList.length === 0 ? (
+        <div className="p-8 text-center bg-zinc-50 dark:bg-neutral-900 rounded-2xl border border-dashed border-zinc-300 dark:border-neutral-800 text-zinc-500 dark:text-neutral-400 text-xs">
+          No add-on products matched &quot;{searchQuery || selectedCategory}&quot;.
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 w-full">
-          {productAddonsList.map((item) => (
+          {filteredList.map((item) => (
             <div
               key={item.menu_item_id}
               className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-neutral-800 rounded-2xl p-4 flex flex-col justify-between shadow-md hover:border-amber-500/40 transition-all group"

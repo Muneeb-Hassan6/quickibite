@@ -24,6 +24,11 @@ try {
         $limitSql = " LIMIT " . intval($limit) . " OFFSET " . intval($offset);
     }
 
+    $sortDir = 'DESC';
+    if ($type === 'kitchen' || (isset($_GET['sort']) && strtolower(trim($_GET['sort'])) === 'asc') || (isset($_GET['order_by']) && strtolower(trim($_GET['order_by'])) === 'fcfs')) {
+        $sortDir = 'ASC';
+    }
+
     if ($type === 'all' || $type === 'cashier') {
         $countQuery = "SELECT COUNT(*) FROM orders";
         $query = "SELECT o.*, 
@@ -36,7 +41,7 @@ try {
                   FROM orders o 
                   LEFT JOIN payments p ON o.id = p.order_id 
                   LEFT JOIN staff s ON o.rider_id = s.id
-                  ORDER BY o.id DESC" . $limitSql;
+                  ORDER BY o.id " . $sortDir . $limitSql;
     } else {
         $countQuery = "SELECT COUNT(*) FROM orders WHERE status NOT IN ('Delivered', 'Completed', 'Dispatched', 'Cancelled', 'Declined')";
         $query = "SELECT o.*, 
@@ -50,7 +55,7 @@ try {
                   LEFT JOIN payments p ON o.id = p.order_id 
                   LEFT JOIN staff s ON o.rider_id = s.id
                   WHERE o.status NOT IN ('Delivered', 'Completed', 'Dispatched', 'Cancelled', 'Declined') 
-                  ORDER BY o.id DESC" . $limitSql;
+                  ORDER BY o.id " . $sortDir . $limitSql;
     }
 
     $totalStmt = $db->prepare($countQuery);

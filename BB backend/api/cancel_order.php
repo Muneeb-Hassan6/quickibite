@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/cors_headers.php';
 require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../config/InventoryHelper.php';
 
 try {
     $database = new Database();
@@ -83,87 +84,8 @@ try {
         exit();
     }
 
-    // 2. Fetch order items to calculate inventory restoration
-    $itemsStmt = $db->prepare("SELECT id, title, size, qty, selected_addons_json FROM order_items WHERE order_id = ?");
-    $itemsStmt->execute([$order_id]);
-    $orderItems = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Fetch all recipes
-    $recipeStmt = $db->query("
-        SELECT r.menu_item_id, r.variant_name, r.inventory_id, r.quantity_to_deduct as quantity, m.name as menu_name 
-        FROM recipes r
-        JOIN menu_items m ON r.menu_item_id = m.id
-    ");
-    $recipes = $recipeStmt ? $recipeStmt->fetchAll(PDO::FETCH_ASSOC) : [];
-    $recipesMap = [];
-    foreach ($recipes as $r) {
-        $key = strtolower(trim($r['menu_name'])) . '_' . strtolower(trim($r['variant_name']));
-        $recipesMap[$key][] = $r;
-    }
-
-    // Fetch custom addons catalog
-    $addonStmt = $db->query("SELECT id, menu_item_id, title, inventory_id, qty_to_deduct FROM product_custom_addons");
-    $addonsCatalog = $addonStmt ? $addonStmt->fetchAll(PDO::FETCH_ASSOC) : [];
-    $addonsMap = [];
-    foreach ($addonsCatalog as $a) {
-        $addonsMap[strtolower(trim($a['title']))] = $a;
-    }
-
-    $restorations = [];
-
-    foreach ($orderItems as $item) {
-        $itemQty = intval($item['qty'] ?? 1);
-        $title = trim($item['title'] ?? '');
-        $size = trim($item['size'] ?: 'Regular');
-        $key = strtolower($title) . '_' . strtolower($size);
-
-        // A. Restore recipe ingredients
-        if (isset($recipesMap[$key])) {
-            foreach ($recipesMap[$key] as $ing) {
-                $invId = intval($ing['inventory_id']);
-                $qty = floatval($ing['quantity']) * $itemQty;
-                if (!isset($restorations[$invId])) $restorations[$invId] = 0;
-                $restorations[$invId] += $qty;
-            }
-        }
-
-        // B. Restore custom addons
-        $addonsRaw = $item['selected_addons_json'] ?? null;
-        if (!empty($addonsRaw)) {
-            $parsedAddons = json_decode($addonsRaw, true);
-            if (is_array($parsedAddons)) {
-                foreach ($parsedAddons as $addObj) {
-                    $invId = !empty($addObj['inventory_id']) ? intval($addObj['inventory_id']) : 0;
-                    $deductQty = !empty($addObj['qty_to_deduct']) ? floatval($addObj['qty_to_deduct']) : (!empty($addObj['qty']) ? floatval($addObj['qty']) : 1.0);
-
-                    if ($invId <= 0) {
-                        $addTitle = strtolower(trim($addObj['title'] ?? ($addObj['name'] ?? '')));
-                        if (isset($addonsMap[$addTitle])) {
-                            $invId = intval($addonsMap[$addTitle]['inventory_id']);
-                            if ($deductQty <= 0) $deductQty = floatval($addonsMap[$addTitle]['qty_to_deduct'] ?: 1.0);
-                        }
-                    }
-
-                    if ($invId > 0) {
-                        $totalRestore = $deductQty * $itemQty;
-                        if (!isset($restorations[$invId])) $restorations[$invId] = 0;
-                        $restorations[$invId] += $totalRestore;
-                    }
-                }
-            }
-        }
-    }
-
-    // 3. Update stock in inventory
-    $restoreStmt = $db->prepare("UPDATE inventory SET stock = stock + :qty WHERE id = :id");
-    foreach ($restorations as $invId => $restoreQty) {
-        if ($restoreQty > 0) {
-            $restoreStmt->execute([
-                ':qty' => $restoreQty,
-                ':id'  => $invId
-            ]);
-        }
-    }
+    // 2. Restore inventory stock (recipes + addons) using atomic logs
+    $restoredCount = InventoryHelper::restockOrderInventory($order_id, $db, $cancel_reason);
 
     // 4. Update order status
     $newStatus = 'cancelled';
@@ -192,7 +114,7 @@ try {
         "message" => "Order #{$order_id} cancelled successfully. Inventory restored.",
         "order_id" => $order_id,
         "status" => "cancelled",
-        "items_restored" => count($restorations)
+        "items_restored" => $restoredCount
     ]);
 } catch (Exception $e) {
     if (isset($db) && $db->inTransaction()) {

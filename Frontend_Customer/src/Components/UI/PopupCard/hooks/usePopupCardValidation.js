@@ -67,6 +67,8 @@ export function usePopupCardValidation({
         name: a.title || a.name,
         title: a.title || a.name,
         price: parseFloat(a.price || a.addon_price || 0),
+        inventory_id: a.inventory_id ? parseInt(a.inventory_id) : null,
+        qty_to_deduct: a.qty_to_deduct ? parseFloat(a.qty_to_deduct) : null,
         is_custom_addon: true,
       })),
       ...selectedUpsells.map((u) => ({
@@ -74,6 +76,8 @@ export function usePopupCardValidation({
         name: u.name || u.title,
         title: u.name || u.title,
         price: parseFloat(u.selectedPrice || u.price || 0),
+        inventory_id: u.inventory_id ? parseInt(u.inventory_id) : null,
+        qty_to_deduct: u.qty_to_deduct ? parseFloat(u.qty_to_deduct) : null,
         addon_group: u.addon_group,
         is_mapping_addon: true,
       })),

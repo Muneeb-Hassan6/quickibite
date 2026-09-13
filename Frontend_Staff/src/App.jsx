@@ -164,7 +164,7 @@ const MainContent = () => {
             path="/kitchen"
             element={
               <ProtectedRoute
-                allowedRoles={["Chef", "Kitchen", "Admin", "Manager"]}
+                allowedRoles={["Chef", "Kitchen", "Cook", "Admin", "Manager", "Owner"]}
               >
                 <KitchenDashboard />
               </ProtectedRoute>
@@ -174,7 +174,7 @@ const MainContent = () => {
           <Route
             path="/cashier"
             element={
-              <ProtectedRoute allowedRoles={["Cashier", "Admin", "Manager"]}>
+              <ProtectedRoute allowedRoles={["Cashier", "Pos", "Admin", "Manager", "Owner"]}>
                 <CashierPortal />
               </ProtectedRoute>
             }
@@ -183,7 +183,7 @@ const MainContent = () => {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute allowedRoles={["Admin", "Manager"]}>
+              <ProtectedRoute allowedRoles={["Admin", "Manager", "Owner"]}>
                 <AdminDashboard />
               </ProtectedRoute>
             }
@@ -192,7 +192,7 @@ const MainContent = () => {
           <Route
             path="/rider"
             element={
-              <ProtectedRoute allowedRoles={["Rider", "Admin", "Manager"]}>
+              <ProtectedRoute allowedRoles={["Rider", "Delivery", "Admin", "Manager", "Owner"]}>
                 <RiderPortal />
               </ProtectedRoute>
             }
@@ -201,7 +201,7 @@ const MainContent = () => {
           <Route
             path="/dispatcher"
             element={
-              <ProtectedRoute allowedRoles={["Dispatcher", "Admin", "Manager"]}>
+              <ProtectedRoute allowedRoles={["Dispatcher", "Dispatch", "Admin", "Manager", "Owner"]}>
                 <DispatchPortal />
               </ProtectedRoute>
             }

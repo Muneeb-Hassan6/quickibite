@@ -102,6 +102,15 @@ if (!empty($orderId) && !empty($data->status)) {
             ':id' => $id
         ]);
 
+        // Restock inventory if order was Cancelled or Declined (unless marked with wastage)
+        if ($dbStatus === 'Cancelled' || $dbStatus === 'Declined') {
+            $isWastage = !empty($data->is_wastage) || (isset($data->reason) && stripos($data->reason, 'wastage') !== false);
+            if (!$isWastage) {
+                include_once __DIR__ . '/../config/InventoryHelper.php';
+                InventoryHelper::restockOrderInventory($id, $db, $data->reason ?? "Order {$dbStatus} by staff");
+            }
+        }
+
         // Trigger real-time broadcast to socket server (non-blocking)
         try {
             $ctx = stream_context_create([

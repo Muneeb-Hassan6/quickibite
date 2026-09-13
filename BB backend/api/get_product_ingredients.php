@@ -6,7 +6,10 @@ include_once __DIR__ . '/../config/Database.php';
 $database = new Database();
 $db = $database->getConnection();
 
-$menu_item_id = isset($_GET['menu_item_id']) ? $_GET['menu_item_id'] : (isset($_GET['product_id']) ? $_GET['product_id'] : null);
+$menu_item_id = isset($_GET['menu_item_id']) ? $_GET['menu_item_id'] : (isset($_GET['product_id']) ? $_GET['product_id'] : (isset($_GET['id']) ? $_GET['id'] : null));
+if ($menu_item_id) {
+    $menu_item_id = intval(preg_replace('/^(prod-|deal-)/', '', strval($menu_item_id)));
+}
 $variant_name = isset($_GET['variant_name']) ? $_GET['variant_name'] : 'Regular';
 
 if (!$menu_item_id) {

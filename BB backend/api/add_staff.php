@@ -79,6 +79,19 @@ if(isset($data->name) && isset($data->role) && isset($data->phone) && isset($dat
             ]);
         }
 
+        // 3. Permanently save custom / assigned role in staff_roles table
+        $assignedRole = trim($data->role);
+        if (!empty($assignedRole)) {
+            $db->exec("CREATE TABLE IF NOT EXISTS staff_roles (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                role_name VARCHAR(100) UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            $roleStmt = $db->prepare("INSERT IGNORE INTO staff_roles (role_name) VALUES (:role_name)");
+            $roleStmt->execute([':role_name' => $assignedRole]);
+        }
+
         // 🔥 Transaction Complete (Sab kuch perfect ho gaya toh Save kar do)
         $db->commit(); 
 

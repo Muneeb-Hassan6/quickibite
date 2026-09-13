@@ -12,6 +12,7 @@ const AddonGroupsManager = () => {
     productAddonsList,
     categories,
     menuItems,
+    inventoryItems,
     loading,
     isModalOpen,
     setIsModalOpen,
@@ -108,6 +109,7 @@ const AddonGroupsManager = () => {
           {/* ═══ SECTION B: PRODUCT-SPECIFIC CUSTOM ADDONS DIRECTORY ═══ */}
           <ProductAddonsDirectory
             productAddonsList={productAddonsList}
+            categories={categories}
             onEditProductAddons={openProductAddonModal}
             onRefresh={refreshData}
           />
@@ -135,6 +137,7 @@ const AddonGroupsManager = () => {
         onClose={() => setIsProductAddonModalOpen(false)}
         menuItem={selectedProductForAddons}
         menuItems={menuItems}
+        inventoryItems={inventoryItems}
         onSaved={refreshData}
       />
     </div>

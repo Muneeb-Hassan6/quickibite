@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Swal from "sweetalert2";
-import { FaTimes, FaSpinner, FaUtensils } from "react-icons/fa";
+import { FaTimes, FaSpinner, FaUtensils, FaSearch } from "react-icons/fa";
 import AddonSubItemsTable from "./AddonSubItemsTable";
 
 const AddonModal = ({
@@ -11,18 +11,37 @@ const AddonModal = ({
   inventoryItems = [],
   onSaved,
 }) => {
-  const [selectedItem, setSelectedItem] = useState(menuItem);
+  const [selectedItem, setSelectedItem] = useState(menuItem || null);
+  const [productSearch, setProductSearch] = useState("");
   const [addons, setAddons] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Sync initial product selection only when modal opens
   useEffect(() => {
-    if (menuItem) {
-      setSelectedItem(menuItem);
-    } else if (menuItems.length > 0 && !selectedItem) {
-      setSelectedItem(menuItems[0]);
+    if (isOpen) {
+      if (menuItem) {
+        const found = menuItems.find((m) => m.id === (menuItem.menu_item_id || menuItem.id)) || menuItem;
+        setSelectedItem(found);
+      } else if (menuItems.length > 0) {
+        setSelectedItem(menuItems[0]);
+      } else {
+        setSelectedItem(null);
+      }
+      setProductSearch("");
     }
-  }, [menuItem, menuItems]);
+  }, [isOpen, menuItem]);
+
+  // Filter products by search term
+  const filteredProducts = useMemo(() => {
+    if (!productSearch.trim()) return menuItems;
+    const q = productSearch.toLowerCase().trim();
+    return menuItems.filter(
+      (m) =>
+        m.name?.toLowerCase().includes(q) ||
+        m.category?.toLowerCase().includes(q)
+    );
+  }, [menuItems, productSearch]);
 
   useEffect(() => {
     if (isOpen && selectedItem?.id) {
@@ -166,12 +185,26 @@ const AddonModal = ({
           </button>
         </div>
 
-        {/* Product Selector Dropdown if multiple products available */}
+        {/* Product Selector with Search Filter */}
         {menuItems.length > 0 && (
-          <div className="mb-4 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5 shrink-0">
-              <FaUtensils className="text-[10px]" /> Select Target Product:
-            </label>
+          <div className="mb-4 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2 shrink-0">
+              <label className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5 shrink-0">
+                <FaUtensils className="text-[10px]" /> Target Product:
+              </label>
+              {/* Quick Search Field */}
+              <div className="relative">
+                <FaSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-zinc-400" />
+                <input
+                  type="text"
+                  placeholder="Filter products..."
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  className="pl-7 pr-2 py-1 text-xs bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-amber-500 w-32 sm:w-36"
+                />
+              </div>
+            </div>
+
             <select
               value={selectedItem?.id || ""}
               onChange={(e) => {
@@ -180,11 +213,16 @@ const AddonModal = ({
               }}
               className="w-full sm:w-auto flex-1 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white text-xs font-bold py-2 px-3 rounded-xl focus:outline-none focus:border-amber-500"
             >
-              {menuItems.map((m) => (
+              {filteredProducts.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.name} ({m.category || "General"}) - Rs {parseFloat(m.price || 0).toLocaleString()}
                 </option>
               ))}
+              {filteredProducts.length === 0 && (
+                <option disabled value="">
+                  No products match &quot;{productSearch}&quot;
+                </option>
+              )}
             </select>
           </div>
         )}

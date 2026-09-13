@@ -11,6 +11,8 @@ import {
   FaLock,
   FaPhoneAlt,
   FaArrowRight,
+  FaConciergeBell,
+  FaStore,
 } from "react-icons/fa";
 import { useAuth } from "../../Context/AuthContext";
 import OrderTrackerHeader from "./Components/OrderTrackerHeader";
@@ -171,28 +173,80 @@ const OrderTracker = () => {
     }
   };
 
-  const getStepIndex = (status = "") => {
+  // Fulfillment Mode Detection
+  const rawMode = (
+    order?.order_mode ||
+    order?.order_type ||
+    order?.type ||
+    "delivery"
+  ).toLowerCase();
+
+  const isDineIn = rawMode.includes("dine");
+  const isTakeaway = rawMode.includes("takeaway") || rawMode.includes("pickup");
+  const isDelivery = !isDineIn && !isTakeaway;
+
+  // 1. Dine-In Steps (3 Steps: Confirmed -> Preparing in Kitchen -> Ready & Served)
+  const getDineInStepIndex = (status = "") => {
     const s = status.toLowerCase();
-    if (s.includes("delivered") || s.includes("completed")) return 4;
-    if (s.includes("dispatch") || s.includes("way") || s.includes("ready") || s.includes("pickup")) return 3;
-    if (s.includes("prepar") || s.includes("cook") || s.includes("kitchen")) return 2;
     if (s.includes("decline") || s.includes("cancel")) return -1;
-    return 1; // Default Confirmed / Pending
+    if (s.includes("ready") || s.includes("served") || s.includes("completed") || s.includes("delivered")) return 3;
+    if (s.includes("prepar") || s.includes("cook") || s.includes("kitchen")) return 2;
+    return 1;
   };
 
-  const currentStep = order ? getStepIndex(order.status) : 1;
-
-  const steps = [
+  const dineInSteps = [
     { num: 1, title: "Order Confirmed", icon: <FaCheckCircle />, desc: "Received by kitchen" },
     { num: 2, title: "Preparing in Kitchen", icon: <FaUtensils />, desc: "Freshly cooked to order" },
     {
       num: 3,
-      title: order?.order_type === "Takeaway" ? "Ready for Pickup" : "Out for Delivery",
-      icon: <FaMotorcycle />,
-      desc: order?.order_type === "Takeaway" ? "Waiting at store counter" : "Rider en route to you",
+      title: "Order Ready & Served",
+      icon: <FaConciergeBell />,
+      desc: order?.table_number ? `Served hot at Table #${order.table_number}` : "Served directly to your table",
     },
+  ];
+
+  // 2. Takeaway Steps (4 Steps: Confirmed -> Preparing in Kitchen -> Ready for Pickup -> Picked Up)
+  const getTakeawayStepIndex = (status = "") => {
+    const s = status.toLowerCase();
+    if (s.includes("decline") || s.includes("cancel")) return -1;
+    if (s.includes("delivered") || s.includes("completed") || s.includes("picked") || s.includes("collected")) return 4;
+    if (s.includes("ready") || s.includes("pickup") || s.includes("counter")) return 3;
+    if (s.includes("prepar") || s.includes("cook") || s.includes("kitchen")) return 2;
+    return 1;
+  };
+
+  const takeawaySteps = [
+    { num: 1, title: "Order Confirmed", icon: <FaCheckCircle />, desc: "Received by kitchen" },
+    { num: 2, title: "Preparing in Kitchen", icon: <FaUtensils />, desc: "Freshly cooked to order" },
+    { num: 3, title: "Ready for Pickup", icon: <FaStore />, desc: "Waiting at store counter" },
+    { num: 4, title: "Picked Up", icon: <FaShoppingBag />, desc: "Order collected from store counter" },
+  ];
+
+  // 3. Delivery Steps (4 Steps: Confirmed -> Preparing in Kitchen -> Out for Delivery -> Delivered)
+  const getDeliveryStepIndex = (status = "") => {
+    const s = status.toLowerCase();
+    if (s.includes("decline") || s.includes("cancel")) return -1;
+    if (s.includes("delivered") || s.includes("completed")) return 4;
+    if (s.includes("dispatch") || s.includes("way") || s.includes("rider") || s.includes("ready")) return 3;
+    if (s.includes("prepar") || s.includes("cook") || s.includes("kitchen")) return 2;
+    return 1;
+  };
+
+  const deliverySteps = [
+    { num: 1, title: "Order Confirmed", icon: <FaCheckCircle />, desc: "Received by kitchen" },
+    { num: 2, title: "Preparing in Kitchen", icon: <FaUtensils />, desc: "Freshly cooked to order" },
+    { num: 3, title: "Out for Delivery", icon: <FaMotorcycle />, desc: "Rider en route to you" },
     { num: 4, title: "Delivered & Enjoy!", icon: <FaShoppingBag />, desc: "Order completed" },
   ];
+
+  const steps = isDineIn ? dineInSteps : isTakeaway ? takeawaySteps : deliverySteps;
+  const currentStep = order
+    ? (isDineIn
+        ? getDineInStepIndex(order.status)
+        : isTakeaway
+        ? getTakeawayStepIndex(order.status)
+        : getDeliveryStepIndex(order.status))
+    : 1;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0c] text-neutral-900 dark:text-white transition-colors duration-300 pb-20">
@@ -292,13 +346,23 @@ const OrderTracker = () => {
             />
 
             {/* Order Details & Receipt Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-start">
-              <OrderTrackerReceiptSummary order={order} />
-              <OrderTrackerRiderCard
-                order={order}
-                restaurantPhone={restaurantPhone}
-              />
-            </div>
+            {isDineIn ? (
+              /* Dine-In Mode: Delivery section completely hidden, centered Receipt */
+              <div className="max-w-3xl mx-auto w-full">
+                <OrderTrackerReceiptSummary order={order} isDineIn={true} />
+              </div>
+            ) : (
+              /* Delivery & Takeaway Modes: Side-by-side Receipt and Destination/Pickup Card */
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-start">
+                <OrderTrackerReceiptSummary order={order} isDineIn={false} />
+                <OrderTrackerRiderCard
+                  order={order}
+                  restaurantPhone={restaurantPhone}
+                  storeSettings={storeSettings}
+                  isTakeaway={isTakeaway}
+                />
+              </div>
+            )}
           </div>
         )}
       </main>

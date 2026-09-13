@@ -104,6 +104,15 @@ export default function KitchenHeader({ activeFilter, setActiveFilter }) {
           <span className="hidden lg:inline">KITCHEN DISPLAY</span>
           <span className="lg:hidden">LIVE</span>
         </div>
+
+        {/* FCFS Priority Queue Active Badge */}
+        <div
+          className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-400 text-[10px] sm:text-[11px] font-black tracking-wider uppercase select-none"
+          title="First-Come, First-Served: Earliest placed orders are prioritized first"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          <span>⚡ FCFS Mode</span>
+        </div>
       </div>
 
       {/* Center: Desktop Segmented Filter Rail (>= 768px) */}

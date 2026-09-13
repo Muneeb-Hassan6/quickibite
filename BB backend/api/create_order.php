@@ -1,6 +1,7 @@
 <?php
 include_once __DIR__ . '/../config/cors_headers.php';
 include_once __DIR__ . '/../config/Database.php';
+include_once __DIR__ . '/../config/InventoryHelper.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -586,62 +587,11 @@ if(!empty($cart_items) && $order_total > 0) {
             $upStmt->execute([':id' => $couponIdToUpdate]);
         }
 
-        // FETCH ALL RECIPES
-        $recipes_map = [];
-        if (!empty($menu_item_ids)) {
-            $ids_str = implode(',', array_fill(0, count($menu_item_ids), '?'));
-            $stmt = $db->prepare("SELECT menu_item_id, variant_name, inventory_id, quantity_to_deduct FROM recipes WHERE menu_item_id IN ($ids_str)");
-            $stmt->execute($menu_item_ids);
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $key = $row['menu_item_id'] . '_' . $row['variant_name'];
-                if (!isset($recipes_map[$key])) $recipes_map[$key] = [];
-                $recipes_map[$key][] = [
-                    'inventory_id' => intval($row['inventory_id']),
-                    'quantity' => floatval($row['quantity_to_deduct'])
-                ];
-            }
-        }
-
-        // FETCH ALL INVENTORY PRICES
-        $needed_inv_ids = [];
-        foreach($cart_items as $item) {
-            if (!empty($item->is_addon) && !empty($item->addon_data)) {
-                $addon_inv_id = intval($item->addon_data->inventory_id ?? 0);
-                if ($addon_inv_id > 0) $needed_inv_ids[$addon_inv_id] = true;
-            } else {
-                $menu_item_id = isset($item->menuItemId) ? intval($item->menuItemId) : 0;
-                if ($menu_item_id <= 0 && isset($item->id)) {
-                    $parts = explode('-', strval($item->id));
-                    if (is_numeric($parts[0])) $menu_item_id = intval($parts[0]);
-                }
-                $variant_name = $item->size ?? 'Regular';
-                $key = $menu_item_id . '_' . $variant_name;
-                if (isset($recipes_map[$key])) {
-                    foreach ($recipes_map[$key] as $r) {
-                        $needed_inv_ids[$r['inventory_id']] = true;
-                    }
-                }
-            }
-        }
-
-        $inventory_prices = [];
-        if (!empty($needed_inv_ids)) {
-            $ids = array_keys($needed_inv_ids);
-            $ids_str = implode(',', array_fill(0, count($ids), '?'));
-            $stmt = $db->prepare("SELECT id, price FROM inventory WHERE id IN ($ids_str)");
-            $stmt->execute($ids);
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $inventory_prices[$row['id']] = floatval($row['price']);
-            }
-        }
-
-        // INSERT ORDER ITEMS & CALCULATE DEDUCTIONS
+        // INSERT ORDER ITEMS
         $itemQuery = "INSERT INTO order_items (order_id, title, size, note, qty, price, spice_level, selected_addons_json) VALUES (:oid, :title, :size, :note, :qty, :price, :spice, :addons_json)";
         $itemStmt = $db->prepare($itemQuery);
 
-        $inventory_deductions = [];
-        $cost_updates = [];
-
+        $prepared_cart_items = [];
         foreach($cart_items as $item) {
             $spice_val = !empty($item->spice_level) ? $item->spice_level : (!empty($item->spiceLevel) ? $item->spiceLevel : 'Medium Spicy');
             $addons_json = null;
@@ -662,121 +612,16 @@ if(!empty($cart_items) && $order_total > 0) {
                 ':addons_json' => $addons_json
             ]);
             $order_item_id = $db->lastInsertId();
-
-            $order_qty = intval($item->qty ?? 1);
-            $unit_cost = 0;
-
-            if (!empty($item->is_addon) && !empty($item->addon_data)) {
-                $addon_data_arr = is_array($item->addon_data) ? $item->addon_data : (array)$item->addon_data;
-                $addon_inv_id = intval($addon_data_arr['inventory_id'] ?? 0);
-                $addon_deduct = floatval($addon_data_arr['qty'] ?? 0);
-                if ($addon_inv_id > 0 && $addon_deduct > 0) {
-                    $invPrice = $inventory_prices[$addon_inv_id] ?? 0;
-                    $unit_cost += ($addon_deduct * $invPrice);
-                    if (!isset($inventory_deductions[$addon_inv_id])) $inventory_deductions[$addon_inv_id] = 0;
-                    $inventory_deductions[$addon_inv_id] += ($addon_deduct * $order_qty);
-                }
-            } else {
-                $menu_item_id = isset($item->menuItemId) ? intval($item->menuItemId) : 0;
-                if ($menu_item_id <= 0 && isset($item->id)) {
-                    $parts = explode('-', strval($item->id));
-                    if (is_numeric($parts[0])) $menu_item_id = intval($parts[0]);
-                }
-                $variant_name = $item->size ?? 'Regular';
-                
-                $excluded = [];
-                if (!empty($item->excluded_ingredients) && is_array($item->excluded_ingredients)) {
-                    foreach ($item->excluded_ingredients as $exId) $excluded[] = intval($exId);
-                }
-
-                // 1. Deduct standard recipe ingredients
-                $key = $menu_item_id . '_' . $variant_name;
-                if (isset($recipes_map[$key])) {
-                    foreach ($recipes_map[$key] as $ing) {
-                        $inv_id = intval($ing['inventory_id']);
-                        if (in_array($inv_id, $excluded)) continue;
-                        
-                        $qty_to_deduct = $ing['quantity'];
-                        $invPrice = $inventory_prices[$inv_id] ?? 0;
-                        $unit_cost += ($qty_to_deduct * $invPrice);
-                        
-                        $total_deduct = $qty_to_deduct * $order_qty;
-                        if ($total_deduct > 0) {
-                            if (!isset($inventory_deductions[$inv_id])) $inventory_deductions[$inv_id] = 0;
-                            $inventory_deductions[$inv_id] += $total_deduct;
-                        }
-                    }
-                }
-
-                // 2. Deduct product custom add-ons
-                $item_addons = [];
-                if (!empty($item->selected_addons)) {
-                    if (is_string($item->selected_addons)) {
-                        $item_addons = json_decode($item->selected_addons, true) ?: [];
-                    } else {
-                        // Normalize stdClass objects to associative arrays
-                        $item_addons = json_decode(json_encode($item->selected_addons), true) ?: [];
-                    }
-                } else if (!empty($item->addons)) {
-                    if (is_string($item->addons)) {
-                        $item_addons = json_decode($item->addons, true) ?: [];
-                    } else {
-                        $item_addons = json_decode(json_encode($item->addons), true) ?: [];
-                    }
-                }
-
-                if (is_array($item_addons) && !empty($item_addons)) {
-                    foreach ($item_addons as $addObj) {
-                        // $addObj is now guaranteed to be an associative array
-                        $addInvId = !empty($addObj['inventory_id']) ? intval($addObj['inventory_id']) : 0;
-                        $addQty = !empty($addObj['qty_to_deduct']) ? floatval($addObj['qty_to_deduct']) : (!empty($addObj['qty']) ? floatval($addObj['qty']) : 0);
-
-                        if ($addInvId <= 0 && $menu_item_id > 0) {
-                            $addTitle = $addObj['title'] ?? ($addObj['name'] ?? '');
-                            if (!empty($addTitle)) {
-                                $lookupStmt = $db->prepare("SELECT inventory_id, qty_to_deduct FROM product_custom_addons WHERE menu_item_id = ? AND title = ? LIMIT 1");
-                                $lookupStmt->execute([$menu_item_id, $addTitle]);
-                                $foundAddon = $lookupStmt->fetch(PDO::FETCH_ASSOC);
-                                if ($foundAddon && !empty($foundAddon['inventory_id'])) {
-                                    $addInvId = intval($foundAddon['inventory_id']);
-                                    if ($addQty <= 0) $addQty = floatval($foundAddon['qty_to_deduct'] ?: 1);
-                                }
-                            }
-                        }
-
-                        if ($addInvId > 0) {
-                            if ($addQty <= 0) $addQty = 1.0;
-                            $invPrice = $inventory_prices[$addInvId] ?? 0;
-                            $unit_cost += ($addQty * $invPrice);
-
-                            $total_add_deduct = $addQty * $order_qty;
-                            if (!isset($inventory_deductions[$addInvId])) $inventory_deductions[$addInvId] = 0;
-                            $inventory_deductions[$addInvId] += $total_add_deduct;
-                        }
-                    }
-                }
+            if (is_object($item)) {
+                $item->order_item_id = $order_item_id;
+            } else if (is_array($item)) {
+                $item['order_item_id'] = $order_item_id;
             }
-            
-            if ($unit_cost > 0) {
-                $cost_updates[$order_item_id] = $unit_cost;
-            }
+            $prepared_cart_items[] = $item;
         }
 
-        if (!empty($inventory_deductions)) {
-            $deductQuery = "UPDATE inventory SET stock = GREATEST(stock - :deduct, 0) WHERE id = :iid";
-            $dStmt = $db->prepare($deductQuery);
-            foreach ($inventory_deductions as $iid => $total_deduct) {
-                $dStmt->execute([':deduct' => $total_deduct, ':iid' => $iid]);
-            }
-        }
-
-        if (!empty($cost_updates)) {
-            $updateCostQuery = "UPDATE order_items SET cost_price = :cost WHERE id = :oiid";
-            $ucStmt = $db->prepare($updateCostQuery);
-            foreach ($cost_updates as $oiid => $cost) {
-                $ucStmt->execute([':cost' => $cost, ':oiid' => $oiid]);
-            }
-        }
+        // DEDUCT INVENTORY (RECIPES + ADDONS) & RECORD IN ORDER LOGS
+        InventoryHelper::deductOrderInventory($order_id, $prepared_cart_items, $db);
 
         // Synchronize Payments Ledger
         try {

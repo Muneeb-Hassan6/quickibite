@@ -49,6 +49,7 @@ const PopupCard = ({ image, title, description, price, item, closePopup }) => {
             decreaseQuantity={cardState.decreaseQuantity}
             grandTotal={cardState.grandTotal}
             handleAddToCart={cardState.handleAddToCart}
+            isOutOfStock={cardState.isOutOfStock}
           />
         </div>
 
@@ -176,6 +177,7 @@ const PopupCard = ({ image, title, description, price, item, closePopup }) => {
             decreaseQuantity={cardState.decreaseQuantity}
             grandTotal={cardState.grandTotal}
             handleAddToCart={cardState.handleAddToCart}
+            isOutOfStock={cardState.isOutOfStock}
           />
         </div>
       </div>

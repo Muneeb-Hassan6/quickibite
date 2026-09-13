@@ -42,6 +42,7 @@ const StaffDashboard = () => {
   const handleEmployeeAdded = () => {
     setIsModalOpen(false);
     queryClient.invalidateQueries({ queryKey: ['staff'] });
+    queryClient.invalidateQueries({ queryKey: ['staff_roles'] });
   };
 
   const tabs = [

@@ -10,6 +10,7 @@ export default function ItemQuantityFooter({
   specialNote = "",
   setSpecialNote,
   mode = "desktop", // "desktop", "mobile", or "note_only"
+  isOutOfStock = false,
 }) {
   if (mode === "note_only") {
     return (
@@ -37,20 +38,23 @@ export default function ItemQuantityFooter({
             Total Amount
           </span>
           <div className="text-right">
-            <span className="text-2xl font-black text-amber-500 dark:text-amber-400 font-['Oswald',sans-serif]">
+            <span className={`text-2xl font-black font-['Oswald',sans-serif] ${
+              isOutOfStock ? "text-neutral-400 dark:text-neutral-500" : "text-amber-500 dark:text-amber-400"
+            }`}>
               Rs {grandTotal}
             </span>
           </div>
         </div>
 
         {/* Quantity Stepper */}
-        <div className="flex items-center justify-between bg-gray-100 dark:bg-neutral-800/90 p-1.5 rounded-xl border border-gray-200 dark:border-neutral-700">
+        <div className={`flex items-center justify-between bg-gray-100 dark:bg-neutral-800/90 p-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 ${isOutOfStock ? "opacity-50 pointer-events-none" : ""}`}>
           <span className="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 font-['Oswald',sans-serif] pl-2">
             Quantity
           </span>
           <div className="flex items-center gap-2">
             <button
               type="button"
+              disabled={isOutOfStock}
               onClick={decreaseQuantity}
               className="w-8 h-8 rounded-lg bg-white dark:bg-neutral-700 hover:bg-amber-400 dark:hover:bg-amber-400 hover:text-black text-gray-800 dark:text-white flex items-center justify-center cursor-pointer border-none transition-all active:scale-90 shadow-xs"
               aria-label="Decrease quantity"
@@ -62,6 +66,7 @@ export default function ItemQuantityFooter({
             </span>
             <button
               type="button"
+              disabled={isOutOfStock}
               onClick={increaseQuantity}
               className="w-8 h-8 rounded-lg bg-white dark:bg-neutral-700 hover:bg-amber-400 dark:hover:bg-amber-400 hover:text-black text-gray-800 dark:text-white flex items-center justify-center cursor-pointer border-none transition-all active:scale-90 shadow-xs"
               aria-label="Increase quantity"
@@ -74,11 +79,16 @@ export default function ItemQuantityFooter({
         {/* Desktop Add to Cart Button */}
         <button
           type="button"
+          disabled={isOutOfStock}
           onClick={handleAddToCart}
-          className="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold font-['Oswald',sans-serif] text-base tracking-wide flex items-center justify-center gap-2 shadow-lg active:scale-98 cursor-pointer border-none transition-all"
+          className={`w-full py-3.5 px-4 rounded-xl font-bold font-['Oswald',sans-serif] text-base tracking-wide flex items-center justify-center gap-2 border-none transition-all ${
+            isOutOfStock
+              ? "bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 cursor-not-allowed shadow-none"
+              : "bg-amber-500 hover:bg-amber-400 text-black shadow-lg active:scale-98 cursor-pointer"
+          }`}
         >
           <FaShoppingBag className="text-sm text-neutral-950" />
-          <span>ADD TO CART • RS {grandTotal}</span>
+          <span>{isOutOfStock ? "CURRENTLY OUT OF STOCK" : `ADD TO CART • RS ${grandTotal}`}</span>
         </button>
       </div>
     );
@@ -88,9 +98,10 @@ export default function ItemQuantityFooter({
   return (
     <div className="lg:hidden sticky bottom-0 z-30 w-full bg-white/95 dark:bg-neutral-950/95 backdrop-blur-md border-t border-gray-200 dark:border-white/10 p-3 sm:p-4 flex items-center justify-between gap-3 shadow-lg">
       {/* Quantity Stepper */}
-      <div className="flex items-center gap-2 bg-gray-100 dark:bg-neutral-800 p-1 sm:p-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 shrink-0">
+      <div className={`flex items-center gap-2 bg-gray-100 dark:bg-neutral-800 p-1 sm:p-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 shrink-0 ${isOutOfStock ? "opacity-50 pointer-events-none" : ""}`}>
         <button
           type="button"
+          disabled={isOutOfStock}
           onClick={decreaseQuantity}
           className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white dark:bg-neutral-700 hover:bg-amber-400 dark:hover:bg-amber-400 hover:text-black text-gray-800 dark:text-white flex items-center justify-center cursor-pointer border-none transition-all active:scale-90"
           aria-label="Decrease quantity"
@@ -102,6 +113,7 @@ export default function ItemQuantityFooter({
         </span>
         <button
           type="button"
+          disabled={isOutOfStock}
           onClick={increaseQuantity}
           className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white dark:bg-neutral-700 hover:bg-amber-400 dark:hover:bg-amber-400 hover:text-black text-gray-800 dark:text-white flex items-center justify-center cursor-pointer border-none transition-all active:scale-90"
           aria-label="Increase quantity"
@@ -113,11 +125,16 @@ export default function ItemQuantityFooter({
       {/* Standalone Add to Cart Button with Full Price */}
       <button
         type="button"
+        disabled={isOutOfStock}
         onClick={handleAddToCart}
-        className="flex-1 py-2.5 sm:py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold font-['Oswald',sans-serif] text-xs sm:text-sm md:text-base tracking-wide flex items-center justify-center gap-2 shadow-lg active:scale-98 cursor-pointer border-none transition-all"
+        className={`flex-1 py-2.5 sm:py-3 px-4 rounded-xl font-bold font-['Oswald',sans-serif] text-xs sm:text-sm md:text-base tracking-wide flex items-center justify-center gap-2 border-none transition-all ${
+          isOutOfStock
+            ? "bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 cursor-not-allowed shadow-none"
+            : "bg-amber-500 hover:bg-amber-400 text-black shadow-lg active:scale-98 cursor-pointer"
+        }`}
       >
         <FaShoppingBag className="text-xs sm:text-sm text-neutral-950" />
-        <span>ADD TO CART • RS {grandTotal}</span>
+        <span>{isOutOfStock ? "CURRENTLY OUT OF STOCK" : `ADD TO CART • RS ${grandTotal}`}</span>
       </button>
     </div>
   );

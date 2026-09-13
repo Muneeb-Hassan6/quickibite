@@ -224,10 +224,10 @@ const HomePage = () => {
   };
 
   const bestSellersData = menuItems.filter(
-    (item) => item.isBestSeller === true && item.isAvailable === true
+    (item) => item.isBestSeller === true
   );
   const menuTopDeals = menuItems.filter(
-    (item) => item.isTopDeal === true && item.isAvailable === true
+    (item) => item.isTopDeal === true
   );
   const sliderDeals = comboDeals.filter((deal) => !deal.is_featured_banner);
   const allTopDeals = [...sliderDeals, ...menuTopDeals];

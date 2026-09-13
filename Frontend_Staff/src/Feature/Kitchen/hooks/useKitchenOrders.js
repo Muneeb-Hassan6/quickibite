@@ -69,12 +69,12 @@ export function useKitchenOrders() {
     };
   }, []);
 
-  // 1. FETCH LIVE ORDERS via React Query
+  // 1. FETCH LIVE ORDERS via React Query (FCFS: First-Come, First-Served)
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["kitchen_orders"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php`
+        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=kitchen&sort=asc&order_by=fcfs`
       );
       const data = await response.json();
 
@@ -150,6 +150,7 @@ export function useKitchenOrders() {
             selected_addons_json: i ? i.selected_addons_json || i.selected_addons || null : null,
           })),
 
+          created_at_raw: dbOrder.created_at || null,
           originalStatus: dbOrder.status || "Pending",
         };
       });
@@ -286,7 +287,29 @@ export function useKitchenOrders() {
     statusMutation.mutate({ orderId, newStatus: dbStatus });
   };
 
-  // 4. SMART FILTERING & STAGE PARTITIONING
+  // 4. SMART FILTERING & STRICT FCFS (First-Come, First-Served) SORTING
+  // Earliest created orders (lowest ID or earliest timestamp) are prioritized at the top of the queue
+  const sortFCFS = (list) => {
+    return [...list]
+      .sort((a, b) => {
+        const timeA = a.created_at_raw ? new Date(a.created_at_raw).getTime() : 0;
+        const timeB = b.created_at_raw ? new Date(b.created_at_raw).getTime() : 0;
+        if (timeA && timeB && timeA !== timeB) {
+          return timeA - timeB; // Ascending: oldest order first (FCFS)
+        }
+        return Number(a.id) - Number(b.id); // Lowest order ID first
+      })
+      .map((order, idx) => {
+        const rawTime = order.created_at_raw ? new Date(order.created_at_raw).getTime() : 0;
+        const elapsedMins = rawTime > 0 ? Math.max(0, Math.floor((Date.now() - rawTime) / 60000)) : 0;
+        return {
+          ...order,
+          fcfsRank: idx + 1,
+          elapsedMinutes: elapsedMins,
+        };
+      });
+  };
+
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
     const activeUpper = (activeFilter || "ALL").toUpperCase().replace(/[-_ ]/g, "");
@@ -301,15 +324,15 @@ export function useKitchenOrders() {
   }, [orders, activeFilter]);
 
   const newOrders = useMemo(
-    () => filteredOrders.filter((o) => o.status === "pending"),
+    () => sortFCFS(filteredOrders.filter((o) => o.status === "pending")),
     [filteredOrders]
   );
   const prepOrders = useMemo(
-    () => filteredOrders.filter((o) => o.status === "preparing"),
+    () => sortFCFS(filteredOrders.filter((o) => o.status === "preparing")),
     [filteredOrders]
   );
   const readyOrders = useMemo(
-    () => filteredOrders.filter((o) => o.status === "ready"),
+    () => sortFCFS(filteredOrders.filter((o) => o.status === "ready")),
     [filteredOrders]
   );
 

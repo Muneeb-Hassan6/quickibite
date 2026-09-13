@@ -6,6 +6,7 @@ export function useAddonGroupsManager() {
   const [productAddonsList, setProductAddonsList] = useState([]);
   const [categories, setCategories] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
+  const [inventoryItems, setInventoryItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Category Mapping Modal State
@@ -28,7 +29,7 @@ export function useAddonGroupsManager() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [mapsRes, prodAddonsRes, catRes, menuRes] = await Promise.all([
+      const [mapsRes, prodAddonsRes, catRes, menuRes, invRes] = await Promise.all([
         fetch(`${import.meta.env.VITE_API_BASE}/admin_manage_addons.php?action=get_category_mappings`, {
           credentials: "include",
           headers: { Accept: "application/json" },
@@ -42,6 +43,10 @@ export function useAddonGroupsManager() {
           headers: { Accept: "application/json" },
         }),
         fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`, {
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        }),
+        fetch(`${import.meta.env.VITE_API_BASE}/inventory_api.php`, {
           credentials: "include",
           headers: { Accept: "application/json" },
         }),
@@ -86,10 +91,21 @@ export function useAddonGroupsManager() {
       } else {
         setMenuItems([]);
       }
+
+      // Inventory Items
+      const invData = await invRes.json().catch(() => null);
+      if (Array.isArray(invData)) {
+        setInventoryItems(invData);
+      } else if (invData && Array.isArray(invData.data)) {
+        setInventoryItems(invData.data);
+      } else {
+        setInventoryItems([]);
+      }
     } catch (error) {
       console.error("Error fetching data in AddonGroupsManager:", error);
       setMappings([]);
       setProductAddonsList([]);
+      setInventoryItems([]);
     } finally {
       setLoading(false);
     }
@@ -114,10 +130,11 @@ export function useAddonGroupsManager() {
 
   const openProductAddonModal = (product = null) => {
     if (product) {
-      const full = menuItems.find((m) => m.id === (product.menu_item_id || product.id)) || product;
+      const pId = product.menu_item_id || product.id;
+      const full = menuItems.find((m) => m.id === pId) || product;
       setSelectedProductForAddons(full);
     } else {
-      setSelectedProductForAddons(menuItems[0] || null);
+      setSelectedProductForAddons(null);
     }
     setIsProductAddonModalOpen(true);
   };
@@ -235,6 +252,7 @@ export function useAddonGroupsManager() {
     productAddonsList,
     categories,
     menuItems,
+    inventoryItems,
     loading,
     isModalOpen,
     setIsModalOpen,

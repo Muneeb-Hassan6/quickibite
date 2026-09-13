@@ -31,8 +31,8 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     }
   }
 
-  // 1. Session Check - If not logged in OR no token, purge stale tab session and redirect to login
-  if (!activeUser || !activeToken) {
+  // 1. Session Check - If not logged in OR no token OR no role, purge stale tab session and redirect to login
+  if (!activeUser || !activeToken || !activeUser.role) {
     logout();
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
@@ -51,18 +51,20 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
     const authorizedDashboard = getRoleDashboard(userRole);
 
-    // Toast alert notifying unauthorized attempt
-    setTimeout(() => {
-      Swal.fire({
-        toast: true,
-        position: "top-end",
-        icon: "warning",
-        title: `Access Denied: ${user.role} cannot access ${location.pathname}`,
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-      });
-    }, 100);
+    // Prevent redirect loop if already at target or login
+    if (authorizedDashboard !== location.pathname && location.pathname !== "/login") {
+      setTimeout(() => {
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "warning",
+          title: `Access Denied: ${activeUser?.role || "Staff"} cannot access ${location.pathname}`,
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+        });
+      }, 100);
+    }
 
     return <Navigate to={authorizedDashboard} replace />;
   }

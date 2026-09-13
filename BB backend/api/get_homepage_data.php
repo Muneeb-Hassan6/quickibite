@@ -109,6 +109,29 @@ foreach ($deal_banners_raw as $b) {
 }
 
 // B. Fetch Menu Items with is_featured_banner = 1
+$insufficientVariants = [];
+$insufficientProducts = [];
+try {
+    $rStmt = $db->query("SELECT r.menu_item_id, LOWER(TRIM(COALESCE(r.variant_name, ''))) as variant_name, r.quantity_to_deduct, i.stock 
+                         FROM recipes r 
+                         JOIN inventory i ON r.inventory_id = i.id");
+    if ($rStmt) {
+        while ($rRow = $rStmt->fetch(PDO::FETCH_ASSOC)) {
+            $mId = intval($rRow['menu_item_id']);
+            $vName = $rRow['variant_name'];
+            $stock = floatval($rRow['stock']);
+            $needed = floatval($rRow['quantity_to_deduct']);
+            if ($stock <= 0 || $stock < $needed) {
+                if (!empty($vName)) {
+                    $insufficientVariants[$mId][$vName] = true;
+                } else {
+                    $insufficientProducts[$mId] = true;
+                }
+            }
+        }
+    }
+} catch (Exception $e) {}
+
 $query_menu_banners = "SELECT id, name, description, category, img, promo_banner_image, is_featured_banner, banner_order, isAvailable, isTopDeal, isBestSeller 
                        FROM menu_items 
                        WHERE is_featured_banner = 1 AND isAvailable = 1 
@@ -119,34 +142,61 @@ $menu_banners_raw = $stmt_menu_banners->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($menu_banners_raw as $m) {
     $bannerImg = !empty($m['promo_banner_image']) ? $m['promo_banner_image'] : $m['img'];
+    $mId = intval($m['id']);
     
     // Fetch variants
     $vStmt = $db->prepare("SELECT id, size_name, price, in_stock FROM menu_variants WHERE menu_id = :menu_id ORDER BY id ASC");
-    $vStmt->execute([':menu_id' => $m['id']]);
+    $vStmt->execute([':menu_id' => $mId]);
     $variantsRaw = $vStmt->fetchAll(PDO::FETCH_ASSOC);
     $variants = [];
     $basePrice = 0;
+    $hasAnyInStock = false;
+
     foreach ($variantsRaw as $v) {
+        $rawInStock = isset($v['in_stock']) ? (bool)$v['in_stock'] : true;
+        $vNameLower = strtolower(trim($v['size_name'] ?? ''));
+
+        $isVariantDepleted = false;
+        if (isset($insufficientProducts[$mId])) {
+            $isVariantDepleted = true;
+        } else if (isset($insufficientVariants[$mId])) {
+            if (!empty($insufficientVariants[$mId][$vNameLower])) {
+                $isVariantDepleted = true;
+            } else if (!empty($insufficientVariants[$mId]['regular']) && ($vNameLower === 'regular' || $vNameLower === 'standard' || empty($vNameLower))) {
+                $isVariantDepleted = true;
+            }
+        }
+
+        $effectiveInStock = $rawInStock && !$isVariantDepleted;
+        if ($effectiveInStock) $hasAnyInStock = true;
+
         $variants[] = [
             "id" => $v['id'],
             "size" => $v['size_name'],
             "price" => floatval($v['price']),
-            "inStock" => isset($v['in_stock']) ? (bool)$v['in_stock'] : true
+            "inStock" => $effectiveInStock
         ];
     }
     if (count($variants) > 0) {
         $basePrice = $variants[0]['price'];
     }
 
+    $isItemAvailable = (bool)$m['isAvailable'];
+    if (!empty($variants) && !$hasAnyInStock) {
+        $isItemAvailable = false;
+    } else if (isset($insufficientProducts[$mId])) {
+        $isItemAvailable = false;
+    }
+
     $rawProductObj = [
-        "id" => intval($m['id']),
+        "id" => $mId,
         "name" => $m['name'],
         "description" => $m['description'],
         "category" => $m['category'],
         "img" => $m['img'],
         "image" => $m['img'],
         "promo_banner_image" => $m['promo_banner_image'],
-        "isAvailable" => true,
+        "isAvailable" => $isItemAvailable,
         "isTopDeal" => (bool)$m['isTopDeal'],
         "isBestSeller" => (bool)$m['isBestSeller'],
         "price" => $basePrice,

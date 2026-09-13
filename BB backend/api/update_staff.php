@@ -33,6 +33,19 @@ if(!empty($data->id) && !empty($data->name) && !empty($data->role)) {
         $stmt->bindParam(":id", $data->id);
         
         $stmt->execute();
+
+        // Permanently save custom / assigned role in staff_roles table
+        $assignedRole = trim((string)$data->role);
+        if (!empty($assignedRole)) {
+            $db->exec("CREATE TABLE IF NOT EXISTS staff_roles (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                role_name VARCHAR(100) UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            $roleStmt = $db->prepare("INSERT IGNORE INTO staff_roles (role_name) VALUES (:role_name)");
+            $roleStmt->execute([':role_name' => $assignedRole]);
+        }
         
         if (isset($data->password) && trim((string)$data->password) !== '') {
             $rawPassword = trim((string)$data->password);

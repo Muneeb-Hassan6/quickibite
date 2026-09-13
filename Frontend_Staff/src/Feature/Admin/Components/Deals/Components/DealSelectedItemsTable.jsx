@@ -103,67 +103,7 @@ export default function DealSelectedItemsTable({
             </div>
 
             {/* Customizable Flavor Choices */}
-            <div className="pt-2 border-t border-slate-200 dark:border-white/5 space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-amber-600 dark:text-amber-400">
-                <input
-                  type="checkbox"
-                  checked={item.is_customizable}
-                  onChange={(e) =>
-                    handleItemChange(
-                      idx,
-                      "is_customizable",
-                      e.target.checked
-                    )
-                  }
-                  className="w-3.5 h-3.5 accent-amber-500 cursor-pointer"
-                />
-                <span className="flex items-center gap-1.5">
-                  <FaSlidersH className="text-[10px]" /> Customer Can Choose
-                  Flavor / Drink
-                </span>
-              </label>
-
-              {item.is_customizable && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3 bg-slate-100 dark:bg-black/40 rounded-xl border border-slate-200 dark:border-white/5">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-600 dark:text-neutral-400 block mb-1">
-                      Choice Group Label
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Select Pizza Flavor"
-                      value={item.choice_group_name || ""}
-                      onChange={(e) =>
-                        handleItemChange(
-                          idx,
-                          "choice_group_name",
-                          e.target.value
-                        )
-                      }
-                      className="w-full p-2 bg-white dark:bg-black/50 text-slate-900 dark:text-white rounded-lg border border-slate-300 dark:border-white/10 text-xs focus:outline-none focus:border-amber-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-600 dark:text-neutral-400 block mb-1">
-                      Comma-Separated Options
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Fajita, Tikka, Pepperoni, Veggie"
-                      value={item.options_str || ""}
-                      onChange={(e) =>
-                        handleItemChange(
-                          idx,
-                          "options_str",
-                          e.target.value
-                        )
-                      }
-                      className="w-full p-2 bg-white dark:bg-black/50 text-slate-900 dark:text-white rounded-lg border border-slate-300 dark:border-white/10 text-xs focus:outline-none focus:border-amber-500"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
+            
           </div>
         ))}
       </div>

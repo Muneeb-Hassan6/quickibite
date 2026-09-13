@@ -1,7 +1,7 @@
 import React from "react";
 import { FaReceipt, FaCheckCircle, FaClock } from "react-icons/fa";
 
-export default function OrderTrackerReceiptSummary({ order }) {
+export default function OrderTrackerReceiptSummary({ order, isDineIn: propIsDineIn }) {
   if (!order) return null;
 
   const rawItems = Array.isArray(order.items) && order.items.length > 0
@@ -102,8 +102,9 @@ export default function OrderTrackerReceiptSummary({ order }) {
 
   const tableNum = order.table_number || order.table_no || order.table || "";
   const isDineIn =
-    rawType.includes("DINE") ||
-    (!rawType.includes("TAKEAWAY") && !rawType.includes("DELIVERY"));
+    typeof propIsDineIn === "boolean"
+      ? propIsDineIn
+      : (rawType.includes("DINE") || (!rawType.includes("TAKEAWAY") && !rawType.includes("DELIVERY")));
 
   const typeDisplay =
     isDineIn && tableNum && !tableNum.toLowerCase().includes("takeaway") && !tableNum.toLowerCase().includes("delivery")
@@ -114,7 +115,7 @@ export default function OrderTrackerReceiptSummary({ order }) {
   const isPaid = paymentStatus.toLowerCase() === "paid" || paymentStatus.toLowerCase() === "completed";
 
   return (
-    <div className="md:col-span-7 bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
+    <div className={`${isDineIn ? "md:col-span-12 max-w-3xl mx-auto w-full" : "md:col-span-7"} bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-4`}>
       {/* Header */}
       <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-neutral-800">
         <div className="flex items-center gap-2">
@@ -145,6 +146,26 @@ export default function OrderTrackerReceiptSummary({ order }) {
           </span>
         </div>
       </div>
+
+      {/* Dine-In Service Table Banner */}
+      {isDineIn && (
+        <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-900 dark:text-purple-300 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            
+            <div>
+              <span className="font-bold text-xs uppercase tracking-wider block">
+                Dine-In Table
+              </span>
+              <span className="text-[11px] text-purple-700 dark:text-purple-300">
+                {tableNum ? `Your hot meal will be served directly at ${tableNum}.` : "Your meal will be served hot at your table."}
+              </span>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[10px] font-bold uppercase tracking-wider shrink-0">
+            Table Served
+          </span>
+        </div>
+      )}
 
       {/* Items list with base price and separate addons */}
       <div className="space-y-2.5">

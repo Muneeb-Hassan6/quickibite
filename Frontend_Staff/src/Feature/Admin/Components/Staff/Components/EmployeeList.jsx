@@ -219,6 +219,7 @@ const EmployeeList = () => {
         setIsEditModalOpen(false);
         fetchStaffBatch(0, false);
         queryClient.invalidateQueries({ queryKey: ["staff"] });
+        queryClient.invalidateQueries({ queryKey: ["staff_roles"] });
       } else {
         Swal.fire({
           icon: "error",

@@ -122,23 +122,27 @@ try {
         exit();
     }
 
-    $itemsStmt = $db->prepare("SELECT id, name as title, quantity FROM order_items WHERE order_id = ?");
+    $itemsStmt = $db->prepare("SELECT id, title, qty as quantity, size FROM order_items WHERE order_id = ?");
     $itemsStmt->execute([$order_id]);
     $orderItems = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Fetch recipes & inventory pricing
+    // Fetch recipes & inventory pricing from 'recipes' table
     $recipeStmt = $db->query("
-        SELECT r.menu_id, r.variant_name, r.inventory_id, r.quantity, m.name as menu_name,
+        SELECT r.menu_item_id, r.variant_name, r.inventory_id, r.quantity_to_deduct as quantity, m.name as menu_name,
                i.name as inventory_name, i.unit as inventory_unit, i.price as unit_cost, i.threshold as inv_threshold
-        FROM menu_recipes r
-        JOIN menu_items m ON r.menu_id = m.id
+        FROM recipes r
+        JOIN menu_items m ON r.menu_item_id = m.id
         JOIN inventory i ON r.inventory_id = i.id
     ");
     $recipes = $recipeStmt ? $recipeStmt->fetchAll(PDO::FETCH_ASSOC) : [];
     $recipesMap = [];
     foreach ($recipes as $r) {
-        $key = strtolower(trim($r['menu_name']));
-        $recipesMap[$key][] = $r;
+        $mName = strtolower(trim($r['menu_name']));
+        $vName = strtolower(trim($r['variant_name'] ?? ''));
+        if (!empty($vName)) {
+            $recipesMap[$mName . '_' . $vName][] = $r;
+        }
+        $recipesMap[$mName][] = $r;
     }
 
     $db->beginTransaction();
@@ -174,36 +178,47 @@ try {
     foreach ($orderItems as $item) {
         $itemQty = intval($item['quantity'] ?: 1);
         $titleKey = strtolower(trim($item['title']));
+        $sizeKey = strtolower(trim($item['size'] ?? ''));
 
-        if (isset($recipesMap[$titleKey])) {
-            foreach ($recipesMap[$titleKey] as $ing) {
-                $invId = intval($ing['inventory_id']);
-                $qty = floatval($ing['quantity']) * $itemQty;
-                $unitCost = floatval($ing['unit_cost'] ?: 0.0);
-                $costLost = round($qty * $unitCost, 2);
+        // Match variant specific or fallback to item base
+        $matchedIngs = $recipesMap[$titleKey . '_' . $sizeKey] ?? ($recipesMap[$titleKey] ?? []);
 
-                $totalLostCost += $costLost;
-                $wastageStmt->execute([
-                    $order_id,
-                    $invId,
-                    $qty,
-                    $ing['inventory_unit'] ?: 'g',
-                    $costLost,
-                    $stage,
-                    $reported_by,
-                    $reason
-                ]);
-
-                // Atomic inventory deduction
-                $deductStmt->execute([$qty, $invId]);
-
-                $wastageInserts[] = [
-                    'inventory_name' => $ing['inventory_name'],
-                    'qty' => $qty,
-                    'unit' => $ing['inventory_unit'],
-                    'cost_lost' => $costLost
-                ];
+        // Deduplicate ingredients if base key had multiple variants
+        $uniqueIngs = [];
+        foreach ($matchedIngs as $ing) {
+            $invId = intval($ing['inventory_id']);
+            if (!isset($uniqueIngs[$invId])) {
+                $uniqueIngs[$invId] = $ing;
             }
+        }
+
+        foreach ($uniqueIngs as $ing) {
+            $invId = intval($ing['inventory_id']);
+            $qty = floatval($ing['quantity']) * $itemQty;
+            $unitCost = floatval($ing['unit_cost'] ?: 0.0);
+            $costLost = round($qty * $unitCost, 2);
+
+            $totalLostCost += $costLost;
+            $wastageStmt->execute([
+                $order_id,
+                $invId,
+                $qty,
+                $ing['inventory_unit'] ?: 'g',
+                $costLost,
+                $stage,
+                $reported_by,
+                $reason
+            ]);
+
+            // Atomic inventory deduction
+            $deductStmt->execute([$qty, $invId]);
+
+            $wastageInserts[] = [
+                'inventory_name' => $ing['inventory_name'],
+                'qty' => $qty,
+                'unit' => $ing['inventory_unit'],
+                'cost_lost' => $costLost
+            ];
         }
     }
 

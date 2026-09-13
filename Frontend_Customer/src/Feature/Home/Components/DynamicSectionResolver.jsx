@@ -53,7 +53,7 @@ export default function DynamicSectionResolver({
       ) {
         const categoryName = section.content_data.split(":")[1];
         items = menuItems.filter(
-          (item) => item.category === categoryName && item.isAvailable === true
+          (item) => item.category === categoryName
         );
       } else if (
         section.content_data &&
@@ -63,8 +63,7 @@ export default function DynamicSectionResolver({
         if (idsStr) {
           const ids = idsStr.split(",").map((id) => parseInt(id));
           items = menuItems.filter(
-            (item) =>
-              ids.includes(parseInt(item.id)) && item.isAvailable === true
+            (item) => ids.includes(parseInt(item.id))
           );
         }
       }

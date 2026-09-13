@@ -52,7 +52,37 @@ try {
     // Graceful fallback if table is not yet migrated
 }
 
-// 🌟 2. Fetch Menu Items & Variants
+// 🌟 2. Fetch Live Recipe Stock Requirements to Dynamically Check In-Stock Status
+$insufficientVariants = []; // [menu_id => [variant_name => true]]
+$insufficientProducts = []; // [menu_id => true]
+
+try {
+    $recipeStockQuery = "SELECT r.menu_item_id, LOWER(TRIM(COALESCE(r.variant_name, ''))) as variant_name, 
+                                r.quantity_to_deduct, i.stock 
+                         FROM recipes r 
+                         JOIN inventory i ON r.inventory_id = i.id";
+    $rStmt = $conn->query($recipeStockQuery);
+    if ($rStmt) {
+        while ($rRow = $rStmt->fetch(PDO::FETCH_ASSOC)) {
+            $mId = intval($rRow['menu_item_id']);
+            $vName = $rRow['variant_name'];
+            $stock = floatval($rRow['stock']);
+            $needed = floatval($rRow['quantity_to_deduct']);
+
+            if ($stock <= 0 || $stock < $needed) {
+                if (!empty($vName)) {
+                    $insufficientVariants[$mId][$vName] = true;
+                } else {
+                    $insufficientProducts[$mId] = true;
+                }
+            }
+        }
+    }
+} catch (Exception $e) {
+    // Fallback if recipes or inventory query has issues
+}
+
+// 🌟 3. Fetch Menu Items & Variants
 $query = "SELECT m.*, v.size_name, v.price, v.id as variant_id, v.in_stock 
           FROM menu_items m 
           LEFT JOIN menu_variants v ON m.id = v.menu_id";
@@ -109,11 +139,27 @@ if ($stmt && $stmt->rowCount() > 0) {
         }
         
         if ($row['variant_id']) {
+            $rawInStock = isset($row['in_stock']) ? (bool)$row['in_stock'] : true;
+            $vNameLower = strtolower(trim($row['size_name'] ?? ''));
+
+            $isVariantDepleted = false;
+            if (isset($insufficientProducts[$id])) {
+                $isVariantDepleted = true;
+            } else if (isset($insufficientVariants[$id])) {
+                if (!empty($insufficientVariants[$id][$vNameLower])) {
+                    $isVariantDepleted = true;
+                } else if (!empty($insufficientVariants[$id]['regular']) && ($vNameLower === 'regular' || $vNameLower === 'standard' || empty($vNameLower))) {
+                    $isVariantDepleted = true;
+                }
+            }
+
+            $effectiveInStock = $rawInStock && !$isVariantDepleted;
+
             $menu[$id]['variants'][] = [
                 "id" => $row['variant_id'],
                 "size" => $row['size_name'],
                 "price" => $row['price'],
-                "inStock" => isset($row['in_stock']) ? (bool)$row['in_stock'] : true
+                "inStock" => $effectiveInStock
             ];
             
             // Default price for table view
@@ -123,6 +169,29 @@ if ($stmt && $stmt->rowCount() > 0) {
         }
     }
 }
+
+// Check overall product availability based on variants and live recipe inventory
+foreach ($menu as &$item) {
+    if (!$item['isAvailable']) {
+        continue;
+    }
+
+    if (!empty($item['variants'])) {
+        $hasAnyInStock = false;
+        foreach ($item['variants'] as $v) {
+            if (!empty($v['inStock'])) {
+                $hasAnyInStock = true;
+                break;
+            }
+        }
+        if (!$hasAnyInStock) {
+            $item['isAvailable'] = false;
+        }
+    } else if (isset($insufficientProducts[$item['id']])) {
+        $item['isAvailable'] = false;
+    }
+}
+unset($item);
 
 echo json_encode(array_values($menu));
 $conn = null;

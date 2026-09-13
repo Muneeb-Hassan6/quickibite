@@ -10,6 +10,12 @@ try {
         throw new Exception("Unable to connect to database.");
     }
 
+    // Auto-migrate menu_addons to allow NULL inventory_id / qty_to_deduct
+    try {
+        $db->exec("ALTER TABLE `menu_addons` MODIFY `inventory_id` INT NULL DEFAULT NULL");
+        $db->exec("ALTER TABLE `menu_addons` MODIFY `qty_to_deduct` DECIMAL(10,2) NULL DEFAULT NULL");
+    } catch (\Throwable $e) {}
+
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     $action = $_GET['action'] ?? ($_POST['action'] ?? '');
 
@@ -202,7 +208,9 @@ try {
                 $qty = !empty($addon['qty_to_deduct']) ? floatval($addon['qty_to_deduct']) : (!empty($addon['qty']) ? floatval($addon['qty']) : null);
 
                 $ins->execute([$menuItemId, $title, $price, $invId, $qty]);
-                $insLegacy->execute([$menuItemId, $title, $price, $invId, $qty]);
+                $legacyInvId = $invId !== null ? $invId : 0;
+                $legacyQty = $qty !== null ? $qty : 0.00;
+                $insLegacy->execute([$menuItemId, $title, $price, $legacyInvId, $legacyQty]);
             }
 
             $db->commit();
@@ -251,11 +259,40 @@ try {
                         }
                         $catName = strtolower(trim($ra['addon_category'] ?? ($ra['title'] ?? '')));
                         if (!empty($catName)) {
+                            $matchedId = null;
                             foreach ($allGroups as $grp) {
                                 if (strtolower($grp['source_category_name']) === $catName || strtolower($grp['title']) === $catName || strpos(strtolower($grp['title']), $catName) !== false) {
-                                    $resolvedGroupIds[] = intval($grp['id']);
+                                    $matchedId = intval($grp['id']);
                                     break;
                                 }
+                            }
+                            // Auto-create missing addon_groups record if not present
+                            if (!$matchedId) {
+                                $srcCatStmt = $db->prepare("SELECT id, name FROM categories WHERE LOWER(name) = ? LIMIT 1");
+                                $srcCatStmt->execute([$catName]);
+                                $srcCatRow = $srcCatStmt->fetch(PDO::FETCH_ASSOC);
+                                $srcCatId = $srcCatRow['id'] ?? null;
+                                $displayName = $srcCatRow['name'] ?? ucfirst($catName);
+
+                                $newGrpStmt = $db->prepare("
+                                    INSERT INTO addon_groups (title, subtitle, source_category_id, source_category_name, icon_type, is_active)
+                                    VALUES (?, ?, ?, ?, 'addon', 1)
+                                ");
+                                $newGrpStmt->execute([
+                                    strtoupper($displayName),
+                                    "Select optional " . $displayName . " to complete your order",
+                                    $srcCatId,
+                                    $displayName
+                                ]);
+                                $matchedId = intval($db->lastInsertId());
+                                $allGroups[] = [
+                                    'id' => $matchedId,
+                                    'title' => strtoupper($displayName),
+                                    'source_category_name' => $displayName
+                                ];
+                            }
+                            if ($matchedId > 0) {
+                                $resolvedGroupIds[] = $matchedId;
                             }
                         }
                     }

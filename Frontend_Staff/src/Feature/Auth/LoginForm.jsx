@@ -14,7 +14,7 @@ import {
   FaShieldAlt,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
-import { useStaffAuth, getRoleDashboard } from "../../Context/AuthContext";
+import { useStaffAuth, getRoleDashboard, isRoleAllowedForPath } from "../../Context/AuthContext";
 
 const LoginForm = () => {
   const navigate = useNavigate();
@@ -26,15 +26,21 @@ const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Auto-redirect if already logged in
+  // Auto-redirect if already logged in (ensures role permission check)
   useEffect(() => {
     if (isAuthenticated && user?.role) {
       const fromPath = location.state?.from?.pathname;
-      const destination =
-        fromPath && fromPath !== "/login" && fromPath !== "/"
-          ? fromPath
-          : getRoleDashboard(user.role);
-      navigate(destination, { replace: true });
+      const canAccessFromPath =
+        fromPath &&
+        fromPath !== "/login" &&
+        fromPath !== "/" &&
+        isRoleAllowedForPath(user.role, fromPath);
+
+      const destination = canAccessFromPath
+        ? fromPath
+        : getRoleDashboard(user.role);
+
+      navigate(destination, { replace: true, state: {} });
     }
   }, [isAuthenticated, user, navigate, location.state]);
 
@@ -92,10 +98,20 @@ const LoginForm = () => {
           timer: 1500,
         });
 
-        // Strict Role-Based Dashboard Routing
-        const targetRoute = getRoleDashboard(result.user.role);
+        // Strict Role-Based Dashboard Routing: only go to fromPath if user's role is authorized!
+        const fromPath = location.state?.from?.pathname;
+        const canAccessFromPath =
+          fromPath &&
+          fromPath !== "/login" &&
+          fromPath !== "/" &&
+          isRoleAllowedForPath(result.user.role, fromPath);
+
+        const targetRoute = canAccessFromPath
+          ? fromPath
+          : getRoleDashboard(result.user.role);
+
         if (targetRoute && targetRoute !== "/login") {
-          navigate(targetRoute, { replace: true });
+          navigate(targetRoute, { replace: true, state: {} });
         } else {
           Swal.fire(
             "Role Unassigned",

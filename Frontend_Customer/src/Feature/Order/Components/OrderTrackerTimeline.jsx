@@ -105,7 +105,13 @@ export default function OrderTrackerTimeline({
           </h2>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {order.table_number && (
+            <div className="px-3 py-1 rounded-full font-['Oswald',sans-serif] font-bold text-xs uppercase tracking-wider bg-purple-500/15 border border-purple-500/30 text-purple-600 dark:text-purple-400">
+              Table #{order.table_number}
+            </div>
+          )}
+
           <div
             className={`px-3 py-1 rounded-full font-['Oswald',sans-serif] font-bold text-xs uppercase tracking-wider border ${
               isCancelled
@@ -231,7 +237,13 @@ export default function OrderTrackerTimeline({
         </div>
 
         {/* Desktop Horizontal Stepper (>= 640px) */}
-        <div className="hidden sm:grid sm:grid-cols-4 gap-4 md:gap-6 relative">
+        <div
+          className={`hidden sm:grid gap-4 md:gap-6 relative ${
+            steps.length === 3
+              ? "sm:grid-cols-3 max-w-2xl mx-auto"
+              : "sm:grid-cols-4"
+          }`}
+        >
           {steps.map((step) => {
             const isCompleted = currentStep >= step.num;
             const isCurrent = currentStep === step.num;

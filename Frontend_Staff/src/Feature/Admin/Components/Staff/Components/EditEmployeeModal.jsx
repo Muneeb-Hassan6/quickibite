@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { FaTimes, FaUserLock, FaEye, FaEyeSlash, FaCheck } from "react-icons/fa";
-
-const STANDARD_ROLES = ["Admin", "Manager", "Cashier", "Chef", "Rider", "Waiter"];
+import { useStaffRoles } from "../hooks/useStaffRoles";
 
 export default function EditEmployeeModal({
   isOpen,
@@ -12,6 +11,7 @@ export default function EditEmployeeModal({
   handleSave,
   phoneError,
 }) {
+  const { roles } = useStaffRoles();
   const [isCustomRole, setIsCustomRole] = useState(false);
   const [customRoleInput, setCustomRoleInput] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -19,11 +19,12 @@ export default function EditEmployeeModal({
 
   useEffect(() => {
     if (editingEmp) {
-      const isCustom = !STANDARD_ROLES.includes(editingEmp.role);
+      const isKnown = roles.includes(editingEmp.role);
+      const isCustom = !isKnown && Boolean(editingEmp.role);
       setIsCustomRole(isCustom);
       setCustomRoleInput(isCustom ? (editingEmp.role || "") : "");
     }
-  }, [editingEmp?.id]);
+  }, [editingEmp?.id, editingEmp?.role, roles]);
 
   if (!isOpen || !editingEmp) return null;
 
@@ -102,12 +103,11 @@ export default function EditEmployeeModal({
               onChange={handleRoleSelect}
               className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
             >
-              <option className="bg-white dark:bg-[#171717]" value="Admin">Admin</option>
-              <option className="bg-white dark:bg-[#171717]" value="Manager">Manager</option>
-              <option className="bg-white dark:bg-[#171717]" value="Cashier">Cashier</option>
-              <option className="bg-white dark:bg-[#171717]" value="Chef">Chef / Kitchen</option>
-              <option className="bg-white dark:bg-[#171717]" value="Rider">Rider</option>
-              <option className="bg-white dark:bg-[#171717]" value="Waiter">Waiter</option>
+              {roles.map((r) => (
+                <option key={r} className="bg-white dark:bg-[#171717]" value={r}>
+                  {r === "Chef" ? "Chef / Kitchen" : r}
+                </option>
+              ))}
               <option className="bg-white dark:bg-[#171717] font-bold text-amber-600 dark:text-amber-400" value="__CUSTOM__">
                 + Enter Custom Role...
               </option>

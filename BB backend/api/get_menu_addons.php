@@ -43,26 +43,36 @@ try {
     // ── 1. FETCH PRODUCT-SPECIFIC CUSTOM ADDONS ─────────────────────────────
     $productAddons = [];
     if ($itemId > 0) {
-        // Check product_custom_addons table first
+        // Check product_custom_addons table first with live inventory stock check
         $stmt = $db->prepare("
-            SELECT id, title, price, inventory_id, qty_to_deduct 
-            FROM product_custom_addons 
-            WHERE menu_item_id = ? AND is_active = 1
-            ORDER BY id ASC
+            SELECT p.id, p.title, p.price, p.inventory_id, p.qty_to_deduct, i.stock as inv_stock 
+            FROM product_custom_addons p 
+            LEFT JOIN inventory i ON p.inventory_id = i.id
+            WHERE p.menu_item_id = ? AND p.is_active = 1
+            ORDER BY p.id ASC
         ");
         $stmt->execute([$itemId]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         if (!empty($rows)) {
             foreach ($rows as $r) {
+                $invId = !empty($r['inventory_id']) ? intval($r['inventory_id']) : null;
+                $invStock = isset($r['inv_stock']) ? floatval($r['inv_stock']) : null;
+                $deductQty = !empty($r['qty_to_deduct']) ? floatval($r['qty_to_deduct']) : 1.0;
+                $inStock = true;
+                if ($invId !== null && $invStock !== null && ($invStock <= 0 || $invStock < $deductQty)) {
+                    $inStock = false;
+                }
+
                 $productAddons[] = [
                     'id' => intval($r['id']),
                     'uid' => 'custom_' . intval($r['id']),
                     'title' => $r['title'],
                     'name' => $r['title'],
                     'price' => floatval($r['price']),
-                    'inventory_id' => !empty($r['inventory_id']) ? intval($r['inventory_id']) : null,
+                    'inventory_id' => $invId,
                     'qty' => !empty($r['qty_to_deduct']) ? floatval($r['qty_to_deduct']) : null,
+                    'in_stock' => $inStock,
                     'is_product_addon' => true,
                     'addon_type' => 'product_custom',
                     'visual_type' => getAddonVisualType($r['title']),
@@ -73,22 +83,32 @@ try {
         } else {
             // Fallback to legacy menu_addons table
             $stmt = $db->prepare("
-                SELECT id, addon_name as title, addon_price as price, inventory_id, qty_to_deduct 
-                FROM menu_addons 
-                WHERE menu_item_id = ?
-                ORDER BY id ASC
+                SELECT m.id, m.addon_name as title, m.addon_price as price, m.inventory_id, m.qty_to_deduct, i.stock as inv_stock 
+                FROM menu_addons m 
+                LEFT JOIN inventory i ON m.inventory_id = i.id
+                WHERE m.menu_item_id = ?
+                ORDER BY m.id ASC
             ");
             $stmt->execute([$itemId]);
             $legacyRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             foreach ($legacyRows as $r) {
+                $invId = !empty($r['inventory_id']) ? intval($r['inventory_id']) : null;
+                $invStock = isset($r['inv_stock']) ? floatval($r['inv_stock']) : null;
+                $deductQty = !empty($r['qty_to_deduct']) ? floatval($r['qty_to_deduct']) : 1.0;
+                $inStock = true;
+                if ($invId !== null && $invStock !== null && ($invStock <= 0 || $invStock < $deductQty)) {
+                    $inStock = false;
+                }
+
                 $productAddons[] = [
                     'id' => intval($r['id']),
                     'uid' => 'custom_' . intval($r['id']),
                     'title' => $r['title'],
                     'name' => $r['title'],
                     'price' => floatval($r['price']),
-                    'inventory_id' => !empty($r['inventory_id']) ? intval($r['inventory_id']) : null,
+                    'inventory_id' => $invId,
                     'qty' => !empty($r['qty_to_deduct']) ? floatval($r['qty_to_deduct']) : null,
+                    'in_stock' => $inStock,
                     'is_product_addon' => true,
                     'addon_type' => 'product_custom',
                     'visual_type' => getAddonVisualType($r['title']),

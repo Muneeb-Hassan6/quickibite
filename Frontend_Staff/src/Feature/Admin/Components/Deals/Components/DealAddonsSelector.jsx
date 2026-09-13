@@ -13,12 +13,9 @@ export default function DealAddonsSelector({
           <FaLayerGroup className="text-amber-500 text-sm" />
           <div>
             <h3 className="m-0 text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white font-['Oswald',sans-serif]">
-              3. Attach Dynamic Addon Groups & Upsells
+              3. Addon Groups & Upsells
             </h3>
-            <p className="m-0 text-[11px] text-slate-500 dark:text-neutral-400 mt-0.5">
-              Select which dynamic addon categories and pairings will be
-              offered to customers when customizing this deal.
-            </p>
+           
           </div>
         </div>
         <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">

@@ -13,15 +13,34 @@ export const AUTH_STORAGE_KEYS = [
   "isAuth",
 ];
 
+// Route access matrix for staff portals
+export const ROUTE_ALLOWED_ROLES = {
+  "/admin": ["admin", "manager", "owner"],
+  "/cashier": ["cashier", "pos", "admin", "manager", "owner"],
+  "/kitchen": ["chef", "kitchen", "cook", "admin", "manager", "owner"],
+  "/rider": ["rider", "delivery", "admin", "manager", "owner"],
+  "/dispatcher": ["dispatcher", "dispatch", "admin", "manager", "owner"],
+};
+
+// Check if a role has permission to access a specific route
+export const isRoleAllowedForPath = (role, pathname) => {
+  if (!role || !pathname) return false;
+  const r = String(role).toLowerCase().trim();
+  const cleanPath = "/" + pathname.replace(/^\/+/, "").split("/")[0].toLowerCase();
+  const allowed = ROUTE_ALLOWED_ROLES[cleanPath];
+  if (!allowed) return false;
+  return allowed.includes(r);
+};
+
 // Helper to determine home dashboard based on role
 export const getRoleDashboard = (role) => {
   if (!role) return "/login";
   const r = String(role).toLowerCase().trim();
-  if (r === "admin" || r === "manager") return "/admin";
-  if (r === "cashier") return "/cashier";
-  if (r === "chef" || r === "kitchen") return "/kitchen";
-  if (r === "dispatcher") return "/dispatcher";
-  if (r === "rider") return "/rider";
+  if (r === "admin" || r === "manager" || r === "owner") return "/admin";
+  if (r === "cashier" || r === "pos") return "/cashier";
+  if (r === "chef" || r === "kitchen" || r === "cook") return "/kitchen";
+  if (r === "dispatcher" || r === "dispatch") return "/dispatcher";
+  if (r === "rider" || r === "delivery") return "/rider";
   return "/login";
 };
 
@@ -90,6 +109,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     getRoleDashboard,
+    isRoleAllowedForPath,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

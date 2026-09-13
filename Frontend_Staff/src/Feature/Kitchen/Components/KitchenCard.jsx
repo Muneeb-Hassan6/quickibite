@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaUtensils, FaArrowRight, FaCheck, FaPrint, FaFire, FaExclamationTriangle } from "react-icons/fa";
+import { FaUtensils, FaArrowRight, FaCheck, FaPrint, FaFire, FaExclamationTriangle, FaClock } from "react-icons/fa";
 import Swal from "sweetalert2";
 
 export default function KitchenCard({
@@ -23,45 +23,40 @@ export default function KitchenCard({
       order.details ||
       order.products;
 
-    if (Array.isArray(rawData)) {
-      parsedItems = rawData;
-    } else if (typeof rawData === "string" && rawData.trim() !== "") {
-      let firstParse = JSON.parse(rawData);
-      if (typeof firstParse === "string") {
-        parsedItems = JSON.parse(firstParse);
-      } else if (Array.isArray(firstParse)) {
-        parsedItems = firstParse;
-      } else {
-        parsedItems =
-          firstParse.items || firstParse.cart || Object.values(firstParse);
+    if (rawData) {
+      if (typeof rawData === "string") {
+        parsedItems = JSON.parse(rawData);
+      } else if (Array.isArray(rawData)) {
+        parsedItems = rawData;
       }
     }
-  } catch (error) {
-    console.error("Items parse error in KitchenCard for Order ID:", order.id);
+  } catch (e) {
+    console.error("Failed to parse items for order card", e);
   }
 
   const handleReportBurn = async () => {
     const { value: formValues } = await Swal.fire({
       title: "Report Burn / Remake",
       html: `
-        <div style="text-align: left; font-size: 13px;">
+        <div style="text-align: left; font-size: 13px; font-family: inherit;">
           <p style="margin-bottom: 8px; color: #a1a1aa;">Select the reason for food remake. Raw ingredient loss will be automatically audited and alerted to Admin.</p>
-          <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #fff;">Reason:</label>
-          <select id="swal-reason" style="width: 100%; padding: 8px 12px; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 8px; margin-bottom: 12px;">
-            <option value="Burnt during cooking / frying">Burnt during cooking / frying</option>
-            <option value="Accidentally dropped / contaminated">Accidentally dropped / contaminated</option>
-            <option value="Recipe / spice level error">Recipe / spice level error</option>
-            <option value="Customer taste change / alteration">Customer taste change / alteration</option>
+          <label style="display: block; margin-bottom: 4px; font-weight: bold; color: #fff;">Reason for Loss</label>
+          <select id="swal-reason" class="swal2-input" style="width: 100%; margin: 0 0 12px 0; background: #27272a; color: #fff; border: 1px solid #3f3f46;">
+            <option value="Overcooked / Burnt">Overcooked / Burnt</option>
+            <option value="Customer Modification Mistake">Customer Modification Mistake</option>
+            <option value="Dropped / Contaminated">Dropped / Contaminated</option>
+            <option value="Recipe Prep Error">Recipe Prep Error</option>
+            <option value="Other Kitchen Wastage">Other Kitchen Wastage</option>
           </select>
-          <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #fff;">Additional Notes (Optional):</label>
-          <input id="swal-notes" placeholder="e.g. Burned 1 Patty, remaking fresh" style="width: 100%; padding: 8px 12px; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 8px; box-sizing: border-box;" />
+          <label style="display: block; margin-bottom: 4px; font-weight: bold; color: #fff;">Specific Notes</label>
+          <textarea id="swal-notes" class="swal2-textarea" placeholder="e.g. Patty burned on grill during rush" style="width: 100%; margin: 0; background: #27272a; color: #fff; border: 1px solid #3f3f46; height: 70px;"></textarea>
         </div>
       `,
       focusConfirm: false,
       showCancelButton: true,
       confirmButtonText: "Submit Remake Ticket",
-      confirmButtonColor: "#f59e0b",
-      cancelButtonColor: "#71717a",
+      confirmButtonColor: "#f43f5e",
+      cancelButtonColor: "#52525b",
       background: "#18181b",
       color: "#fff",
       preConfirm: () => {
@@ -121,14 +116,10 @@ export default function KitchenCard({
     }
   };
 
-  const borderClass =
-    hasRemakeReported
-      ? "border-l-rose-500 ring-2 ring-rose-500/20"
-      : order.status === "pending"
-      ? "border-l-amber-500"
-      : order.status === "preparing"
-      ? "border-l-orange-500"
-      : "border-l-emerald-500";
+  const isTakeaway =
+    order.table === "Takeaway" ||
+    order.table_number === "Takeaway" ||
+    order.type?.toLowerCase().includes("takeaway");
 
   const btnStyleClass =
     btnClass === "amber"
@@ -141,12 +132,18 @@ export default function KitchenCard({
 
   return (
     <div
-      className={`relative flex flex-col justify-between bg-white dark:bg-neutral-900 border border-stone-200 dark:border-neutral-800 rounded-xl shadow-xs hover:shadow-md transition-all duration-200 overflow-hidden border-l-[5px] sm:border-l-[6px] ${borderClass}`}
+      className={`rounded-xl border transition-all duration-200 flex flex-col justify-between overflow-hidden shadow-xs hover:shadow-md ${
+        hasRemakeReported
+          ? "border-rose-500/80 bg-rose-950/20"
+          : isReady
+          ? "bg-stone-50/90 border-emerald-500/50 dark:bg-neutral-900/80 dark:border-emerald-500/40"
+          : "bg-white border-stone-200/90 dark:bg-neutral-900 dark:border-neutral-800"
+      }`}
     >
       {/* Remake Active Header Stripe if triggered */}
       {hasRemakeReported && (
-        <div className="bg-rose-500 text-white px-3 py-1 text-[10px] font-black uppercase tracking-wider flex items-center justify-between">
-          <span className="flex items-center gap-1">
+        <div className="bg-rose-500/20 text-rose-400 px-3 py-1 text-[11px] font-bold flex items-center justify-between border-b border-rose-500/30">
+          <span className="flex items-center gap-1.5">
             <FaFire className="animate-bounce" /> Remake In Progress
           </span>
           <span className="opacity-90">Audited</span>
@@ -194,15 +191,47 @@ export default function KitchenCard({
         </div>
       </div>
 
-      {/* Card Body: Items List */}
+      {/* Card Body: Items List with FCFS Queue Priority & Wait Timer */}
       <div className="p-3 sm:p-3.5 flex-1">
-        <div className="flex justify-between text-xs text-stone-500 dark:text-neutral-400 font-bold mb-2.5 sm:mb-3 pb-1.5 sm:pb-2 border-b border-dashed border-stone-200 dark:border-neutral-800">
-          <span className="font-mono text-stone-900 dark:text-neutral-200 font-bold">
-            #{order.id}
-          </span>
-          <span className="uppercase tracking-wider text-amber-700 dark:text-amber-400 font-black text-[10px] sm:text-[11px]">
-            {order.type || "Dine-In"}
-          </span>
+        <div className="flex justify-between items-center text-xs text-stone-500 dark:text-neutral-400 font-bold mb-2.5 sm:mb-3 pb-1.5 sm:pb-2 border-b border-dashed border-stone-200 dark:border-neutral-800">
+          <div className="flex items-center gap-1.5 font-mono text-stone-900 dark:text-neutral-200 font-bold">
+            <span>#{order.id}</span>
+            {order.fcfsRank && (
+              <span
+                className={`px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
+                  order.fcfsRank === 1
+                    ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 animate-pulse"
+                    : order.fcfsRank === 2
+                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                    : "bg-stone-200 dark:bg-neutral-800 text-stone-600 dark:text-neutral-400"
+                }`}
+                title={`FCFS Queue Priority #${order.fcfsRank} (First-Come, First-Served)`}
+              >
+                Queue #{order.fcfsRank}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            {typeof order.elapsedMinutes === "number" && (
+              <span
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 ${
+                  order.elapsedMinutes >= 20
+                    ? "bg-rose-500 text-white animate-pulse"
+                    : order.elapsedMinutes >= 10
+                    ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                    : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                }`}
+                title={`Order wait time: ${order.elapsedMinutes} mins`}
+              >
+                <FaClock className="text-[9px]" />
+                {order.elapsedMinutes}m wait
+              </span>
+            )}
+            <span className="uppercase tracking-wider text-amber-700 dark:text-amber-400 font-black text-[10px] sm:text-[11px]">
+              {order.type || "Dine-In"}
+            </span>
+          </div>
         </div>
 
         <div className="space-y-2 sm:space-y-2.5">

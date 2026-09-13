@@ -186,7 +186,22 @@ export function usePopupCard({
     addToCart,
   });
 
-  const handleAddToCart = (e) =>
+  const isOutOfStock =
+    fullItem?.isAvailable === false ||
+    fullItem?.isAvailable === 0 ||
+    fullItem?.isAvailable === "0" ||
+    (Array.isArray(fullItem?.variants) &&
+      fullItem.variants.length > 0 &&
+      fullItem.variants.every(
+        (v) =>
+          v.inStock === false ||
+          v.in_stock === false ||
+          v.in_stock === 0 ||
+          v.in_stock === "0"
+      ));
+
+  const handleAddToCart = (e) => {
+    if (isOutOfStock) return;
     validation.buildAndAddToCart({
       isDeal,
       comboItems,
@@ -207,9 +222,11 @@ export function usePopupCard({
       selectedSpice,
       e,
     });
+  };
 
   return {
     isDeal,
+    isOutOfStock,
     fullItem,
     rawDesc,
     comboItems,
