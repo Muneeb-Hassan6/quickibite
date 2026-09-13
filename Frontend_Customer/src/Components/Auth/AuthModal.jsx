@@ -69,6 +69,7 @@ const AuthModal = () => {
   // Forgot Password state
   const [forgotStep, setForgotStep] = useState(1); // 1: Request code, 2: Reset password
   const [forgotIdentifier, setForgotIdentifier] = useState("");
+  const [forgotEmailError, setForgotEmailError] = useState("");
   const [resetCode, setResetCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [formError, setFormError] = useState("");
@@ -77,7 +78,7 @@ const AuthModal = () => {
 
   const clientId =
     import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-    "672266612348-j631PbWWqgKDBDorh525uecKaGZD21FGSoCeR.apps.googleusercontent.com";
+    "1049603766930-trlpcl7it3m6u5q0a2nb4cg0csm4n4vn.apps.googleusercontent.com";
 
   // Google OAuth Response Handler (from Access Token -> UserInfo)
   const processGoogleAccessToken = useCallback(
@@ -201,18 +202,65 @@ const AuthModal = () => {
     setTimeout(() => setCopiedPromo(false), 2500);
   };
 
+  // Validation regex helpers
+  const isValidPakMobile = (phone) => /^03\d{9}$/.test((phone || "").replace(/\D/g, ""));
+  const isValidEmail = (email) =>
+    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test((email || "").trim());
+
+  // Input change handlers with formatting & restriction
+  const handleLoginIdentifierChange = (e) => {
+    const val = e.target.value;
+    if (/^03\d*$/.test(val) && val.length > 11) {
+      setLoginIdentifier(val.slice(0, 11));
+    } else {
+      setLoginIdentifier(val);
+    }
+    if (formError) setFormError("");
+  };
+
+  const handleRegPhoneChange = (e) => {
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+    setRegPhone(digits);
+    if (formError) setFormError("");
+  };
+
+  const handleRegEmailChange = (e) => {
+    setRegEmail(e.target.value);
+    if (formError) setFormError("");
+  };
+
+  const handleForgotIdentifierChange = (e) => {
+    setForgotIdentifier(e.target.value);
+    if (forgotEmailError) setForgotEmailError("");
+    if (formError) setFormError("");
+  };
+
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setFormError("");
 
-    if (!loginIdentifier.trim() || !loginPassword) {
-      setFormError("Please enter your phone/email and password.");
+    const idVal = loginIdentifier.trim();
+    if (!idVal || !loginPassword) {
+      setFormError("Please enter your phone number / email and password.");
       return;
+    }
+
+    if (idVal.includes("@")) {
+      if (!isValidEmail(idVal)) {
+        setFormError("Please enter a valid email address (e.g. user@gmail.com).");
+        return;
+      }
+    } else {
+      const cleanDigits = idVal.replace(/\D/g, "");
+      if (!isValidPakMobile(cleanDigits)) {
+        setFormError("Mobile number must start with 03 and be exactly 11 digits (e.g. 03001234567).");
+        return;
+      }
     }
 
     setLoading(true);
     const res = await login({
-      identifier: loginIdentifier.trim(),
+      identifier: idVal.includes("@") ? idVal : idVal.replace(/\D/g, ""),
       password: loginPassword,
     });
     setLoading(false);
@@ -226,8 +274,21 @@ const AuthModal = () => {
     e.preventDefault();
     setFormError("");
 
-    if (!regFullName.trim() || !regPhone.trim() || !regPassword) {
+    const cleanPhone = regPhone.replace(/\D/g, "");
+    const cleanEmail = regEmail.trim();
+
+    if (!regFullName.trim() || !cleanPhone || !regPassword) {
       setFormError("Full name, phone number, and password are required.");
+      return;
+    }
+
+    if (!isValidPakMobile(cleanPhone)) {
+      setFormError("Mobile number must start with 03 and be exactly 11 digits (e.g. 03001234567).");
+      return;
+    }
+
+    if (cleanEmail && !isValidEmail(cleanEmail)) {
+      setFormError("Please enter a valid email address format (e.g. user@gmail.com).");
       return;
     }
 
@@ -244,8 +305,8 @@ const AuthModal = () => {
     setLoading(true);
     const res = await register({
       full_name: regFullName.trim(),
-      phone: regPhone.trim(),
-      email: regEmail.trim(),
+      phone: cleanPhone,
+      email: cleanEmail,
       password: regPassword,
     });
     setLoading(false);
@@ -259,22 +320,31 @@ const AuthModal = () => {
   const handleForgotRequest = async (e) => {
     e.preventDefault();
     setFormError("");
-    if (!forgotIdentifier.trim()) {
-      setFormError("Please provide your registered phone or email.");
+    setForgotEmailError("");
+
+    const emailVal = forgotIdentifier.trim();
+    if (!emailVal) {
+      setForgotEmailError("Please enter your registered email address.");
+      return;
+    }
+
+    if (!isValidEmail(emailVal)) {
+      setForgotEmailError("Invalid email");
       return;
     }
 
     setLoading(true);
-    const res = await requestPasswordReset(forgotIdentifier.trim());
+    const res = await requestPasswordReset(emailVal);
     setLoading(false);
 
     if (res.success) {
-      if (res.reset_code) {
-        setResetCode(res.reset_code);
-      }
       setForgotStep(2);
     } else {
-      setFormError(res.message || "Could not find account.");
+      if (res.error_type === "NOT_REGISTERED") {
+        setForgotEmailError("Invalid email");
+      } else {
+        setFormError(res.message || "Could not process request.");
+      }
     }
   };
 
@@ -361,7 +431,7 @@ const AuthModal = () => {
             >
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 text-[11px] font-black uppercase tracking-wider shadow-sm backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-                <span>🔥 WELCOME DISCOUNT ACTIVE</span>
+                <span>WELCOME DISCOUNT ACTIVE</span>
               </div>
             </div>
 
@@ -521,9 +591,9 @@ const AuthModal = () => {
           {/* ════ TAB 1: LOGIN FORM ════ */}
           {authModalTab === "login" && (
             <form onSubmit={handleLoginSubmit} className="space-y-3.5">
-              <div className="mb-7">
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-neutral-400 mb-2">
-                  Phone Number or Email
+              <div className="mb-3.5">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-neutral-400 mb-1.5">
+                  Mobile Number or Email
                 </label>
                 <div className="relative"> 
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 dark:text-neutral-500">
@@ -532,11 +602,23 @@ const AuthModal = () => {
                   <input
                     type="text"
                     required
-                    placeholder="03001234567 or email@domain.com"
+                    placeholder="03XXXXXXXXX or email@gmail.com"
                     value={loginIdentifier}
-                    onChange={(e) => setLoginIdentifier(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 rounded-xl text-zinc-900 dark:text-white text-md placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+                    onChange={handleLoginIdentifierChange}
+                    className={`w-full pl-9 pr-9 py-2.5 bg-gray-50 dark:bg-neutral-900 border rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none transition-all ${
+                      isValidPakMobile(loginIdentifier) || (loginIdentifier.includes("@") && isValidEmail(loginIdentifier))
+                        ? "border-emerald-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                        : (/^\d+$/.test(loginIdentifier) && loginIdentifier.length >= 2 && !loginIdentifier.startsWith("03")) ||
+                          (loginIdentifier.includes("@") && !isValidEmail(loginIdentifier))
+                        ? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                        : "border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                    }`}
                   />
+                  {(isValidPakMobile(loginIdentifier) || (loginIdentifier.includes("@") && isValidEmail(loginIdentifier))) && (
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-emerald-500 text-xs">
+                      <FaCheckCircle />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -629,7 +711,7 @@ const AuthModal = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-neutral-400 mb-1">
-                    Phone Number *
+                    Mobile Number *
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 dark:text-neutral-500">
@@ -638,11 +720,23 @@ const AuthModal = () => {
                     <input
                       type="tel"
                       required
-                      placeholder="03001234567"
+                      maxLength={11}
+                      placeholder="03XXXXXXXXX"
                       value={regPhone}
-                      onChange={(e) => setRegPhone(e.target.value)}
-                      className="w-full pl-9 pr-3.5 py-2.5 bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+                      onChange={handleRegPhoneChange}
+                      className={`w-full pl-9 pr-9 py-2.5 bg-gray-50 dark:bg-neutral-900 border rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none transition-all ${
+                        isValidPakMobile(regPhone)
+                          ? "border-emerald-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                          : regPhone.length >= 2 && !regPhone.startsWith("03")
+                          ? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                          : "border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                      }`}
                     />
+                    {isValidPakMobile(regPhone) && (
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-emerald-500 text-xs">
+                        <FaCheckCircle />
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -658,9 +752,20 @@ const AuthModal = () => {
                       type="email"
                       placeholder="you@email.com"
                       value={regEmail}
-                      onChange={(e) => setRegEmail(e.target.value)}
-                      className="w-full pl-9 pr-3.5 py-2.5 bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+                      onChange={handleRegEmailChange}
+                      className={`w-full pl-9 pr-9 py-2.5 bg-gray-50 dark:bg-neutral-900 border rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none transition-all ${
+                        regEmail.trim().length > 0
+                          ? isValidEmail(regEmail)
+                            ? "border-emerald-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                            : "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                          : "border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                      }`}
                     />
+                    {regEmail.trim().length > 0 && isValidEmail(regEmail) && (
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-emerald-500 text-xs">
+                        <FaCheckCircle />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -738,21 +843,37 @@ const AuthModal = () => {
                 <form onSubmit={handleForgotRequest} className="space-y-3.5">
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-neutral-400 mb-1">
-                      Registered Phone or Email
+                      Registered Email Address
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 dark:text-neutral-500">
-                        <FaUser className="text-xs" />
+                        <FaEnvelope className="text-xs" />
                       </div>
                       <input
-                        type="text"
+                        type="email"
                         required
-                        placeholder="03001234567 or email@domain.com"
+                        placeholder="you@gmail.com"
                         value={forgotIdentifier}
-                        onChange={(e) => setForgotIdentifier(e.target.value)}
-                        className="w-full pl-9 pr-3.5 py-2.5 bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+                        onChange={handleForgotIdentifierChange}
+                        className={`w-full pl-9 pr-9 py-2.5 bg-gray-50 dark:bg-neutral-900 border rounded-xl text-zinc-900 dark:text-white text-xs placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-none transition-all ${
+                          forgotEmailError
+                            ? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                            : isValidEmail(forgotIdentifier)
+                            ? "border-emerald-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                            : "border-gray-300 dark:border-neutral-700/80 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                        }`}
                       />
+                      {isValidEmail(forgotIdentifier) && !forgotEmailError && (
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-emerald-500 text-xs">
+                          <FaCheckCircle />
+                        </div>
+                      )}
                     </div>
+                    {forgotEmailError && (
+                      <p className="text-xs text-red-500 dark:text-red-400 mt-1.5 font-medium flex items-center gap-1.5 animate-fade-in">
+                        <span>⚠️</span> {forgotEmailError}
+                      </p>
+                    )}
                   </div>
 
                   <button
@@ -761,11 +882,14 @@ const AuthModal = () => {
                     className="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-['Oswald',sans-serif] font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-md active:scale-98 transition-all cursor-pointer disabled:opacity-50 border-none"
                   >
                     {loading ? <FaSpinner className="animate-spin text-sm" /> : <FaKey />}
-                    <span>{loading ? "Sending Code..." : "Send Verification Code"}</span>
+                    <span>{loading ? "Sending OTP..." : "Send Verification Code"}</span>
                   </button>
                 </form>
               ) : (
                 <form onSubmit={handleForgotConfirm} className="space-y-3.5">
+                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-zinc-800 dark:text-neutral-300 leading-relaxed">
+                    6-digit verification code sent to <strong className="text-amber-600 dark:text-amber-400 font-semibold">{forgotIdentifier}</strong> (Valid for 2 minutes). Check your Gmail inbox or spam.
+                  </div>
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-neutral-400 mb-1">
                       6-Digit Reset Code
@@ -810,6 +934,7 @@ const AuthModal = () => {
                   type="button"
                   onClick={() => {
                     setFormError("");
+                    setForgotEmailError("");
                     setAuthModalTab("login");
                     setForgotStep(1);
                   }}

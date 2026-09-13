@@ -40,7 +40,7 @@ const SearchBar = ({
           <FaSearch className="text-gray-400 dark:text-neutral-500 text-xs mr-3 flex-shrink-0" />
           <input
             type="text"
-            placeholder="Search delicious burgers, pizzas, drinks, fried chicken, wraps..."
+            placeholder="e.g: burgers, pizzas, drinks, fried chicken, wraps..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);

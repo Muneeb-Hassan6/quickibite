@@ -208,25 +208,24 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Password reset request handler
-  const requestPasswordReset = async (identifier) => {
+  const requestPasswordReset = async (email) => {
     try {
       const res = await fetch(`${API_BASE}/customer_reset_password.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "request", identifier }),
+        body: JSON.stringify({ action: "request", email }),
       });
       const data = await res.json();
       if (data.success) {
-        toast.success(data.message || "Reset code sent!");
-        return { success: true, reset_code: data.reset_code };
+        toast.success(data.message || "Reset code sent to your Gmail!");
+        return { success: true, email: data.email };
       } else {
-        toast.error(data.message || "User not found.");
-        return { success: false, message: data.message };
+        return { success: false, error_type: data.error_type, message: data.message || "User not found." };
       }
     } catch (err) {
       console.error("Reset request error:", err);
       toast.error("Network error while requesting password reset.");
-      return { success: false };
+      return { success: false, message: "Network error" };
     }
   };
 

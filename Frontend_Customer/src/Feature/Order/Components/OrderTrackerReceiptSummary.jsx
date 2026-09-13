@@ -122,8 +122,8 @@ export default function OrderTrackerReceiptSummary({ order }) {
             <FaReceipt />
           </div>
           <div>
-            <h3 className="font-['Oswald',sans-serif] font-bold text-base sm:text-lg uppercase tracking-wide text-neutral-900 dark:text-white m-0">
-              Itemized Order Receipt
+            <h3 className="font-['Oswald',sans-serif] font-bold text-base sm:text-lg uppercase tracking-wide text-neutral-900 dark:text-white m-0 ">
+               Receipt
             </h3>
             <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-mono">
               #{order.id} • {typeDisplay}

@@ -20,12 +20,6 @@ export default function MenuHeroHeader() {
                 HIT DIFFERENT
               </span>
             </h1>
-
-            {/* Subtitle Text */}
-            <p className="text-neutral-600 dark:text-neutral-400 text-xs sm:text-sm md:text-base max-w-lg mt-2 sm:mt-3 font-medium leading-relaxed">
-              Explore handcrafted gourmet burgers, cheesy pizzas, crispy
-              broast, wraps, and savory sides freshly prepared on order.
-            </p>
           </div>
 
           {/* Right Column: 3D Floating Fried Chicken Showcase */}

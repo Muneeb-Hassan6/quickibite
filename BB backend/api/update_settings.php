@@ -40,7 +40,11 @@ if ($data && is_array($data)) {
             'terms_agreement_text' => 'terms_and_conditions',
             'terms_and_conditions' => 'terms_agreement_text',
             'delivery_fee' => 'default_delivery_fee',
-            'default_delivery_fee' => 'delivery_fee'
+            'default_delivery_fee' => 'delivery_fee',
+            'store_lat' => 'restaurant_lat',
+            'restaurant_lat' => 'store_lat',
+            'store_lng' => 'restaurant_lng',
+            'restaurant_lng' => 'store_lng'
         ];
 
         foreach ($data as $key => $value) {

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { LuTag, LuCheck, LuX, LuLoader } from "react-icons/lu";
+import React, { useState, useEffect } from "react";
+import { LuTag, LuCheck, LuX, LuLoader, LuLock } from "react-icons/lu";
 import { API_BASE } from "../../config/api";
 import { useAuth } from "../../Context/AuthContext";
 
@@ -12,14 +12,26 @@ const PromoCodeBox = ({
   customerMobile = "",
   handleApplyCoupon = null,
 }) => {
-  const { customer } = useAuth();
+  const { customer, openAuthModal } = useAuth();
   const [inputCode, setInputCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  // Remove coupon automatically if user is logged out
+  useEffect(() => {
+    if (!customer && appliedCoupon && typeof onRemoveCoupon === "function") {
+      onRemoveCoupon();
+    }
+  }, [customer, appliedCoupon, onRemoveCoupon]);
+
   const handleApply = async () => {
     const code = inputCode.trim().toUpperCase();
     if (!code) return;
+
+    if (!customer && !customerId) {
+      setErrorMsg("Please log in to apply discount coupons.");
+      return;
+    }
 
     setLoading(true);
     setErrorMsg("");
@@ -76,7 +88,30 @@ const PromoCodeBox = ({
         </h4>
       </div>
 
-      {appliedCoupon ? (
+      {!customer ? (
+        <div className="bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0">
+              <LuLock className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-neutral-900 dark:text-white m-0">
+                Have a coupon code?
+              </p>
+              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 m-0">
+                Log in to your account to use discount coupons.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => openAuthModal && openAuthModal("login")}
+            className="w-full sm:w-auto px-4 py-2 bg-amber-400 hover:bg-amber-300 text-neutral-950 font-['Oswald',sans-serif] font-black text-xs uppercase tracking-wider rounded-xl transition-all border-none cursor-pointer shrink-0 shadow-xs active:scale-95 text-center"
+          >
+            Sign In to Apply
+          </button>
+        </div>
+      ) : appliedCoupon ? (
         <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 rounded-2xl px-4 py-3">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center">

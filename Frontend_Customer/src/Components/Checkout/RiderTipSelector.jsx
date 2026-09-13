@@ -39,13 +39,10 @@ const RiderTipSelector = ({
             Tip Your Rider
           </h4>
         </div>
-        <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
-          <LuHeart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> 100% goes to rider
-        </span>
       </div>
 
-      <p className="text-xs text-neutral-500 dark:text-neutral-400 m-0">
-        Reward your delivery partner for quick and safe delivery to your doorstep.
+      <p className="text-xs text-neutral-500 dark:text-neutral-400 m-0 mb-2">
+        Reward your delivery partner.
       </p>
 
       <div className="grid grid-cols-5 gap-2 pt-1">

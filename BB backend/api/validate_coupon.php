@@ -64,6 +64,15 @@ try {
         }
     }
 
+    // Strict Rule: Coupon discounts are exclusive to registered customers only
+    if (empty($customerId)) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Coupon discounts are exclusive to registered members. Please sign in or create an account to claim.'
+        ]);
+        exit();
+    }
+
     // Rule B (Per-Customer Multi-Use Prevention)
     if (!empty($customerId) || !empty($customerMobile)) {
         $whereParts = [];

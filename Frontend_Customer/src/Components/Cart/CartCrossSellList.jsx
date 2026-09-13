@@ -9,7 +9,7 @@ const CartCrossSellList = ({ upsellItems = [], onQuickAdd }) => {
     <div className="w-full mt-4 pt-3.5 border-t border-zinc-200 dark:border-neutral-800">
       {/* Title */}
       <div className="flex items-center gap-1.5 mb-2.5">
-        <FaFire className="text-xs text-amber-500" />
+       
         <h4 className="text-[11px] font-black tracking-wider text-zinc-600 dark:text-neutral-400 uppercase font-['Oswald',sans-serif] m-0">
           Frequently Bought Together
         </h4>

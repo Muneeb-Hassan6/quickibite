@@ -209,9 +209,11 @@ export function useCheckoutForm() {
   const effectiveTip = orderType === "delivery" ? (Number(riderTip) || 0) : 0;
   const total = Math.max(0, subTotal - discountAmount) + deliveryFee + effectiveTip;
 
-  // Delivery Radius Boundary Guard (Haversine Formula)
-  const restaurantLat = Number(storeSettings.restaurant_lat) || RESTAURANT_COORDS.lat;
-  const restaurantLng = Number(storeSettings.restaurant_lng) || RESTAURANT_COORDS.lng;
+  // Delivery Radius Boundary Guard (Haversine Formula) with dynamic store location
+  const dynamicStoreLat = Number(storeSettings.store_lat || storeSettings.restaurant_lat) || RESTAURANT_COORDS.lat;
+  const dynamicStoreLng = Number(storeSettings.store_lng || storeSettings.restaurant_lng) || RESTAURANT_COORDS.lng;
+  const restaurantLat = dynamicStoreLat;
+  const restaurantLng = dynamicStoreLng;
   const maxDeliveryRadiusKm = Number(storeSettings.delivery_radius) || MAX_DELIVERY_RADIUS_KM;
 
   const deliveryDistanceKm =
@@ -323,6 +325,10 @@ export function useCheckoutForm() {
     const cleanCode = (code || "").trim().toUpperCase();
     if (!cleanCode) return { success: false, message: "Please enter a promo code." };
 
+    if (!customer?.id) {
+      return { success: false, message: "Please sign in or create an account to use promo codes." };
+    }
+
     try {
       const response = await fetch(`${API_BASE}/validate_coupon.php`, {
         method: "POST",
@@ -406,8 +412,8 @@ export function useCheckoutForm() {
         fullAddress = "Takeaway - Store Counter Pickup";
       }
 
-      let customerLat = 31.5204;
-      let customerLng = 74.3587;
+      let customerLat = dynamicStoreLat;
+      let customerLng = dynamicStoreLng;
 
       if (orderType === "delivery") {
         if (exactGpsCoords?.lat && exactGpsCoords?.lng) {
@@ -502,7 +508,13 @@ export function useCheckoutForm() {
         const orderId = result.orderId || result.order_id || result.id || "";
         if (orderId) {
           localStorage.setItem("activeOrderId", orderId.toString());
-          navigate(`/track-order?orderId=${orderId}`);
+          const cleanMobile = (customerMobile || "").trim();
+          if (cleanMobile) {
+            localStorage.setItem("activeOrderPhone", cleanMobile);
+            navigate(`/track-order?orderId=${orderId}&phone=${encodeURIComponent(cleanMobile)}`);
+          } else {
+            navigate(`/track-order?orderId=${orderId}`);
+          }
         } else {
           navigate("/track-order");
         }
@@ -589,5 +601,6 @@ export function useCheckoutForm() {
     deliveryDistanceKm,
     maxDeliveryRadiusKm,
     isOutOfDeliveryRadius,
+    storeCoords: { lat: dynamicStoreLat, lng: dynamicStoreLng },
   };
 }

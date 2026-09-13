@@ -41,10 +41,6 @@ export default function DealsGridList({
             <LuSlidersHorizontal className="text-xs" />
           </button>
         </div>
-
-        <p className="hidden sm:block text-xs text-gray-500 dark:text-neutral-400 m-0">
-          Click any combo deal to customize flavor options & sides
-        </p>
       </div>
 
       {/* Deals Grid / States */}

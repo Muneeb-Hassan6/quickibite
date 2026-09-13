@@ -67,9 +67,8 @@ export default function OrderSummaryCard({
         {/* Rider Tip Line */}
         {isDelivery && riderTip > 0 && (
           <div className="flex justify-between text-neutral-600 dark:text-neutral-400 font-medium">
-            <span className="flex items-center gap-1.5">
-              <LuHeart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-              <span>Rider Tip</span>
+            <span>
+              Rider Tip
             </span>
             <span className="font-bold text-neutral-900 dark:text-white">
               Rs {riderTip.toLocaleString()}
@@ -122,11 +121,6 @@ export default function OrderSummaryCard({
         </span>
         {!isOutOfDeliveryRadius && <LuArrowRight className="w-4 h-4" />}
       </button>
-
-      <div className="flex items-center justify-center gap-2 text-xs font-semibold text-neutral-400 dark:text-neutral-500">
-        <LuShieldCheck className="w-4 h-4 text-amber-500" />
-        <span>Live Kitchen Dispatch & SMS Notification</span>
-      </div>
     </div>
   );
 }

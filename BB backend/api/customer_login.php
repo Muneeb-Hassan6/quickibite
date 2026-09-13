@@ -18,9 +18,33 @@ if (empty($identifier) || empty($password)) {
     exit();
 }
 
+$isEmail = strpos($identifier, '@') !== false;
+
+if ($isEmail) {
+    if (!filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
+        echo json_encode(['success' => false, 'message' => 'Please provide a valid email address (e.g. name@gmail.com).']);
+        exit();
+    }
+    $queryPhone = null;
+    $queryEmail = $identifier;
+} else {
+    $cleanPhone = preg_replace('/[^0-9]/', '', $identifier);
+    if (!preg_match('/^03[0-9]{9}$/', $cleanPhone)) {
+        echo json_encode(['success' => false, 'message' => 'Mobile number must start with 03 and be exactly 11 digits (e.g. 03001234567).']);
+        exit();
+    }
+    $queryPhone = $cleanPhone;
+    $queryEmail = null;
+}
+
 try {
-    $stmt = $db->prepare("SELECT * FROM customer_users WHERE phone = :id OR email = :id LIMIT 1");
-    $stmt->execute([':id' => $identifier]);
+    if ($queryPhone) {
+        $stmt = $db->prepare("SELECT * FROM customer_users WHERE phone = :phone LIMIT 1");
+        $stmt->execute([':phone' => $queryPhone]);
+    } else {
+        $stmt = $db->prepare("SELECT * FROM customer_users WHERE email = :email LIMIT 1");
+        $stmt->execute([':email' => $queryEmail]);
+    }
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user || !password_verify($password, $user['password_hash'])) {

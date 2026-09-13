@@ -310,23 +310,22 @@ if (!$customer_id && !empty($data->customer_email ?? ($data->email ?? null))) {
     }
 }
 
+// Dynamic Store Settings & Coordinates (Always loaded for all order modes: Delivery, Takeaway, Dine-In)
+$delivSettingsQuery = $db->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('free_delivery_threshold', 'default_delivery_fee', 'delivery_fee', 'delivery_radius', 'restaurant_lat', 'restaurant_lng', 'store_lat', 'store_lng')");
+$delivSettings = [];
+if ($delivSettingsQuery) {
+    while ($row = $delivSettingsQuery->fetch(PDO::FETCH_ASSOC)) {
+        $delivSettings[$row['setting_key']] = $row['setting_value'];
+    }
+}
+$restaurantLat = !empty($delivSettings['store_lat']) && floatval($delivSettings['store_lat']) != 0 ? floatval($delivSettings['store_lat']) : (!empty($delivSettings['restaurant_lat']) && floatval($delivSettings['restaurant_lat']) != 0 ? floatval($delivSettings['restaurant_lat']) : 31.5204);
+$restaurantLng = !empty($delivSettings['store_lng']) && floatval($delivSettings['store_lng']) != 0 ? floatval($delivSettings['store_lng']) : (!empty($delivSettings['restaurant_lng']) && floatval($delivSettings['restaurant_lng']) != 0 ? floatval($delivSettings['restaurant_lng']) : 74.3587);
+
 // 1. Enforce Delivery Fee & Delivery Radius Boundary Check based on Order Mode
 if ($order_mode === 'delivery') {
-    // Dynamic Delivery Settings
-    $delivSettingsQuery = $db->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('free_delivery_threshold', 'default_delivery_fee', 'delivery_fee', 'delivery_radius', 'restaurant_lat', 'restaurant_lng')");
-    $delivSettings = [];
-    if ($delivSettingsQuery) {
-        while ($row = $delivSettingsQuery->fetch(PDO::FETCH_ASSOC)) {
-            $delivSettings[$row['setting_key']] = $row['setting_value'];
-        }
-    }
     $dbThreshold = isset($delivSettings['free_delivery_threshold']) ? floatval($delivSettings['free_delivery_threshold']) : 1500.00;
     $dbDefaultFee = isset($delivSettings['default_delivery_fee']) ? floatval($delivSettings['default_delivery_fee']) : (isset($delivSettings['delivery_fee']) ? floatval($delivSettings['delivery_fee']) : 150.00);
     $delivery_fee = ($subtotal >= $dbThreshold) ? 0.00 : $dbDefaultFee;
-
-    // Delivery Radius Boundary Guard (Haversine Formula)
-    $restaurantLat = isset($delivSettings['restaurant_lat']) && floatval($delivSettings['restaurant_lat']) != 0 ? floatval($delivSettings['restaurant_lat']) : 31.5204;
-    $restaurantLng = isset($delivSettings['restaurant_lng']) && floatval($delivSettings['restaurant_lng']) != 0 ? floatval($delivSettings['restaurant_lng']) : 74.3587;
     $maxDeliveryRadiusKm = isset($delivSettings['delivery_radius']) && floatval($delivSettings['delivery_radius']) > 0 ? floatval($delivSettings['delivery_radius']) : 10.0;
 
     $reqLat = !empty($data->customer_lat) ? floatval($data->customer_lat) : 
@@ -513,6 +512,12 @@ if(!empty($cart_items) && $order_total > 0) {
                     (!empty($data->longitude) ? floatval($data->longitude) : 
                     (!empty($data->lng) ? floatval($data->lng) : null)));
 
+        // Dynamic store coordinates for Takeaway, Dine-in or missing coordinates
+        if ($order_mode === 'takeaway' || $order_mode === 'dine_in' || empty($cust_lat) || empty($cust_lng)) {
+            if (empty($cust_lat) || $order_mode !== 'delivery') $cust_lat = $restaurantLat;
+            if (empty($cust_lng) || $order_mode !== 'delivery') $cust_lng = $restaurantLng;
+        }
+
         $customer_id = !empty($data->customer_id) ? intval($data->customer_id) : (!empty($data->customerId) ? intval($data->customerId) : null);
 
         // Fallback: If customer_id is missing, auto-link to customer_users by phone or email
@@ -536,6 +541,14 @@ if(!empty($cart_items) && $order_total > 0) {
         }
 
         $house_val = !empty($data->house_no) ? trim($data->house_no) : (!empty($data->house_info) ? trim($data->house_info) : (!empty($data->house) ? trim($data->house) : null));
+
+        // Security safeguard: Coupons are exclusive to registered members
+        if (empty($customer_id) && (!empty($coupon_code) || floatval($discount_amount) > 0)) {
+            $coupon_code = null;
+            $discount_amount = 0.00;
+            // Recalculate order_total without coupon discount
+            $order_total = $subtotal + $delivery_fee + $rider_tip + $tax_amount;
+        }
 
         $query = "INSERT INTO orders (customer_id, order_type, order_mode, customer_name, customer_mobile, customer_address, customer_lat, customer_lng, latitude, longitude, house_no, house_info, street, area, table_number, delivery_fee, rider_tip, coupon_code, discount_amount, total, status, payment_method, payment_status, transaction_id) 
                   VALUES (:cid, :type, :mode, :name, :mobile, :address, :cust_lat, :cust_lng, :lat, :lng, :house, :house_info, :street, :area, :table, :deliv_fee, :tip, :coupon, :discount, :total, 'Pending', :pmethod, :pstatus, :txn_id)";

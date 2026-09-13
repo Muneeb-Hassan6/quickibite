@@ -158,11 +158,7 @@ export default function OrderTrackerTimeline({
                   <span>Kitchen Status Locked</span>
                 )}
               </div>
-              <p className="text-[11px] text-zinc-500 dark:text-neutral-400 m-0">
-                {isPending && timeLeft > 0
-                  ? "You can cancel with 1-tap. Ingredients will be immediately returned to inventory."
-                  : "Chef has started food preparation. Please call restaurant support to modify."}
-              </p>
+              
             </div>
           </div>
 

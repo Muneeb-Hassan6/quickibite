@@ -19,7 +19,7 @@ import "swiper/css/pagination";
 
 export default function HomeReviewsSection({
   title = "WHAT OUR FOODIES SAY",
-  subtitle = "Real stories & experiences from our verified food lovers",
+  
   reviews = [],
   summary = { total_reviews: 0, average_rating: 5.0 },
   filterMode = "all", // "all" | "featured" | "top_rated"
@@ -89,7 +89,7 @@ export default function HomeReviewsSection({
   if (!reviews || reviews.length === 0) return null;
 
   return (
-    <section className="w-full py-8 md:py-12 relative overflow-hidden">
+    <section className="w-full relative overflow-hidden">
       {/* Subtle Background Glow Elements */}
       <div className="absolute top-1/2 left-0 -translate-y-1/2 w-72 h-72 bg-amber-500/10 dark:bg-amber-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="absolute top-1/2 right-0 -translate-y-1/2 w-72 h-72 bg-orange-500/10 dark:bg-orange-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
@@ -97,20 +97,14 @@ export default function HomeReviewsSection({
       {/* Header Container */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
         <div className="space-y-2">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-black uppercase tracking-wider">
-            <FaStar className="text-amber-500 text-xs animate-pulse" />
-            <span>Verified Customer Stories</span>
-          </div>
+         
 
           {/* Heading */}
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black font-['Oswald',sans-serif] uppercase tracking-wide text-zinc-900 dark:text-white m-0">
             {title}
           </h2>
 
-          <p className="text-xs sm:text-sm text-zinc-600 dark:text-neutral-400 max-w-xl m-0 leading-relaxed font-sans">
-            {subtitle}
-          </p>
+         
         </div>
 
         {/* Rating Summary Bar */}
@@ -126,24 +120,15 @@ export default function HomeReviewsSection({
                   <FaStar key={i} />
                 ))}
               </div>
-              <span className="text-[10px] font-bold text-zinc-500 dark:text-neutral-400 uppercase tracking-wider block">
+              <span className="text-[10px] font-bold text-zinc-500 dark:text-neutral-400 uppercase tracking-wider block text-center">
                 Out of 5.0
               </span>
             </div>
           </div>
 
-          <div className="w-[1px] h-9 bg-zinc-200 dark:bg-neutral-800" />
+          
 
-          {/* Verified Count */}
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-              <FaCheckCircle className="text-xs" />
-              <span>100% Authentic</span>
-            </div>
-            <span className="text-[11px] text-zinc-500 dark:text-neutral-400 font-medium block">
-              Based on {totalCount}+ orders
-            </span>
-          </div>
+         
         </div>
       </div>
 
@@ -335,19 +320,6 @@ export default function HomeReviewsSection({
           })}
         </Swiper>
       )}
-
-      {/* Trust Footer Bar */}
-      <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 pt-6 border-t border-zinc-200/80 dark:border-neutral-800/60 text-zinc-500 dark:text-neutral-500 text-xs font-medium">
-        <div className="flex items-center gap-2">
-          <FaCheckCircle className="text-emerald-500" />
-          <span>Real orders verified through OTP & Delivery logs</span>
-        </div>
-        <div className="hidden sm:block text-zinc-300 dark:text-neutral-700">•</div>
-        <div className="flex items-center gap-2">
-          <FaUtensils className="text-amber-500" />
-          <span>Freshly prepared & hot delivered guarantee</span>
-        </div>
-      </div>
     </section>
   );
 }

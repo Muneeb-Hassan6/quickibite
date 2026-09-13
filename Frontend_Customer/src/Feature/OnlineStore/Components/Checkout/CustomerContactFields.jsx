@@ -70,23 +70,14 @@ export default function CustomerContactFields({
               const cleanDigits = e.target.value.replace(/\D/g, "").slice(0, 11);
               handleMobileChange(cleanDigits);
             }}
-            placeholder="03001234567"
+            placeholder="03XXXXXXXXX"
             className={`w-full p-3.5 rounded-xl bg-gray-50 dark:bg-neutral-800/80 border text-sm text-neutral-900 dark:text-white focus:outline-none focus:border-amber-500 transition-colors font-mono ${
               errors.mobile
                 ? "border-red-500 bg-red-50/10 ring-1 ring-red-500"
                 : "border-gray-200 dark:border-neutral-700"
             }`}
           />
-          {errors.mobile ? (
-            <span className="text-xs text-red-500 font-medium flex items-center gap-1">
-              <LuCircleAlert className="w-3 h-3 shrink-0" />
-              {errors.mobile}
-            </span>
-          ) : (
-            <span className="text-[11px] text-neutral-400">
-              Format: 03XXXXXXXXX (11 digits)
-            </span>
-          )}
+          
         </div>
 
         {/* 🌟 Guest Phone Collision Notice Banner */}

@@ -188,9 +188,7 @@ const LoginForm = () => {
 
           {/* Mobile Only Brand Icon */}
           <div className="lg:hidden flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-amber-500 text-neutral-950 flex items-center justify-center font-['Oswald',sans-serif] font-black text-xs">
-              QB
-            </div>
+            
             <span className="font-['Oswald',sans-serif] font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white">
               Staff Portal
             </span>

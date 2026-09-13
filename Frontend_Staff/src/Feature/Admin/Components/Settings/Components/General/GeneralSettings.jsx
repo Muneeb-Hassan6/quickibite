@@ -15,6 +15,7 @@ const GeneralSettings = () => {
     fileInputRef,
     isLoading,
     handleChange,
+    handleLocationChange,
     handleLogoChange,
     handleRemoveLogo,
     handleSave,
@@ -59,6 +60,7 @@ const GeneralSettings = () => {
           settings={settings}
           setSettings={setSettings}
           handleChange={handleChange}
+          handleLocationChange={handleLocationChange}
           logoFile={logoFile}
           handleLogoChange={handleLogoChange}
           handleRemoveLogo={handleRemoveLogo}

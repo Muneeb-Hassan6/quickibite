@@ -1,30 +1,51 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
-  FaCompass,
   FaPlay,
-  FaPause,
-  FaRedo,
-  FaChevronDown,
-  FaChevronUp,
-  FaRoute,
+  FaStop,
+  FaMapMarkerAlt,
+  FaWalking,
+  FaMotorcycle,
+  FaSlidersH,
+  FaTimes,
+  FaPaperPlane,
   FaStore,
+  FaCompass,
+  FaRoute,
 } from "react-icons/fa";
-
-const PRESETS = [
-  { name: "Store (QuickBite HQ)", lat: 31.5204, lng: 74.3587 },
-  { name: "Gulberg Main", lat: 31.5102, lng: 74.3440 },
-  { name: "Model Town", lat: 31.4826, lng: 74.3256 },
-  { name: "DHA Phase 5", lat: 31.4685, lng: 74.4020 },
-];
 
 export default function RiderGpsSimulator({
   currentLocation = { lat: 31.5204, lng: 74.3587 },
   destination = null,
   onLocationUpdate,
 }) {
+  const { data: storeSettings = {} } = useQuery({
+    queryKey: ["settings"],
+    queryFn: async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE}/get_settings.php`);
+        const json = await res.json();
+        return json.success ? json.data : {};
+      } catch {
+        return {};
+      }
+    },
+    staleTime: 60000,
+  });
+
+  const storeLat = parseFloat(storeSettings.store_lat || storeSettings.restaurant_lat) || 31.5204;
+  const storeLng = parseFloat(storeSettings.store_lng || storeSettings.restaurant_lng) || 74.3587;
+
+  const PRESETS = [
+    { name: "Store (QuickBite HQ)", lat: storeLat, lng: storeLng },
+    { name: "Gulberg Main", lat: 31.5102, lng: 74.3440 },
+    { name: "Model Town", lat: 31.4826, lng: 74.3256 },
+    { name: "DHA Phase 5", lat: 31.4685, lng: 74.4020 },
+  ];
+
   const [isOpen, setIsOpen] = useState(false);
-  const [customLat, setCustomLat] = useState(currentLocation?.lat || 31.5204);
-  const [customLng, setCustomLng] = useState(currentLocation?.lng || 74.3587);
+  const [customLat, setCustomLat] = useState(currentLocation?.lat || storeLat);
+  const [customLng, setCustomLng] = useState(currentLocation?.lng || storeLng);
 
   // Simulation State
   const [isSimulating, setIsSimulating] = useState(false);

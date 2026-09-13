@@ -1,10 +1,12 @@
 import React from "react";
-import { FaCloudUploadAlt, FaTrash } from "react-icons/fa";
+import { FaCloudUploadAlt, FaTrash, FaMapMarkedAlt } from "react-icons/fa";
+import RestaurantLocationPicker from "./RestaurantLocationPicker";
 
 export default function RestaurantProfileForm({
   settings = {},
   setSettings,
   handleChange,
+  handleLocationChange,
   logoFile,
   handleLogoChange,
   handleRemoveLogo,
@@ -130,17 +132,33 @@ export default function RestaurantProfileForm({
         />
       </div>
 
-      {/* Physical Address */}
-      <div>
-        <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
-          Physical Outlet Address *
-        </label>
+      {/* Physical Address & Map Location Picker */}
+      <div className="sm:col-span-2 space-y-3 pt-3 border-t border-slate-200 dark:border-white/10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <label className="text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider flex items-center gap-1.5">
+            <FaMapMarkedAlt className="text-amber-500" />
+            <span>Physical Outlet Address & Store GPS Coordinates *</span>
+          </label>
+          <span className="text-[11px] text-slate-500 dark:text-neutral-400 font-medium">
+            Used across the system for checkout distance calculation & takeaway counter pickup
+          </span>
+        </div>
+
         <input
           type="text"
           name="store_address"
           className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
           value={settings.store_address}
           onChange={handleChange}
+          placeholder="e.g. 123 Food Street, Main Market, Gulberg, Lahore"
+        />
+
+        {/* Embedded Interactive Mapbox Picker */}
+        <RestaurantLocationPicker
+          storeLat={settings.store_lat}
+          storeLng={settings.store_lng}
+          storeAddress={settings.store_address}
+          onLocationChange={handleLocationChange}
         />
       </div>
     </>

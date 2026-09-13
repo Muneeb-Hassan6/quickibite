@@ -78,10 +78,7 @@ export default function CartDrawerCheckoutFooter({
         <FaArrowRight className="text-xs" />
       </button>
 
-      <div className="flex items-center justify-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-neutral-400 dark:text-neutral-500">
-        <FaShieldAlt className="text-amber-500 text-[10px]" />
-        <span>Safe & Secure Checkout</span>
-      </div>
+   
     </div>
   );
 }

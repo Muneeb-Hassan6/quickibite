@@ -10,6 +10,10 @@ export function useGeneralSettings() {
     contact_phone: "",
     admin_email: "",
     store_address: "",
+    store_lat: "31.5204",
+    store_lng: "74.3587",
+    restaurant_lat: "31.5204",
+    restaurant_lng: "74.3587",
     store_logo: "",
     original_logo: "",
     restaurant_open_time: "10:00",
@@ -43,6 +47,10 @@ export function useGeneralSettings() {
         contact_phone: settingsData.contact_phone || "",
         admin_email: settingsData.admin_email || "",
         store_address: settingsData.store_address || "",
+        store_lat: settingsData.store_lat || settingsData.restaurant_lat || "31.5204",
+        store_lng: settingsData.store_lng || settingsData.restaurant_lng || "74.3587",
+        restaurant_lat: settingsData.store_lat || settingsData.restaurant_lat || "31.5204",
+        restaurant_lng: settingsData.store_lng || settingsData.restaurant_lng || "74.3587",
         store_logo: settingsData.store_logo || "",
         original_logo: settingsData.store_logo || "",
         restaurant_open_time: settingsData.restaurant_open_time || "10:00",
@@ -50,6 +58,17 @@ export function useGeneralSettings() {
       });
     }
   }, [settingsData]);
+
+  const handleLocationChange = ({ lat, lng, address }) => {
+    setSettings((prev) => ({
+      ...prev,
+      store_lat: lat !== undefined ? lat : prev.store_lat,
+      store_lng: lng !== undefined ? lng : prev.store_lng,
+      restaurant_lat: lat !== undefined ? lat : prev.restaurant_lat,
+      restaurant_lng: lng !== undefined ? lng : prev.restaurant_lng,
+      ...(address ? { store_address: address, restaurant_address: address } : {}),
+    }));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -177,6 +196,7 @@ export function useGeneralSettings() {
     fileInputRef,
     isLoading,
     handleChange,
+    handleLocationChange,
     handleLogoChange,
     handleRemoveLogo,
     handleSave,

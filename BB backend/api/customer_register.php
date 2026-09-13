@@ -11,12 +11,24 @@ if (!$data) {
 }
 
 $fullName = trim($data['full_name'] ?? '');
-$phone = preg_replace('/[^0-9+]/', '', $data['phone'] ?? '');
+$phone = preg_replace('/[^0-9]/', '', $data['phone'] ?? '');
 $email = trim($data['email'] ?? '');
 $password = $data['password'] ?? '';
 
 if (empty($fullName) || empty($phone) || empty($password)) {
     echo json_encode(['success' => false, 'message' => 'Full name, phone, and password are required.']);
+    exit();
+}
+
+// Validate Pakistani mobile format: 03XXXXXXXXX (11 digits)
+if (!preg_match('/^03[0-9]{9}$/', $phone)) {
+    echo json_encode(['success' => false, 'message' => 'Mobile number must start with 03 and be exactly 11 digits (e.g. 03001234567).']);
+    exit();
+}
+
+// Validate email format if provided
+if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    echo json_encode(['success' => false, 'message' => 'Please provide a valid email address (e.g. name@gmail.com).']);
     exit();
 }
 

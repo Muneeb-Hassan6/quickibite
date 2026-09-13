@@ -1,6 +1,7 @@
 <?php
 include_once __DIR__ . '/../config/cors_headers.php';
 include_once __DIR__ . '/../config/Database.php';
+include_once __DIR__ . '/../config/Mailer.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -11,27 +12,48 @@ if (!$data) {
 }
 
 $action = $data['action'] ?? 'request'; // 'request' | 'reset'
-$identifier = trim($data['identifier'] ?? ($data['phone'] ?? ($data['email'] ?? '')));
+$identifier = trim($data['email'] ?? ($data['identifier'] ?? ($data['phone'] ?? '')));
 
 if (empty($identifier)) {
-    echo json_encode(['success' => false, 'message' => 'Phone or Email is required.']);
+    echo json_encode([
+        'success' => false,
+        'error_type' => 'EMPTY_INPUT',
+        'message' => 'Please enter your registered email address.'
+    ]);
     exit();
 }
 
+$isEmail = strpos($identifier, '@') !== false;
+
 try {
     if ($action === 'request') {
-        $stmt = $db->prepare("SELECT id, full_name, email, phone FROM customer_users WHERE phone = :id OR email = :id LIMIT 1");
-        $stmt->execute([':id' => $identifier]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$user) {
-            echo json_encode(['success' => false, 'message' => 'No account found with this phone/email.']);
+        // Enforce email format for sending OTP
+        if (!$isEmail || !filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
+            echo json_encode([
+                'success' => false,
+                'error_type' => 'INVALID_FORMAT',
+                'message' => 'Please enter a valid email address format (e.g. you@gmail.com).'
+            ]);
             exit();
         }
 
-        // Generate 6-digit verification code or token
+        // Check if email exists in database
+        $stmt = $db->prepare("SELECT id, full_name, email FROM customer_users WHERE email = :email LIMIT 1");
+        $stmt->execute([':email' => $identifier]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            echo json_encode([
+                'success' => false,
+                'error_type' => 'NOT_REGISTERED',
+                'message' => 'Invalid email'
+            ]);
+            exit();
+        }
+
+        // Generate 6-digit verification code
         $otp = strval(rand(100000, 999999));
-        $expires = date('Y-m-d H:i:s', strtotime('+15 minutes'));
+        $expires = date('Y-m-d H:i:s', strtotime('+2 minutes'));
 
         $up = $db->prepare("UPDATE customer_users SET reset_token = :token, reset_expires = :expires WHERE id = :id");
         $up->execute([
@@ -40,11 +62,22 @@ try {
             ':id' => $user['id']
         ]);
 
+        // Dispatch OTP via Gmail SMTP
+        $mailResult = Mailer::sendOtpEmail($user['email'], $user['full_name'], $otp);
+
+        if (!$mailResult['success']) {
+            echo json_encode([
+                'success' => false,
+                'error_type' => 'MAIL_FAILED',
+                'message' => $mailResult['message'] ?? 'Failed to send OTP email. Please try again later.'
+            ]);
+            exit();
+        }
+
         echo json_encode([
             'success' => true,
-            'message' => 'Reset code generated successfully! (In sandbox mode, use code: ' . $otp . ')',
-            'reset_code' => $otp,
-            'customer_id' => (int)$user['id']
+            'message' => 'Verification code sent to your Gmail! Please check your inbox.',
+            'email' => $user['email']
         ]);
         exit();
     } elseif ($action === 'reset') {

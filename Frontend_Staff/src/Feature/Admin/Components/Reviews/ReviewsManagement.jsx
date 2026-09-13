@@ -172,17 +172,9 @@ export default function ReviewsManagement() {
           ═══════════════════════════════════════ */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-mono font-bold tracking-widest text-amber-600 dark:text-amber-400 uppercase bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-              SOCIAL PROOF ENGINE
-            </span>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-black font-['Oswald',sans-serif] uppercase tracking-wide text-slate-900 dark:text-white m-0">
             Verified Customer Reviews
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-neutral-400 mt-1">
-            Moderate, feature, and showcase verified buyer dining feedback.
-          </p>
         </div>
 
         <button
