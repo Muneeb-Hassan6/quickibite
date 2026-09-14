@@ -32,8 +32,15 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }
 
   // 1. Session Check - If not logged in OR no token OR no role, purge stale tab session and redirect to login
-  if (!activeUser || !activeToken || !activeUser.role) {
-    logout();
+  const isInvalidSession = !activeUser || !activeToken || !activeUser?.role;
+
+  useEffect(() => {
+    if (isInvalidSession) {
+      logout();
+    }
+  }, [isInvalidSession, logout]);
+
+  if (isInvalidSession) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

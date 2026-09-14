@@ -12,6 +12,8 @@ import {
   FaStore,
   FaCompass,
   FaRoute,
+  FaChevronUp,
+  FaChevronDown,
 } from "react-icons/fa";
 
 export default function RiderGpsSimulator({

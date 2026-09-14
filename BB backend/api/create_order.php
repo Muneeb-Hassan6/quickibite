@@ -88,6 +88,8 @@ try {
     if ($checkTxn->fetchColumn() == 0) {
         $db->exec("ALTER TABLE `orders` ADD COLUMN `transaction_id` VARCHAR(100) NULL DEFAULT NULL AFTER `payment_status`");
     }
+    // Ensure inventory logs table exists outside any active transaction
+    InventoryHelper::ensureLogsTable($db);
 } catch (PDOException $migErr) {
     // Silently continue — migration may have already been applied
     error_log("Auto-migrate notice: " . $migErr->getMessage());
@@ -639,7 +641,9 @@ if(!empty($cart_items) && $order_total > 0) {
             error_log("Payments insert warning: " . $payErr->getMessage());
         }
 
-        $db->commit();
+        if ($db->inTransaction()) {
+            $db->commit();
+        }
 
         // NOTE: Socket broadcast handled by frontend (usePosCart.js emits 'new_order_placed' after success)
         // PHP-side HTTP trigger disabled to prevent response blocking on Windows.

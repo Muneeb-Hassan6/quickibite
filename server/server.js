@@ -16,10 +16,10 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin:
-      NODE_ENV === "production"
-        ? process.env.FRONTEND_URL_PRODUCTION
-        : process.env.FRONTEND_URL || "*",
+    origin: (origin, callback) => {
+      // Reflect origin so credentials: true works without browser wildcard errors
+      callback(null, true);
+    },
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -64,20 +64,6 @@ app.post("/trigger-order", (req, res) => {
 
 // ── Socket.io Connection Guard ────────────────────────────────────────────────
 io.use((socket, next) => {
-  const origin = socket.handshake.headers.origin;
-  const allowedOrigin =
-    NODE_ENV === "production"
-      ? process.env.FRONTEND_URL_PRODUCTION
-      : process.env.FRONTEND_URL || "*";
-
-  if (NODE_ENV === "production" && origin && allowedOrigin !== "*") {
-    const allowedList = allowedOrigin.split(",").map((o) => o.trim());
-    if (!allowedList.includes(origin)) {
-      console.warn(`⛔ Rejected socket connection from unauthorized origin: ${origin}`);
-      return next(new Error("Unauthorized connection origin"));
-    }
-  }
-
   next();
 });
 

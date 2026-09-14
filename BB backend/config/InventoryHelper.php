@@ -1,21 +1,37 @@
 <?php
 class InventoryHelper {
 
+    private static $logsTableChecked = false;
+
     /**
-     * Ensure the order_inventory_logs table exists for atomic deduction & restock tracking
+     * Ensure the order_inventory_logs table exists for atomic deduction & restock tracking.
+     * Guarded to NEVER execute DDL inside an active transaction (prevents MySQL implicit commit).
      */
     public static function ensureLogsTable(PDO $db) {
-        $sql = "CREATE TABLE IF NOT EXISTS order_inventory_logs (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            order_id INT NOT NULL,
-            inventory_id INT NOT NULL,
-            quantity DECIMAL(10,2) NOT NULL,
-            is_restored TINYINT(1) DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            INDEX (order_id),
-            INDEX (inventory_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-        $db->exec($sql);
+        if (self::$logsTableChecked) return;
+
+        // Never execute DDL (CREATE TABLE) inside an active transaction in MySQL!
+        if ($db->inTransaction()) {
+            self::$logsTableChecked = true;
+            return;
+        }
+
+        try {
+            $sql = "CREATE TABLE IF NOT EXISTS order_inventory_logs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                order_id INT NOT NULL,
+                inventory_id INT NOT NULL,
+                quantity DECIMAL(10,2) NOT NULL,
+                is_restored TINYINT(1) DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX (order_id),
+                INDEX (inventory_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+            $db->exec($sql);
+            self::$logsTableChecked = true;
+        } catch (\Throwable $e) {
+            // Already exists or creation failed safely
+        }
     }
 
     /**
