@@ -1,4 +1,7 @@
-<?php error_reporting(0);
+<?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 include_once __DIR__ . '/../config/cors_headers.php';
 include_once __DIR__ . '/../config/Database.php';
 
