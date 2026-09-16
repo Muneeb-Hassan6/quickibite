@@ -221,6 +221,9 @@ export function usePopupCard({
   });
 
   const isOutOfStock =
+    fullItem?.inStock === false ||
+    fullItem?.inStock === 0 ||
+    fullItem?.inStock === "0" ||
     fullItem?.isAvailable === false ||
     fullItem?.isAvailable === 0 ||
     fullItem?.isAvailable === "0" ||
@@ -246,6 +249,7 @@ export function usePopupCard({
       selectedFries,
       hasDrinkInCombo,
       selectedDrink,
+      dynamicSelections,
       specialNote,
       singleUnitTotal: pricing.singleUnitTotal,
       quantity: pricing.quantity,

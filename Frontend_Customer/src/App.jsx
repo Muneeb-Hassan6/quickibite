@@ -35,6 +35,8 @@ import { AuthProvider, useAuth } from "./Context/AuthContext";
 import AuthModal from "./Components/Auth/AuthModal";
 import GooglePhoneModal from "./Components/Customer/GooglePhoneModal";
 import CustomerProfileDrawer from "./Components/Customer/CustomerProfileDrawer";
+import PWAInstallBanner from "./Components/UI/PWAInstallBanner";
+import OfflineIndicator from "./Components/UI/OfflineIndicator";
 
 const MainContent = () => {
   const { cartItems } = useCart();
@@ -126,6 +128,12 @@ const MainContent = () => {
 
       {/* 👤 CUSTOMER PROFILE & ORDER HISTORY DRAWER */}
       <CustomerProfileDrawer />
+
+      {/* 📡 OFFLINE CONNECTIVITY INDICATOR */}
+      <OfflineIndicator />
+
+      {/* 📲 PWA IN-APP INSTALL PROMPT BANNER */}
+      <PWAInstallBanner />
     </div>
   );
 };

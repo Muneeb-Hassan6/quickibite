@@ -115,15 +115,20 @@ export default function DealPreviewCard({
                     .map((it, idx) => (
                       <span
                         key={idx}
-                        className="text-[11px] font-medium bg-slate-200 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-800 dark:text-neutral-300 px-2 py-0.5 rounded-lg flex items-center gap-1"
+                        className="text-[11px] font-medium bg-slate-200 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-800 dark:text-neutral-300 px-2 py-0.5 rounded-lg flex items-center gap-1.5"
                       >
                         <span className="text-amber-600 dark:text-amber-400 font-bold">
                           {it.quantity}x
                         </span>
-                        <span className="truncate max-w-[120px]">
+                        <span className="truncate max-w-[140px]">
                           {it.item_title}
                         </span>
-                        {it.is_customizable && (
+                        {it.size && it.size !== "Regular" && (
+                          <span className="text-[9px] font-black text-slate-600 dark:text-neutral-300 bg-slate-300 dark:bg-white/10 px-1 py-0.2 rounded">
+                            {it.size}
+                          </span>
+                        )}
+                        {(it.is_customizable || it.flavor_mode === "choice") && (
                           <span className="text-[9px] text-amber-600 dark:text-amber-400 font-black bg-amber-500/15 px-1 rounded">
                             Choice
                           </span>

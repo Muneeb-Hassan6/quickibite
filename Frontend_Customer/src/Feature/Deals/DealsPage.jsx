@@ -41,7 +41,13 @@ const DealsPage = () => {
             deal.items_description ||
             deal.description ||
             "Exclusive combo deal packed with your favorites.",
-          is_permanent: deal.is_permanent,
+          is_permanent: deal.is_permanent == 1 || deal.is_permanent === true,
+          start_time: deal.start_time,
+          end_time: deal.end_time,
+          is_time_active: deal.is_time_active !== false && deal.isTimeActive !== false,
+          time_window_text: deal.time_window_text || "",
+          isAvailable: deal.isAvailable !== false,
+          inStock: deal.inStock !== false && deal.inStock !== 0 && deal.inStock !== "0",
         }));
       }
       return [];

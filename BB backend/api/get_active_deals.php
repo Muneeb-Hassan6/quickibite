@@ -14,10 +14,13 @@ try {
     // Initialize inventory and recipe helper
     DealInventoryHelper::init($db);
 
+    date_default_timezone_set('Asia/Karachi');
+    $current_time = date('H:i:s');
+
+    // Fetch all active deals; deals outside their time window will be marked with is_time_active = false
     $query = "SELECT * FROM deals 
               WHERE is_active = 1 
               AND (expires_at IS NULL OR expires_at > NOW())
-              AND (is_permanent = 1 OR (CURRENT_TIME() BETWEEN start_time AND end_time)) 
               ORDER BY id DESC";
 
     $stmt = $db->prepare($query);
@@ -27,8 +30,36 @@ try {
     foreach ($deals as &$deal) {
         $deal_id = $deal['id'];
         
+        // Time window active evaluation
+        $isPermanent = intval($deal['is_permanent'] ?? 1) === 1;
+        $isTimeActive = true;
+        $timeWindowText = "";
+
+        if (!$isPermanent && !empty($deal['start_time']) && !empty($deal['end_time'])) {
+            $st = $deal['start_time'];
+            $et = $deal['end_time'];
+
+            $start_ts = strtotime($st);
+            $end_ts = strtotime($et);
+            $curr_ts = strtotime($current_time);
+
+            if ($end_ts > $start_ts) {
+                // Same-day window e.g. 12:00 to 16:00
+                $isTimeActive = ($curr_ts >= $start_ts && $curr_ts <= $end_ts);
+            } else {
+                // Overnight window e.g. 20:00 to 02:00
+                $isTimeActive = ($curr_ts >= $start_ts || $curr_ts <= $end_ts);
+            }
+
+            $timeWindowText = date("h:i A", $start_ts) . " - " . date("h:i A", $end_ts);
+        }
+
+        $deal['is_time_active'] = $isTimeActive;
+        $deal['isTimeActive'] = $isTimeActive;
+        $deal['time_window_text'] = $timeWindowText;
+
         // Fetch structured deal items
-        $itemQuery = "SELECT id, menu_item_id, item_title, quantity, is_customizable, choice_group_name, options_json 
+        $itemQuery = "SELECT id, menu_item_id, category, item_title, size, flavor_name, flavor_mode, quantity, is_customizable, choice_group_name, options_json 
                       FROM deal_items 
                       WHERE deal_id = :deal_id 
                       ORDER BY id ASC";

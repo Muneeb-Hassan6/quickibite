@@ -81,9 +81,34 @@ class DealInventoryHelper {
      */
     public static function hasStockByNameKeyword($keyword) {
         $kw = strtolower(trim($keyword));
+        // Alias mapping for common culinary keywords to actual inventory names
+        $aliases = [
+            'mozzarella' => ['mozarella', 'cheese', 'chadder'],
+            'broast cut' => ['chicken leg', 'chicken breast', 'chicken thaigh'],
+            'broast' => ['chicken leg', 'chicken breast', 'chicken thaigh'],
+            'zinger patty' => ['chicken patty', 'boneless chicken'],
+            'patty' => ['chicken patty', 'boneless chicken'],
+            'potato fries' => ['potato'],
+            'fries' => ['potato'],
+            'tortilla' => ['shawarama bread', 'paratha'],
+            'pita' => ['shawarama bread'],
+            'shawarma' => ['shawarama bread', 'paratha'],
+            'wings' => ['chicken wings'],
+            'dip' => ['garlic mayo', 'white mayonise', 'sause'],
+            'garlic dip' => ['garlic mayo', 'white mayonise']
+        ];
+
+        $targets = [$kw];
+        if (isset($aliases[$kw])) {
+            $targets = array_merge($targets, $aliases[$kw]);
+        }
+
         foreach (self::$inventoryMap as $inv) {
-            if (strpos(strtolower($inv['name']), $kw) !== false) {
-                return $inv['stock'] > 0;
+            $invLower = strtolower($inv['name']);
+            foreach ($targets as $tgt) {
+                if (strpos($invLower, $tgt) !== false) {
+                    return floatval($inv['stock']) > 0;
+                }
             }
         }
         return true; // Not found in tracked inventory, assume pass
@@ -236,10 +261,37 @@ class DealInventoryHelper {
             $slotInStock = false;
         }
 
-        // 2.3 Check linked menu_item_id if directly provided
+        // 2.3 Check linked menu_item_id or match flavor_name / item_title to menu catalog
+        $slotSize = trim($it['size'] ?? '');
+        $slotFlavor = trim($it['flavor_name'] ?? '');
+        $slotFlavorMode = trim($it['flavor_mode'] ?? 'fixed');
+
         $linkedMenuId = intval($it['menu_item_id'] ?? 0);
+        if ($linkedMenuId <= 0 && !empty($slotFlavor)) {
+            $fLower = strtolower($slotFlavor);
+            if (isset(self::$menuItemsByName[$fLower])) {
+                $linkedMenuId = intval(self::$menuItemsByName[$fLower]['id']);
+            }
+        }
+        if ($linkedMenuId <= 0 && !empty($titleLower)) {
+            $cleanTitle = trim(preg_replace('/^(Large|Medium|Small|Quarter|Plain)\s+/i', '', $titleLower));
+            $cleanTitleNoS = rtrim($cleanTitle, 's');
+            if (isset(self::$menuItemsByName[$titleLower])) {
+                $linkedMenuId = intval(self::$menuItemsByName[$titleLower]['id']);
+            } elseif (isset(self::$menuItemsByName[$cleanTitle])) {
+                $linkedMenuId = intval(self::$menuItemsByName[$cleanTitle]['id']);
+            } elseif (isset(self::$menuItemsByName[$cleanTitleNoS])) {
+                $linkedMenuId = intval(self::$menuItemsByName[$cleanTitleNoS]['id']);
+            }
+        }
         if ($linkedMenuId > 0) {
-            if (!self::isProductInStock($linkedMenuId)) {
+            $variant = !empty($slotSize) ? strtolower($slotSize) : '';
+            if (empty($variant)) {
+                if (strpos($titleLower, 'large') !== false) $variant = 'large';
+                elseif (strpos($titleLower, 'medium') !== false) $variant = 'medium';
+                elseif (strpos($titleLower, 'small') !== false) $variant = 'small';
+            }
+            if (!self::isProductInStock($linkedMenuId, $variant)) {
                 $slotInStock = false;
             }
         }
@@ -257,10 +309,10 @@ class DealInventoryHelper {
                 $flavorInStock = true;
 
                 if ($optId > 0) {
-                    $flavorInStock = self::isProductInStock($optId);
+                    $flavorInStock = self::isProductInStock($optId, !empty($slotSize) ? strtolower($slotSize) : '');
                 } elseif (isset(self::$menuItemsByName[$optLower])) {
                     $matched = self::$menuItemsByName[$optLower];
-                    $flavorInStock = self::isProductInStock($matched['id']);
+                    $flavorInStock = self::isProductInStock($matched['id'], !empty($slotSize) ? strtolower($slotSize) : '');
                 } elseif ($isPizzaSlot) {
                     // Pizza flavor keyword check
                     if (strpos($optLower, 'tikka') !== false || strpos($optLower, 'fajita') !== false || strpos($optLower, 'fagitta') !== false) {
@@ -328,16 +380,26 @@ class DealInventoryHelper {
 
             $itemsList[] = [
                 'id' => $it['id'],
+                'menu_item_id' => intval($it['menu_item_id'] ?? 0),
+                'category' => $it['category'] ?? '',
                 'item_title' => $it['item_title'],
+                'size' => $it['size'] ?? 'Regular',
+                'flavor_name' => $it['flavor_name'] ?? '',
+                'flavor_mode' => $it['flavor_mode'] ?? 'fixed',
                 'quantity' => intval($it['quantity'] ?? 1),
                 'is_customizable' => intval($it['is_customizable'] ?? 0) === 1,
-                'choice_group_name' => $it['choice_group_name'],
+                'choice_group_name' => $it['choice_group_name'] ?? '',
                 'options' => $options,
                 'slot_in_stock' => $slotEval['inStock'],
                 'structured_data' => $slotEval['structured_data'] ?? null
             ];
 
-            $descParts[] = ($it['quantity'] > 1 ? $it['quantity'] . 'x ' : '1x ') . $it['item_title'];
+            $rawTitle = trim($it['item_title'] ?? '');
+            if (preg_match('/^\d+\s*x\s+/i', $rawTitle)) {
+                $descParts[] = $rawTitle;
+            } else {
+                $descParts[] = ($it['quantity'] > 1 ? $it['quantity'] . 'x ' : '1x ') . $rawTitle;
+            }
         }
 
         $deal['items'] = $itemsList;
@@ -346,8 +408,8 @@ class DealInventoryHelper {
             ? $deal['description'] 
             : (count($descParts) > 0 ? implode(' + ', $descParts) : 'Exclusive Combo Deal');
         
-        $deal['isAvailable'] = true;
-        $deal['inStock'] = $dealInStock;
+        $deal['isAvailable'] = (bool)$dealInStock;
+        $deal['inStock'] = (bool)$dealInStock;
     }
 }
 ?>

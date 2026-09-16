@@ -65,8 +65,8 @@ if (!empty($data->title) && isset($data->price) && $data->price !== '') {
         // 2. Deal Items Insert
         if (!empty($data->items) && is_array($data->items)) {
             $itemQuery = "INSERT INTO deal_items 
-                          (deal_id, menu_item_id, item_title, quantity, is_customizable, choice_group_name, options_json) 
-                          VALUES (:deal_id, :menu_item_id, :item_title, :qty, :is_customizable, :choice_group_name, :options_json)";
+                          (deal_id, menu_item_id, category, item_title, size, flavor_name, flavor_mode, quantity, is_customizable, choice_group_name, options_json) 
+                          VALUES (:deal_id, :menu_item_id, :category, :item_title, :size, :flavor_name, :flavor_mode, :qty, :is_customizable, :choice_group_name, :options_json)";
             $itemStmt = $db->prepare($itemQuery);
 
             foreach ($data->items as $item) {
@@ -75,9 +75,16 @@ if (!empty($data->title) && isset($data->price) && $data->price !== '') {
                 if ($itemTitle === '') continue;
 
                 $menuItemId = !empty($item->menu_item_id) ? intval($item->menu_item_id) : (!empty($item->id) && is_numeric($item->id) ? intval($item->id) : 0);
+                $category = !empty($item->category) ? trim($item->category) : null;
+                $size = !empty($item->size) ? trim($item->size) : 'Regular';
+                $flavorName = !empty($item->flavor_name) ? trim($item->flavor_name) : null;
+                $flavorMode = !empty($item->flavor_mode) ? trim($item->flavor_mode) : (!empty($item->is_customizable) ? 'choice' : 'fixed');
+                $isCustomizable = ($flavorMode === 'choice' || !empty($item->is_customizable)) ? 1 : 0;
 
                 $optionsJson = null;
-                if (!empty($item->options_str)) {
+                if (!empty($item->options_json)) {
+                    $optionsJson = is_string($item->options_json) ? $item->options_json : json_encode($item->options_json);
+                } elseif (!empty($item->options_str)) {
                     $optionsJson = json_encode(array_values(array_filter(array_map('trim', explode(',', $item->options_str)))));
                 } elseif (!empty($item->options)) {
                     $optionsJson = is_array($item->options) ? json_encode($item->options) : json_encode(array_values(array_filter(array_map('trim', explode(',', $item->options)))));
@@ -86,9 +93,13 @@ if (!empty($data->title) && isset($data->price) && $data->price !== '') {
                 $itemStmt->execute([
                     ':deal_id' => $deal_id,
                     ':menu_item_id' => $menuItemId,
+                    ':category' => $category,
                     ':item_title' => $itemTitle,
+                    ':size' => $size,
+                    ':flavor_name' => $flavorName,
+                    ':flavor_mode' => $flavorMode,
                     ':qty' => max(1, intval($item->quantity ?? $item->qty ?? 1)),
-                    ':is_customizable' => !empty($item->is_customizable) ? 1 : 0,
+                    ':is_customizable' => $isCustomizable,
                     ':choice_group_name' => !empty($item->choice_group_name) ? trim($item->choice_group_name) : null,
                     ':options_json' => $optionsJson
                 ]);

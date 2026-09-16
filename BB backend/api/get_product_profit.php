@@ -33,12 +33,16 @@ $query = "SELECT
             SUM(oi.qty) as total_qty,
             SUM(oi.price * oi.qty) as total_revenue,
             SUM(oi.cost_price * oi.qty) as total_cogs,
-            MAX(mi.category) as category
+            COALESCE(MAX(mi.category), CASE WHEN MAX(d.id) IS NOT NULL THEN 'Deals & Combos' ELSE NULL END, 'Special') as category
           FROM orders o
           JOIN order_items oi ON o.id = oi.order_id
-          LEFT JOIN menu_items mi ON oi.title = mi.name
-          WHERE o.status IN ('Completed', 'Delivered') AND $dateCondition
+          LEFT JOIN menu_items mi ON LOWER(oi.title) = LOWER(mi.name)
+          LEFT JOIN deals d ON LOWER(oi.title) = LOWER(d.title)
+          WHERE o.status IN ('Completed', 'Delivered') 
+            AND oi.price > 0 
+            AND $dateCondition
           GROUP BY oi.title
+          HAVING total_revenue > 0
           ORDER BY total_revenue DESC";
 
 $stmt = $db->prepare($query);
@@ -49,17 +53,23 @@ $formatted_results = [];
 foreach ($results as $row) {
     $rev = floatval($row['total_revenue']);
     $cogs = floatval($row['total_cogs']);
+    
+    // Fallback: If COGS is missing or 0 for an item with sales revenue, estimate standard food cost (45%)
+    if ($cogs <= 0 && $rev > 0) {
+        $cogs = round($rev * 0.45, 2);
+    }
+    
     $profit = $rev - $cogs;
-    $margin = $rev > 0 ? round(($profit / $rev) * 100, 2) : 0;
+    $margin = $rev > 0 ? round(($profit / $rev) * 100, 1) : 0;
     
     $formatted_results[] = [
         "title" => $row['title'],
         "qty" => intval($row['total_qty']),
-        "revenue" => $rev,
-        "cogs" => $cogs,
-        "profit" => $profit,
+        "revenue" => round($rev, 2),
+        "cogs" => round($cogs, 2),
+        "profit" => round($profit, 2),
         "margin" => $margin,
-        "category" => $row['category'] ?: 'Uncategorized'
+        "category" => $row['category'] ?: 'Special'
     ];
 }
 

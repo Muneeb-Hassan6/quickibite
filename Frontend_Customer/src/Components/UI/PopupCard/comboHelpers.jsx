@@ -85,15 +85,22 @@ export const parseComboItems = (description = "", dbItems = []) => {
       const isPizza = lname.includes("pizza");
       const isFries = lname.includes("fries") || lname.includes("potato");
 
+      const isChoice = it.flavor_mode === 'choice' || Boolean(it.is_customizable);
       return {
         id: it.id || idx,
         raw: `${it.quantity || 1}x ${name}`,
         qty: `${it.quantity || 1}X`,
+        quantity: it.quantity || 1,
         name: name,
+        category: it.category || "",
+        size: it.size || "Regular",
+        flavor_name: it.flavor_name || "",
+        flavor_mode: it.flavor_mode || (isChoice ? "choice" : "fixed"),
+        menu_item_id: it.menu_item_id || 0,
         isDrink,
         isPizza,
         isFries,
-        is_customizable: Boolean(it.is_customizable),
+        is_customizable: isChoice,
         choice_group_name:
           it.choice_group_name ||
           (isPizza

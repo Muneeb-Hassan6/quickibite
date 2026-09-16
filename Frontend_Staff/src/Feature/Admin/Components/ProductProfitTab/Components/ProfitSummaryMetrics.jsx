@@ -29,7 +29,7 @@ export default function ProfitSummaryMetrics({
             Total Production Cost
           </span>
           <span className="text-xl sm:text-2xl font-black text-rose-500 font-sans block">
-            Rs. {totalCost.toLocaleString()}
+            Rs. {Math.round(totalCost).toLocaleString()}
           </span>
         </div>
         <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center text-sm font-black shrink-0">
@@ -43,7 +43,7 @@ export default function ProfitSummaryMetrics({
             Net Gross Profit
           </span>
           <span className="text-xl sm:text-2xl font-black text-emerald-500 font-sans block">
-            Rs. {totalProfit.toLocaleString()}
+            Rs. {Math.round(totalProfit).toLocaleString()}
           </span>
         </div>
         <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center text-sm font-black shrink-0">

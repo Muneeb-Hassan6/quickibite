@@ -103,11 +103,16 @@ export function useDealFormValidation() {
       banner_order: isFeaturedBanner ? parseInt(bannerOrder) || 0 : 0,
       addon_categories: selectedAddonCategories.join(","),
       items: validItems.map((it) => ({
+        menu_item_id: it.menu_item_id ? parseInt(it.menu_item_id) : 0,
+        category: it.category ? it.category.trim() : null,
         item_title: it.item_title.trim(),
+        size: it.size ? it.size.trim() : 'Regular',
+        flavor_name: it.flavor_name ? it.flavor_name.trim() : null,
+        flavor_mode: it.flavor_mode ? it.flavor_mode.trim() : (it.is_customizable ? 'choice' : 'fixed'),
         quantity: parseInt(it.quantity) || 1,
-        is_customizable: it.is_customizable ? 1 : 0,
-        choice_group_name: it.is_customizable ? it.choice_group_name.trim() : null,
-        options_str: it.is_customizable ? it.options_str.trim() : null,
+        is_customizable: (it.flavor_mode === 'choice' || it.is_customizable) ? 1 : 0,
+        choice_group_name: (it.flavor_mode === 'choice' || it.is_customizable) && it.choice_group_name ? it.choice_group_name.trim() : null,
+        options_str: (it.flavor_mode === 'choice' || it.is_customizable) && it.options_str ? it.options_str.trim() : null,
       })),
     };
   };

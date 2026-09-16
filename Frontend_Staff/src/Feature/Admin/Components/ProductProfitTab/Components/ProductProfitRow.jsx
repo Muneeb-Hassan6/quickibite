@@ -2,6 +2,7 @@ import React from "react";
 
 export default function ProductProfitRow({ item }) {
   const margin = Number(item.margin) || 0;
+  const profit = Number(item.profit) || 0;
   let badgeStyle = "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30";
   let marginColor = "bg-emerald-500";
 
@@ -33,16 +34,20 @@ export default function ProductProfitRow({ item }) {
       </td>
 
       <td className="p-3.5 sm:p-4 align-middle font-bold text-[var(--text-secondary)] font-mono">
-        Rs. {Number(item.revenue || 0).toLocaleString()}
+        Rs. {Math.round(Number(item.revenue || 0)).toLocaleString()}
       </td>
 
       <td className="p-3.5 sm:p-4 align-middle text-[var(--text-secondary)] font-medium font-mono">
-        Rs. {Number(item.cogs || 0).toLocaleString()}
+        Rs. {Math.round(Number(item.cogs || 0)).toLocaleString()}
       </td>
 
       <td className="p-3.5 sm:p-4 align-middle">
-        <span className="font-black text-sm text-emerald-500 font-mono">
-          Rs. {Number(item.profit || 0).toLocaleString()}
+        <span
+          className={`font-black text-sm font-mono ${
+            profit < 0 ? "text-rose-500" : "text-emerald-500"
+          }`}
+        >
+          Rs. {Math.round(profit).toLocaleString()}
         </span>
       </td>
 
@@ -51,7 +56,7 @@ export default function ProductProfitRow({ item }) {
           <div className="w-20 h-2 bg-black/20 dark:bg-black/50 rounded-full overflow-hidden border border-[var(--border-subtle)]">
             <div
               className={`h-full rounded-full transition-all duration-500 ${marginColor}`}
-              style={{ width: `${Math.min(100, Math.max(5, margin))}%` }}
+              style={{ width: `${Math.min(100, Math.max(0, margin))}%` }}
             />
           </div>
           <span

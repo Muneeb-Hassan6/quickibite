@@ -25,6 +25,7 @@ const DealMaker = ({ editDeal, onSuccess }) => {
     handleAddItemRow,
     handleRemoveItemRow,
     handleItemChange,
+    handleUpdateItemRow,
     handleQuickSelectMenu,
     menuItems,
     availableAddonCategories,
@@ -80,6 +81,7 @@ const DealMaker = ({ editDeal, onSuccess }) => {
             handleAddItemRow={handleAddItemRow}
             handleRemoveItemRow={handleRemoveItemRow}
             handleItemChange={handleItemChange}
+            handleUpdateItemRow={handleUpdateItemRow}
             handleQuickSelectMenu={handleQuickSelectMenu}
             menuItems={menuItems}
             availableAddonCategories={availableAddonCategories}

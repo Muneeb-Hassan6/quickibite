@@ -28,7 +28,7 @@ try {
         exit();
     }
 
-    $itemQuery = "SELECT id, menu_item_id, item_title, quantity, is_customizable, choice_group_name, options_json 
+    $itemQuery = "SELECT id, menu_item_id, category, item_title, size, flavor_name, flavor_mode, quantity, is_customizable, choice_group_name, options_json 
                   FROM deal_items 
                   WHERE deal_id = :deal_id 
                   ORDER BY id ASC";
@@ -38,6 +38,32 @@ try {
 
     // Process stock cascading across slots and flavor options
     DealInventoryHelper::processDeal($deal, $rawItems);
+
+    date_default_timezone_set('Asia/Karachi');
+    $current_time = date('H:i:s');
+    $isPermanent = intval($deal['is_permanent'] ?? 1) === 1;
+    $isTimeActive = true;
+    $timeWindowText = "";
+
+    if (!$isPermanent && !empty($deal['start_time']) && !empty($deal['end_time'])) {
+        $st = $deal['start_time'];
+        $et = $deal['end_time'];
+        $start_ts = strtotime($st);
+        $end_ts = strtotime($et);
+        $curr_ts = strtotime($current_time);
+
+        if ($end_ts > $start_ts) {
+            $isTimeActive = ($curr_ts >= $start_ts && $curr_ts <= $end_ts);
+        } else {
+            $isTimeActive = ($curr_ts >= $start_ts || $curr_ts <= $end_ts);
+        }
+
+        $timeWindowText = date("h:i A", $start_ts) . " - " . date("h:i A", $end_ts);
+    }
+
+    $deal['is_time_active'] = $isTimeActive;
+    $deal['isTimeActive'] = $isTimeActive;
+    $deal['time_window_text'] = $timeWindowText;
 
     $deal['badge_tag'] = $deal['badge_tag'] ?? $deal['tag'] ?? 'HOT DEAL';
     $deal['is_deal'] = true;

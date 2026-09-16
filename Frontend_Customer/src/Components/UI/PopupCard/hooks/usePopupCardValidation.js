@@ -48,6 +48,7 @@ export function usePopupCardValidation({
     selectedFries,
     hasDrinkInCombo,
     selectedDrink,
+    dynamicSelections = {},
     specialNote,
     singleUnitTotal,
     quantity,
@@ -92,6 +93,18 @@ export function usePopupCardValidation({
       if (hasPizzaInCombo) noteParts.push(`Pizza: ${selectedPizza}`);
       if (hasFriesInCombo) noteParts.push(`Fries: ${selectedFries}`);
       if (hasDrinkInCombo) noteParts.push(`Drink: ${selectedDrink}`);
+      
+      // Dynamic selections notes
+      if (dynamicSelections && typeof dynamicSelections === 'object') {
+        Object.entries(dynamicSelections).forEach(([slotId, val]) => {
+          if (val) {
+            const matchedSlot = comboItems.find(c => c.id == slotId);
+            const slotLabel = matchedSlot ? matchedSlot.name : `Option #${slotId}`;
+            noteParts.push(`${slotLabel}: ${val}`);
+          }
+        });
+      }
+
       if (addonsSummary) noteParts.push(`Addons: ${addonsSummary}`);
       if (specialNote) noteParts.push(`Note: ${specialNote}`);
 
@@ -108,11 +121,13 @@ export function usePopupCardValidation({
         is_deal: true,
         image: finalImage,
         deal_items: comboItems,
+        dynamicSelections,
         selectedFlavors: {
           pizza: hasPizzaInCombo ? selectedPizza : null,
           fries: hasFriesInCombo ? selectedFries : null,
           drink: hasDrinkInCombo ? selectedDrink : null,
           addOns: selectedUpsells,
+          ...dynamicSelections,
         },
         addons: combinedAddons,
         selected_addons: combinedAddons,

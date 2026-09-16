@@ -17,7 +17,7 @@ try {
     foreach ($deals as &$deal) {
         $deal_id = $deal['id'];
         
-        $itemQuery = "SELECT id, item_title, quantity, is_customizable, choice_group_name, options_json 
+        $itemQuery = "SELECT id, menu_item_id, category, item_title, size, flavor_name, flavor_mode, quantity, is_customizable, choice_group_name, options_json 
                       FROM deal_items 
                       WHERE deal_id = :deal_id 
                       ORDER BY id ASC";
@@ -35,7 +35,12 @@ try {
 
             $itemsList[] = [
                 'id' => $it['id'],
+                'menu_item_id' => intval($it['menu_item_id'] ?? 0),
+                'category' => $it['category'] ?? '',
                 'item_title' => $it['item_title'],
+                'size' => $it['size'] ?? 'Regular',
+                'flavor_name' => $it['flavor_name'] ?? '',
+                'flavor_mode' => $it['flavor_mode'] ?? 'fixed',
                 'quantity' => intval($it['quantity'] ?? 1),
                 'is_customizable' => intval($it['is_customizable'] ?? 0) === 1,
                 'choice_group_name' => $it['choice_group_name'] ?? '',

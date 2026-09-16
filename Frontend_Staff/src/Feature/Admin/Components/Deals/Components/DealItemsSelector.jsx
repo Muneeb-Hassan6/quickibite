@@ -8,6 +8,7 @@ export default function DealItemsSelector({
   handleAddItemRow,
   handleRemoveItemRow,
   handleItemChange,
+  handleUpdateItemRow,
   handleQuickSelectMenu,
   menuItems = [],
   availableAddonCategories = [],
@@ -25,6 +26,7 @@ export default function DealItemsSelector({
         handleAddItemRow={handleAddItemRow}
         handleRemoveItemRow={handleRemoveItemRow}
         handleItemChange={handleItemChange}
+        handleUpdateItemRow={handleUpdateItemRow}
         handleQuickSelectMenu={handleQuickSelectMenu}
         menuItems={menuItems}
       />

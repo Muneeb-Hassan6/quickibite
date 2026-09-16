@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
-import { FaFire, FaShoppingBag } from "react-icons/fa";
+import { FaFire, FaShoppingBag, FaClock } from "react-icons/fa";
 import PopupCard from "./PopupCard";
 import { resolveImageUrl } from "../../utils/imageOptimizer";
 
@@ -28,13 +28,21 @@ const DealCard = ({ deal }) => {
     deal.inStock === 0 ||
     deal.inStock === "0";
 
+  // Timing check: check if deal is time-bound and currently inactive
+  const isPermanent = deal.is_permanent == 1 || deal.is_permanent === true;
+  const isTimeInactive =
+    !isPermanent &&
+    (deal.is_time_active === false || deal.isTimeActive === false);
+
+  const isUnavailable = isOutOfStock || isTimeInactive;
+
   const rawImage =
     deal.img || deal.image || deal.image_url || deal.photo || "";
   const finalImage = resolveImageUrl(rawImage, 600);
 
   const openPopup = (e) => {
     if (e) e.stopPropagation();
-    if (isOutOfStock) return;
+    if (isUnavailable) return;
     setIsOpen(true);
   };
 
@@ -48,7 +56,7 @@ const DealCard = ({ deal }) => {
       <div
         onClick={openPopup}
         className={`group relative w-full bg-white dark:bg-neutral-900/90 border rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between transition-all duration-300 shadow-md select-none ${
-          isOutOfStock
+          isUnavailable
             ? "opacity-60 grayscale contrast-125 border-neutral-300 dark:border-neutral-800 pointer-events-none cursor-not-allowed"
             : "border-gray-200/80 dark:border-white/10 hover:border-amber-500/40 cursor-pointer"
         }`}
@@ -56,7 +64,7 @@ const DealCard = ({ deal }) => {
         {/* 📸 IMAGE CONTAINER */}
         <div className="w-full h-28 min-[400px]:h-32 sm:h-40 md:h-44 flex items-center justify-center overflow-hidden my-1 relative rounded-lg sm:rounded-xl bg-gray-50 dark:bg-neutral-800/60 transition-colors duration-300 group-hover:bg-amber-400/10 dark:group-hover:bg-amber-400/5">
           {/* Animated Bottom-to-Top Amber Background Layer */}
-          {!isOutOfStock && (
+          {!isUnavailable && (
             <div className="absolute inset-0 bg-amber-400 dark:bg-amber-400 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-0 pointer-events-none rounded-lg sm:rounded-xl" />
           )}
 
@@ -69,12 +77,32 @@ const DealCard = ({ deal }) => {
             </div>
           )}
 
+          {/* Time Inactive Blackout Overlay & Badge */}
+          {!isOutOfStock && isTimeInactive && (
+            <div className="absolute inset-0 z-20 bg-black/75 backdrop-blur-[2px] flex flex-col items-center justify-center p-2 rounded-lg sm:rounded-xl pointer-events-none text-center">
+              <span className="bg-neutral-950/95 text-amber-400 border border-amber-500/40 text-[9px] sm:text-[10px] font-black uppercase tracking-wider font-['Oswald',sans-serif] px-2.5 py-1 rounded-full shadow-2xl flex items-center gap-1">
+                <FaClock className="text-amber-400 text-[10px]" />
+                {deal.time_window_text || "Scheduled Deal"}
+              </span>
+              <span className="text-[9px] text-white/90 font-bold mt-1 tracking-wide uppercase">
+                Currently Closed
+              </span>
+            </div>
+          )}
+
           {/* Badges Overlay */}
           <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 z-10 flex flex-wrap gap-1 items-center pointer-events-none">
-            <span className="inline-flex items-center gap-1 backdrop-blur-md bg-red-600/95 text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded-md shadow-xs border border-white/20 tracking-wide uppercase">
-              <FaFire className="text-[8px] text-amber-300" />
-              {deal.badge_tag || deal.tag || "DEAL"}
-            </span>
+            {isTimeInactive ? (
+              <span className="inline-flex items-center gap-1 backdrop-blur-md bg-neutral-900/90 text-amber-300 text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded-md shadow-xs border border-amber-400/30 tracking-wide uppercase">
+                <FaClock className="text-[8px] text-amber-300" />
+                {deal.time_window_text || "TIMED"}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 backdrop-blur-md bg-red-600/95 text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded-md shadow-xs border border-white/20 tracking-wide uppercase">
+                <FaFire className="text-[8px] text-amber-300" />
+                {deal.badge_tag || deal.tag || "DEAL"}
+              </span>
+            )}
           </div>
 
           {/* Food Cutout Image */}
@@ -92,7 +120,7 @@ const DealCard = ({ deal }) => {
         {/* 📝 TITLE */}
         <h5
           className={`text-xs sm:text-base font-bold font-['Oswald',sans-serif] tracking-wide uppercase line-clamp-1 mt-1 text-left transition-colors m-0 ${
-            isOutOfStock ? "text-neutral-500 dark:text-neutral-400" : "text-gray-900 dark:text-white group-hover:text-amber-500"
+            isUnavailable ? "text-neutral-500 dark:text-neutral-400" : "text-gray-900 dark:text-white group-hover:text-amber-500"
           }`}
           title={title}
         >
@@ -104,12 +132,12 @@ const DealCard = ({ deal }) => {
           {/* Price */}
           <div className="flex items-baseline gap-1 flex-wrap">
             <span className={`text-[10px] sm:text-xs font-extrabold uppercase tracking-tight font-['Oswald',sans-serif] ${
-              isOutOfStock ? "text-neutral-400 dark:text-neutral-500" : "text-amber-500 dark:text-amber-400"
+              isUnavailable ? "text-neutral-400 dark:text-neutral-500" : "text-amber-500 dark:text-amber-400"
             }`}>
               Rs
             </span>
             <span className={`text-xs sm:text-sm md:text-base font-bold font-['Oswald',sans-serif] ${
-              isOutOfStock ? "text-neutral-400 dark:text-neutral-500" : "text-amber-500 dark:text-amber-400"
+              isUnavailable ? "text-neutral-400 dark:text-neutral-500" : "text-amber-500 dark:text-amber-400"
             }`}>
               {dealPrice}
             </span>
@@ -123,29 +151,33 @@ const DealCard = ({ deal }) => {
           {/* Add Button */}
           <button
             type="button"
-            disabled={isOutOfStock}
+            disabled={isUnavailable}
             className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center font-bold shadow-sm border-none transition-all ${
-              isOutOfStock
+              isUnavailable
                 ? "bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed opacity-60"
                 : "bg-amber-500 hover:bg-amber-400 text-black active:scale-95 cursor-pointer"
             }`}
             onClick={(e) => {
-              if (isOutOfStock) {
+              if (isUnavailable) {
                 e.stopPropagation();
                 return;
               }
               openPopup(e);
             }}
-            aria-label={isOutOfStock ? "Out of Stock" : "Customize deal"}
+            aria-label={isOutOfStock ? "Out of Stock" : isTimeInactive ? "Time Closed" : "Customize deal"}
           >
-            <FaShoppingBag className="text-[10px] sm:text-xs" />
+            {isTimeInactive ? (
+              <FaClock className="text-[10px] sm:text-xs text-amber-500/70" />
+            ) : (
+              <FaShoppingBag className="text-[10px] sm:text-xs" />
+            )}
           </button>
         </div>
       </div>
 
       {/* 🚀 MODAL PORTAL */}
       {isOpen &&
-        !isOutOfStock &&
+        !isUnavailable &&
         ReactDOM.createPortal(
           <PopupCard
             item={{

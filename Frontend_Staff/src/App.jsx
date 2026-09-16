@@ -65,6 +65,8 @@ const LoadingFallback = () => (
 
 // 🔥 NAYA: PROTECTED ROUTE IMPORT (Path apne hisaab se adjust kar lijiyega)
 import ProtectedRoute from "./Components/ProtectedRoute";
+import StaffPWAInstallBanner from "./Components/PWA/StaffPWAInstallBanner";
+import useWakeLock from "./Hooks/useWakeLock";
 
 // LIBRARIES
 import {
@@ -119,6 +121,9 @@ const MainContent = () => {
   const shouldHideUI =
     isKitchenPage || isCashierPage || isAdminRoute || isLoginPage;
 
+  // Keep Kitchen/POS screens awake
+  useWakeLock(!isLoginPage);
+
   return (
     <div
       className="App w-full overflow-x-hidden"
@@ -149,6 +154,9 @@ const MainContent = () => {
           },
         }}
       />
+
+      {/* 📲 STAFF PWA DESKTOP/TABLET INSTALL BANNER */}
+      <StaffPWAInstallBanner />
 
       <React.Suspense fallback={<LoadingFallback />}>
         <Routes>

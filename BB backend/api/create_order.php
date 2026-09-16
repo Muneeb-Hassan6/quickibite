@@ -169,6 +169,55 @@ if (empty($cart_items)) {
 }
 
 if (!empty($cart_items)) {
+    // Deal In-Stock & Availability Pre-validation
+    include_once __DIR__ . '/../config/DealInventoryHelper.php';
+    foreach ($cart_items as $item) {
+        if (InventoryHelper::isDealItem($item)) {
+            $dealId = InventoryHelper::extractDealId($item);
+            if ($dealId > 0) {
+                $dStmt = $db->prepare("SELECT * FROM deals WHERE id = ? LIMIT 1");
+                $dStmt->execute([$dealId]);
+                $dealRow = $dStmt->fetch(PDO::FETCH_ASSOC);
+                if ($dealRow) {
+                    $itStmt = $db->prepare("SELECT * FROM deal_items WHERE deal_id = ?");
+                    $itStmt->execute([$dealId]);
+                    $dItems = $itStmt->fetchAll(PDO::FETCH_ASSOC);
+                    DealInventoryHelper::processDeal($dealRow, $dItems);
+                    if (isset($dealRow['inStock']) && $dealRow['inStock'] === false) {
+                        http_response_code(400);
+                        echo json_encode([
+                            "success" => false,
+                            "message" => "Deal '" . ($dealRow['title'] ?? 'Selected Deal') . "' contains out-of-stock items and cannot be ordered right now."
+                        ]);
+                        exit();
+                    }
+
+                    // Validate deal timing window
+                    $isPermanent = intval($dealRow['is_permanent'] ?? 1) === 1;
+                    if (!$isPermanent && !empty($dealRow['start_time']) && !empty($dealRow['end_time'])) {
+                        $st = $dealRow['start_time'];
+                        $et = $dealRow['end_time'];
+                        $start_ts = strtotime($st);
+                        $end_ts = strtotime($et);
+                        $curr_ts = strtotime(date('H:i:s'));
+                        $isTimeActive = ($end_ts > $start_ts)
+                            ? ($curr_ts >= $start_ts && $curr_ts <= $end_ts)
+                            : ($curr_ts >= $start_ts || $curr_ts <= $end_ts);
+
+                        if (!$isTimeActive) {
+                            http_response_code(400);
+                            echo json_encode([
+                                "success" => false,
+                                "message" => "Deal '" . ($dealRow['title'] ?? 'Selected Deal') . "' is only available between " . date("h:i A", $start_ts) . " and " . date("h:i A", $end_ts) . "."
+                            ]);
+                            exit();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     foreach($cart_items as $item) {
         if (!empty($item->is_addon) && !empty($item->addon_data)) {
             $addon_id = intval($item->addon_data->id ?? 0);

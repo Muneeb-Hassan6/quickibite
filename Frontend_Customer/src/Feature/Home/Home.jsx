@@ -72,6 +72,11 @@ const HomePage = () => {
           inStock: deal.inStock !== false && deal.inStock !== 0 && deal.inStock !== "0",
           is_deal: true,
           size: "Combo",
+          is_permanent: deal.is_permanent == 1 || deal.is_permanent === true,
+          start_time: deal.start_time,
+          end_time: deal.end_time,
+          is_time_active: deal.is_time_active !== false && deal.isTimeActive !== false,
+          time_window_text: deal.time_window_text || "",
         }));
       }
       return [];
@@ -124,6 +129,11 @@ const HomePage = () => {
             isAvailable: data.deal.isAvailable !== false,
             inStock: data.deal.inStock !== false && data.deal.inStock !== 0 && data.deal.inStock !== "0",
             size: "Combo",
+            is_permanent: data.deal.is_permanent == 1 || data.deal.is_permanent === true,
+            start_time: data.deal.start_time,
+            end_time: data.deal.end_time,
+            is_time_active: data.deal.is_time_active !== false && data.deal.isTimeActive !== false,
+            time_window_text: data.deal.time_window_text || "",
           };
         }
       } catch (e) {
@@ -132,6 +142,12 @@ const HomePage = () => {
     }
 
     const itemToOpen = fullDeal || deal;
+    const isPermanent = itemToOpen.is_permanent == 1 || itemToOpen.is_permanent === true;
+    const isTimeInactive = !isPermanent && (itemToOpen.is_time_active === false || itemToOpen.isTimeActive === false);
+    if (isTimeInactive) {
+      return; // Do not open inactive deal
+    }
+
     setSelectedPopupItem({
       ...itemToOpen,
       is_deal: true,

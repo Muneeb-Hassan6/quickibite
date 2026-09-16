@@ -41,7 +41,12 @@ export function useDealMaker({ editDeal, onSuccess }) {
   // Dynamic Included Items & Choices Repeater State
   const [includedItems, setIncludedItems] = useState([
     {
+      menu_item_id: 0,
+      category: "",
       item_title: "",
+      size: "Regular",
+      flavor_name: "",
+      flavor_mode: "fixed",
       quantity: 1,
       is_customizable: false,
       choice_group_name: "",
@@ -109,14 +114,19 @@ export function useDealMaker({ editDeal, onSuccess }) {
       ) {
         setIncludedItems(
           editDeal.items.map((it) => ({
+            menu_item_id: it.menu_item_id || 0,
+            category: it.category || "",
             item_title: it.item_title || "",
+            size: it.size || "Regular",
+            flavor_name: it.flavor_name || "",
+            flavor_mode: it.flavor_mode || (it.is_customizable ? "choice" : "fixed"),
             quantity: it.quantity || 1,
             is_customizable:
-              it.is_customizable == 1 || it.is_customizable === true,
+              it.is_customizable == 1 || it.is_customizable === true || it.flavor_mode === "choice",
             choice_group_name: it.choice_group_name || "",
             options_str:
               it.options_str ||
-              (it.options ? it.options.map((o) => o.option_name).join(", ") : ""),
+              (it.options ? it.options.map((o) => typeof o === "string" ? o : o.option_name || o.name).join(", ") : ""),
           }))
         );
       }
@@ -153,7 +163,12 @@ export function useDealMaker({ editDeal, onSuccess }) {
       setSelectedAddonCategories(["drinks", "Potato Corner", "Sauses", "Grilled Wings"]);
       setIncludedItems([
         {
+          menu_item_id: 0,
+          category: "",
           item_title: "",
+          size: "Regular",
+          flavor_name: "",
+          flavor_mode: "fixed",
           quantity: 1,
           is_customizable: false,
           choice_group_name: "",
@@ -185,7 +200,12 @@ export function useDealMaker({ editDeal, onSuccess }) {
     setIncludedItems([
       ...includedItems,
       {
+        menu_item_id: 0,
+        category: "",
         item_title: "",
+        size: "Regular",
+        flavor_name: "",
+        flavor_mode: "fixed",
         quantity: 1,
         is_customizable: false,
         choice_group_name: "",
@@ -201,7 +221,12 @@ export function useDealMaker({ editDeal, onSuccess }) {
         ? updated
         : [
             {
+              menu_item_id: 0,
+              category: "",
               item_title: "",
+              size: "Regular",
+              flavor_name: "",
+              flavor_mode: "fixed",
               quantity: 1,
               is_customizable: false,
               choice_group_name: "",
@@ -217,12 +242,27 @@ export function useDealMaker({ editDeal, onSuccess }) {
     setIncludedItems(updated);
   };
 
+  const handleUpdateItemRow = (index, updates) => {
+    const updated = [...includedItems];
+    updated[index] = { ...updated[index], ...updates };
+    setIncludedItems(updated);
+  };
+
   const handleQuickSelectMenu = (index, menuItemId) => {
     const selected = menuItems.find((m) => m.id == menuItemId);
     if (!selected) return;
 
     const updated = [...includedItems];
-    updated[index].item_title = selected.name || selected.title;
+    const defaultSize = selected.variants && selected.variants.length > 0 ? selected.variants[0].size : 'Regular';
+    updated[index] = {
+      ...updated[index],
+      menu_item_id: selected.id,
+      category: selected.category || "",
+      flavor_name: selected.name || selected.title,
+      flavor_mode: "fixed",
+      size: defaultSize,
+      item_title: selected.name || selected.title,
+    };
     setIncludedItems(updated);
   };
 
@@ -320,6 +360,7 @@ export function useDealMaker({ editDeal, onSuccess }) {
     handleAddItemRow,
     handleRemoveItemRow,
     handleItemChange,
+    handleUpdateItemRow,
     handleQuickSelectMenu,
     menuItems,
     availableAddonCategories: AVAILABLE_ADDON_CATEGORIES,

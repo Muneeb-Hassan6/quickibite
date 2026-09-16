@@ -16,11 +16,22 @@ export default function ComboIncludedList({ comboItems = [] }) {
                 className="w-10 h-10 rounded-xl object-cover p-0.5 border border-amber-400/30 bg-amber-400/10 shrink-0"
               />
               <div className="flex flex-col">
-                <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                  {cItem.name}
-                </span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
+                    {cItem.name}
+                  </span>
+                  {cItem.size && cItem.size !== "Regular" && (
+                    <span className="text-[10px] font-black bg-amber-500/20 text-amber-600 dark:text-amber-400 px-1.5 py-0.2 rounded border border-amber-500/30">
+                      {cItem.size}
+                    </span>
+                  )}
+                </div>
                 <span className="text-[11px] text-gray-500 dark:text-neutral-400 font-medium">
-                  Freshly prepared portion
+                  {cItem.flavor_name
+                    ? `Flavor: ${cItem.flavor_name}`
+                    : cItem.is_customizable
+                      ? "Choice of flavor below"
+                      : "Freshly prepared portion"}
                 </span>
               </div>
             </div>
