@@ -19,7 +19,7 @@ const CategoryItemPage = () => {
         `${API_BASE}/get_menu.php`
       );
       const data = await response.json();
-      return Array.isArray(data) ? data.filter((item) => item.isAvailable !== false) : [];
+      return Array.isArray(data) ? data : [];
     },
   });
 

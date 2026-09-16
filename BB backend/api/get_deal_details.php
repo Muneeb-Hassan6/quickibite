@@ -1,6 +1,7 @@
 <?php
 include_once __DIR__ . '/../config/cors_headers.php';
 include_once __DIR__ . '/../config/Database.php';
+include_once __DIR__ . '/../config/DealInventoryHelper.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -14,6 +15,9 @@ if ($deal_id <= 0) {
 }
 
 try {
+    // Initialize inventory helper for stock cascading
+    DealInventoryHelper::init($db);
+
     $stmt = $db->prepare("SELECT * FROM deals WHERE id = :id AND is_active = 1 AND (expires_at IS NULL OR expires_at > NOW())");
     $stmt->execute([':id' => $deal_id]);
     $deal = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -24,7 +28,7 @@ try {
         exit();
     }
 
-    $itemQuery = "SELECT id, item_title, quantity, is_customizable, choice_group_name, options_json 
+    $itemQuery = "SELECT id, menu_item_id, item_title, quantity, is_customizable, choice_group_name, options_json 
                   FROM deal_items 
                   WHERE deal_id = :deal_id 
                   ORDER BY id ASC";
@@ -32,32 +36,10 @@ try {
     $itemStmt->execute([':deal_id' => $deal_id]);
     $rawItems = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $itemsList = [];
-    $descParts = [];
+    // Process stock cascading across slots and flavor options
+    DealInventoryHelper::processDeal($deal, $rawItems);
 
-    foreach ($rawItems as $it) {
-        $options = null;
-        if (!empty($it['options_json'])) {
-            $options = is_string($it['options_json']) ? json_decode($it['options_json'], true) : $it['options_json'];
-        }
-
-        $itemsList[] = [
-            'id' => $it['id'],
-            'item_title' => $it['item_title'],
-            'quantity' => intval($it['quantity'] ?? 1),
-            'is_customizable' => intval($it['is_customizable'] ?? 0) === 1,
-            'choice_group_name' => $it['choice_group_name'],
-            'options' => $options ?? []
-        ];
-
-        $descParts[] = ($it['quantity'] > 1 ? $it['quantity'] . 'x ' : '1x ') . $it['item_title'];
-    }
-
-    $deal['items'] = $itemsList;
     $deal['badge_tag'] = $deal['badge_tag'] ?? $deal['tag'] ?? 'HOT DEAL';
-    $deal['items_description'] = !empty($deal['description']) 
-        ? $deal['description'] 
-        : (count($descParts) > 0 ? implode(' + ', $descParts) : 'Exclusive Combo Deal');
     $deal['is_deal'] = true;
     $deal['price'] = floatval($deal['price']);
     $deal['original_price'] = !empty($deal['original_price']) ? floatval($deal['original_price']) : null;

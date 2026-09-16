@@ -63,7 +63,7 @@ const DealsPage = () => {
   // Combine & Normalize Deals
   const allDeals = useMemo(() => {
     const menuTopDeals = menuData
-      .filter((item) => item.isTopDeal === true && item.isAvailable !== false)
+      .filter((item) => item.isTopDeal === true)
       .map((item) => ({
         ...item,
         is_deal: true,

@@ -116,6 +116,8 @@ const PopupCard = ({ image, title, description, price, item, closePopup }) => {
               hasDrinkInCombo={cardState.hasDrinkInCombo}
               selectedDrink={cardState.selectedDrink}
               setSelectedDrink={cardState.setSelectedDrink}
+              dynamicSelections={cardState.dynamicSelections}
+              setDynamicSelection={cardState.setDynamicSelection}
             />
 
             {/* 2. Choose Size / Portion (Regular Products) */}

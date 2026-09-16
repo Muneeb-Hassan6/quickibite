@@ -22,12 +22,19 @@ const DealCard = ({ deal }) => {
       ? Math.round((savings / originalPrice) * 100)
       : 0;
 
+  // Out-of-Stock check based strictly on inStock inventory flag
+  const isOutOfStock =
+    deal.inStock === false ||
+    deal.inStock === 0 ||
+    deal.inStock === "0";
+
   const rawImage =
     deal.img || deal.image || deal.image_url || deal.photo || "";
   const finalImage = resolveImageUrl(rawImage, 600);
 
   const openPopup = (e) => {
     if (e) e.stopPropagation();
+    if (isOutOfStock) return;
     setIsOpen(true);
   };
 
@@ -40,12 +47,27 @@ const DealCard = ({ deal }) => {
     <>
       <div
         onClick={openPopup}
-        className="group relative w-full bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between hover:border-amber-500/40 transition-all duration-300 shadow-md cursor-pointer select-none"
+        className={`group relative w-full bg-white dark:bg-neutral-900/90 border rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between transition-all duration-300 shadow-md select-none ${
+          isOutOfStock
+            ? "opacity-60 grayscale contrast-125 border-neutral-300 dark:border-neutral-800 pointer-events-none cursor-not-allowed"
+            : "border-gray-200/80 dark:border-white/10 hover:border-amber-500/40 cursor-pointer"
+        }`}
       >
         {/* 📸 IMAGE CONTAINER */}
         <div className="w-full h-28 min-[400px]:h-32 sm:h-40 md:h-44 flex items-center justify-center overflow-hidden my-1 relative rounded-lg sm:rounded-xl bg-gray-50 dark:bg-neutral-800/60 transition-colors duration-300 group-hover:bg-amber-400/10 dark:group-hover:bg-amber-400/5">
           {/* Animated Bottom-to-Top Amber Background Layer */}
-          <div className="absolute inset-0 bg-amber-400 dark:bg-amber-400 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-0 pointer-events-none rounded-lg sm:rounded-xl" />
+          {!isOutOfStock && (
+            <div className="absolute inset-0 bg-amber-400 dark:bg-amber-400 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-0 pointer-events-none rounded-lg sm:rounded-xl" />
+          )}
+
+          {/* Out of Stock Blackout Overlay & Badge */}
+          {isOutOfStock && (
+            <div className="absolute inset-0 z-20 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center p-2 rounded-lg sm:rounded-xl pointer-events-none">
+              <span className="bg-neutral-950/90 text-white border border-white/20 text-[10px] sm:text-xs font-black uppercase tracking-wider font-['Oswald',sans-serif] px-3 py-1 rounded-full shadow-2xl">
+                Out of Stock
+              </span>
+            </div>
+          )}
 
           {/* Badges Overlay */}
           <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 z-10 flex flex-wrap gap-1 items-center pointer-events-none">
@@ -69,7 +91,9 @@ const DealCard = ({ deal }) => {
 
         {/* 📝 TITLE */}
         <h5
-          className="text-xs sm:text-base font-bold font-['Oswald',sans-serif] tracking-wide text-gray-900 dark:text-white uppercase line-clamp-1 mt-1 text-left group-hover:text-amber-500 transition-colors m-0"
+          className={`text-xs sm:text-base font-bold font-['Oswald',sans-serif] tracking-wide uppercase line-clamp-1 mt-1 text-left transition-colors m-0 ${
+            isOutOfStock ? "text-neutral-500 dark:text-neutral-400" : "text-gray-900 dark:text-white group-hover:text-amber-500"
+          }`}
           title={title}
         >
           {title}
@@ -79,10 +103,14 @@ const DealCard = ({ deal }) => {
         <div className="flex items-center justify-between mt-2 pt-1 border-t border-gray-100 dark:border-white/5">
           {/* Price */}
           <div className="flex items-baseline gap-1 flex-wrap">
-            <span className="text-[10px] sm:text-xs font-extrabold text-amber-500 dark:text-amber-400 uppercase tracking-tight font-['Oswald',sans-serif]">
+            <span className={`text-[10px] sm:text-xs font-extrabold uppercase tracking-tight font-['Oswald',sans-serif] ${
+              isOutOfStock ? "text-neutral-400 dark:text-neutral-500" : "text-amber-500 dark:text-amber-400"
+            }`}>
               Rs
             </span>
-            <span className="text-xs sm:text-sm md:text-base font-bold text-amber-500 dark:text-amber-400 font-['Oswald',sans-serif]">
+            <span className={`text-xs sm:text-sm md:text-base font-bold font-['Oswald',sans-serif] ${
+              isOutOfStock ? "text-neutral-400 dark:text-neutral-500" : "text-amber-500 dark:text-amber-400"
+            }`}>
               {dealPrice}
             </span>
             {originalPrice && originalPrice > dealPrice && (
@@ -95,17 +123,29 @@ const DealCard = ({ deal }) => {
           {/* Add Button */}
           <button
             type="button"
-            className="w-7 h-7 sm:w-9 sm:h-9 bg-amber-500 hover:bg-amber-400 text-black rounded-lg sm:rounded-xl flex items-center justify-center font-bold shadow-sm active:scale-95 cursor-pointer border-none transition-all"
-            onClick={openPopup}
-            aria-label="Customize deal"
+            disabled={isOutOfStock}
+            className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center font-bold shadow-sm border-none transition-all ${
+              isOutOfStock
+                ? "bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed opacity-60"
+                : "bg-amber-500 hover:bg-amber-400 text-black active:scale-95 cursor-pointer"
+            }`}
+            onClick={(e) => {
+              if (isOutOfStock) {
+                e.stopPropagation();
+                return;
+              }
+              openPopup(e);
+            }}
+            aria-label={isOutOfStock ? "Out of Stock" : "Customize deal"}
           >
-            <FaShoppingBag className="text-[10px] sm:text-xs text-neutral-950" />
+            <FaShoppingBag className="text-[10px] sm:text-xs" />
           </button>
         </div>
       </div>
 
       {/* 🚀 MODAL PORTAL */}
       {isOpen &&
+        !isOutOfStock &&
         ReactDOM.createPortal(
           <PopupCard
             item={{

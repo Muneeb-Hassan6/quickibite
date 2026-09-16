@@ -111,6 +111,7 @@ const AdminDashboard = () => {
         {/* Fixed Top Header (Never Scrolls Away) */}
         <AdminHeader
           activeTab={activeTab}
+          setActiveTab={setActiveTab}
           setIsSidebarOpen={setIsSidebarOpen}
           isDarkMode={isDarkMode}
           toggleTheme={toggleTheme}

@@ -21,6 +21,12 @@ export function usePopupCard({
   const [selectedPizza, setSelectedPizza] = useState("Chicken Tikka");
   const [selectedFries, setSelectedFries] = useState("Masala Fries");
   const [fullItem, setFullItem] = useState(item);
+  const [dynamicSelections, setDynamicSelectionsState] = useState({});
+
+  // Helper: set a single slot selection
+  const setDynamicSelection = (slotId, flavorName) => {
+    setDynamicSelectionsState(prev => ({ ...prev, [slotId]: flavorName }));
+  };
 
   const isDeal = Boolean(
     fullItem?.is_deal === true ||
@@ -77,6 +83,34 @@ export function usePopupCard({
   const hasDrinkInCombo = comboItems.some((c) => c.isDrink);
   const hasPizzaInCombo = comboItems.some((c) => c.isPizza);
   const hasFriesInCombo = comboItems.some((c) => c.isFries);
+
+  // Auto-select first available flavor for each customizable slot
+  useEffect(() => {
+    if (!comboItems || comboItems.length === 0) return;
+    const newSelections = {};
+    let pizzaSet = false, friesSet = false, drinkSet = false;
+    comboItems.forEach(slot => {
+      if (!slot.is_customizable || !Array.isArray(slot.options) || slot.options.length === 0) return;
+      // Find first in-stock option
+      const firstAvail = slot.options.find(o => {
+        if (typeof o === 'string') return true;
+        return o.inStock !== false;
+      });
+      const firstName = firstAvail
+        ? (typeof firstAvail === 'string' ? firstAvail : firstAvail.name)
+        : '';
+      if (firstName) {
+        newSelections[slot.id] = firstName;
+        // Also set legacy state
+        if (slot.isPizza && !pizzaSet) { setSelectedPizza(firstName); pizzaSet = true; }
+        if (slot.isFries && !friesSet) { setSelectedFries(firstName); friesSet = true; }
+        if (slot.isDrink && !drinkSet) { setSelectedDrink(firstName); drinkSet = true; }
+      }
+    });
+    if (Object.keys(newSelections).length > 0) {
+      setDynamicSelectionsState(prev => ({ ...prev, ...newSelections }));
+    }
+  }, [comboItems]);
 
   const [openSections, setOpenSections] = useState({
     comboIncludes: true,
@@ -246,6 +280,8 @@ export function usePopupCard({
     setSelectedFries,
     selectedDrink,
     setSelectedDrink,
+    dynamicSelections,
+    setDynamicSelection,
     productCustomAddons,
     selectedProductAddons: pricing.selectedAddons,
     toggleProductAddon: pricing.toggleProductAddon,

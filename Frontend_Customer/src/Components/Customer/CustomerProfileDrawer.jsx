@@ -149,18 +149,21 @@ export default function CustomerProfileDrawer() {
           (m.name && itemName && m.name.trim().toLowerCase() === itemName.trim().toLowerCase())
       );
 
-      // Check stock availability
+      // Check stock and active availability
       const isAvailable = matchedItem
         ? matchedItem.isAvailable !== false &&
           matchedItem.is_available !== 0 &&
           matchedItem.isAvailable !== 0 &&
           matchedItem.is_available !== "0" &&
-          matchedItem.isAvailable !== "0"
+          matchedItem.isAvailable !== "0" &&
+          matchedItem.inStock !== false &&
+          matchedItem.inStock !== 0 &&
+          matchedItem.inStock !== "0"
         : true;
 
       if (!isAvailable) {
         skippedCount += 1;
-        toast.error(`"${itemName}" is currently unavailable and was not reordered.`, {
+        toast.error(`"${itemName}" is currently out of stock and was not reordered.`, {
           duration: 4500,
         });
         return;

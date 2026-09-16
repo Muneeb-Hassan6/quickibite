@@ -37,7 +37,7 @@ const MenuPage = () => {
     queryFn: async () => {
       const res = await fetch(`${API_BASE}/get_menu.php`);
       const data = await res.json();
-      return Array.isArray(data) ? data.filter((i) => i.isAvailable !== false) : [];
+      return Array.isArray(data) ? data : [];
     },
   });
 

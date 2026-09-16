@@ -68,7 +68,8 @@ const HomePage = () => {
           items: deal.items || [],
           items_description: deal.items_description,
           description: deal.description || deal.items_description,
-          isAvailable: true,
+          isAvailable: deal.isAvailable !== false,
+          inStock: deal.inStock !== false && deal.inStock !== 0 && deal.inStock !== "0",
           is_deal: true,
           size: "Combo",
         }));
@@ -120,7 +121,8 @@ const HomePage = () => {
             image: data.deal.img,
             img: data.deal.img,
             is_deal: true,
-            isAvailable: true,
+            isAvailable: data.deal.isAvailable !== false,
+            inStock: data.deal.inStock !== false && data.deal.inStock !== 0 && data.deal.inStock !== "0",
             size: "Combo",
           };
         }

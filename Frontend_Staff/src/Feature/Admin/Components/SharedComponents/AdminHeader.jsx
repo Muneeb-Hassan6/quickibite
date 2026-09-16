@@ -9,6 +9,10 @@ import {
   FaTimesCircle,
   FaFire,
   FaCheck,
+  FaExclamationTriangle,
+  FaExclamationCircle,
+  FaArrowRight,
+  FaBoxes,
 } from "react-icons/fa";
 import { HiBars3BottomLeft } from "react-icons/hi2";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -28,7 +32,7 @@ const TAB_DESCRIPTIONS = {
   settings: "Restaurant profile, operational timings, delivery rules, and legal terms",
 };
 
-const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
+const AdminHeader = ({ activeTab, setActiveTab, setIsSidebarOpen }) => {
   const { theme, toggleTheme } = useTheme();
   const queryClient = useQueryClient();
   const [currentTime, setCurrentTime] = useState("");
@@ -95,8 +99,15 @@ const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
     }
   };
 
-  const getNotifIcon = (type) => {
-    switch (type) {
+  const getNotifIcon = (notif) => {
+    if (notif.type === "stock_alert") {
+      return notif.severity === "critical" ? (
+        <FaExclamationTriangle className="text-rose-500 text-xs animate-pulse" />
+      ) : (
+        <FaExclamationCircle className="text-amber-500 text-xs" />
+      );
+    }
+    switch (notif.type) {
       case "remake":
         return <FaUtensils className="text-amber-500 text-xs" />;
       case "delivery_failed":
@@ -202,19 +213,40 @@ const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
                     <div
                       key={notif.id}
                       className={`p-3 transition-colors flex items-start gap-2.5 ${
-                        notif.is_read == 0
+                        notif.type === "stock_alert" && notif.severity === "critical"
+                          ? "bg-rose-500/5 dark:bg-rose-500/10"
+                          : notif.type === "stock_alert" && notif.severity === "warning"
+                          ? "bg-amber-500/5 dark:bg-amber-500/10"
+                          : notif.is_read == 0
                           ? "bg-amber-500/5 dark:bg-amber-500/10"
                           : "hover:bg-zinc-50 dark:hover:bg-neutral-800/40"
                       }`}
                     >
-                      <div className="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 mt-0.5">
-                        {getNotifIcon(notif.type)}
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                        notif.type === "stock_alert" && notif.severity === "critical"
+                          ? "bg-rose-100 dark:bg-rose-900/40"
+                          : notif.type === "stock_alert" && notif.severity === "warning"
+                          ? "bg-amber-100 dark:bg-amber-900/40"
+                          : "bg-zinc-100 dark:bg-neutral-800"
+                      }`}>
+                        {getNotifIcon(notif)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1">
-                          <h4 className="text-xs font-bold text-zinc-900 dark:text-white m-0 truncate">
-                            {notif.title}
-                          </h4>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            {notif.type === "stock_alert" && (
+                              <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shrink-0 ${
+                                notif.severity === "critical"
+                                  ? "bg-rose-500 text-white"
+                                  : "bg-amber-500 text-white"
+                              }`}>
+                                {notif.severity === "critical" ? "Critical" : "Low"}
+                              </span>
+                            )}
+                            <h4 className="text-xs font-bold text-zinc-900 dark:text-white m-0 truncate">
+                              {notif.title}
+                            </h4>
+                          </div>
                           <span className="text-[10px] text-zinc-400 whitespace-nowrap">
                             {new Date(notif.created_at).toLocaleTimeString([], {
                               hour: "2-digit",
@@ -225,6 +257,18 @@ const AdminHeader = ({ activeTab, setIsSidebarOpen }) => {
                         <p className="text-[11px] text-zinc-600 dark:text-zinc-300 m-0 mt-0.5 leading-snug break-words">
                           {notif.message}
                         </p>
+                        {notif.type === "stock_alert" && setActiveTab && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTab("inventory");
+                              setIsNotifOpen(false);
+                            }}
+                            className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 hover:underline bg-transparent border-none cursor-pointer p-0"
+                          >
+                            <FaBoxes className="text-[9px]" /> View in Inventory <FaArrowRight className="text-[8px]" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))

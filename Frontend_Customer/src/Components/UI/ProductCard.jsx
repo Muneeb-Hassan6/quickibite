@@ -34,11 +34,11 @@ const ProductCard = ({
   const originalPrice = item?.original_price || item?.originalPrice || null;
   const customTag = item?.tag || null;
 
-  // Comprehensive Out-of-Stock check (item isAvailable flag or all variants out of stock)
+  // Dynamic Out-of-Stock check based strictly on inStock inventory flag
   const isOutOfStock =
-    item?.isAvailable === false ||
-    item?.isAvailable === 0 ||
-    item?.isAvailable === "0" ||
+    item?.inStock === false ||
+    item?.inStock === 0 ||
+    item?.inStock === "0" ||
     (Array.isArray(item?.variants) &&
       item.variants.length > 0 &&
       item.variants.every(
@@ -64,6 +64,7 @@ const ProductCard = ({
 
   const openPopup = (e) => {
     if (e) e.stopPropagation();
+    if (isOutOfStock) return;
     setIsOpen(true);
   };
 
@@ -75,10 +76,10 @@ const ProductCard = ({
   return (
     <>
       <div
-        className={`group relative w-full bg-white dark:bg-neutral-900/90 border rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 xl:p-4 flex flex-col justify-between transition-all duration-300 shadow-md cursor-pointer select-none ${
+        className={`group relative w-full bg-white dark:bg-neutral-900/90 border rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 xl:p-4 flex flex-col justify-between transition-all duration-300 shadow-md select-none ${
           isOutOfStock
-            ? "opacity-70 dark:opacity-60 grayscale contrast-125 border-neutral-300 dark:border-neutral-800"
-            : "border-gray-200/80 dark:border-white/10 hover:border-amber-500/40"
+            ? "opacity-60 grayscale contrast-125 border-neutral-300 dark:border-neutral-800 pointer-events-none cursor-not-allowed"
+            : "border-gray-200/80 dark:border-white/10 hover:border-amber-500/40 cursor-pointer"
         }`}
         onClick={openPopup}
       >
@@ -203,6 +204,7 @@ const ProductCard = ({
 
       {/* 🚀 PORTAL TO PREVENT MODAL CLIPPING */}
       {isOpen &&
+        !isOutOfStock &&
         ReactDOM.createPortal(
           <PopupCard
             item={item}
