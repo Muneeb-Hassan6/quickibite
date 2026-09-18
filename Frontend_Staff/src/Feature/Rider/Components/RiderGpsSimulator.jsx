@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   FaPlay,
+  FaPause,
   FaStop,
+  FaRedo,
   FaMapMarkerAlt,
   FaWalking,
   FaMotorcycle,

@@ -37,6 +37,10 @@ self.addEventListener('activate', (event) => {
 // 3. Fetch Event: Smart routing & caching
 self.addEventListener('fetch', (event) => {
   const { request } = event;
+
+  // Prevent caching requests that do not start with http or https (such as chrome-extension://)
+  if (!request.url.startsWith('http')) return;
+
   const url = new URL(request.url);
 
   // Skip non-GET requests and WebSocket/SSE

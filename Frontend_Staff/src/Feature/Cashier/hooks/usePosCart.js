@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { io } from "socket.io-client";
 import Swal from "sweetalert2";
+import { staffSocket } from "../../../utils/socket";
 
 export default function usePosCart({
   gstRate = 0,
@@ -137,6 +137,11 @@ export default function usePosCart({
       }
     }
 
+    const isDeliveryCod =
+      orderType === "Delivery" &&
+      (!paymentMethod || paymentMethod === "Cash" || paymentMethod === "COD" || paymentMethod === "Cash on Delivery");
+    const effectivePaymentStatus = isDeliveryCod ? "Pending" : (paymentStatus || "Paid");
+
     const orderPayload = {
       order_type: orderType,
       order_mode: orderType.toUpperCase(),
@@ -149,7 +154,7 @@ export default function usePosCart({
       delivery_fee: Number(activeDeliveryFee.toFixed(2)),
       total: Number(grandTotal.toFixed(2)),
       payment_method: paymentMethod || "Cash",
-      payment_status: paymentStatus || "Paid",
+      payment_status: effectivePaymentStatus,
       transaction_id: transactionId || (paymentMethod !== "Cash" ? `POS-${Math.floor(100000 + Math.random() * 900000)}` : null),
       cart,
     };
@@ -212,14 +217,7 @@ export default function usePosCart({
 
         // Real-Time Socket Signal
         try {
-          const socket = io(import.meta.env.VITE_SOCKET_URL, {
-            transports: ["websocket"],
-            reconnection: false,
-          });
-          socket.on("connect", () => {
-            socket.emit("new_order_placed");
-            setTimeout(() => socket.disconnect(), 1000);
-          });
+          staffSocket.emit("new_order_placed");
         } catch (socketErr) {
           console.warn("Socket emit failed (non-critical):", socketErr);
         }

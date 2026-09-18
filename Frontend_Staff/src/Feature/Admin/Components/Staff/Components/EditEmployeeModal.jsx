@@ -198,7 +198,7 @@ export default function EditEmployeeModal({
                 name="username"
                 value={editingEmp.username || ""}
                 onChange={handleChange}
-                placeholder="e.g. ali_staff"
+                placeholder="e.g. ali_staff (leave blank for No Portal Access)"
                 className="w-full px-3.5 py-2.5 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-medium focus:outline-none focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-neutral-600"
               />
             </div>

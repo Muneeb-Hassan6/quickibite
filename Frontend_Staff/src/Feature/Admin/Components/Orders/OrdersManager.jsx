@@ -8,6 +8,7 @@ import UpdateStatusModal from "./Components/UpdateStatusModal";
 import OrderReceiptModal from "./Components/OrderReceiptModal";
 import ServerPaginationControls from "../SharedComponents/ServerPaginationControls";
 import { apiFetch } from "../../../../utils/apiHelper";
+import { staffSocket } from "../../../../utils/socket";
 
 const PAGE_SIZE = 30;
 
@@ -189,12 +190,28 @@ const OrdersManager = () => {
     fetchOrdersBatch(0, false);
   }, [fetchOrdersBatch]);
 
-  // Periodic background polling every 10 seconds
+  // Real-time socket sync and periodic background polling (fallback 60s)
   useEffect(() => {
+    staffSocket.on("refresh_kitchen", refreshCurrentOrders);
+    staffSocket.on("refresh_orders", refreshCurrentOrders);
+    staffSocket.on("new_order_placed", refreshCurrentOrders);
+    staffSocket.on("order_status_updated", refreshCurrentOrders);
+    staffSocket.on("order_status_changed", refreshCurrentOrders);
+    staffSocket.on("payment_status_updated", refreshCurrentOrders);
+
     const timer = setInterval(() => {
       refreshCurrentOrders();
-    }, 10000);
-    return () => clearInterval(timer);
+    }, 60000);
+
+    return () => {
+      staffSocket.off("refresh_kitchen", refreshCurrentOrders);
+      staffSocket.off("refresh_orders", refreshCurrentOrders);
+      staffSocket.off("new_order_placed", refreshCurrentOrders);
+      staffSocket.off("order_status_updated", refreshCurrentOrders);
+      staffSocket.off("order_status_changed", refreshCurrentOrders);
+      staffSocket.off("payment_status_updated", refreshCurrentOrders);
+      clearInterval(timer);
+    };
   }, [refreshCurrentOrders]);
 
   const handleLoadMore = () => {

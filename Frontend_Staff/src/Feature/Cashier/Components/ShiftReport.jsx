@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { FaPrint, FaCalendarAlt, FaStore } from "react-icons/fa";
+import { staffSocket } from "../../../utils/socket";
 
 // Atomic Subcomponents
 import ZReportReceipt from "./Shift/ZReportReceipt";
 
 export default function ShiftReport({ ordersData = [] }) {
+  const queryClient = useQueryClient();
   const [liveOrders, setLiveOrders] = useState([]);
   const [cashierName, setCashierName] = useState("Cashier");
 
@@ -21,6 +23,22 @@ export default function ShiftReport({ ordersData = [] }) {
       }
     }
   }, []);
+
+  // Real-time socket listener to immediately refresh shift orders on reconciliation or payment updates
+  useEffect(() => {
+    const triggerRefresh = () => {
+      queryClient.invalidateQueries({ queryKey: ["shift_orders"] });
+    };
+    staffSocket.on("payment_status_updated", triggerRefresh);
+    staffSocket.on("refresh_kitchen", triggerRefresh);
+    staffSocket.on("refresh_orders", triggerRefresh);
+
+    return () => {
+      staffSocket.off("payment_status_updated", triggerRefresh);
+      staffSocket.off("refresh_kitchen", triggerRefresh);
+      staffSocket.off("refresh_orders", triggerRefresh);
+    };
+  }, [queryClient]);
 
   const { data: dbOrders = [] } = useQuery({
     queryKey: ["shift_orders"],
@@ -56,16 +74,34 @@ export default function ShiftReport({ ordersData = [] }) {
     }
   }, [dbOrders, ordersData]);
 
+  // Helper to identify physical Cash & COD tender (Cash in Drawer)
+  const isCashOrCodMethod = (method = "") => {
+    const m = (method || "").toLowerCase().trim();
+    return (
+      m === "cash" ||
+      m === "cod" ||
+      m.includes("cash") || // matches "cash on delivery", "cash on pickup"
+      m.includes("cod") ||
+      m === ""
+    );
+  };
+
   // Aggregate Metrics
-  const paidOrders = liveOrders.filter((o) => o.paymentStatus === "Paid");
-  const totalSales = paidOrders.reduce((sum, o) => sum + o.total, 0);
+  const paidOrders = liveOrders.filter((o) => {
+    const st = (o.paymentStatus || "").toLowerCase();
+    return st === "paid" || st === "completed";
+  });
+  const totalSales = paidOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
   const cashSales = paidOrders
-    .filter((o) => o.paymentMethod?.toLowerCase() === "cash")
-    .reduce((sum, o) => sum + o.total, 0);
+    .filter((o) => isCashOrCodMethod(o.paymentMethod))
+    .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
   const digitalSales = paidOrders
-    .filter((o) => o.paymentMethod?.toLowerCase() !== "cash")
-    .reduce((sum, o) => sum + o.total, 0);
-  const unpaidOrders = liveOrders.filter((o) => o.paymentStatus !== "Paid");
+    .filter((o) => !isCashOrCodMethod(o.paymentMethod))
+    .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+  const unpaidOrders = liveOrders.filter((o) => {
+    const st = (o.paymentStatus || "").toLowerCase();
+    return st !== "paid" && st !== "completed";
+  });
 
   const handleCloseShift = () => {
     Swal.fire({

@@ -1,15 +1,7 @@
 import { useEffect } from "react";
-import { io } from "socket.io-client";
+import { staffSocket as riderSocket } from "../../../utils/socket";
 
-// Module-Level Singleton Socket Instance
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
-export const riderSocket = io(SOCKET_URL, {
-  transports: ["websocket", "polling"],
-  reconnection: true,
-  reconnectionAttempts: 10,
-  reconnectionDelay: 1000,
-  autoConnect: true,
-});
+export { riderSocket };
 
 export function useRiderSocket({ riderId, queryClient }) {
   useEffect(() => {
@@ -17,8 +9,12 @@ export function useRiderSocket({ riderId, queryClient }) {
       riderSocket.emit("join_room", "rider");
     };
 
-    const invalidateAssigned = () => {
+    const invalidateAssigned = (data) => {
       if (queryClient && riderId) {
+        // If event targets a specific rider, ignore if it's not us
+        if (data?.rider_id && String(data.rider_id) !== String(riderId)) {
+          return;
+        }
         queryClient.invalidateQueries({
           queryKey: ["rider_assigned_order", riderId],
         });

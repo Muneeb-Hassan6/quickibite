@@ -12,7 +12,14 @@ import {
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 
-export default function ActiveOrderCard({ order, onComplete, onCancel, isCompleting }) {
+export default function ActiveOrderCard({
+  order,
+  onComplete,
+  onCancel,
+  isCompleting,
+  stopNumber = 1,
+  totalStops = 1,
+}) {
   const [isFailing, setIsFailing] = useState(false);
   if (!order) return null;
   const isCod = order.paymentType === "Cash on Delivery" || order.paymentType === "COD";
@@ -100,7 +107,7 @@ export default function ActiveOrderCard({ order, onComplete, onCancel, isComplet
             timer: 2500,
             showConfirmButton: false,
           });
-          if (onCancel) onCancel();
+          if (onCancel) onCancel(order.id);
         } else {
           Swal.fire("Error", data.message || "Failed to log delivery failure", "error");
         }
@@ -112,19 +119,41 @@ export default function ActiveOrderCard({ order, onComplete, onCancel, isComplet
     }
   };
 
+  const isNearest = stopNumber === 1 && totalStops > 1;
+
   return (
     <div className="bg-white dark:bg-neutral-900 border border-stone-200 dark:border-neutral-800 rounded-2xl overflow-hidden mb-4 shadow-xs transition-colors relative">
       {/* Top Accent Stripe */}
-      <div className="h-1.5 w-full bg-amber-500" />
+      <div className={`h-1.5 w-full ${isNearest ? "bg-emerald-500" : "bg-amber-500"}`} />
 
       {/* Header Info */}
       <div className="p-4 sm:p-5 pb-3 flex justify-between items-center border-b border-stone-200 dark:border-neutral-800">
-        <span className="text-lg sm:text-xl font-black font-['Oswald',sans-serif] text-stone-900 dark:text-white">
-          Order #{order.id}
-        </span>
-        <span className="text-xs font-mono font-bold text-stone-500 dark:text-neutral-400">
-          {order.time || "Just now"}
-        </span>
+        <div className="flex items-center gap-2">
+          {totalStops > 1 && (
+            <span
+              className={`text-[11px] font-black font-['Oswald',sans-serif] px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                isNearest
+                  ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40"
+                  : "bg-stone-100 dark:bg-neutral-800 text-stone-600 dark:text-neutral-400 border border-stone-300 dark:border-neutral-700"
+              }`}
+            >
+              Stop #{stopNumber} {isNearest ? "• Nearest" : ""}
+            </span>
+          )}
+          <span className="text-lg sm:text-xl font-black font-['Oswald',sans-serif] text-stone-900 dark:text-white">
+            Order #{order.id}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          {order.distanceKm && (
+            <span className="text-xs font-mono font-bold text-sky-600 dark:text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-md">
+              {order.distanceKm}
+            </span>
+          )}
+          <span className="text-xs font-mono font-bold text-stone-500 dark:text-neutral-400">
+            {order.time || "Just now"}
+          </span>
+        </div>
       </div>
 
       <div className="p-4 sm:p-5 space-y-3.5">
@@ -246,7 +275,7 @@ export default function ActiveOrderCard({ order, onComplete, onCancel, isComplet
                 });
                 if (!res.isConfirmed) return;
               }
-              if (onComplete) onComplete();
+              if (onComplete) onComplete(order.id);
             }}
             className="flex-[2] min-h-[44px] px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs uppercase font-['Oswald',sans-serif] tracking-wider cursor-pointer flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 border-none disabled:opacity-50 disabled:cursor-not-allowed"
           >

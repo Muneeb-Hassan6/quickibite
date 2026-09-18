@@ -45,3 +45,5 @@ export default function useWakeLock(enabled = true) {
     };
   }, [enabled]);
 }
+
+export { useWakeLock };

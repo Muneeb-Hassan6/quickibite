@@ -44,13 +44,20 @@ export default function EmployeeTableRow({
         </div>
       </td>
       <td className="p-3.5 sm:p-4 align-middle">
-        <span
-          className={`!rounded-full px-3 py-0.5 text-xs font-bold uppercase tracking-wider inline-block ${getRoleBadge(
-            emp.role
-          )}`}
-        >
-          {emp.role || "Unassigned"}
-        </span>
+        <div className="flex flex-col items-start gap-1">
+          <span
+            className={`!rounded-full px-3 py-0.5 text-xs font-bold uppercase tracking-wider inline-block ${getRoleBadge(
+              emp.role
+            )}`}
+          >
+            {emp.role || "Unassigned"}
+          </span>
+          {!emp.username && (
+            <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.05] text-slate-500 dark:text-neutral-400 border border-slate-200 dark:border-white/10">
+              No Portal Access
+            </span>
+          )}
+        </div>
       </td>
       <td className="p-3.5 sm:p-4 align-middle font-medium text-slate-600 dark:text-neutral-400">
         <div className="flex items-center gap-1.5">

@@ -132,6 +132,7 @@ if ($close_ts > $open_ts) {
 }
 
 if (!$is_open) {
+    if (ob_get_level()) ob_clean();
     echo json_encode([
         "success" => false, 
         "message" => "Restaurant is currently closed. Operating hours are from " . date("h:i A", $open_ts) . " to " . date("h:i A", $close_ts) . ".",
@@ -161,6 +162,7 @@ foreach ($raw_items as $raw_item) {
 
 if (empty($cart_items)) {
     http_response_code(400);
+    if (ob_get_level()) ob_clean();
     echo json_encode([
         "success" => false, 
         "message" => "Cart is empty or contains invalid item quantities."
@@ -698,6 +700,7 @@ if(!empty($cart_items) && $order_total > 0) {
         // PHP-side HTTP trigger disabled to prevent response blocking on Windows.
 
 
+        if (ob_get_level()) ob_clean();
         echo json_encode([
             "success"        => true, 
             "message"        => "Order saved successfully!", 
@@ -712,9 +715,11 @@ if(!empty($cart_items) && $order_total > 0) {
         if ($db->inTransaction()) {
             $db->rollBack();
         }
+        if (ob_get_level()) ob_clean();
         echo json_encode(["success" => false, "message" => "Database error: " . $e->getMessage()]);
     }
 } else {
+    if (ob_get_level()) ob_clean();
     echo json_encode(["success" => false, "message" => "Invalid Request Data"]);
 }
 ?>

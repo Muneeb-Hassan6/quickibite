@@ -8,6 +8,9 @@ export default function MapView({
   routePath = [],
   riderLocation,
   currentOrder,
+  activeOrders = [],
+  selectedOrder,
+  onSelectOrder,
   MAPBOX_TOKEN,
 }) {
   const mapRef = useRef(null);
@@ -17,6 +20,9 @@ export default function MapView({
       e.target.resize();
     }
   };
+
+  const stops = activeOrders.length > 0 ? activeOrders : currentOrder ? [currentOrder] : [];
+  const activeSelectedId = selectedOrder?.id || currentOrder?.id;
 
   return (
     <div className="h-64 sm:h-72 w-full rounded-2xl overflow-hidden mb-4 border border-stone-200 dark:border-neutral-800 shadow-xs relative">
@@ -30,7 +36,7 @@ export default function MapView({
         onLoad={handleMapLoad}
         attributionControl={false}
       >
-        {/* Turn-by-Turn Route Polyline */}
+        {/* Turn-by-Turn Route Polyline to Active Stop */}
         {routePath.length > 0 && (
           <Source
             id="route-source"
@@ -72,33 +78,64 @@ export default function MapView({
             </Marker>
           )}
 
-        {/* Customer Target Pin */}
-        {currentOrder && (() => {
+        {/* All Customer Target Stop Pins */}
+        {stops.map((ord, idx) => {
+          const isSelected = String(ord.id) === String(activeSelectedId);
           const dropLng =
-            typeof currentOrder.targetLng === "number"
-              ? currentOrder.targetLng
-              : typeof currentOrder.customer_lng === "number"
-              ? currentOrder.customer_lng
-              : parseFloat(currentOrder.targetLng || currentOrder.customer_lng || currentOrder.longitude) || 74.3440;
+            typeof ord.targetLng === "number"
+              ? ord.targetLng
+              : typeof ord.customer_lng === "number"
+              ? ord.customer_lng
+              : parseFloat(ord.targetLng || ord.customer_lng || ord.longitude) || 74.3440;
           const dropLat =
-            typeof currentOrder.targetLat === "number"
-              ? currentOrder.targetLat
-              : typeof currentOrder.customer_lat === "number"
-              ? currentOrder.customer_lat
-              : parseFloat(currentOrder.targetLat || currentOrder.customer_lat || currentOrder.latitude) || 31.5102;
+            typeof ord.targetLat === "number"
+              ? ord.targetLat
+              : typeof ord.customer_lat === "number"
+              ? ord.customer_lat
+              : parseFloat(ord.targetLat || ord.customer_lat || ord.latitude) || 31.5102;
 
           return (
-            <Marker longitude={dropLng} latitude={dropLat} anchor="bottom">
-              <div className="w-9 h-9 rounded-full bg-white border-2 border-red-500 shadow-md flex items-center justify-center p-1.5 transition-transform hover:scale-110">
-                <img
-                  src="https://cdn-icons-png.flaticon.com/512/2776/2776067.png"
-                  className="w-full h-full object-contain"
-                  alt="Customer Marker"
-                />
+            <Marker
+              key={ord.id || idx}
+              longitude={dropLng}
+              latitude={dropLat}
+              anchor="bottom"
+              onClick={(e) => {
+                e.originalEvent?.stopPropagation();
+                if (onSelectOrder) onSelectOrder(ord.id);
+              }}
+            >
+              <div
+                className={`relative flex flex-col items-center cursor-pointer transition-transform ${
+                  isSelected ? "scale-110 z-20" : "opacity-85 hover:opacity-100 z-10"
+                }`}
+              >
+                <div
+                  className={`w-9 h-9 rounded-full bg-white flex items-center justify-center p-1.5 shadow-md border-2 ${
+                    isSelected
+                      ? "border-red-500 ring-4 ring-red-500/30 animate-bounce"
+                      : "border-stone-500"
+                  }`}
+                >
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/512/2776/2776067.png"
+                    className="w-full h-full object-contain"
+                    alt={`Stop #${idx + 1}`}
+                  />
+                </div>
+                <span
+                  className={`text-[10px] font-black font-['Oswald',sans-serif] px-1.5 py-0.2 rounded-md shadow-xs mt-0.5 whitespace-nowrap ${
+                    isSelected
+                      ? "bg-red-600 text-white"
+                      : "bg-stone-800 text-stone-200"
+                  }`}
+                >
+                  Stop {idx + 1}
+                </span>
               </div>
             </Marker>
           );
-        })()}
+        })}
       </Map>
     </div>
   );

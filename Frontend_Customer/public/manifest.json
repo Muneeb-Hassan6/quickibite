@@ -1,7 +1,7 @@
 {
-  "name": "QuickiBite - Fast Food & Delivery",
-  "short_name": "QuickiBite",
-  "description": "Order delicious fast food, burgers, pizza, wraps and exclusive deals online from QuickiBite.",
+  "name": "BigBite - Fast Food & Delivery",
+  "short_name": "BigBite",
+  "description": "Order delicious fast food, burgers, pizza, wraps and exclusive deals online from BigBite.",
   "start_url": "/",
   "id": "/?source=pwa",
   "scope": "/",

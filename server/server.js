@@ -98,10 +98,11 @@ io.on("connection", (socket) => {
   });
 
   // Dispatcher assigns order to rider → notify all riders
-  socket.on("trigger_rider_assignment", () => {
-    console.log("📬 Rider assignment triggered → notifying riders");
-    io.emit("refresh_rider");          // Rider portal listens
-    io.emit("refresh_rider_list");     // Dispatcher rider list refreshes
+  socket.on("trigger_rider_assignment", (data) => {
+    console.log("📬 Rider assignment triggered → notifying riders", data || "");
+    io.emit("refresh_rider", data);          // Rider portal listens
+    io.emit("refresh_rider_list", data);     // Dispatcher rider list refreshes
+    io.emit("trigger_rider_assignment", data);
   });
 
   // Rider status changes (online/offline/complete delivery)
@@ -117,6 +118,58 @@ io.on("connection", (socket) => {
     io.emit("refresh_kitchen");
     io.emit("refresh_orders");
     io.emit("payment_status_updated", data);
+  });
+
+  // 📍 Rider GPS stream → dispatchers only
+  socket.on("rider_location_update", (data) => {
+    socket.to("dispatcher").emit("rider_location_broadcast", data);
+  });
+
+  // 🔄 Generic order status updated broadcast
+  socket.on("order_status_updated", (data) => {
+    console.log("🔄 order_status_updated received → broadcasting to all clients", data || "");
+    io.emit("order_status_updated", data);
+    io.emit("refresh_kitchen");
+    io.emit("refresh_orders", data);
+  });
+
+  // 🔄 Manual refresh triggers
+  socket.on("refresh_kitchen", () => {
+    io.emit("refresh_kitchen");
+  });
+
+  socket.on("refresh_rider_list", () => {
+    io.emit("refresh_rider_list");
+  });
+
+  socket.on("refresh_rider", (data) => {
+    io.emit("refresh_rider", data);
+  });
+
+  socket.on("refresh_orders", (data) => {
+    io.emit("refresh_orders", data);
+  });
+
+  // 🌉 Legacy / alias bridges for dead events
+  socket.on("order:ready", (data) => {
+    io.emit("order_status_updated", { ...data, status: "ready" });
+    io.emit("refresh_kitchen");
+  });
+
+  socket.on("order:dispatched", (data) => {
+    io.emit("order_status_updated", { ...data, status: "dispatched" });
+    io.emit("refresh_kitchen");
+  });
+
+  socket.on("order:delivered", (data) => {
+    io.emit("order_status_updated", { ...data, status: "delivered" });
+    io.emit("refresh_kitchen");
+    io.emit("refresh_rider_list");
+  });
+
+  socket.on("new_order", (data) => {
+    io.emit("new_order_placed", data);
+    io.emit("refresh_kitchen");
   });
 
   socket.on("disconnect", (reason) => {

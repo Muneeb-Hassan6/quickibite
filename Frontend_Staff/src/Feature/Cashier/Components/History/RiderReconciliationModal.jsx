@@ -26,7 +26,7 @@ export default function RiderReconciliationModal({
 
   if (!isOpen) return null;
 
-  // Filter Delivery orders that are COD and NOT paid
+  // Filter Delivery orders that are COD, delivered, and NOT yet settled/paid
   const pendingCodOrders = orders.filter((order) => {
     const isDelivery =
       order.order_type?.toLowerCase().includes("delivery") ||
@@ -36,14 +36,18 @@ export default function RiderReconciliationModal({
     const pMethod = (order.payment_method || "").toLowerCase();
     const isCod =
       pMethod === "cod" ||
+      pMethod.includes("cod") ||
       pMethod.includes("delivery") ||
-      pMethod === "cash" ||
+      pMethod.includes("cash") ||
       pMethod === "";
 
     const pStatus = (order.payment_status || "").toLowerCase();
-    const isPending = pStatus !== "paid" && pStatus !== "completed";
+    const isUnsettled = pStatus !== "paid" && pStatus !== "completed";
 
-    return isDelivery && isCod && isPending;
+    const ordStatus = (order.status || "").toLowerCase();
+    const isDelivered = ordStatus === "delivered" || ordStatus === "completed" || ordStatus === "dispatched";
+
+    return isDelivery && isCod && isDelivered && isUnsettled;
   });
 
   // Group pending orders by Rider

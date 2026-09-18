@@ -20,7 +20,7 @@ export default function DeliveryHistory({ history = [] }) {
       <div className="space-y-2">
         {displayHistory.map((item, index) => (
           <div
-            key={index}
+            key={item.id || index}
             className="bg-white dark:bg-neutral-900 border border-stone-200 dark:border-neutral-800 flex justify-between items-center p-3.5 rounded-xl text-xs shadow-xs transition-colors"
           >
             <div className="min-w-0 flex-1">

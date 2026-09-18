@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Swal from "sweetalert2";
-import { io } from "socket.io-client";
+import { staffSocket } from "../../../utils/socket";
 import {
   FaMoneyBillWave,
   FaMotorcycle,
@@ -211,25 +211,18 @@ export default function OrderHistory({
     fetchOrdersBatch(0, false);
   }, [fetchOrdersBatch]);
 
-  // Real-time socket listener and periodic refresh
+  // Real-time socket listener and periodic fallback refresh
   useEffect(() => {
-    let socket;
-    try {
-      socket = io(import.meta.env.VITE_SOCKET_URL, {
-        transports: ["websocket", "polling"],
-      });
+    staffSocket.on("payment_status_updated", refreshCurrentOrders);
+    staffSocket.on("refresh_kitchen", refreshCurrentOrders);
+    staffSocket.on("refresh_orders", refreshCurrentOrders);
 
-      socket.on("payment_status_updated", refreshCurrentOrders);
-      socket.on("refresh_kitchen", refreshCurrentOrders);
-      socket.on("refresh_orders", refreshCurrentOrders);
-    } catch (err) {
-      console.warn("Socket connection failed in OrderHistory:", err);
-    }
-
-    const interval = setInterval(refreshCurrentOrders, 8000);
+    const interval = setInterval(refreshCurrentOrders, 30000);
 
     return () => {
-      if (socket) socket.disconnect();
+      staffSocket.off("payment_status_updated", refreshCurrentOrders);
+      staffSocket.off("refresh_kitchen", refreshCurrentOrders);
+      staffSocket.off("refresh_orders", refreshCurrentOrders);
       clearInterval(interval);
     };
   }, [refreshCurrentOrders]);
@@ -243,33 +236,70 @@ export default function OrderHistory({
   const orders = propOrders && propOrders.length > 0 ? propOrders : ordersList;
   const safeOrders = Array.isArray(orders) ? orders : [];
 
-  // Calculate Rider COD pending totals
+  // Dedicated state for server-wide unreconciled COD delivery orders
+  const [pendingCodOrdersList, setPendingCodOrdersList] = useState([]);
+
+  // Fetch all pending COD orders from server (unrestricted by pagination)
+  const fetchPendingCodOrders = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=pending_cod`
+      );
+      const data = await response.json();
+      const list = Array.isArray(data) ? data : (data?.orders || []);
+      setPendingCodOrdersList(list.map(formatOrder));
+    } catch (err) {
+      console.warn("Failed to fetch pending COD orders:", err);
+    }
+  }, []);
+
+  // Fetch pending COD on mount and bind to background refresh
+  useEffect(() => {
+    fetchPendingCodOrders();
+  }, [fetchPendingCodOrders]);
+
+  // Merge server-wide pending COD orders with currently loaded safeOrders
+  const reconciliationOrders = useMemo(() => {
+    const map = new Map();
+    // 1. Add server-wide pending COD orders
+    pendingCodOrdersList.forEach((o) => map.set(o.id, o));
+
+    // 2. Also check any currently loaded safeOrders in case of real-time local updates
+    safeOrders.forEach((o) => {
+      const isDelivery =
+        o.order_type?.toLowerCase().includes("delivery") ||
+        o.type?.toLowerCase().includes("delivery") ||
+        o.order_mode?.toLowerCase().includes("delivery");
+      const pMethod = (o.payment_method || "").toLowerCase();
+      const isCod =
+        pMethod === "cod" ||
+        pMethod.includes("cod") ||
+        pMethod.includes("delivery") ||
+        pMethod.includes("cash") ||
+        pMethod === "";
+      const pStatus = (o.payment_status || "").toLowerCase();
+      const isUnsettled = pStatus !== "paid" && pStatus !== "completed";
+      const ordStatus = (o.status || "").toLowerCase();
+      const isDelivered = ordStatus === "delivered" || ordStatus === "completed" || ordStatus === "dispatched";
+
+      if (isDelivery && isCod && isUnsettled && isDelivered) {
+        map.set(o.id, o);
+      }
+    });
+
+    return Array.from(map.values());
+  }, [pendingCodOrdersList, safeOrders]);
+
+  // Calculate Rider COD pending totals from reconciliationOrders
   const codStats = useMemo(() => {
     let pendingAmount = 0;
     let pendingCount = 0;
     const riderSet = new Set();
 
-    safeOrders.forEach((order) => {
-      const isDelivery =
-        order.order_type?.toLowerCase().includes("delivery") ||
-        order.type?.toLowerCase().includes("delivery") ||
-        order.order_mode?.toLowerCase().includes("delivery");
-
-      const pMethod = (order.payment_method || "").toLowerCase();
-      const isCod =
-        pMethod === "cod" ||
-        pMethod.includes("delivery") ||
-        pMethod === "cash" ||
-        pMethod === "";
-
-      const pStatus = (order.payment_status || "").toLowerCase();
-      const isPending = pStatus !== "paid" && pStatus !== "completed";
-
-      if (isDelivery && isCod && isPending) {
-        pendingCount += 1;
-        pendingAmount += parseFloat(order.total || order.total_amount || 0);
-        if (order.rider_id) riderSet.add(order.rider_id);
-      }
+    reconciliationOrders.forEach((order) => {
+      pendingCount += 1;
+      pendingAmount += parseFloat(order.total || order.total_amount || 0);
+      if (order.rider_id) riderSet.add(order.rider_id);
     });
 
     return {
@@ -277,7 +307,7 @@ export default function OrderHistory({
       pendingCount,
       riderCount: riderSet.size,
     };
-  }, [safeOrders]);
+  }, [reconciliationOrders]);
 
   // Handle single order payment status update
   const handleUpdatePaymentStatus = async (orderId, newStatus, order) => {
@@ -297,17 +327,11 @@ export default function OrderHistory({
 
       if (result.success) {
         refreshCurrentOrders();
+        fetchPendingCodOrders();
 
-        // Emit socket notification
+        // Emit socket notification via shared staffSocket
         try {
-          const socket = io(import.meta.env.VITE_SOCKET_URL, {
-            transports: ["websocket"],
-            reconnection: false,
-          });
-          socket.on("connect", () => {
-            socket.emit("payment_status_updated", { id: orderId, status: newStatus });
-            setTimeout(() => socket.disconnect(), 1000);
-          });
+          staffSocket.emit("payment_status_updated", { id: orderId, status: newStatus });
         } catch (socketErr) {
           console.warn("Socket broadcast failed:", socketErr);
         }
@@ -352,11 +376,17 @@ export default function OrderHistory({
   const handleBatchReconcile = async (orderIds, status, riderName, totalAmount) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_payment_status.php`,
+        `${import.meta.env.VITE_API_BASE}/batch_reconcile_orders.php`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ order_ids: orderIds, status }),
+          body: JSON.stringify({
+            order_ids: orderIds,
+            status: status || "Paid",
+            rider_name: riderName,
+            total_cash: totalAmount,
+            total_amount: totalAmount,
+          }),
         }
       );
 
@@ -364,17 +394,11 @@ export default function OrderHistory({
 
       if (result.success) {
         refreshCurrentOrders();
+        fetchPendingCodOrders();
 
-        // Emit socket notification
+        // Emit socket notification via shared staffSocket
         try {
-          const socket = io(import.meta.env.VITE_SOCKET_URL, {
-            transports: ["websocket"],
-            reconnection: false,
-          });
-          socket.on("connect", () => {
-            socket.emit("payment_status_updated", { order_ids: orderIds, status });
-            setTimeout(() => socket.disconnect(), 1000);
-          });
+          staffSocket.emit("payment_status_updated", { order_ids: orderIds, status: status || "Paid" });
         } catch (socketErr) {
           console.warn("Socket broadcast failed:", socketErr);
         }
@@ -608,7 +632,7 @@ export default function OrderHistory({
       <RiderReconciliationModal
         isOpen={isReconciliationModalOpen}
         onClose={() => setIsReconciliationModalOpen(false)}
-        orders={safeOrders}
+        orders={reconciliationOrders}
         onUpdateStatus={handleUpdatePaymentStatus}
         onBatchReconcile={handleBatchReconcile}
       />

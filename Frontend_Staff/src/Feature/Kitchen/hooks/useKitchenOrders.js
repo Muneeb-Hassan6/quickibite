@@ -1,16 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { io } from "socket.io-client";
-
-// Singleton socket instance across the entire staff app lifecycle
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
-const socket = io(SOCKET_URL, {
-  transports: ["polling", "websocket"],
-  reconnectionAttempts: 5,
-  reconnectionDelay: 2000,
-  autoConnect: true,
-});
+import { staffSocket as socket } from "../../../utils/socket";
 
 // Singleton AudioContext reference for persistent, unlocked Web Audio playback
 let globalAudioCtx = null;
@@ -186,19 +177,30 @@ export function useKitchenOrders() {
       queryClient.invalidateQueries({ queryKey: ["kitchen_orders"] });
     };
 
+    const handleJoin = () => {
+      socket.emit("join_room", "kitchen");
+    };
+
+    if (socket.connected) {
+      handleJoin();
+    } else {
+      socket.on("connect", handleJoin);
+    }
+
     // Listen to all relevant order triggers from socket server
-    socket.on("new_order", handleNewOrder);
     socket.on("new_order_placed", handleNewOrder);
     socket.on("refresh_kitchen", handleRefreshKitchen);
     socket.on("order_status_updated", handleStatusUpdate);
     socket.on("order_status_changed", handleStatusUpdate);
+    socket.on("refresh_orders", handleStatusUpdate);
 
     return () => {
-      socket.off("new_order", handleNewOrder);
+      socket.off("connect", handleJoin);
       socket.off("new_order_placed", handleNewOrder);
       socket.off("refresh_kitchen", handleRefreshKitchen);
       socket.off("order_status_updated", handleStatusUpdate);
       socket.off("order_status_changed", handleStatusUpdate);
+      socket.off("refresh_orders", handleStatusUpdate);
     };
   }, [queryClient]);
 

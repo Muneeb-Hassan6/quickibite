@@ -1,13 +1,39 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { staffSocket } from "../../utils/socket";
 import OrderReceiptModal from "./Components/Orders/Components/OrderReceiptModal";
 import DashboardWelcomeHero from "./Components/DashboardHome/DashboardWelcomeHero";
 import DashboardKpiCards from "./Components/DashboardHome/DashboardKpiCards";
 import DashboardLiveOrdersFeed from "./Components/DashboardHome/DashboardLiveOrdersFeed";
 
 const DashboardHome = ({ setActiveTab }) => {
+  const queryClient = useQueryClient();
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [selectedOrderToView, setSelectedOrderToView] = useState(null);
+
+  // Real-time socket sync for Admin Dashboard
+  useEffect(() => {
+    const handleRealtimeRefresh = () => {
+      queryClient.invalidateQueries({ queryKey: ["admin_orders"] });
+      queryClient.invalidateQueries({ queryKey: ["profit_stats"] });
+    };
+
+    staffSocket.on("refresh_kitchen", handleRealtimeRefresh);
+    staffSocket.on("new_order_placed", handleRealtimeRefresh);
+    staffSocket.on("order_status_updated", handleRealtimeRefresh);
+    staffSocket.on("order_status_changed", handleRealtimeRefresh);
+    staffSocket.on("payment_status_updated", handleRealtimeRefresh);
+    staffSocket.on("refresh_orders", handleRealtimeRefresh);
+
+    return () => {
+      staffSocket.off("refresh_kitchen", handleRealtimeRefresh);
+      staffSocket.off("new_order_placed", handleRealtimeRefresh);
+      staffSocket.off("order_status_updated", handleRealtimeRefresh);
+      staffSocket.off("order_status_changed", handleRealtimeRefresh);
+      staffSocket.off("payment_status_updated", handleRealtimeRefresh);
+      staffSocket.off("refresh_orders", handleRealtimeRefresh);
+    };
+  }, [queryClient]);
 
   const { data: allOrders = [] } = useQuery({
     queryKey: ["admin_orders", "all"],
@@ -109,7 +135,7 @@ const DashboardHome = ({ setActiveTab }) => {
       }
       return [];
     },
-    refetchInterval: 5000,
+    refetchInterval: 60000,
   });
 
   const { data: menuData = [] } = useQuery({
@@ -135,7 +161,7 @@ const DashboardHome = ({ setActiveTab }) => {
           ? profitJson.data
           : { revenue: 0, cogs: 0, gross_profit: 0 };
       },
-      refetchInterval: 5000,
+      refetchInterval: 60000,
     });
 
   const sortedOrders = useMemo(() => {

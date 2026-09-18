@@ -35,6 +35,7 @@ export default function DispatchPortal() {
     handleAssign,
     handleCompleteTrip,
     handleSmartBatching,
+    isAssigning,
   } = useDispatcherData();
 
   return (

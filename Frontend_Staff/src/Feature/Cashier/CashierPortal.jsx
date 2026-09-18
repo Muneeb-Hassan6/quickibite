@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { FaBars, FaSun, FaMoon, FaShoppingCart } from "react-icons/fa";
@@ -15,7 +16,78 @@ import CashierReceiptModal from "./Components/CashierReceiptModal";
 
 const CashierPortal = () => {
   const { logout } = useStaffAuth();
-  const [activeTab, setActiveTab] = useState("terminal");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Normalize tab names (supports aliases: 'pos', 'terminal', 'history', 'sales', 'shift')
+  const normalizeTab = (tab) => {
+    if (!tab) return null;
+    const t = String(tab).toLowerCase().trim();
+    if (t === "pos" || t === "terminal") return "terminal";
+    if (t === "history") return "history";
+    if (t === "sales" || t === "shift" || t === "report") return "shift";
+    return null;
+  };
+
+  const getInitialTab = () => {
+    // 1. URL search param has highest priority (?tab=sales, ?tab=history, ?tab=pos)
+    const urlTab = normalizeTab(searchParams.get("tab"));
+    if (urlTab) return urlTab;
+
+    // 2. LocalStorage fallback
+    const savedTab = normalizeTab(localStorage.getItem("cashier_active_tab"));
+    if (savedTab) return savedTab;
+
+    // 3. Default fallback to POS terminal
+    return "terminal";
+  };
+
+  const [activeTab, setActiveTabState] = useState(getInitialTab);
+
+  // Sync state to LocalStorage and URL search param
+  const setActiveTab = (tabName) => {
+    const validTab = normalizeTab(tabName) || "terminal";
+    setActiveTabState(validTab);
+    try {
+      localStorage.setItem("cashier_active_tab", validTab);
+    } catch (e) {
+      console.warn("localStorage error:", e);
+    }
+
+    const publicTabParam =
+      validTab === "terminal" ? "pos" : validTab === "shift" ? "sales" : "history";
+
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("tab", publicTabParam);
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
+  // Sync if URL search param changes or ensure current tab is reflected in URL
+  useEffect(() => {
+    const urlTab = normalizeTab(searchParams.get("tab"));
+    if (urlTab && urlTab !== activeTab) {
+      setActiveTabState(urlTab);
+      try {
+        localStorage.setItem("cashier_active_tab", urlTab);
+      } catch (e) {}
+    } else if (!urlTab) {
+      const publicTabParam =
+        activeTab === "terminal" ? "pos" : activeTab === "shift" ? "sales" : "history";
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("tab", publicTabParam);
+          return next;
+        },
+        { replace: true }
+      );
+    }
+  }, [searchParams]);
+
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [selectedOrderToView, setSelectedOrderToView] = useState(null);
   const [terminalResetTrigger, setTerminalResetTrigger] = useState(0);

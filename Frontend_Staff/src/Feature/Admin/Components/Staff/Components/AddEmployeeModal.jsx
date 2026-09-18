@@ -6,6 +6,16 @@ import EmployeePersonalInfoForm from "./EmployeePersonalInfoForm";
 import EmployeeWorkDetailsForm from "./EmployeeWorkDetailsForm";
 import { apiFetch } from "../../../../../utils/apiHelper";
 
+const PORTAL_ROLES = [
+  "Admin",
+  "Manager",
+  "Cashier",
+  "Dispatcher",
+  "Chef",
+  "Kitchen",
+  "Rider",
+];
+
 const initialFormData = {
   name: "",
   role: "Waiter",
@@ -20,7 +30,7 @@ const initialFormData = {
 
 const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
   const [formData, setFormData] = useState(initialFormData);
-
+  const [enablePortalAccess, setEnablePortalAccess] = useState(false);
   const [customRoleName, setCustomRoleName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [phoneError, setPhoneError] = useState("");
@@ -61,50 +71,64 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
 
     const pwd = (formData.password || "").trim();
     const cpwd = (formData.confirm_password || "").trim();
+    const uname = (formData.username || "").trim();
 
-    // Strong password validation rules
-    if (!pwd || pwd.length < 8) {
-      Swal.fire({
-        icon: "warning",
-        title: "Password Too Short",
-        text: "Password must be at least 8 characters long.",
-        background: "#171717",
-        color: "#fff",
-      });
-      return;
-    }
+    // Validate credentials only when portal access is enabled
+    if (enablePortalAccess) {
+      if (!uname) {
+        Swal.fire({
+          icon: "warning",
+          title: "Username Required",
+          text: "Please enter a username for portal login access.",
+          background: "#171717",
+          color: "#fff",
+        });
+        return;
+      }
 
-    if (!/[A-Z]/.test(pwd)) {
-      Swal.fire({
-        icon: "warning",
-        title: "Capital Letter Required",
-        text: "Password must contain at least one capital letter (A-Z).",
-        background: "#171717",
-        color: "#fff",
-      });
-      return;
-    }
+      if (!pwd || pwd.length < 8) {
+        Swal.fire({
+          icon: "warning",
+          title: "Password Too Short",
+          text: "Password must be at least 8 characters long.",
+          background: "#171717",
+          color: "#fff",
+        });
+        return;
+      }
 
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) {
-      Swal.fire({
-        icon: "warning",
-        title: "Special Character Required",
-        text: "Password must contain at least one special character (!@#$%^&* etc.).",
-        background: "#171717",
-        color: "#fff",
-      });
-      return;
-    }
+      if (!/[A-Z]/.test(pwd)) {
+        Swal.fire({
+          icon: "warning",
+          title: "Capital Letter Required",
+          text: "Password must contain at least one capital letter (A-Z).",
+          background: "#171717",
+          color: "#fff",
+        });
+        return;
+      }
 
-    if (pwd !== cpwd) {
-      Swal.fire({
-        icon: "error",
-        title: "Passwords Do Not Match",
-        text: "Please make sure your password and confirm password match.",
-        background: "#171717",
-        color: "#fff",
-      });
-      return;
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) {
+        Swal.fire({
+          icon: "warning",
+          title: "Special Character Required",
+          text: "Password must contain at least one special character (!@#$%^&* etc.).",
+          background: "#171717",
+          color: "#fff",
+        });
+        return;
+      }
+
+      if (pwd !== cpwd) {
+        Swal.fire({
+          icon: "error",
+          title: "Passwords Do Not Match",
+          text: "Please make sure your password and confirm password match.",
+          background: "#171717",
+          color: "#fff",
+        });
+        return;
+      }
     }
 
     const finalRole = isCustomRole ? customRoleName.trim() : formData.role;
@@ -112,19 +136,38 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
     setIsSubmitting(true);
 
     try {
+      const payload = {
+        name: formData.name.trim(),
+        role: finalRole,
+        phone: formData.phone.trim(),
+        salary: formData.salary,
+        enable_portal: enablePortalAccess,
+        username: enablePortalAccess ? uname : null,
+        password: enablePortalAccess ? pwd : null,
+        confirm_password: enablePortalAccess ? cpwd : null,
+        bike_number: formData.bike_number || "",
+        license_number: formData.license_number || "",
+      };
+
       const response = await apiFetch("add_staff.php", {
         method: "POST",
-        body: JSON.stringify({
-          ...formData,
-          password: pwd,
-          confirm_password: cpwd,
-          role: finalRole,
-        }),
+        body: JSON.stringify(payload),
       });
 
-      const result = await response.json();
+      let result;
+      const text = await response.text();
+      try {
+        result = JSON.parse(text);
+      } catch (parseErr) {
+        console.error("Non-JSON API response in add_staff:", text, parseErr);
+        if (text.includes('"success":true') || text.includes('"success": true')) {
+          result = { success: true, message: "Staff enrolled successfully." };
+        } else {
+          throw new Error(text || "Invalid server response.");
+        }
+      }
 
-      if (result.success) {
+      if (response.ok && result?.success) {
         Swal.fire({
           icon: "success",
           title: "Staff Enrolled!",
@@ -139,21 +182,23 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
 
         setFormData(initialFormData);
         setCustomRoleName("");
+        setEnablePortalAccess(false);
         onClose();
       } else {
         Swal.fire({
           icon: "error",
           title: "Action Failed",
-          text: result.message,
+          text: result?.message || "Failed to enroll staff member.",
           background: "#171717",
           color: "#fff",
         });
       }
     } catch (error) {
+      console.error("Staff enrollment network error:", error);
       Swal.fire({
         icon: "error",
         title: "System Error",
-        text: "Failed to connect with server.",
+        text: error?.message || "Failed to connect with server.",
         background: "#171717",
         color: "#fff",
       });
@@ -202,6 +247,8 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
             handleChange={handleChange}
             customRoleName={customRoleName}
             setCustomRoleName={setCustomRoleName}
+            enablePortalAccess={enablePortalAccess}
+            setEnablePortalAccess={setEnablePortalAccess}
           />
 
           {/* Footer Actions */}

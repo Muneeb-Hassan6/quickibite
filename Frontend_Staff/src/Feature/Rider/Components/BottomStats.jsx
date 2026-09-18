@@ -16,7 +16,7 @@ export default function BottomStats({ stats }) {
 
       <div className="text-center">
         <div className="text-emerald-600 dark:text-emerald-400 text-xl font-black font-['Oswald',sans-serif]">
-          Rs {stats.earnings}
+          Rs {stats.earnings.toLocaleString()}
         </div>
         <div className="text-stone-500 dark:text-neutral-400 text-[10px] font-bold uppercase tracking-wider mt-0.5">
           Earned Today

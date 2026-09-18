@@ -204,9 +204,19 @@ const EmployeeList = () => {
           confirm_password: cpwd,
         }),
       });
-      const result = await response.json();
+      let result;
+      const text = await response.text();
+      try {
+        result = JSON.parse(text);
+      } catch (parseErr) {
+        if (text.includes('"success":true') || text.includes('"success": true')) {
+          result = { success: true, message: "Employee details updated." };
+        } else {
+          throw new Error(text || "Failed to update employee.");
+        }
+      }
 
-      if (result.success) {
+      if (response.ok && result?.success) {
         Swal.fire({
           icon: "success",
           title: "Updated!",

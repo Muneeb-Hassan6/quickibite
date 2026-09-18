@@ -1,18 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { io } from "socket.io-client";
 import toast from "react-hot-toast";
 import { apiFetch } from "../../../utils/apiHelper";
-
-// Module-Level Singleton Socket Instance
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
-const socket = io(SOCKET_URL, {
-  transports: ["websocket", "polling"],
-  reconnection: true,
-  reconnectionAttempts: 10,
-  reconnectionDelay: 1000,
-  autoConnect: true,
-});
+import { staffSocket as socket } from "../../../utils/socket";
 
 export const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371e3;
@@ -48,7 +38,7 @@ export function useDispatcherData() {
   const { data: rawOrders = [], isLoading: isOrdersLoading } = useQuery({
     queryKey: ["dispatcher_orders"],
     queryFn: async () => {
-      const orderRes = await apiFetch("get_orders.php?type=all");
+      const orderRes = await apiFetch("get_orders.php?type=all&order_by=fcfs&sort=asc");
       const orderData = await orderRes.json();
       return Array.isArray(orderData) ? orderData : orderData.data || [];
     },
@@ -83,6 +73,26 @@ export function useDispatcherData() {
       queryClient.invalidateQueries({ queryKey: ["staff"] });
     };
 
+    // Real-time rider GPS tracking handler
+    const handleRiderLocation = (data) => {
+      if (!data?.riderId) return;
+      queryClient.setQueryData(["dispatcher_staff"], (old) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((s) => {
+          if (String(s.id) === String(data.riderId)) {
+            return {
+              ...s,
+              current_lat: data.lat,
+              current_lng: data.lng,
+              lat: data.lat,
+              lng: data.lng,
+            };
+          }
+          return s;
+        });
+      });
+    };
+
     if (socket.connected) {
       handleJoin();
     } else {
@@ -92,16 +102,22 @@ export function useDispatcherData() {
     socket.on("refresh_kitchen", invalidateQueries);
     socket.on("refresh_rider", invalidateQueries);
     socket.on("refresh_rider_list", invalidateQueries);
-    socket.on("new_order", invalidateQueries);
+    socket.on("new_order_placed", invalidateQueries);
     socket.on("order_status_updated", invalidateQueries);
+    socket.on("order_status_changed", invalidateQueries);
+    socket.on("refresh_orders", invalidateQueries);
+    socket.on("rider_location_broadcast", handleRiderLocation);
 
     return () => {
       socket.off("connect", handleJoin);
       socket.off("refresh_kitchen", invalidateQueries);
       socket.off("refresh_rider", invalidateQueries);
       socket.off("refresh_rider_list", invalidateQueries);
-      socket.off("new_order", invalidateQueries);
+      socket.off("new_order_placed", invalidateQueries);
       socket.off("order_status_updated", invalidateQueries);
+      socket.off("order_status_changed", invalidateQueries);
+      socket.off("refresh_orders", invalidateQueries);
+      socket.off("rider_location_broadcast", handleRiderLocation);
     };
   }, [queryClient]);
 
@@ -117,30 +133,45 @@ export function useDispatcherData() {
           (status === "ready" || status === "ready to serve")
         );
       })
+      .sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateA - dateB; // FCFS: oldest first
+      })
       .map((o) => {
         let rawItems = [];
         try {
           rawItems =
             typeof o.items === "string" ? JSON.parse(o.items) : o.items || [];
-        } catch (e) {}
+        } catch (e) { /* ignore parse errors */ }
+
+        const paymentRaw = String(o.payment_method || o.payment || "COD").trim();
+        const isCOD = paymentRaw.toUpperCase().includes("COD") || paymentRaw.toUpperCase().includes("CASH");
+        const totalAmount = parseFloat(o.total) || 0;
 
         return {
           id: o.id,
           customer: o.customer_name || o.customer || o.name || "Unknown Customer",
+          phone: o.customer_mobile || o.phone || "N/A",
           address: o.customer_address || o.address || "No Address Provided",
           targetLat:
             parseFloat(o.customer_lat || o.latitude || o.lat) || 31.5102,
           targetLng:
             parseFloat(o.customer_lng || o.longitude || o.lng) || 74.3440,
+          rawItems: rawItems,
           items: `${rawItems?.length || 0} Items`,
-          total: `Rs ${o.total}`,
+          total: `Rs ${totalAmount.toLocaleString()}`,
+          totalAmount: totalAmount,
+          createdAt: o.created_at || null,
           time: o.created_at
             ? new Date(o.created_at).toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
               })
             : "Just Now",
-          payment: "COD",
+          paymentMethod: isCOD ? "COD" : "Online",
+          payment: isCOD ? "COD" : "Online",
+          isCOD: isCOD,
           isUrgent: false,
         };
       });
@@ -216,66 +247,103 @@ export function useDispatcherData() {
       return role === "rider" || designation === "rider";
     });
 
-    return riderStaff.map((r) => ({
-      id: r.id,
-      name: r.name || "Unknown Rider",
-      status: r.shift_status || r.status || "Offline",
-      location: {
-        lat: parseFloat(r.lat) || 31.5204 + (Math.random() - 0.5) * 0.03,
-        lng: parseFloat(r.lng) || 74.3587 + (Math.random() - 0.5) * 0.03,
-      },
-      trips: parseInt(r.trips_completed) || 0,
-      rating: 4.8,
-      vehicle: r.vehicle || "Bike",
-      phone: r.phone || "N/A",
-      accuracy: "98%",
-    }));
+    return riderStaff.map((r) => {
+      const activeOrders = parseInt(r.active_orders_count) || 0;
+      const shiftStatus = (r.shift_status || r.status || "Offline").trim();
+      const isOffline = shiftStatus.toLowerCase() === "offline" || (r.status || "").toLowerCase() === "inactive";
+      const canAccept = !isOffline && activeOrders < 3;
+
+      return {
+        id: r.id,
+        name: r.name || "Unknown Rider",
+        status: shiftStatus,
+        activeOrders: activeOrders,
+        canAccept: canAccept,
+        isOffline: isOffline,
+        location: {
+          lat: parseFloat(r.lat) || 31.5204 + (Math.random() - 0.5) * 0.03,
+          lng: parseFloat(r.lng) || 74.3587 + (Math.random() - 0.5) * 0.03,
+        },
+        trips: parseInt(r.trips_completed) || 0,
+        rating: 4.8,
+        vehicle: r.vehicle || "Bike",
+        phone: r.phone || "N/A",
+        accuracy: "98%",
+      };
+    });
   }, [rawStaff]);
 
   const freeRidersCount = useMemo(() => {
-    return riders.filter(
-      (r) => String(r.status).toLowerCase() === "available"
-    ).length;
+    return riders.filter((r) => r.canAccept).length;
   }, [riders]);
 
-  // 5. ASSIGN RIDER MUTATION (Clean Singleton Socket Emit)
+  // 5. ASSIGN RIDER MUTATION (Clean Singleton Socket Emit & Single Atomic HTTP Call)
   const assignMutation = useMutation({
     mutationFn: async ({ orderId, riderId, batchDetails }) => {
-      const ordersToAssign = batchDetails ? batchDetails.map((b) => b.id) : [orderId];
+      const rawIds =
+        batchDetails && Array.isArray(batchDetails) && batchDetails.length > 0
+          ? batchDetails.map((b) => b.id)
+          : [orderId];
 
-      for (const id of ordersToAssign) {
-        await fetch(`${import.meta.env.VITE_API_BASE}/assign_rider.php`, {
+      const ordersToAssign = rawIds
+        .map((id) =>
+          typeof id === "string" && id.startsWith("BATCH-")
+            ? id.replace("BATCH-", "")
+            : id
+        )
+        .map((id) => parseInt(id, 10))
+        .filter((id) => !isNaN(id) && id > 0);
+
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE}/assign_rider.php`,
+        {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            order_id: id,
-            id: id,
+            order_ids: ordersToAssign,
+            order_id: ordersToAssign[0],
+            id: ordersToAssign[0],
             rider_id: riderId,
             status: "Dispatched",
           }),
-        });
+        }
+      );
+      const resData = await res.json();
+      if (!resData.success) {
+        throw new Error(resData.message || "Assignment failed.");
       }
-
-      await fetch(`${import.meta.env.VITE_API_BASE}/update_rider_status.php`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: riderId, status: "Busy" }),
-      });
+      return { resData, ordersToAssign, riderId };
     },
-    onSuccess: () => {
-      socket.emit("trigger_rider_assignment");
+    onSuccess: (result, variables) => {
+      const riderId = variables?.riderId;
+      const orderIds = result?.ordersToAssign || [];
+
+      // Single atomic socket emit with full assignment batch details
+      socket.emit("trigger_rider_assignment", {
+        rider_id: riderId,
+        order_ids: orderIds,
+      });
       socket.emit("rider_status_update");
       socket.emit("refresh_kitchen");
+      socket.emit("order_status_updated");
 
       queryClient.invalidateQueries({ queryKey: ["dispatcher_orders"] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["dispatcher_staff"] });
       queryClient.invalidateQueries({ queryKey: ["staff"] });
-      toast.success("Rider assigned successfully!");
+
+      if (orderIds.length > 1) {
+        toast.success(`Batch of ${orderIds.length} orders assigned to rider!`);
+      } else {
+        toast.success("Rider assigned successfully!");
+      }
     },
     onError: (err) => {
       console.error("Assignment error:", err);
-      toast.error("Failed to assign rider.");
+      toast.error(err.message || "Failed to assign rider.");
+      // Re-fetch to get latest state after a capacity rejection
+      queryClient.invalidateQueries({ queryKey: ["dispatcher_orders"] });
+      queryClient.invalidateQueries({ queryKey: ["dispatcher_staff"] });
     },
   });
 
@@ -486,6 +554,7 @@ export function useDispatcherData() {
     handleAssign,
     handleCompleteTrip,
     handleSmartBatching,
+    isAssigning: assignMutation.isPending,
     isCompletingTrip: markDeliveredMutation.isPending,
     isLoading: isOrdersLoading || isStaffLoading,
   };

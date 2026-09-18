@@ -25,8 +25,13 @@ try {
     }
 
     $sortDir = 'DESC';
-    if ($type === 'kitchen' || (isset($_GET['sort']) && strtolower(trim($_GET['sort'])) === 'asc') || (isset($_GET['order_by']) && strtolower(trim($_GET['order_by'])) === 'fcfs')) {
+    if ($type === 'kitchen' || (isset($_GET['sort']) && strtolower(trim($_GET['sort'])) === 'asc') || (isset($_GET['order_by']) && strtolower(trim($_GET['order_by'])) === 'fcfs') || $type === 'dispatcher') {
         $sortDir = 'ASC';
+    }
+
+    $orderByClause = "ORDER BY o.id " . $sortDir;
+    if ((isset($_GET['order_by']) && strtolower(trim($_GET['order_by'])) === 'fcfs') || $type === 'dispatcher') {
+        $orderByClause = "ORDER BY o.created_at ASC, o.id ASC";
     }
 
     if ($type === 'all' || $type === 'cashier') {
@@ -41,7 +46,25 @@ try {
                   FROM orders o 
                   LEFT JOIN payments p ON o.id = p.order_id 
                   LEFT JOIN staff s ON o.rider_id = s.id
-                  ORDER BY o.id " . $sortDir . $limitSql;
+                  " . $orderByClause . $limitSql;
+    } else if ($type === 'pending_cod') {
+        $wherePendingCod = "WHERE (LOWER(o.order_type) LIKE '%delivery%' OR LOWER(o.order_mode) LIKE '%delivery%')
+                             AND (LOWER(COALESCE(p.method, o.payment_method, '')) IN ('cod', 'cash', 'cash on delivery', '') OR LOWER(COALESCE(p.method, o.payment_method, '')) LIKE '%delivery%')
+                             AND LOWER(COALESCE(p.status, o.payment_status, 'pending')) NOT IN ('paid', 'completed')
+                             AND o.status IN ('Delivered', 'Completed', 'Dispatched')";
+        $countQuery = "SELECT COUNT(*) FROM orders o LEFT JOIN payments p ON o.id = p.order_id " . $wherePendingCod;
+        $query = "SELECT o.*, 
+                         COALESCE(p.status, o.payment_status, 'Pending') as payment_status, 
+                         COALESCE(p.method, o.payment_method, 'Cash') as payment_method,
+                         DATE_FORMAT(o.created_at, '%h:%i %p') as time,
+                         DATE_FORMAT(o.created_at, '%d/%m/%Y') as date,
+                         s.name as rider_name,
+                         s.phone as rider_phone
+                  FROM orders o 
+                  LEFT JOIN payments p ON o.id = p.order_id 
+                  LEFT JOIN staff s ON o.rider_id = s.id
+                  " . $wherePendingCod . "
+                  " . $orderByClause . $limitSql;
     } else {
         $countQuery = "SELECT COUNT(*) FROM orders WHERE status NOT IN ('Delivered', 'Completed', 'Dispatched', 'Cancelled', 'Declined')";
         $query = "SELECT o.*, 
@@ -55,7 +78,7 @@ try {
                   LEFT JOIN payments p ON o.id = p.order_id 
                   LEFT JOIN staff s ON o.rider_id = s.id
                   WHERE o.status NOT IN ('Delivered', 'Completed', 'Dispatched', 'Cancelled', 'Declined') 
-                  ORDER BY o.id " . $sortDir . $limitSql;
+                  " . $orderByClause . $limitSql;
     }
 
     $totalStmt = $db->prepare($countQuery);

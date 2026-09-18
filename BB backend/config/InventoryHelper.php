@@ -199,6 +199,10 @@ class InventoryHelper {
             $oiid = is_object($item) ? ($item->order_item_id ?? null) : ($item['order_item_id'] ?? null);
             if (!$oiid) continue;
 
+            $unit_cost = 0.0;
+            $mId = self::resolveMenuItemId($item);
+            $size = strtolower(trim(is_object($item) ? ($item->size ?? 'regular') : ($item['size'] ?? 'regular')));
+
             $isDeal = self::isDealItem($item);
             if ($isDeal) {
                 $unit_cost = self::calculateDealUnitCost($item, $inventory_prices, $db);

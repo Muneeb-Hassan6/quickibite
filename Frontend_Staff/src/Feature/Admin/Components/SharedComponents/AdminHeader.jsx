@@ -17,6 +17,7 @@ import {
 import { HiBars3BottomLeft } from "react-icons/hi2";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "../../../../Context/ThemeContext";
+import { staffSocket } from "../../../../utils/socket";
 
 const TAB_DESCRIPTIONS = {
   dashboard: "Real-time metrics, order volumes, and financial summary",
@@ -66,7 +67,20 @@ const AdminHeader = ({ activeTab, setActiveTab, setIsSidebarOpen }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Poll staff notifications every 6 seconds
+  // Real-time socket sync for notifications
+  useEffect(() => {
+    const handleNotifSync = () => {
+      queryClient.invalidateQueries({ queryKey: ["staff_notifications"] });
+    };
+    staffSocket.on("refresh_kitchen", handleNotifSync);
+    staffSocket.on("refresh_orders", handleNotifSync);
+    return () => {
+      staffSocket.off("refresh_kitchen", handleNotifSync);
+      staffSocket.off("refresh_orders", handleNotifSync);
+    };
+  }, [queryClient]);
+
+  // Poll staff notifications every 60 seconds (idle fallback)
   const { data: notifData = {} } = useQuery({
     queryKey: ["staff_notifications"],
     queryFn: async () => {
@@ -80,7 +94,7 @@ const AdminHeader = ({ activeTab, setActiveTab, setIsSidebarOpen }) => {
         return { unread_count: 0, notifications: [] };
       }
     },
-    refetchInterval: 6000,
+    refetchInterval: 60000,
   });
 
   const unreadCount = notifData.unread_count || 0;

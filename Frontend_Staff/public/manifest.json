@@ -1,7 +1,7 @@
 {
-  "name": "QuickiBite Staff - POS & Operations",
-  "short_name": "Staff POS",
-  "description": "QuickiBite Restaurant Staff Portal for Cashier POS, Kitchen KDS, and Rider delivery dispatch.",
+  "name": "BigBite Staff - POS & Operations",
+  "short_name": "BigBite POS",
+  "description": "BigBite Restaurant Staff Portal for Cashier POS, Kitchen KDS, and Rider delivery dispatch.",
   "start_url": "/",
   "id": "/?source=staff-pwa",
   "scope": "/",

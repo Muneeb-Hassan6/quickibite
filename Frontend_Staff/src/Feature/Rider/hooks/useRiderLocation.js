@@ -16,11 +16,13 @@ export const calculateDistance = (lat1, lon1, lat2, lon2) => {
 export function useRiderLocation({
   riderId,
   isOnline,
+  selectedOrder,
   currentOrder,
   orderStatus,
   setOrderStatus,
 }) {
   const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+  const targetOrder = selectedOrder || currentOrder;
 
   // 1. Initial State explicitly locked to Lahore
   const [riderLocation, setRiderLocation] = useState({
@@ -128,12 +130,12 @@ export function useRiderLocation({
               });
             }
 
-            if (currentOrder) {
+            if (targetOrder && targetOrder.targetLat && targetOrder.targetLng) {
               const dist = calculateDistance(
                 latitude,
                 longitude,
-                currentOrder.targetLat,
-                currentOrder.targetLng
+                targetOrder.targetLat,
+                targetOrder.targetLng
               );
               setDistance(Math.round(dist));
               if (dist < 50 && !isArrived) {
@@ -164,7 +166,30 @@ export function useRiderLocation({
         watchIdRef.current = null;
       }
     };
-  }, [isOnline, currentOrder, isArrived, orderStatus, riderId, setOrderStatus]);
+  }, [isOnline, targetOrder, isArrived, orderStatus, riderId, setOrderStatus]);
+
+  // Recalculate route and distance whenever targetOrder changes
+  useEffect(() => {
+    if (targetOrder && targetOrder.targetLat && targetOrder.targetLng) {
+      fetchMapboxAI(
+        riderLocation.lat,
+        riderLocation.lng,
+        targetOrder.targetLat,
+        targetOrder.targetLng
+      );
+      const dist = calculateDistance(
+        riderLocation.lat,
+        riderLocation.lng,
+        targetOrder.targetLat,
+        targetOrder.targetLng
+      );
+      setDistance(Math.round(dist));
+    } else {
+      setRoutePath([]);
+      setAiData({ eta: "...", roadDistance: "..." });
+      setDistance(null);
+    }
+  }, [targetOrder?.id, targetOrder?.targetLat, targetOrder?.targetLng, fetchMapboxAI]);
 
   // 4. Manual Coordinate Setter (for Dev Simulator)
   const setManualRiderLocation = useCallback(
@@ -199,18 +224,18 @@ export function useRiderLocation({
         });
       }
 
-      if (currentOrder) {
+      if (targetOrder && targetOrder.targetLat && targetOrder.targetLng) {
         fetchMapboxAI(
           latitude,
           longitude,
-          currentOrder.targetLat,
-          currentOrder.targetLng
+          targetOrder.targetLat,
+          targetOrder.targetLng
         );
         const dist = calculateDistance(
           latitude,
           longitude,
-          currentOrder.targetLat,
-          currentOrder.targetLng
+          targetOrder.targetLat,
+          targetOrder.targetLng
         );
         setDistance(Math.round(dist));
         if (dist < 50 && !isArrived) {
@@ -222,7 +247,7 @@ export function useRiderLocation({
         }
       }
     },
-    [riderId, currentOrder, isArrived, fetchMapboxAI, setOrderStatus]
+    [riderId, targetOrder, isArrived, fetchMapboxAI, setOrderStatus]
   );
 
   return {

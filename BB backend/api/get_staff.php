@@ -21,9 +21,16 @@ try {
     }
 
     $query = "SELECT s.id, s.name, s.role, s.phone, s.salary, s.status, s.shift_status, s.username, s.shift, s.hire_date AS created_at,
-                     r.vehicle, r.lat, r.lng, r.trips_completed, r.license_number 
+                     r.vehicle, r.lat, r.lng, r.trips_completed, r.license_number,
+                     COALESCE(act.active_orders_count, 0) AS active_orders_count
               FROM staff s 
               LEFT JOIN rider r ON s.id = r.staff_id
+              LEFT JOIN (
+                  SELECT rider_id, COUNT(*) AS active_orders_count 
+                  FROM orders 
+                  WHERE status IN ('Dispatched', 'Out for Delivery', 'On The Way')
+                  GROUP BY rider_id
+              ) act ON s.id = act.rider_id
               ORDER BY s.id DESC" . $limitSql;
               
     $stmt = $db->prepare($query);

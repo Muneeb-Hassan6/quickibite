@@ -25,6 +25,11 @@ export default function RiderPortal() {
     isOnline,
     handleToggleStatus,
     isTogglingStatus,
+    activeOrders,
+    proximityOrders,
+    selectedOrder,
+    selectedOrderId,
+    setSelectedOrderId,
     currentOrder,
     incomingOrderDetails,
     acceptOrder,
@@ -57,6 +62,12 @@ export default function RiderPortal() {
   };
 
   if (!riderSession) return null;
+
+  const hasActiveDeliveries = isOnline && (activeOrders.length > 0 || selectedOrder);
+  const targetOrder = selectedOrder || currentOrder;
+  const currentStopIndex = proximityOrders.findIndex(
+    (o) => String(o.id) === String(targetOrder?.id)
+  );
 
   return (
     <div className="flex justify-center bg-stone-100 dark:bg-neutral-950 min-h-screen text-stone-900 dark:text-neutral-100 font-sans transition-colors">
@@ -94,7 +105,7 @@ export default function RiderPortal() {
           )}
 
           {/* ONLINE & SEARCHING STATE */}
-          {isOnline && !currentOrder && (
+          {isOnline && !hasActiveDeliveries && (
             <div className="space-y-4">
               <div className="py-8 flex flex-col items-center justify-center text-center bg-stone-50 dark:bg-neutral-950/80 border border-stone-200 dark:border-neutral-800 rounded-2xl shadow-xs">
                 <div className="w-14 h-14 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-2xl mb-3 animate-pulse border border-emerald-500/30">
@@ -114,9 +125,55 @@ export default function RiderPortal() {
             </div>
           )}
 
-          {/* ACTIVE DELIVERY VIEW */}
-          {isOnline && currentOrder && (
+          {/* ACTIVE MULTI-STOP DELIVERY VIEW */}
+          {hasActiveDeliveries && targetOrder && (
             <div className="space-y-4 animate-in fade-in duration-200">
+              {/* Multi-Stop Batch Navigation Switcher Bar */}
+              {proximityOrders.length > 1 && (
+                <div className="bg-stone-50 dark:bg-neutral-950/90 border border-stone-200 dark:border-neutral-800 p-2.5 rounded-2xl shadow-xs">
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <span className="text-[11px] font-black uppercase tracking-wider font-['Oswald',sans-serif] text-stone-700 dark:text-neutral-300">
+                      Active Batch ({proximityOrders.length} Stops)
+                    </span>
+                    <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full uppercase">
+                      Proximity Route
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                    {proximityOrders.map((ord, idx) => {
+                      const isSelected = String(ord.id) === String(targetOrder.id);
+                      const isNearest = idx === 0;
+
+                      return (
+                        <button
+                          key={ord.id}
+                          type="button"
+                          onClick={() => setSelectedOrderId(ord.id)}
+                          className={`p-2 rounded-xl text-left transition-all cursor-pointer border ${
+                            isSelected
+                              ? "bg-amber-500 text-neutral-950 border-amber-600 shadow-sm ring-2 ring-amber-500/40"
+                              : "bg-white dark:bg-neutral-900 text-stone-800 dark:text-neutral-200 border-stone-200 dark:border-neutral-800 hover:border-amber-400"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between text-[10px] font-black font-['Oswald',sans-serif]">
+                            <span>
+                              STOP {idx + 1} {isNearest ? "• NEAREST" : ""}
+                            </span>
+                            <span className="font-mono text-[9px]">
+                              {ord.distanceKm || "..."}
+                            </span>
+                          </div>
+                          <div className="text-xs font-bold truncate mt-0.5">
+                            #{ord.id} - {ord.customer}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Map View & Chat Overlay Button */}
               <div className="relative">
                 <button
@@ -132,7 +189,10 @@ export default function RiderPortal() {
                   setViewState={setViewState}
                   routePath={routePath}
                   riderLocation={riderLocation}
-                  currentOrder={currentOrder}
+                  currentOrder={targetOrder}
+                  activeOrders={proximityOrders}
+                  selectedOrder={targetOrder}
+                  onSelectOrder={setSelectedOrderId}
                   MAPBOX_TOKEN={MAPBOX_TOKEN}
                 />
               </div>
@@ -145,14 +205,17 @@ export default function RiderPortal() {
                 orderStatus={orderStatus}
                 handlePhotoUpload={handlePhotoUpload}
                 deliveryPhoto={deliveryPhoto}
-                completeDelivery={completeDelivery}
+                completeDelivery={() => completeDelivery(targetOrder.id)}
               />
 
-              {/* Active Order Card */}
+              {/* Active Order Card for Focused Stop */}
               <ActiveOrderCard
-                order={currentOrder}
-                onComplete={completeDelivery}
-                onCancel={() => declineOrder(currentOrder.id)}
+                key={targetOrder.id}
+                order={targetOrder}
+                stopNumber={currentStopIndex !== -1 ? currentStopIndex + 1 : 1}
+                totalStops={proximityOrders.length || 1}
+                onComplete={(id) => completeDelivery(id)}
+                onCancel={(id) => declineOrder(id)}
                 isCompleting={isCompletingDelivery}
               />
             </div>
@@ -167,15 +230,15 @@ export default function RiderPortal() {
           <IncomingOrderModal
             order={incomingOrderDetails}
             onAccept={acceptOrder}
-            onDecline={() => declineOrder(incomingOrderDetails.id)}
+            onDecline={declineOrder}
           />
         )}
 
-        {currentOrder && isChatOpen && (
+        {targetOrder && isChatOpen && (
           <ChatDrawer
             isOpen={isChatOpen}
             onClose={() => setIsChatOpen(false)}
-            customerName={currentOrder.customer}
+            customerName={targetOrder.customer}
           />
         )}
       </div>
@@ -184,15 +247,15 @@ export default function RiderPortal() {
       <RiderGpsSimulator
         currentLocation={riderLocation}
         destination={
-          currentOrder
+          targetOrder
             ? {
                 lat:
-                  currentOrder.targetLat ||
-                  currentOrder.customer_lat ||
+                  targetOrder.targetLat ||
+                  targetOrder.customer_lat ||
                   31.4826,
                 lng:
-                  currentOrder.targetLng ||
-                  currentOrder.customer_lng ||
+                  targetOrder.targetLng ||
+                  targetOrder.customer_lng ||
                   74.3256,
               }
             : { lat: 31.4826, lng: 74.3256 }

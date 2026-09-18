@@ -1,8 +1,13 @@
 <?php
+if (ob_get_level()) ob_clean();
+ob_start();
+
 include_once __DIR__ . '/../config/cors_headers.php';
 include_once __DIR__ . '/../config/auth_middleware.php';
 require_role(['Admin', 'Manager']);
 include_once __DIR__ . '/../config/Database.php';
+
+header('Content-Type: application/json; charset=utf-8');
 
 $database = new Database();
 $db = $database->getConnection();
@@ -34,17 +39,15 @@ if(!empty($data->id) && !empty($data->name) && !empty($data->role)) {
         
         $stmt->execute();
 
-        // Permanently save custom / assigned role in staff_roles table
+        // Permanently save custom / assigned role in staff_roles table (DML only, no DDL)
         $assignedRole = trim((string)$data->role);
         if (!empty($assignedRole)) {
-            $db->exec("CREATE TABLE IF NOT EXISTS staff_roles (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                role_name VARCHAR(100) UNIQUE NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-            $roleStmt = $db->prepare("INSERT IGNORE INTO staff_roles (role_name) VALUES (:role_name)");
-            $roleStmt->execute([':role_name' => $assignedRole]);
+            try {
+                $roleStmt = $db->prepare("INSERT IGNORE INTO staff_roles (role_name) VALUES (:role_name)");
+                $roleStmt->execute([':role_name' => $assignedRole]);
+            } catch (Exception $roleErr) {
+                // Non-fatal if staff_roles does not exist or duplicate
+            }
         }
         
         if (isset($data->password) && trim((string)$data->password) !== '') {

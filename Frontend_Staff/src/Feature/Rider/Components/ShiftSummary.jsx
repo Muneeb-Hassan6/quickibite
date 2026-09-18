@@ -19,7 +19,7 @@ export default function ShiftSummary({ stats }) {
             <span>Cash</span>
           </div>
           <div className="text-stone-900 dark:text-white text-lg sm:text-xl mt-1 font-['Oswald',sans-serif] font-black">
-            Rs. {stats.cashInHand}
+            Rs. {stats.cashInHand.toLocaleString()}
           </div>
         </div>
 
@@ -29,7 +29,7 @@ export default function ShiftSummary({ stats }) {
             <span>Online</span>
           </div>
           <div className="text-stone-900 dark:text-white text-lg sm:text-xl mt-1 font-['Oswald',sans-serif] font-black">
-            Rs. {stats.onlineCollected}
+            Rs. {stats.onlineCollected.toLocaleString()}
           </div>
         </div>
 
@@ -39,7 +39,7 @@ export default function ShiftSummary({ stats }) {
             <span>Earned</span>
           </div>
           <div className="text-stone-900 dark:text-white text-lg sm:text-xl mt-1 font-['Oswald',sans-serif] font-black">
-            Rs. {stats.earnings}
+            Rs. {stats.earnings.toLocaleString()}
           </div>
         </div>
       </div>
