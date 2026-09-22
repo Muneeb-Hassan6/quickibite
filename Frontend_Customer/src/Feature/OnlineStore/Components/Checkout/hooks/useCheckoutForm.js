@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import { useCart } from "../../../../../Context/CartContext";
 import { useAuth } from "../../../../../Context/AuthContext";
 import { useOrderSession } from "../../../../../Hooks/useOrderSession";
@@ -530,11 +531,64 @@ export function useCheckoutForm() {
     }
   };
 
-  const handleSandboxSuccess = async (txnRef) => {
-    setSandboxLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setSandboxLoading(false);
+  const handleSandboxSuccess = async (txnRef, status = "success", errorMessage = "") => {
     setSandboxModalOpen(false);
+
+    // 1. Processing Payment Screen (Matches Screenshot 1)
+    Swal.fire({
+      title: "Processing Payment...",
+      text: "Connecting to Secure Gateway",
+      allowOutsideClick: false,
+      background: "#18181b",
+      color: "#ffffff",
+      didOpen: () => Swal.showLoading(),
+    });
+
+    await new Promise((r) => setTimeout(r, 1800));
+
+    // 2. Insufficient Balance Screen
+    if (status === "low_balance") {
+      Swal.fire({
+        icon: "error",
+        title: "Payment Failed",
+        text: errorMessage || "Insufficient balance in your account. Transaction rejected.",
+        background: "#18181b",
+        color: "#ffffff",
+        confirmButtonColor: "#f59e0b",
+        confirmButtonText: "Try Again",
+      }).then(() => {
+        setSandboxModalOpen(true);
+      });
+      return;
+    }
+
+    // 3. Declined / Blocked Screen
+    if (status === "declined") {
+      Swal.fire({
+        icon: "error",
+        title: "Payment Failed",
+        text: errorMessage || "Transaction declined by banking gateway / card security check.",
+        background: "#18181b",
+        color: "#ffffff",
+        confirmButtonColor: "#ef4444",
+        confirmButtonText: "Try Again",
+      }).then(() => {
+        setSandboxModalOpen(true);
+      });
+      return;
+    }
+
+    // 4. Payment Successful Screen (Matches Screenshot 2)
+    await Swal.fire({
+      icon: "success",
+      title: "Payment Successful",
+      text: "Transaction Completed.",
+      timer: 1600,
+      showConfirmButton: false,
+      background: "#18181b",
+      color: "#ffffff",
+    });
+
     const resolvedTxn =
       typeof txnRef === "string" && txnRef.trim()
         ? txnRef.trim()
