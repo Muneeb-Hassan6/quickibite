@@ -17,7 +17,7 @@ class Database {
             // Alwaysdata Cloud Database
             $this->host = "mysql-quickibite.alwaysdata.net";
             $this->port = "3306"; 
-            $this->db_name = "quickibite_new";
+            $this->db_name = "quickibite_db";
             $this->username = "quickibite";
             $this->password = "Quickbite123;";
         } else {
