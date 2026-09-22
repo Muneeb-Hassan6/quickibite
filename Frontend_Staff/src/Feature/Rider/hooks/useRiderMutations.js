@@ -122,22 +122,44 @@ export function useRiderMutations({
         );
       }
 
-      try {
-        const orderIds = ordersToAdd.map((o) => o.id);
-        await fetch(`${import.meta.env.VITE_API_BASE}/accept_order.php`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            rider_id: riderSession.id,
-            order_ids: orderIds,
-          }),
-        });
+      if (
+        customerPhone &&
+        customerPhone !== "N/A" &&
+        customerPhone.trim() !== ""
+      ) {
+        let formattedPhone = customerPhone.replace(/\D/g, "");
+        if (formattedPhone.startsWith("0")) {
+          formattedPhone = "92" + formattedPhone.slice(1);
+        } else if (
+          formattedPhone.length === 10 &&
+          formattedPhone.startsWith("3")
+        ) {
+          formattedPhone = "92" + formattedPhone;
+        }
+        const riderName = riderSession?.name || "Rider";
+        const riderPhone = riderSession?.phone || "";
+        const msg = `Hi! Your QuickBite order is accepted by our rider *${riderName}*. Contact: ${riderPhone}. They are on their way to deliver your order!`;
+        const waUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(
+          msg
+        )}`;
+        window.open(waUrl, "_blank");
+      }
 
+      try {
+        await fetch(
+          `${import.meta.env.VITE_API_BASE}/update_rider_status.php`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: riderSession.id,
+              status: "Busy",
+              lat: riderLocation?.lat || 31.5204,
+              lng: riderLocation?.lng || 74.3587,
+            }),
+          }
+        );
         riderSocket.emit("rider_status_update");
-        riderSocket.emit("order_status_updated");
-        riderSocket.emit("refresh_kitchen");
-        riderSocket.emit("refresh_rider");
-        riderSocket.emit("refresh_orders");
       } catch (err) {
         console.warn("Could not update rider status on accept:", err);
       }
@@ -300,9 +322,6 @@ export function useRiderMutations({
       riderSocket.emit("rider_status_update");
       riderSocket.emit("refresh_kitchen");
       riderSocket.emit("order_status_updated");
-      riderSocket.emit("refresh_orders");
-      riderSocket.emit("refresh_rider");
-      riderSocket.emit("refresh_rider_list");
 
       const idSet = new Set(orderIds.map((id) => String(id)));
 

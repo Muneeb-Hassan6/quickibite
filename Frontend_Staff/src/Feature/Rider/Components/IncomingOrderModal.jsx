@@ -138,10 +138,10 @@ export default function IncomingOrderModal({ order, onAccept, onDecline }) {
           <button
             type="button"
             onClick={handleAccept}
-            className="flex-1 min-h-[44px] bg-emerald-500 hover:bg-emerald-600 text-white border-none p-3 rounded-xl font-black text-xs uppercase font-['Oswald',sans-serif] tracking-wider cursor-pointer flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 ring-2 ring-emerald-500/40"
+            className="flex-1 min-h-[44px] bg-emerald-500 hover:bg-emerald-600 text-white border-none p-3 rounded-xl font-black text-xs uppercase font-['Oswald',sans-serif] tracking-wider cursor-pointer flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95"
           >
             <FaCheck />
-            <span>{isBatch ? `Accept Batch (${orders.length})` : "Accept Order"}</span>
+            <span>{isBatch ? "Accept Batch" : "Accept"}</span>
           </button>
         </div>
       </div>

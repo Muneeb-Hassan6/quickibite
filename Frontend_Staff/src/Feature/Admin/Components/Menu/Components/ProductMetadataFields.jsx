@@ -48,7 +48,6 @@ export default function ProductMetadataFields({
           />
           <span>Mark as Best Seller</span>
         </label>
-        
       </div>
 
       {/* Spice Selection Control */}

@@ -109,8 +109,6 @@ const DealCard = ({ deal }) => {
           <img
             src={finalImage}
             alt={title}
-            loading="lazy"
-            decoding="async"
             className="relative z-10 w-full h-full object-contain drop-shadow-md transition-transform duration-300 group-hover:scale-105 p-1"
             onError={(e) => {
               e.target.onerror = null;

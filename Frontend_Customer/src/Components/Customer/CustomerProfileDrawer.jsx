@@ -52,7 +52,7 @@ export default function CustomerProfileDrawer() {
   const [reviewOrder, setReviewOrder] = useState(null);
   const [reviewedOrderIds, setReviewedOrderIds] = useState(() => {
     try {
-      const saved = localStorage.getItem("bigbite_reviewed_orders") || localStorage.getItem("quickbite_reviewed_orders");
+      const saved = localStorage.getItem("quickbite_reviewed_orders");
       return saved ? JSON.parse(saved) : {};
     } catch {
       return {};
@@ -220,7 +220,7 @@ export default function CustomerProfileDrawer() {
     setReviewedOrderIds((prev) => {
       const updated = { ...prev, [orderId]: reviewData };
       try {
-        localStorage.setItem("bigbite_reviewed_orders", JSON.stringify(updated));
+        localStorage.setItem("quickbite_reviewed_orders", JSON.stringify(updated));
       } catch {}
       return updated;
     });
@@ -331,7 +331,7 @@ export default function CustomerProfileDrawer() {
           <div className="p-5 sm:p-6 bg-gradient-to-b from-zinc-50 to-white dark:from-neutral-900 dark:via-neutral-950 dark:to-[#0e0e11] border-b border-zinc-200 dark:border-neutral-800/80 shrink-0">
             <div className="flex items-center justify-between mb-4">
               <span className="text-[10px] font-mono font-bold tracking-widest text-amber-600 dark:text-amber-400 uppercase bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                ⭐ BIGBITE VIP MEMBER
+                ⭐ QUICKIBITE VIP MEMBER
               </span>
               <button
                 type="button"
@@ -365,7 +365,7 @@ export default function CustomerProfileDrawer() {
                   {customer?.full_name || "Foodie"}
                 </h3>
                 <p className="text-xs text-zinc-500 dark:text-neutral-400 truncate mt-0.5">
-                  {customer?.email || customer?.phone || "BigBite Gourmet"}
+                  {customer?.email || customer?.phone || "QuickiBite Gourmet"}
                 </p>
                 {customer?.phone && customer?.email && (
                   <p className="text-[11px] text-zinc-400 dark:text-neutral-500 font-mono truncate">

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import DispatchHeader from "./Components/DispatchHeader";
 import DispatchStats from "./Components/DispatchStats";
 import AutoPilotControlBar from "./Components/AutoPilotControlBar";
-// import DispatcherMap from "./Components/DispatcherMap";
+import DispatcherMap from "./Components/DispatcherMap";
 import ReadyOrdersList from "./Components/ReadyOrdersList";
 import ActiveRidersList from "./Components/ActiveRidersList";
 import ActiveDeliveries from "./Components/ActiveDeliveries";
@@ -52,14 +52,14 @@ export default function DispatchPortal() {
       />
 
       {/* 3. Real-Time Rider GPS Map */}
-      {/* <div className="px-3.5 sm:px-6 lg:px-8 py-2">
+      <div className="px-3.5 sm:px-6 lg:px-8 py-2">
         <DispatcherMap
           riders={riders}
           MAPBOX_TOKEN={MAPBOX_TOKEN}
           viewState={mapViewState}
           setViewState={setMapViewState}
         />
-      </div> */}
+      </div>
 
       {/* 4. Auto-Pilot & Smart Batching Controls */}
       <AutoPilotControlBar

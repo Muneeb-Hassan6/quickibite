@@ -58,7 +58,7 @@ const LoadingFallback = () => (
       className="mt-6 text-sm font-semibold tracking-wider uppercase text-gray-400 animate-pulse"
       style={{ letterSpacing: "0.15em" }}
     >
-      BigBite Staff Portal...
+      QuickiBite Staff Portal...
     </p>
   </div>
 );

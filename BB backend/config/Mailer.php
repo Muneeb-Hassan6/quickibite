@@ -50,7 +50,7 @@ class Mailer {
 
             // Email Content
             $mail->isHTML(true);
-            $mail->Subject = "Your BigBite Password Reset Code: $otp";
+            $mail->Subject = "Your QuickiBite Password Reset Code: $otp";
 
             // HTML Body Template
             $safeName = htmlspecialchars($customerName ?: 'Foodie', ENT_QUOTES, 'UTF-8');
@@ -71,7 +71,7 @@ class Mailer {
                       <!-- Header -->
                       <tr>
                         <td style='background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding:30px 24px; text-align:center;'>
-                          <h1 style='margin:0; font-size:28px; font-weight:900; letter-spacing:1px; color:#09090b; text-transform:uppercase;'>BIGBITE</h1>
+                          <h1 style='margin:0; font-size:28px; font-weight:900; letter-spacing:1px; color:#09090b; text-transform:uppercase;'>QUICKIBITE</h1>
                           <p style='margin:6px 0 0 0; font-size:13px; font-weight:600; color:#451a03;'>Instant Fast Food & Delicious Meals</p>
                         </td>
                       </tr>
@@ -93,7 +93,7 @@ class Mailer {
                           </div>
 
                           <p style='margin:0 0 16px 0; font-size:13px; line-height:1.6; color:#71717a;'>
-                            ⚠️ <strong>Security Notice:</strong> Never share this code with anyone. BigBite representatives will never ask you for this code.
+                            ⚠️ <strong>Security Notice:</strong> Never share this code with anyone. QuickiBite representatives will never ask you for this code.
                           </p>
 
                           <p style='margin:0; font-size:12px; line-height:1.6; color:#52525b;'>
@@ -106,7 +106,7 @@ class Mailer {
                       <tr>
                         <td style='border-top:1px solid #27272a; padding:20px 24px; text-align:center; background-color:#121215;'>
                           <p style='margin:0; font-size:11px; color:#52525b;'>
-                            &copy; " . date('Y') . " BigBite Delivery. All rights reserved.
+                            &copy; " . date('Y') . " QuickiBite Delivery. All rights reserved.
                           </p>
                         </td>
                       </tr>
@@ -120,7 +120,7 @@ class Mailer {
             ";
 
             // Plain text alternative
-            $mail->AltBody = "Hello $safeName,\n\nYour BigBite password reset code is: $otp\n\nThis code will expire in 2 minutes. If you did not request this, please ignore this email.";
+            $mail->AltBody = "Hello $safeName,\n\nYour QuickiBite password reset code is: $otp\n\nThis code will expire in 2 minutes. If you did not request this, please ignore this email.";
 
             $mail->send();
             return [

@@ -92,7 +92,7 @@ export default function CustomerContactFields({
                   Registered Account Detected {phoneCollision.existingName ? `(${phoneCollision.existingName})` : ""}
                 </p>
                 <p className="text-[11px] sm:text-xs text-neutral-300 dark:text-neutral-300 mt-1 leading-relaxed">
-                  This mobile number is linked with an existing BigBite account. Log in to claim loyalty points and track this order in your profile.
+                  This mobile number is linked with an existing QuickiBite account. Log in to claim loyalty points and track this order in your profile.
                 </p>
               </div>
             </div>

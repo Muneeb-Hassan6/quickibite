@@ -125,7 +125,7 @@ export const CartProvider = ({ children }) => {
 
     let loggedUser = null;
     try {
-      const saved = localStorage.getItem("bigbite_customer_user") || localStorage.getItem("quickbite_customer_user");
+      const saved = localStorage.getItem("quickbite_customer_user");
       if (saved) loggedUser = JSON.parse(saved);
     } catch {}
 

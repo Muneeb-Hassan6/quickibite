@@ -7,7 +7,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [customer, setCustomer] = useState(() => {
     try {
-      const saved = localStorage.getItem("bigbite_customer_user") || localStorage.getItem("quickbite_customer_user");
+      const saved = localStorage.getItem("quickbite_customer_user");
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -89,7 +89,7 @@ export const AuthProvider = ({ children }) => {
 
       if (data.success && data.customer) {
         setCustomer(data.customer);
-        localStorage.setItem("bigbite_customer_user", JSON.stringify(data.customer));
+        localStorage.setItem("quickbite_customer_user", JSON.stringify(data.customer));
         toast.success(`Welcome back, ${data.customer.full_name}! 👋`);
         setIsAuthModalOpen(false);
         fetchAddresses(data.customer.id);
@@ -117,8 +117,8 @@ export const AuthProvider = ({ children }) => {
 
       if (data.success && data.customer) {
         setCustomer(data.customer);
-        localStorage.setItem("bigbite_customer_user", JSON.stringify(data.customer));
-        toast.success(`Account created! Welcome to BigBite, ${data.customer.full_name}! 🎉`);
+        localStorage.setItem("quickbite_customer_user", JSON.stringify(data.customer));
+        toast.success(`Account created! Welcome to QuickiBite, ${data.customer.full_name}! 🎉`);
         setIsAuthModalOpen(false);
         fetchAddresses(data.customer.id);
         return { success: true, customer: data.customer };
@@ -145,7 +145,7 @@ export const AuthProvider = ({ children }) => {
 
       if (data.success && data.customer) {
         setCustomer(data.customer);
-        localStorage.setItem("bigbite_customer_user", JSON.stringify(data.customer));
+        localStorage.setItem("quickbite_customer_user", JSON.stringify(data.customer));
         toast.success(`Google sign-in successful! Welcome, ${data.customer.full_name}! 👋`);
         setIsAuthModalOpen(false);
         fetchAddresses(data.customer.id);
@@ -192,7 +192,7 @@ export const AuthProvider = ({ children }) => {
           mobile: data.phone,
         };
         setCustomer(updatedCust);
-        localStorage.setItem("bigbite_customer_user", JSON.stringify(updatedCust));
+        localStorage.setItem("quickbite_customer_user", JSON.stringify(updatedCust));
         toast.success("Phone number saved successfully! 🎉");
         setShowPhoneModal(false);
         return { success: true, phone: data.phone };
@@ -256,7 +256,6 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setCustomer(null);
     setSavedAddresses([]);
-    localStorage.removeItem("bigbite_customer_user");
     localStorage.removeItem("quickbite_customer_user");
     toast.success("Logged out successfully.");
   };

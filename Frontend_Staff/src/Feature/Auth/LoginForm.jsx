@@ -183,7 +183,7 @@ const LoginForm = () => {
             <FaUserShield className="text-amber-400 text-sm" />
             <span>Encrypted Session</span>
           </div>
-          <span className="text-[11px] text-neutral-400 font-sans">© {new Date().getFullYear()} BigBite</span>
+          <span className="text-[11px] text-neutral-400 font-sans">© {new Date().getFullYear()} QuickBite</span>
         </div>
       </div>
 
@@ -296,7 +296,7 @@ const LoginForm = () => {
 
         {/* Footer Note */}
         <div className="text-center text-xs text-slate-400 dark:text-neutral-600 pt-4">
-          BigBite Multi-Role Systems • Internal Use Only
+          QuickBite Multi-Role Systems • Internal Use Only
         </div>
       </div>
     </div>

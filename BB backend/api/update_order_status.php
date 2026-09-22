@@ -111,9 +111,21 @@ if (!empty($orderId) && !empty($data->status)) {
             }
         }
 
-        // Trigger real-time broadcast to live socket cluster
-        include_once __DIR__ . '/../config/SocketBroadcaster.php';
-        SocketBroadcaster::broadcastOrderTrigger(['order_id' => $id, 'status' => $dbStatus]);
+        // Trigger real-time broadcast to socket server (non-blocking)
+        try {
+            $ctx = stream_context_create([
+                'http' => [
+                    'method' => 'POST',
+                    'timeout' => 0.5,
+                    'header' => "Content-Type: application/json\r\n" .
+                                "x-internal-secret: quickibite_internal_secret_2026\r\n",
+                    'content' => json_encode(['order_id' => $id, 'status' => $dbStatus])
+                ]
+            ]);
+            @file_get_contents('http://localhost:3001/trigger-order', false, $ctx);
+        } catch (\Throwable $e) {
+            // Non-blocking fallback
+        }
 
         echo json_encode([
             "success" => true,

@@ -1,5 +1,5 @@
 import React from "react";
-import { FaTimes, FaSave, FaCube, FaSpinner } from "react-icons/fa";
+import { FaTimes, FaSave, FaCube } from "react-icons/fa";
 
 const InventoryModal = ({
   isOpen,
@@ -8,14 +8,13 @@ const InventoryModal = ({
   form,
   setForm,
   onSave,
-  isSaving = false,
 }) => {
   if (!isOpen) return null;
 
   return (
     <div
       className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center p-3 sm:p-5 z-[99999]"
-      onClick={() => !isSaving && onClose()}
+      onClick={onClose}
     >
       <div
         className="w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 shadow-2xl relative animate-slide-up max-h-[90vh] overflow-y-auto text-zinc-900 dark:text-white"
@@ -31,8 +30,7 @@ const InventoryModal = ({
           </div>
           <button
             type="button"
-            disabled={isSaving}
-            className="w-8 h-8 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center justify-center border-none cursor-pointer transition-all active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-8 h-8 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center justify-center border-none cursor-pointer transition-all active:scale-90"
             onClick={onClose}
           >
             <FaTimes className="text-sm" />
@@ -154,28 +152,17 @@ const InventoryModal = ({
           <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <button
               type="button"
-              disabled={isSaving}
-              className="px-4 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 text-xs font-bold uppercase tracking-wider cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 text-xs font-bold uppercase tracking-wider cursor-pointer transition-all"
               onClick={onClose}
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={isSaving}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-500/20 active:scale-95 border-none cursor-pointer flex items-center justify-center gap-2 min-w-[130px] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-500/20 active:scale-95 border-none cursor-pointer flex items-center gap-2 transition-all"
             >
-              {isSaving ? (
-                <>
-                  <FaSpinner className="animate-spin text-xs" />
-                  <span>{editingProduct ? "Updating..." : "Saving..."}</span>
-                </>
-              ) : (
-                <>
-                  <FaSave className="text-xs" />
-                  <span>{editingProduct ? "Update Ingredient" : "Save Ingredient"}</span>
-                </>
-              )}
+              <FaSave className="text-xs" />
+              <span>{editingProduct ? "Update Ingredient" : "Save Ingredient"}</span>
             </button>
           </div>
         </form>

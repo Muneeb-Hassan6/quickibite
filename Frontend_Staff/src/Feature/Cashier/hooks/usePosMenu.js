@@ -1,29 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { staffSocket } from "../../../utils/socket";
+import { useQuery } from "@tanstack/react-query";
 
 export default function usePosMenu({ terminalResetTrigger = 0 } = {}) {
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null);
-
-  // Real-time synchronization for POS Menu & Settings
-  useEffect(() => {
-    const handleSync = () => {
-      queryClient.invalidateQueries({ queryKey: ["menu"] });
-      queryClient.invalidateQueries({ queryKey: ["settings"] });
-    };
-
-    staffSocket.on("refresh_menu", handleSync);
-    staffSocket.on("refresh_kitchen", handleSync);
-    staffSocket.on("refresh_orders", handleSync);
-
-    return () => {
-      staffSocket.off("refresh_menu", handleSync);
-      staffSocket.off("refresh_kitchen", handleSync);
-      staffSocket.off("refresh_orders", handleSync);
-    };
-  }, [queryClient]);
 
   // Settings Query
   const { data: settingsData = {} } = useQuery({

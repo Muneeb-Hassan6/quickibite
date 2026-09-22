@@ -5,10 +5,10 @@ export const useOrderSession = () => {
   const [searchParams] = useSearchParams();
   const [session, setSession] = useState(() => {
     try {
-      const saved = localStorage.getItem("bigbite_order_session") || localStorage.getItem("quickbite_order_session");
+      const saved = localStorage.getItem("quickbite_order_session");
       if (saved) return JSON.parse(saved);
     } catch (e) {
-      console.warn("Failed to parse bigbite_order_session:", e);
+      console.warn("Failed to parse quickbite_order_session:", e);
     }
     // Fallback to legacy sessionStorage if present
     const sessionMode = sessionStorage.getItem("orderMode");
@@ -33,7 +33,7 @@ export const useOrderSession = () => {
         tableNumber: tableParam,
         isQrScanned: true,
       };
-      localStorage.setItem("bigbite_order_session", JSON.stringify(newSession));
+      localStorage.setItem("quickbite_order_session", JSON.stringify(newSession));
       sessionStorage.setItem("orderMode", "Dine-In");
       sessionStorage.setItem("tableNumber", tableParam);
       setSession(newSession);
@@ -45,7 +45,7 @@ export const useOrderSession = () => {
           tableNumber: normalizedMode === "dine_in" ? (session.tableNumber || "1") : null,
           isQrScanned: normalizedMode === "dine_in" ? session.isQrScanned : false,
         };
-        localStorage.setItem("bigbite_order_session", JSON.stringify(newSession));
+        localStorage.setItem("quickbite_order_session", JSON.stringify(newSession));
         setSession(newSession);
       }
     }
@@ -58,13 +58,13 @@ export const useOrderSession = () => {
       tableNumber: mode === "dine_in" ? (session.tableNumber || "1") : null,
       isQrScanned: mode === "dine_in" ? session.isQrScanned : false,
     };
-    localStorage.setItem("bigbite_order_session", JSON.stringify(updated));
+    localStorage.setItem("quickbite_order_session", JSON.stringify(updated));
     setSession(updated);
   };
 
   const clearDineIn = () => {
     const defaultSession = { mode: "delivery", tableNumber: null, isQrScanned: false };
-    localStorage.setItem("bigbite_order_session", JSON.stringify(defaultSession));
+    localStorage.setItem("quickbite_order_session", JSON.stringify(defaultSession));
     sessionStorage.removeItem("orderMode");
     sessionStorage.removeItem("tableNumber");
     setSession(defaultSession);

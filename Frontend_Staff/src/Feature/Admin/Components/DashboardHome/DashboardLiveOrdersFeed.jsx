@@ -40,9 +40,8 @@ export default function DashboardLiveOrdersFeed({
           <thead>
             <tr className="border-b border-[var(--border-subtle)] bg-[var(--table-header-bg)]">
               <th className="p-3 text-[var(--text-primary)] text-[11px] uppercase font-bold tracking-wider">
-                Order ID 
+                Order ID
               </th>
-              
               <th className="p-3 text-[var(--text-primary)] text-[11px] uppercase font-bold tracking-wider">
                 Customer
               </th>

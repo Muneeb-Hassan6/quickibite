@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
-import { apiFetch } from "../../../../../utils/apiHelper";
 
 export function useDealList() {
   const queryClient = useQueryClient();
@@ -22,10 +21,14 @@ export function useDealList() {
   const handleToggleStatus = async (id, currentStatus) => {
     const newStatus = currentStatus === 1 || currentStatus === "1" ? 0 : 1;
     try {
-      const response = await apiFetch("update_deal_status.php", {
-        method: "POST",
-        body: JSON.stringify({ id, is_active: newStatus }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE}/update_deal_status.php`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, is_active: newStatus }),
+        }
+      );
       const data = await response.json();
 
       if (data.success) {
@@ -40,11 +43,9 @@ export function useDealList() {
           background: "#171717",
           color: "#fff",
         });
-      } else {
-        Swal.fire("Error", data.message || "Failed to update status", "error");
       }
     } catch (error) {
-      Swal.fire("Error", "Server connection failed", "error");
+      Swal.fire("Error", "Could not update deal status", "error");
     }
   };
 
@@ -63,13 +64,14 @@ export function useDealList() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await apiFetch("delete_deal.php", {
-            method: "POST",
-            body: JSON.stringify({
-              id,
-              auth_token: sessionStorage.getItem("auth_token"),
-            }),
-          });
+          const response = await fetch(
+            `${import.meta.env.VITE_API_BASE}/delete_deal.php`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id }),
+            }
+          );
           const data = await response.json();
           if (data.success) {
             Swal.fire("Deleted!", "Deal has been removed.", "success");

@@ -132,7 +132,7 @@ export const resolveAddressCoordinates = async (
     }
   }
 
-  // Fallback: BigBite Store HQ
-  console.warn("⚠️ Geocoding default fallback to BigBite Store HQ:", rawAddress);
+  // Fallback: QuickBite Store HQ
+  console.warn("⚠️ Geocoding default fallback to QuickBite Store HQ:", rawAddress);
   return { lat: 31.5204, lng: 74.3587, source: "Store HQ Fallback" };
 };
