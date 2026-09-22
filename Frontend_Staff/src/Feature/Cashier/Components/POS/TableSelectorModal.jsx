@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FaTimes, FaChair, FaCheckCircle, FaBan, FaSyncAlt } from "react-icons/fa";
+import { FaTimes, FaChair, FaCheckCircle, FaBan, FaSyncAlt, FaSearch } from "react-icons/fa";
 
 export default function TableSelectorModal({ isOpen, onClose, onSelectTable, selectedTable }) {
+  const [searchQuery, setSearchQuery] = useState("");
+
   const { data: tablesData, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["restaurant_tables"],
     queryFn: async () => {
@@ -14,11 +16,26 @@ export default function TableSelectorModal({ isOpen, onClose, onSelectTable, sel
     staleTime: 5000,
   });
 
+  useEffect(() => {
+    if (isOpen) {
+      setSearchQuery("");
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const tables = tablesData || [];
   const availableCount = tables.filter((t) => !t.is_occupied).length;
   const occupiedCount = tables.filter((t) => t.is_occupied).length;
+
+  const filteredTables = tables.filter((table) => {
+    if (!searchQuery.trim()) return true;
+    const term = searchQuery.toLowerCase().trim();
+    return (
+      (table.table_name || "").toLowerCase().includes(term) ||
+      String(table.id || "").includes(term)
+    );
+  });
 
   return (
     <div
@@ -82,6 +99,28 @@ export default function TableSelectorModal({ isOpen, onClose, onSelectTable, sel
           </div>
         </div>
 
+        {/* Search Bar */}
+        <div className="relative mb-3 shrink-0">
+          <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search table number (e.g. Table 1, 5)..."
+            className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 text-xs text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono box-border"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center justify-center text-[9px] border-none cursor-pointer"
+              title="Clear Search"
+            >
+              <FaTimes />
+            </button>
+          )}
+        </div>
+
         {/* Tables Grid */}
         <div className="flex-1 overflow-y-auto py-2">
           {isLoading ? (
@@ -92,9 +131,20 @@ export default function TableSelectorModal({ isOpen, onClose, onSelectTable, sel
             <div className="py-16 text-center text-xs text-zinc-400">
               No tables configured in restaurant database.
             </div>
+          ) : filteredTables.length === 0 ? (
+            <div className="py-12 text-center text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="m-0 font-bold mb-2">No tables found matching "{searchQuery}"</p>
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-bold cursor-pointer"
+              >
+                Clear Search
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {tables.map((table) => {
+              {filteredTables.map((table) => {
                 const isOccupied = !!table.is_occupied;
                 const isSelected = selectedTable === table.table_name;
 

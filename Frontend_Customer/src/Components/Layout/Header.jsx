@@ -25,22 +25,17 @@ const Header = () => {
   const prevCartCount = useRef(0);
 
   const currentPath = location.pathname.toLowerCase();
-  const isCheckoutPage = currentPath.includes("/checkout");
-  const shouldHideNav = isCheckoutPage;
 
-  const totalCartQty = (cartItems || []).reduce(
-    (sum, item) => sum + (item.qty || 1),
-    0
-  );
+  const totalCartProducts = (cartItems || []).length;
 
   useEffect(() => {
-    if (totalCartQty > prevCartCount.current && prevCartCount.current >= 0) {
+    if (totalCartProducts > prevCartCount.current && prevCartCount.current >= 0) {
       setCartBounce(true);
       const timer = setTimeout(() => setCartBounce(false), 500);
       return () => clearTimeout(timer);
     }
-    prevCartCount.current = totalCartQty;
-  }, [totalCartQty]);
+    prevCartCount.current = totalCartProducts;
+  }, [totalCartProducts]);
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -63,9 +58,7 @@ const Header = () => {
   const isNavActive = (to) =>
     to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
 
-  if (shouldHideNav) {
-    return null;
-  }
+
 
   return (
     <header className="fixed top-0 left-0 right-0 w-full h-14 sm:h-16 z-50 px-4 sm:px-6 transition-all duration-300 backdrop-blur-md bg-white/95 text-zinc-900 border-b border-zinc-200/80 shadow-xs dark:bg-[#0d0d0d]/95 dark:text-white dark:border-white/10 dark:shadow-md flex items-center">
@@ -112,7 +105,7 @@ const Header = () => {
             </button>
 
             {/* Track Order Icon (Desktop only shortcut) */}
-            {!shouldHideNav && (
+            {(
               <button
                 type="button"
                 onClick={() => navigate("/track-order")}
@@ -149,9 +142,9 @@ const Header = () => {
               <span className="relative z-10 text-orange-500 dark:text-orange-400 group-hover:text-white transition-colors duration-200 flex items-center justify-center">
                 <FaShoppingBag className="text-xs sm:text-sm group-hover:text-white transition-colors duration-200" />
               </span>
-              {totalCartQty > 0 && (
+              {totalCartProducts > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 bg-amber-500 text-white text-[11px] font-bold rounded-full flex items-center justify-center leading-none shadow-md z-10 pointer-events-none border-2 border-white dark:border-neutral-950">
-                  {totalCartQty}
+                  {totalCartProducts}
                 </span>
               )}
             </button>
