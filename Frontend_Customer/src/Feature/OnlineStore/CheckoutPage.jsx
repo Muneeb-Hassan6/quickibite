@@ -108,6 +108,7 @@ const CheckoutPage = () => {
             />
 
             <PaymentMethodPicker
+              orderType={form.orderType}
               paymentMethod={form.paymentMethod}
               setPaymentMethod={form.setPaymentMethod}
             />

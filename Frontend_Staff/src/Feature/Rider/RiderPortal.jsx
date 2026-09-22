@@ -77,6 +77,7 @@ export default function RiderPortal() {
       handleToggleStatus();
     }
     logout();
+    navigate("/login", { replace: true, state: {} });
   };
 
   if (!riderSession) return null;

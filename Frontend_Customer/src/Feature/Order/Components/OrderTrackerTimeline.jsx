@@ -18,6 +18,24 @@ export default function OrderTrackerTimeline({
   const isPending = status === "pending";
   const isCancelled = status === "cancelled" || status === "cancelled_with_wastage" || status === "declined";
 
+  // Check if order was paid online or if it's a cash payment
+  const rawMethod = (order?.payment_method || "").toLowerCase();
+  const rawPaymentStatus = (order?.payment_status || "").toLowerCase();
+
+  const isOnlinePayment =
+    rawPaymentStatus.includes("paid") ||
+    rawPaymentStatus.includes("completed") ||
+    rawMethod.includes("card") ||
+    rawMethod.includes("jazz") ||
+    rawMethod.includes("easy") ||
+    rawMethod.includes("wallet") ||
+    rawMethod.includes("online") ||
+    rawMethod.includes("stripe");
+
+  // Only allow cancellation bar for cash payment methods that have NOT been paid online
+  const isCashPayment = !isOnlinePayment && (rawMethod.includes("cash") || rawMethod === "");
+  const canShowCancelBar = !isCancelled && isCashPayment;
+
   // Calculate 120s cancellation countdown from order.created_at
   useEffect(() => {
     if (!order?.created_at || !isPending) {
@@ -45,11 +63,11 @@ export default function OrderTrackerTimeline({
   };
 
   const handleCancelOrder = async () => {
-    if (!isPending || timeLeft <= 0) return;
+    if (!isPending || timeLeft <= 0 || !canShowCancelBar) return;
 
     const result = await Swal.fire({
       title: "Cancel Your Order?",
-      text: "Are you sure you want to cancel this order? Any reserved ingredients will be immediately restored to inventory.",
+      text: "Are you sure you want to cancel this order?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, Cancel Order",
@@ -77,7 +95,7 @@ export default function OrderTrackerTimeline({
         if (data.success) {
           Swal.fire(
             "Cancelled",
-            "Your order has been cancelled and stock has been restored.",
+            "Your order has been cancelled.",
             "success"
           );
           fetchOrderDetails(searchId, true);
@@ -138,8 +156,8 @@ export default function OrderTrackerTimeline({
         </div>
       </div>
 
-      {/* Cancel Window & Status Alert Banner */}
-      {!isCancelled && (
+      {/* Cancel Window & Status Alert Banner: ONLY shown for cash payment orders */}
+      {canShowCancelBar && (
         <div className="mt-4 p-3 sm:p-4 rounded-2xl bg-zinc-50 dark:bg-neutral-800/60 border border-zinc-200 dark:border-neutral-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             {isPending && timeLeft > 0 ? (

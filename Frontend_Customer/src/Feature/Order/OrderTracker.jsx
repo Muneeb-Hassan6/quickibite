@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   FaCheckCircle,
@@ -24,8 +24,12 @@ import { io } from "socket.io-client";
 
 const OrderTracker = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { customer } = useAuth();
+
+  const stateOrderId = location.state?.orderId || location.state?.id || "";
+  const statePhone = location.state?.phone || location.state?.mobile || "";
 
   const queryOrderId = searchParams.get("orderId") || searchParams.get("id") || "";
   const queryPhone = searchParams.get("phone") || searchParams.get("mobile") || "";
@@ -33,8 +37,8 @@ const OrderTracker = () => {
   const storedActivePhone = localStorage.getItem("activeOrderPhone") || "";
   const userPhone = customer?.phone || customer?.mobile || "";
 
-  const initialOrderId = queryOrderId || storedActiveId;
-  const initialPhone = queryPhone || storedActivePhone || userPhone;
+  const initialOrderId = stateOrderId || queryOrderId || storedActiveId;
+  const initialPhone = statePhone || queryPhone || storedActivePhone || userPhone;
 
   const [searchId, setSearchId] = useState(initialOrderId);
   const [searchPhone, setSearchPhone] = useState(initialPhone);
@@ -75,16 +79,19 @@ const OrderTracker = () => {
     if (isManual) setIsRefreshing(true);
 
     const activePhone = phoneToVerify !== null ? phoneToVerify : searchPhone;
-    let url = `${API_BASE}/get_order_details.php?id=${encodeURIComponent(id)}`;
-    if (activePhone && activePhone.trim()) {
-      url += `&phone=${encodeURIComponent(activePhone.trim())}`;
-    }
-    if (customer?.id) {
-      url += `&customer_id=${encodeURIComponent(customer.id)}`;
-    }
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(`${API_BASE}/get_order_details.php`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: id,
+          phone: activePhone ? activePhone.trim() : "",
+          customer_id: customer?.id || 0,
+        }),
+      });
       const data = await response.json();
 
       if (response.ok && data.success && data.order) {
@@ -114,17 +121,26 @@ const OrderTracker = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Sync if URL query parameters change
+  // If URL has query parameters, extract and clean the address bar URL immediately
   useEffect(() => {
-    if (queryOrderId) {
-      setSearchId(queryOrderId);
-      setInputSearchId(queryOrderId);
+    if (queryOrderId || queryPhone) {
+      if (queryOrderId) {
+        setSearchId(queryOrderId);
+        setInputSearchId(queryOrderId);
+        localStorage.setItem("activeOrderId", queryOrderId);
+      }
+      if (queryPhone) {
+        setSearchPhone(queryPhone);
+        setInputSearchPhone(queryPhone);
+        localStorage.setItem("activeOrderPhone", queryPhone);
+      }
+      // Remove query parameters from address bar to protect sensitive data
+      navigate("/track-order", {
+        replace: true,
+        state: { orderId: queryOrderId || initialOrderId, phone: queryPhone || initialPhone },
+      });
     }
-    if (queryPhone) {
-      setSearchPhone(queryPhone);
-      setInputSearchPhone(queryPhone);
-    }
-  }, [queryOrderId, queryPhone]);
+  }, [queryOrderId, queryPhone, navigate]);
 
   // Autofill logged-in user phone if phone field is currently blank
   useEffect(() => {
@@ -190,10 +206,14 @@ const OrderTracker = () => {
 
       if (trimmedPhone) {
         localStorage.setItem("activeOrderPhone", trimmedPhone);
-        navigate(`/track-order?orderId=${trimmedId}&phone=${encodeURIComponent(trimmedPhone)}`);
-      } else {
-        navigate(`/track-order?orderId=${trimmedId}`);
       }
+      localStorage.setItem("activeOrderId", trimmedId);
+
+      // Keep address bar clean without leaking order ID or phone
+      navigate("/track-order", {
+        replace: true,
+        state: { orderId: trimmedId, phone: trimmedPhone },
+      });
 
       fetchOrderDetails(trimmedId, true, trimmedPhone);
     }

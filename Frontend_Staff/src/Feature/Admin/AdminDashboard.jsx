@@ -54,7 +54,7 @@ const AdminDashboard = () => {
     }).then((result) => {
       if (result.isConfirmed) {
         logout();
-        navigate("/login", { replace: true });
+        navigate("/login", { replace: true, state: {} });
       }
     });
   };

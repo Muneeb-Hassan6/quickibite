@@ -34,6 +34,7 @@ export default function DispatchHeader() {
   const handleConfirmLogout = () => {
     setShowLogoutModal(false);
     logout();
+    navigate("/login", { replace: true, state: {} });
   };
 
   return (

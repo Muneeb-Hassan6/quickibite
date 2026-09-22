@@ -66,6 +66,7 @@ export default function KitchenHeader({ activeFilter, setActiveFilter }) {
     }).then((result) => {
       if (result.isConfirmed) {
         logout();
+        navigate("/login", { replace: true, state: {} });
       }
     });
   };

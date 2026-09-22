@@ -50,6 +50,7 @@ const CashierSidebar = ({
     }).then((result) => {
       if (result.isConfirmed) {
         logout();
+        navigate("/login", { replace: true, state: {} });
       }
     });
   };

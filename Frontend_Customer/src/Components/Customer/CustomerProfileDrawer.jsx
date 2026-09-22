@@ -77,12 +77,15 @@ export default function CustomerProfileDrawer() {
 
     setLoadingOrders(true);
     try {
-      const params = new URLSearchParams();
-      if (customer.id) params.append("customer_id", customer.id);
-      if (customer.phone) params.append("phone", customer.phone);
-      if (customer.email) params.append("email", customer.email);
-
-      const res = await fetch(`${API_BASE}/get_customer_orders.php?${params.toString()}`);
+      const res = await fetch(`${API_BASE}/get_customer_orders.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_id: customer.id || 0,
+          phone: customer.phone || "",
+          email: customer.email || "",
+        }),
+      });
       const data = await res.json();
       if (data.success && Array.isArray(data.orders)) {
         setOrders(data.orders);

@@ -5,7 +5,24 @@ include_once __DIR__ . '/../config/Database.php';
 $database = new Database();
 $db = $database->getConnection();
 
-$order_id = isset($_GET['id']) ? intval($_GET['id']) : (isset($_GET['order_id']) ? intval($_GET['order_id']) : 0);
+$data = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $rawInput = file_get_contents('php://input');
+    if (!empty($rawInput)) {
+        $json = json_decode($rawInput, true);
+        if (is_array($json)) {
+            $data = $json;
+        }
+    }
+    if (empty($data) && !empty($_POST)) {
+        $data = $_POST;
+    }
+}
+
+$order_id = isset($data['id']) ? intval($data['id']) : (isset($data['order_id']) ? intval($data['order_id']) : 0);
+if ($order_id <= 0) {
+    $order_id = isset($_GET['id']) ? intval($_GET['id']) : (isset($_GET['order_id']) ? intval($_GET['order_id']) : 0);
+}
 
 if ($order_id <= 0) {
     http_response_code(400);
@@ -31,8 +48,15 @@ try {
     }
 
     // Security / IDOR Protection: Verify ownership by customer_id or phone number
-    $phone = isset($_GET['phone']) ? trim($_GET['phone']) : (isset($_GET['customer_mobile']) ? trim($_GET['customer_mobile']) : '');
-    $customer_id = isset($_GET['customer_id']) ? intval($_GET['customer_id']) : 0;
+    $phone = isset($data['phone']) ? trim($data['phone']) : (isset($data['customer_mobile']) ? trim($data['customer_mobile']) : '');
+    if (empty($phone)) {
+        $phone = isset($_GET['phone']) ? trim($_GET['phone']) : (isset($_GET['customer_mobile']) ? trim($_GET['customer_mobile']) : '');
+    }
+
+    $customer_id = isset($data['customer_id']) ? intval($data['customer_id']) : 0;
+    if ($customer_id <= 0) {
+        $customer_id = isset($_GET['customer_id']) ? intval($_GET['customer_id']) : 0;
+    }
 
     $is_authorized = false;
 

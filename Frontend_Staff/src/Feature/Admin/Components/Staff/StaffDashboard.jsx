@@ -13,7 +13,7 @@ import {
 import EmployeeList from "./Components/EmployeeList";
 import AttendanceSheet from "./Components/AttendanceSheet";
 import Payroll from "./Components/Payroll";
-import ShiftManager from "./Components/ShiftManager";
+// import ShiftManager from "./Components/ShiftManager";
 import AttendanceHistory from "./Components/AttendanceHistory";
 import AddEmployeeModal from "./Components/AddEmployeeModal";
 import { apiFetch } from "../../../../utils/apiHelper";
@@ -49,7 +49,7 @@ const StaffDashboard = () => {
     { id: "employees", label: "Employee List", icon: <FaUsers /> },
     { id: "attendance", label: "Daily Attendance", icon: <FaCalendarCheck /> },
     { id: "payroll", label: "Payroll", icon: <FaMoneyBillWave /> },
-    { id: "shifts", label: "Shift Roster", icon: <FaClock /> },
+    // { id: "shifts", label: "Shift Roster", icon: <FaClock /> },
     { id: "history", label: "Attendance History", icon: <FaHistory /> },
   ];
 

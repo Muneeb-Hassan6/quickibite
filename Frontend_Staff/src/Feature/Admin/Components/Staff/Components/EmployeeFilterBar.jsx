@@ -9,7 +9,7 @@ export default function EmployeeFilterBar({
   return (
     <div className="admin-card-surface flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 p-3 sm:p-4 rounded-2xl shadow-sm">
       <div className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
-        Staff Roster ({totalCount} Members)
+        Staff
       </div>
       <div className="flex items-center bg-slate-50 dark:bg-[#111111] px-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 focus-within:border-amber-500 transition-colors w-full sm:w-80">
         <FaSearch className="text-slate-400 dark:text-neutral-500 text-xs mr-2 shrink-0" />

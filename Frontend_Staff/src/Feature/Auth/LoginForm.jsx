@@ -26,23 +26,13 @@ const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Auto-redirect if already logged in (ensures role permission check)
+  // Auto-redirect if already logged in directly to designated role dashboard
   useEffect(() => {
     if (isAuthenticated && user?.role) {
-      const fromPath = location.state?.from?.pathname;
-      const canAccessFromPath =
-        fromPath &&
-        fromPath !== "/login" &&
-        fromPath !== "/" &&
-        isRoleAllowedForPath(user.role, fromPath);
-
-      const destination = canAccessFromPath
-        ? fromPath
-        : getRoleDashboard(user.role);
-
+      const destination = getRoleDashboard(user.role);
       navigate(destination, { replace: true, state: {} });
     }
-  }, [isAuthenticated, user, navigate, location.state]);
+  }, [isAuthenticated, user, navigate]);
 
   const handleBackToStore = () => {
     const configuredUrl = import.meta.env.VITE_CUSTOMER_URL;
@@ -98,17 +88,8 @@ const LoginForm = () => {
           timer: 1500,
         });
 
-        // Strict Role-Based Dashboard Routing: only go to fromPath if user's role is authorized!
-        const fromPath = location.state?.from?.pathname;
-        const canAccessFromPath =
-          fromPath &&
-          fromPath !== "/login" &&
-          fromPath !== "/" &&
-          isRoleAllowedForPath(result.user.role, fromPath);
-
-        const targetRoute = canAccessFromPath
-          ? fromPath
-          : getRoleDashboard(result.user.role);
+        // Direct Role-Based Dashboard Routing: each role is routed strictly to their designated portal
+        const targetRoute = getRoleDashboard(result.user.role);
 
         if (targetRoute && targetRoute !== "/login") {
           navigate(targetRoute, { replace: true, state: {} });

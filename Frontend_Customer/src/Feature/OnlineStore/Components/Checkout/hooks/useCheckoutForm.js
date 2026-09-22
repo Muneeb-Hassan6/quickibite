@@ -31,6 +31,12 @@ export function calculateHaversineDistanceKm(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
+export const getCashMethodLabel = (type) => {
+  if (type === "takeaway") return "Cash on Pickup";
+  if (type === "dine_in") return "Cash";
+  return "Cash on Delivery";
+};
+
 export function useCheckoutForm() {
   const navigate = useNavigate();
   const { cartItems, placeOrder } = useCart();
@@ -44,7 +50,7 @@ export function useCheckoutForm() {
   const [street, setStreet] = useState("");
   const [area, setArea] = useState("");
   const [tableNumber, setTableNumber] = useState(session.tableNumber || "");
-  const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
+  const [paymentMethod, setPaymentMethod] = useState(() => getCashMethodLabel(session.mode || "delivery"));
   const [mapCoords, setMapCoords] = useState({
     lat: 31.5204,
     lng: 74.3587,
@@ -66,6 +72,22 @@ export function useCheckoutForm() {
     }
   }, [customer]);
 
+  // Synchronize dynamic cash label when orderType changes (Delivery -> Cash on Delivery, Takeaway -> Cash on Pickup, Dine-In -> Cash)
+  useEffect(() => {
+    setPaymentMethod((prev) => {
+      const isCash =
+        !prev ||
+        prev === "Cash on Delivery" ||
+        prev === "Cash on Pickup" ||
+        prev === "Cash" ||
+        prev.toLowerCase().includes("cash");
+      if (isCash) {
+        return getCashMethodLabel(orderType);
+      }
+      return prev;
+    });
+  }, [orderType]);
+
   // Guest Mobile Collision State & Debounced Backend Verification
   const [phoneCollision, setPhoneCollision] = useState({
     isColliding: false,
@@ -77,9 +99,11 @@ export function useCheckoutForm() {
     if (!isAuthenticated && clean.length === 11 && clean.startsWith("03")) {
       const timer = setTimeout(async () => {
         try {
-          const res = await fetch(
-            `${API_BASE}/check_customer_phone.php?phone=${encodeURIComponent(clean)}`
-          );
+          const res = await fetch(`${API_BASE}/check_customer_phone.php`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: clean }),
+          });
           const data = await res.json();
           if (data && data.exists) {
             setPhoneCollision({
@@ -394,7 +418,8 @@ export function useCheckoutForm() {
       return;
     }
 
-    await submitFinalOrder("Cash on Delivery", "Unpaid");
+    const resolvedCashMethod = getCashMethodLabel(orderType);
+    await submitFinalOrder(resolvedCashMethod, "Unpaid");
   };
 
   const submitFinalOrder = async (
@@ -512,10 +537,10 @@ export function useCheckoutForm() {
           const cleanMobile = (customerMobile || "").trim();
           if (cleanMobile) {
             localStorage.setItem("activeOrderPhone", cleanMobile);
-            navigate(`/track-order?orderId=${orderId}&phone=${encodeURIComponent(cleanMobile)}`);
-          } else {
-            navigate(`/track-order?orderId=${orderId}`);
           }
+          navigate("/track-order", {
+            state: { orderId: orderId.toString(), phone: cleanMobile },
+          });
         } else {
           navigate("/track-order");
         }
