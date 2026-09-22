@@ -43,7 +43,13 @@ export const resolveImageUrl = (img, width = 600) => {
   }
   const apiBase = import.meta.env.VITE_API_BASE || "";
   const serverBase = apiBase.replace(/\/api\/?$/, "");
-  const cleanPath = cleanImg.startsWith("/") ? cleanImg : `/${cleanImg}`;
+  let cleanPath = cleanImg.startsWith("/") ? cleanImg : `/${cleanImg}`;
+
+  // Automatically serve lightweight WebP asset for product uploads
+  if (cleanPath.includes("/uploads/products/") && cleanPath.toLowerCase().endsWith(".png")) {
+    cleanPath = cleanPath.replace(/\.png$/i, ".webp");
+  }
+
   return `${serverBase}${cleanPath}`;
 };
 

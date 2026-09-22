@@ -309,21 +309,37 @@ export function useRiderData() {
           } catch {}
         }
 
+        const cartItems = Array.isArray(o.cart) ? o.cart : [];
+        const itemsSummary = cartItems.length > 0
+          ? cartItems.map((item) => `${item.qty || 1}x ${item.title || item.name || 'Item'}`).join(", ")
+          : (typeof o.items === "string" ? o.items : "Food Items");
+
         return {
           id: o.id,
           customer: o.customer_name || o.customer || o.name || "Customer",
           phone: o.customer_mobile || o.mobile || o.phone || o.contact || "N/A",
           address: finalAddr,
-          items: o.cart ? `${o.cart.length} Items` : "Items Details in DB",
-          total: `Rs ${o.total}`,
+          items: cartItems.length > 0 ? `${cartItems.length} Items` : "1 Item",
+          itemsSummary: itemsSummary,
+          cart: cartItems,
+          total: `Rs ${parseFloat(o.total || 0).toLocaleString()}`,
+          rawTotal: parseFloat(o.total || 0),
           paymentType: o.payment_method || o.paymentMethod || "Cash on Delivery",
           payment_method: o.payment_method || o.paymentMethod || "Cash on Delivery",
-          time: "Just Now",
+          time: o.created_at ? new Date(o.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Just Now",
           targetLat: rawTargetLat,
           targetLng: rawTargetLng,
           customer_lat: rawTargetLat,
           customer_lng: rawTargetLng,
           status: o.status,
+          notes: o.notes || o.special_instructions || "",
+          house_no: o.house_no || o.house_info || "",
+          street: o.street || "",
+          area: o.area || "",
+          delivery_fee: parseFloat(o.delivery_fee || 0),
+          discount_amount: parseFloat(o.discount_amount || 0),
+          rider_tip: parseFloat(o.rider_tip || 0),
+          rawOrder: o,
         };
       };
 

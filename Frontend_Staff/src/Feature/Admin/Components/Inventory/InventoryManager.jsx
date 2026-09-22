@@ -11,6 +11,7 @@ import InventoryModal from "./Components/InventoryModal";
 import WastageAnalytics from "./Components/WastageAnalytics";
 import ServerPaginationControls from "../SharedComponents/ServerPaginationControls";
 import { apiFetch } from "../../../../utils/apiHelper";
+import { staffSocket } from "../../../../utils/socket";
 
 const PAGE_SIZE = 25;
 
@@ -21,6 +22,7 @@ const InventoryManager = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [sortConfig, setSortConfig] = useState({
     key: "name",
     direction: "asc",
@@ -46,6 +48,9 @@ const InventoryManager = () => {
     threshold: "10",
   };
   const [form, setForm] = useState(defaultForm);
+
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   const fetchInventoryBatch = useCallback(async (offset = 0, isAppend = false) => {
     if (isAppend) {
@@ -91,6 +96,52 @@ const InventoryManager = () => {
     fetchInventoryBatch(0, false);
   }, [fetchInventoryBatch]);
 
+  const refreshSearch = useCallback(async () => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
+    try {
+      const response = await apiFetch(`inventory_api.php?search=${encodeURIComponent(trimmed)}`);
+      const result = await response.json();
+      if (result && (result.success || result.status === "success")) {
+        const items = Array.isArray(result.items) ? result.items : (Array.isArray(result) ? result : []);
+        setSearchResults(items);
+      }
+    } catch (err) {
+      console.error("Refresh search error:", err);
+    }
+  }, [searchQuery]);
+
+  // Server-side debounced search across all database records
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      setSearchResults(null);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const response = await apiFetch(`inventory_api.php?search=${encodeURIComponent(trimmed)}`);
+        const result = await response.json();
+        if (result && (result.success || result.status === "success")) {
+          const items = Array.isArray(result.items) ? result.items : (Array.isArray(result) ? result : []);
+          setSearchResults(items);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (err) {
+        console.error("Inventory search error:", err);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const handleLoadMore = () => {
     if (!isLoadingMore && hasMore) {
       fetchInventoryBatch(products.length, true);
@@ -101,7 +152,9 @@ const InventoryManager = () => {
   const lowStock = serverStats.low_stock;
   const totalValue = serverStats.total_value;
 
-  const filteredProducts = products.filter((product) => {
+  const activeProducts = searchResults !== null ? searchResults : products;
+
+  const filteredProducts = activeProducts.filter((product) => {
     const matchesSearch = product.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
@@ -191,7 +244,10 @@ const InventoryManager = () => {
         const res = await response.json();
         if (res.status === "success") {
           fetchInventoryBatch(0, false);
+          if (searchQuery.trim()) refreshSearch();
           queryClient.invalidateQueries({ queryKey: ['inventory'] });
+          queryClient.invalidateQueries({ queryKey: ['menu'] });
+          staffSocket.emit("refresh_menu");
           Swal.fire({
             icon: "success",
             title: "Deleted!",
@@ -212,6 +268,7 @@ const InventoryManager = () => {
     if (e && typeof e.preventDefault === "function") {
       e.preventDefault();
     }
+    setIsSaving(true);
     try {
       const isEvent = e && typeof e.preventDefault === "function";
       const dataToSave = customData || (!isEvent && e && typeof e === "object" ? e : form);
@@ -228,7 +285,10 @@ const InventoryManager = () => {
 
       if (result.status === "success") {
         fetchInventoryBatch(0, false);
+        if (searchQuery.trim()) refreshSearch();
         queryClient.invalidateQueries({ queryKey: ['inventory'] });
+        queryClient.invalidateQueries({ queryKey: ['menu'] });
+        staffSocket.emit("refresh_menu");
         setIsModalOpen(false);
         Swal.fire({
           icon: "success",
@@ -250,6 +310,8 @@ const InventoryManager = () => {
       }
     } catch (error) {
       console.error("Error saving:", error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -341,6 +403,7 @@ const InventoryManager = () => {
             isLoadingMore={isLoadingMore}
             onLoadMore={handleLoadMore}
             itemLabel="items"
+            isSearching={searchQuery.trim().length > 0}
           />
         </>
       )}
@@ -353,6 +416,7 @@ const InventoryManager = () => {
         form={form}
         setForm={setForm}
         onSave={handleSave}
+        isSaving={isSaving}
       />
     </div>
   );

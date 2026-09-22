@@ -28,22 +28,44 @@ if(!empty($orderIds) && !empty($data->rider_id)) {
             $stmt1->execute([':order_id' => $oid]);
         }
 
-        // 2. Rider ko dubara 'Available' mark kar do taa ke usay naye orders assign ho sakein
-        $query2 = "UPDATE staff SET shift_status = 'Available' WHERE id = :rider_id";
+        // 2. Rider capacity re-calculation: Check if rider still has remaining active orders in transit
+        $activeStmt = $db->prepare("SELECT COUNT(*) FROM orders WHERE rider_id = :rider_id AND status IN ('Dispatched', 'Out for Delivery', 'On The Way')");
+        $activeStmt->execute([':rider_id' => $data->rider_id]);
+        $remainingCount = intval($activeStmt->fetchColumn());
+
+        $newShiftStatus = ($remainingCount >= 3) ? 'Busy' : 'Available';
+        $query2 = "UPDATE staff SET shift_status = :shift_status WHERE id = :rider_id";
         $stmt2 = $db->prepare($query2);
-        $stmt2->execute([':rider_id' => $data->rider_id]);
+        $stmt2->execute([
+            ':shift_status' => $newShiftStatus,
+            ':rider_id' => $data->rider_id
+        ]);
 
         $db->commit();
+
+        // 3. Trigger real-time broadcast to live socket server for Dispatcher & Kitchen
+        include_once __DIR__ . '/../config/SocketBroadcaster.php';
+        SocketBroadcaster::broadcastOrderTrigger(['order_ids' => $orderIds, 'status' => 'Ready']);
+
+        if (ob_get_level()) ob_clean();
         echo json_encode([
             "success" => true, 
-            "message" => count($orderIds) > 1 ? "Batch of orders declined successfully. Returned to dispatcher." : "Order declined successfully. Returned to dispatcher.",
-            "order_ids" => $orderIds
+            "message" => count($orderIds) > 1 ? "Batch of orders cancelled. Returned to dispatcher." : "Order #{$orderIds[0]} cancelled. Returned to dispatcher.",
+            "order_ids" => $orderIds,
+            "remaining_active" => $remainingCount
         ]);
+        exit();
     } catch(PDOException $e) {
-        $db->rollBack();
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        http_response_code(500);
         echo json_encode(["success" => false, "message" => "Database Error: " . $e->getMessage()]);
+        exit();
     }
 } else {
+    http_response_code(400);
     echo json_encode(["success" => false, "message" => "Incomplete data."]);
+    exit();
 }
 ?>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Swal from "sweetalert2";
 import { staffSocket } from "../../../utils/socket";
+import { apiFetch } from "../../../utils/apiHelper";
 import {
   FaMoneyBillWave,
   FaMotorcycle,
@@ -125,6 +126,8 @@ export default function OrderHistory({
 
   // Server-side pagination states
   const [ordersList, setOrdersList] = useState([]);
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -149,8 +152,8 @@ export default function OrderHistory({
     }
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=cashier&limit=${PAGE_SIZE}&offset=${offset}&format=paginated`
+      const response = await apiFetch(
+        `get_orders.php?type=cashier&limit=${PAGE_SIZE}&offset=${offset}&format=paginated`
       );
       const data = await response.json();
 
@@ -185,12 +188,27 @@ export default function OrderHistory({
     }
   }, []);
 
+  // Dedicated state for server-wide unreconciled COD delivery orders
+  const [pendingCodOrdersList, setPendingCodOrdersList] = useState([]);
+
+  // Fetch all pending COD orders from server (unrestricted by pagination)
+  const fetchPendingCodOrders = useCallback(async () => {
+    try {
+      const response = await apiFetch("get_orders.php?type=pending_cod");
+      const data = await response.json();
+      const list = Array.isArray(data) ? data : (data?.orders || []);
+      setPendingCodOrdersList(list.map(formatOrder));
+    } catch (err) {
+      console.warn("Failed to fetch pending COD orders:", err);
+    }
+  }, []);
+
   // Background refresh to keep currently loaded orders synchronized
   const refreshCurrentOrders = useCallback(async () => {
     try {
       const currentLimit = Math.max(PAGE_SIZE, ordersListRef.current.length || PAGE_SIZE);
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=cashier&limit=${currentLimit}&offset=0&format=paginated`
+      const response = await apiFetch(
+        `get_orders.php?type=cashier&limit=${currentLimit}&offset=0&format=paginated`
       );
       const data = await response.json();
 
@@ -204,28 +222,90 @@ export default function OrderHistory({
     } catch (err) {
       console.warn("Background refresh error:", err);
     }
-  }, []);
+    // Also keep pending COD orders synchronized
+    fetchPendingCodOrders();
+  }, [fetchPendingCodOrders]);
 
-  // Initial load: fetch first 30 orders
+  const refreshSearch = useCallback(async () => {
+    const trimmed = searchTerm.trim();
+    if (!trimmed) return;
+    try {
+      const response = await apiFetch(
+        `get_orders.php?type=cashier&search=${encodeURIComponent(trimmed)}&format=paginated`
+      );
+      const data = await response.json();
+      if (data && data.success && Array.isArray(data.orders)) {
+        setSearchResults(data.orders.map(formatOrder));
+      }
+    } catch (err) {
+      console.error("Order history refresh search error:", err);
+    }
+  }, [searchTerm]);
+
+  // Server-side debounced search across all database records
+  useEffect(() => {
+    const trimmed = searchTerm.trim();
+    if (!trimmed) {
+      setSearchResults(null);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const response = await apiFetch(
+          `get_orders.php?type=cashier&search=${encodeURIComponent(trimmed)}&format=paginated`
+        );
+        const data = await response.json();
+        if (data && data.success && Array.isArray(data.orders)) {
+          setSearchResults(data.orders.map(formatOrder));
+        } else {
+          setSearchResults([]);
+        }
+      } catch (err) {
+        console.error("Order history search error:", err);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Initial load: fetch first 30 orders and pending COD
   useEffect(() => {
     fetchOrdersBatch(0, false);
-  }, [fetchOrdersBatch]);
+    fetchPendingCodOrders();
+  }, [fetchOrdersBatch, fetchPendingCodOrders]);
 
   // Real-time socket listener and periodic fallback refresh
   useEffect(() => {
-    staffSocket.on("payment_status_updated", refreshCurrentOrders);
-    staffSocket.on("refresh_kitchen", refreshCurrentOrders);
-    staffSocket.on("refresh_orders", refreshCurrentOrders);
+    const socketEvents = [
+      "new_order_placed",
+      "order_status_updated",
+      "order_status_changed",
+      "order_delivered",
+      "refresh_kitchen",
+      "refresh_orders",
+      "refresh_rider",
+      "payment_status_updated"
+    ];
 
-    const interval = setInterval(refreshCurrentOrders, 30000);
+    const onUpdate = () => {
+      refreshCurrentOrders();
+      if (searchTerm.trim()) refreshSearch();
+    };
+
+    socketEvents.forEach((evt) => staffSocket.on(evt, onUpdate));
+    const interval = setInterval(onUpdate, 20000);
 
     return () => {
-      staffSocket.off("payment_status_updated", refreshCurrentOrders);
-      staffSocket.off("refresh_kitchen", refreshCurrentOrders);
-      staffSocket.off("refresh_orders", refreshCurrentOrders);
+      socketEvents.forEach((evt) => staffSocket.off(evt, onUpdate));
       clearInterval(interval);
     };
-  }, [refreshCurrentOrders]);
+  }, [refreshCurrentOrders, refreshSearch, searchTerm]);
 
   // Load next 30 orders
   const handleLoadMore = () => {
@@ -234,29 +314,8 @@ export default function OrderHistory({
   };
 
   const orders = propOrders && propOrders.length > 0 ? propOrders : ordersList;
-  const safeOrders = Array.isArray(orders) ? orders : [];
-
-  // Dedicated state for server-wide unreconciled COD delivery orders
-  const [pendingCodOrdersList, setPendingCodOrdersList] = useState([]);
-
-  // Fetch all pending COD orders from server (unrestricted by pagination)
-  const fetchPendingCodOrders = useCallback(async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=pending_cod`
-      );
-      const data = await response.json();
-      const list = Array.isArray(data) ? data : (data?.orders || []);
-      setPendingCodOrdersList(list.map(formatOrder));
-    } catch (err) {
-      console.warn("Failed to fetch pending COD orders:", err);
-    }
-  }, []);
-
-  // Fetch pending COD on mount and bind to background refresh
-  useEffect(() => {
-    fetchPendingCodOrders();
-  }, [fetchPendingCodOrders]);
+  const baseOrders = searchResults !== null ? searchResults : orders;
+  const safeOrders = Array.isArray(baseOrders) ? baseOrders : [];
 
   // Merge server-wide pending COD orders with currently loaded safeOrders
   const reconciliationOrders = useMemo(() => {
@@ -328,6 +387,7 @@ export default function OrderHistory({
       if (result.success) {
         refreshCurrentOrders();
         fetchPendingCodOrders();
+        if (searchTerm.trim()) refreshSearch();
 
         // Emit socket notification via shared staffSocket
         try {
@@ -395,6 +455,7 @@ export default function OrderHistory({
       if (result.success) {
         refreshCurrentOrders();
         fetchPendingCodOrders();
+        if (searchTerm.trim()) refreshSearch();
 
         // Emit socket notification via shared staffSocket
         try {
@@ -574,8 +635,10 @@ export default function OrderHistory({
         />
       )}
 
-      
 
+      {/* Load More Button, progress bar — hidden during search */}
+      {!searchTerm.trim() && (
+        <>
         {/* Load More Button or All Loaded message */}
         <div className="w-full flex justify-center items-center pt-1">
           {hasMore ? (
@@ -627,6 +690,8 @@ export default function OrderHistory({
           </div>
         </div>
       </div>
+        </>
+      )}
 
       {/* 6. Rider COD Reconciliation Modal */}
       <RiderReconciliationModal

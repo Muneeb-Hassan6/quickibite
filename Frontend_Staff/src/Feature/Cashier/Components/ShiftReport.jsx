@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { FaPrint, FaCalendarAlt, FaStore } from "react-icons/fa";
 import { staffSocket } from "../../../utils/socket";
+import { apiFetch } from "../../../utils/apiHelper";
 
 // Atomic Subcomponents
 import ZReportReceipt from "./Shift/ZReportReceipt";
@@ -24,28 +25,34 @@ export default function ShiftReport({ ordersData = [] }) {
     }
   }, []);
 
-  // Real-time socket listener to immediately refresh shift orders on reconciliation or payment updates
+  // Real-time socket listener to immediately refresh shift orders on any order/payment changes
   useEffect(() => {
     const triggerRefresh = () => {
       queryClient.invalidateQueries({ queryKey: ["shift_orders"] });
     };
-    staffSocket.on("payment_status_updated", triggerRefresh);
-    staffSocket.on("refresh_kitchen", triggerRefresh);
-    staffSocket.on("refresh_orders", triggerRefresh);
+
+    const events = [
+      "new_order_placed",
+      "order_status_updated",
+      "order_status_changed",
+      "order_delivered",
+      "payment_status_updated",
+      "refresh_kitchen",
+      "refresh_orders",
+      "refresh_rider",
+    ];
+
+    events.forEach((evt) => staffSocket.on(evt, triggerRefresh));
 
     return () => {
-      staffSocket.off("payment_status_updated", triggerRefresh);
-      staffSocket.off("refresh_kitchen", triggerRefresh);
-      staffSocket.off("refresh_orders", triggerRefresh);
+      events.forEach((evt) => staffSocket.off(evt, triggerRefresh));
     };
   }, [queryClient]);
 
   const { data: dbOrders = [] } = useQuery({
     queryKey: ["shift_orders"],
     queryFn: async () => {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=all`
-      );
+      const res = await apiFetch("get_orders.php?type=all");
       const data = await res.json();
       if (Array.isArray(data)) {
         return data.map((o) => ({

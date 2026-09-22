@@ -14,7 +14,11 @@ const ServerPaginationControls = ({
   isLoadingMore = false,
   onLoadMore,
   itemLabel = "records",
+  isSearching = false,
 }) => {
+  // Hide pagination controls entirely when user is actively searching
+  if (isSearching) return null;
+
   const displayTotal = totalCount || loadedCount;
   const progressPercent = Math.min(
     100,

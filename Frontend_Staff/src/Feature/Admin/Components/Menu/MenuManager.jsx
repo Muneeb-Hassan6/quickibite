@@ -55,6 +55,7 @@ const MenuManager = () => {
     triggerDeleteCategory,
     handleConfirmAction,
     handleEditItem,
+    isSavingItem,
   } = useMenuManager();
 
   return (
@@ -193,6 +194,7 @@ const MenuManager = () => {
         onSave={handleSaveMenu}
         categories={categories}
         customSliders={customSliders}
+        isSaving={isSavingItem}
       />
 
       <CategoryModal

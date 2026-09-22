@@ -9,7 +9,7 @@ export const useOrders = () => useContext(OrderContext);
 export const OrderProvider = ({ children }) => {
   const queryClient = useQueryClient();
 
-  // 🔥 1. FETCH ORDERS FROM BACKEND
+  // 🔥 1. FETCH ORDERS FROM BACKEND (On-demand, polling disabled to eliminate guest overhead)
   const { data: orders = [], refetch: fetchOrders } = useQuery({
     queryKey: ['customer_orders'],
     queryFn: async () => {
@@ -24,7 +24,8 @@ export const OrderProvider = ({ children }) => {
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
-    refetchInterval: 5000,
+    enabled: false,
+    refetchInterval: false,
   });
 
   // 🔥 2. PLACE NEW ORDER FUNCTION (Sends to Backend)

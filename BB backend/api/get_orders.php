@@ -34,19 +34,45 @@ try {
         $orderByClause = "ORDER BY o.created_at ASC, o.id ASC";
     }
 
+    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+    $queryParams = [];
+
+    $limitSql = "";
+    if ($search === '' && $limit > 0) {
+        $limitSql = " LIMIT " . intval($limit) . " OFFSET " . intval($offset);
+    }
+
     if ($type === 'all' || $type === 'cashier') {
-        $countQuery = "SELECT COUNT(*) FROM orders";
-        $query = "SELECT o.*, 
-                         COALESCE(p.status, o.payment_status, 'Pending') as payment_status, 
-                         COALESCE(p.method, o.payment_method, 'Cash') as payment_method,
-                         DATE_FORMAT(o.created_at, '%h:%i %p') as time,
-                         DATE_FORMAT(o.created_at, '%d/%m/%Y') as date,
-                         s.name as rider_name,
-                         s.phone as rider_phone
-                  FROM orders o 
-                  LEFT JOIN payments p ON o.id = p.order_id 
-                  LEFT JOIN staff s ON o.rider_id = s.id
-                  " . $orderByClause . $limitSql;
+        if ($search !== '') {
+            $whereClause = "WHERE (o.id LIKE :search OR o.customer_name LIKE :search OR o.table_number LIKE :search OR s.name LIKE :search OR o.customer_mobile LIKE :search)";
+            $queryParams[':search'] = "%" . $search . "%";
+            $countQuery = "SELECT COUNT(*) FROM orders o LEFT JOIN staff s ON o.rider_id = s.id " . $whereClause;
+            $query = "SELECT o.*, 
+                             COALESCE(p.status, o.payment_status, 'Pending') as payment_status, 
+                             COALESCE(p.method, o.payment_method, 'Cash') as payment_method,
+                             DATE_FORMAT(o.created_at, '%h:%i %p') as time,
+                             DATE_FORMAT(o.created_at, '%d/%m/%Y') as date,
+                             s.name as rider_name,
+                             s.phone as rider_phone
+                      FROM orders o 
+                      LEFT JOIN payments p ON o.id = p.order_id 
+                      LEFT JOIN staff s ON o.rider_id = s.id
+                      " . $whereClause . "
+                      " . $orderByClause;
+        } else {
+            $countQuery = "SELECT COUNT(*) FROM orders";
+            $query = "SELECT o.*, 
+                             COALESCE(p.status, o.payment_status, 'Pending') as payment_status, 
+                             COALESCE(p.method, o.payment_method, 'Cash') as payment_method,
+                             DATE_FORMAT(o.created_at, '%h:%i %p') as time,
+                             DATE_FORMAT(o.created_at, '%d/%m/%Y') as date,
+                             s.name as rider_name,
+                             s.phone as rider_phone
+                      FROM orders o 
+                      LEFT JOIN payments p ON o.id = p.order_id 
+                      LEFT JOIN staff s ON o.rider_id = s.id
+                      " . $orderByClause . $limitSql;
+        }
     } else if ($type === 'pending_cod') {
         $wherePendingCod = "WHERE (LOWER(o.order_type) LIKE '%delivery%' OR LOWER(o.order_mode) LIKE '%delivery%')
                              AND (LOWER(COALESCE(p.method, o.payment_method, '')) IN ('cod', 'cash', 'cash on delivery', '') OR LOWER(COALESCE(p.method, o.payment_method, '')) LIKE '%delivery%')
@@ -77,28 +103,42 @@ try {
                   FROM orders o 
                   LEFT JOIN payments p ON o.id = p.order_id 
                   LEFT JOIN staff s ON o.rider_id = s.id
-                  WHERE o.status NOT IN ('Delivered', 'Completed', 'Dispatched', 'Cancelled', 'Declined') 
+                  WHERE status NOT IN ('Delivered', 'Completed', 'Dispatched', 'Cancelled', 'Declined') 
                   " . $orderByClause . $limitSql;
     }
 
     $totalStmt = $db->prepare($countQuery);
-    $totalStmt->execute();
+    $totalStmt->execute($queryParams);
     $total_count = intval($totalStmt->fetchColumn());
 
     $stmt = $db->prepare($query);
-    $stmt->execute();
+    $stmt->execute($queryParams);
     $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $final_orders = [];
+    $orderIds = array_column($orders, 'id');
+    $itemsByOrder = [];
+
+    if (!empty($orderIds)) {
+        $inPlaceholders = implode(',', array_fill(0, count($orderIds), '?'));
+        $itemQuery = "SELECT id, order_id, title as name, size, note, qty, price, spice_level, selected_addons_json FROM order_items WHERE order_id IN ($inPlaceholders)";
+        $itemStmt = $db->prepare($itemQuery);
+        $itemStmt->execute($orderIds);
+        $allItems = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($allItems as $item) {
+            $oid = $item['order_id'];
+            if (!isset($itemsByOrder[$oid])) {
+                $itemsByOrder[$oid] = [];
+            }
+            $itemsByOrder[$oid][] = $item;
+        }
+    }
 
     foreach ($orders as $order) {
-        $itemQuery = "SELECT id, title as name, size, note, qty, price, spice_level, selected_addons_json FROM order_items WHERE order_id = :oid";
-        $itemStmt = $db->prepare($itemQuery);
-        $itemStmt->execute([':oid' => $order['id']]);
-        
-        $order['items'] = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
-        $order['cart'] = $order['items'];
-        
+        $orderItems = $itemsByOrder[$order['id']] ?? [];
+        $order['items'] = $orderItems;
+        $order['cart'] = $orderItems;
         $final_orders[] = $order;
     }
 

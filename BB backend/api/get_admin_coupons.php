@@ -23,7 +23,41 @@ try {
         FROM coupons
     ");
     $stats = $statsStmt ? $statsStmt->fetch(PDO::FETCH_ASSOC) : [];
-    $total = (int)($stats['total_coupons'] ?? 0);
+    $search = trim($_GET['search'] ?? '');
+    if ($search !== '') {
+        $stmt = $db->prepare("
+            SELECT 
+                id, 
+                code, 
+                discount_type, 
+                discount_value, 
+                min_spend, 
+                max_discount, 
+                usage_limit, 
+                times_used, 
+                expiry_date, 
+                is_active, 
+                created_at 
+            FROM coupons 
+            WHERE code LIKE :search OR discount_type LIKE :search
+            ORDER BY id DESC
+        ");
+        $stmt->execute([':search' => "%" . $search . "%"]);
+        $coupons = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode([
+            'success' => true,
+            'data' => $coupons ?: [],
+            'total' => count($coupons ?: []),
+            'has_more' => false,
+            'stats' => [
+                'total_coupons' => $total,
+                'active_coupons' => (int)($stats['active_coupons'] ?? 0),
+                'total_used' => (int)($stats['total_used'] ?? 0),
+            ]
+        ]);
+        exit();
+    }
 
     if ($isPaginated) {
         $stmt = $db->prepare("

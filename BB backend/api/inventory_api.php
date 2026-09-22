@@ -31,6 +31,25 @@ try {
 
     switch ($method) {
         case 'GET':
+            $search = trim($_GET['search'] ?? '');
+            if ($search !== '') {
+                $query = "SELECT * FROM inventory WHERE name LIKE :search ORDER BY id DESC";
+                $stmt = $db->prepare($query);
+                $stmt->execute([':search' => "%" . $search . "%"]);
+                $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                if (ob_get_level()) ob_clean();
+                echo json_encode([
+                    "success" => true,
+                    "status" => "success",
+                    "items" => $items ?: [],
+                    "total" => count($items ?: []),
+                    "has_more" => false,
+                    "is_search" => true
+                ]);
+                exit();
+            }
+
             if (isset($_GET['limit'])) {
                 $limit = max(1, min(100, intval($_GET['limit'])));
                 $offset = max(0, intval($_GET['offset'] ?? 0));

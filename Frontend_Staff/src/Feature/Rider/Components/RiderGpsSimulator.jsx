@@ -41,7 +41,7 @@ export default function RiderGpsSimulator({
   const storeLng = parseFloat(storeSettings.store_lng || storeSettings.restaurant_lng) || 74.3587;
 
   const PRESETS = [
-    { name: "Store (QuickBite HQ)", lat: storeLat, lng: storeLng },
+    { name: "Store (BigBite HQ)", lat: storeLat, lng: storeLng },
     { name: "Gulberg Main", lat: 31.5102, lng: 74.3440 },
     { name: "Model Town", lat: 31.4826, lng: 74.3256 },
     { name: "DHA Phase 5", lat: 31.4685, lng: 74.4020 },

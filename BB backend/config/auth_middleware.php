@@ -21,9 +21,31 @@ if (!$authHeader && isset($_SERVER['HTTP_AUTHORIZATION'])) {
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
 }
 
-// 🚀 FIX FOR INFINITYFREE: Check custom header if Authorization is stripped
+// 🚀 FIX FOR INFINITYFREE / CUSTOM PROXIES: Check custom headers if Authorization is stripped
 if (!$authHeader && isset($_SERVER['HTTP_X_AUTH_TOKEN'])) {
     $authHeader = 'Bearer ' . $_SERVER['HTTP_X_AUTH_TOKEN'];
+}
+if (!$authHeader && isset($_SERVER['HTTP_X_TOKEN'])) {
+    $authHeader = 'Bearer ' . $_SERVER['HTTP_X_TOKEN'];
+}
+
+// Fallback: Check request body or query parameter if headers are stripped by web server
+if (!$authHeader) {
+    if (!empty($_GET['auth_token'])) {
+        $authHeader = 'Bearer ' . $_GET['auth_token'];
+    } elseif (!empty($_GET['token'])) {
+        $authHeader = 'Bearer ' . $_GET['token'];
+    } else {
+        $rawInput = file_get_contents('php://input');
+        if (!empty($rawInput)) {
+            $parsedJson = json_decode($rawInput, true);
+            if (!empty($parsedJson['auth_token'])) {
+                $authHeader = 'Bearer ' . $parsedJson['auth_token'];
+            } elseif (!empty($parsedJson['token'])) {
+                $authHeader = 'Bearer ' . $parsedJson['token'];
+            }
+        }
+    }
 }
 
 if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {

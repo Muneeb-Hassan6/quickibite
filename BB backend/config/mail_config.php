@@ -1,5 +1,5 @@
 <?php
-// QuickiBite Gmail SMTP Configuration
+// BigBite Gmail SMTP Configuration
 
 return [
     // Gmail SMTP Server Settings
@@ -16,5 +16,5 @@ return [
 
     // Display sender details
     'from_email'    => getenv('SMTP_FROM_EMAIL') ?: 'imuneebhassan6@gmail.com',
-    'from_name'     => 'QuickiBite'
+    'from_name'     => 'BigBite'
 ];

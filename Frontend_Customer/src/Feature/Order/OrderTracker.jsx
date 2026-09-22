@@ -19,7 +19,8 @@ import OrderTrackerHeader from "./Components/OrderTrackerHeader";
 import OrderTrackerTimeline from "./Components/OrderTrackerTimeline";
 import OrderTrackerReceiptSummary from "./Components/OrderTrackerReceiptSummary";
 import OrderTrackerRiderCard from "./Components/OrderTrackerRiderCard";
-import { API_BASE } from "../../config/api";
+import { API_BASE, SOCKET_URL } from "../../config/api";
+import { io } from "socket.io-client";
 
 const OrderTracker = () => {
   const navigate = useNavigate();
@@ -133,19 +134,44 @@ const OrderTracker = () => {
     }
   }, [userPhone]);
 
-  // Initial load and live status polling
+  // Initial load and live real-time status updates via Socket.IO
   useEffect(() => {
     if (searchId) {
       fetchOrderDetails(searchId, false, searchPhone);
 
-      // Auto-poll every 5 seconds for live status updates if not blocked by auth error
+      // Connect to Socket.io for instantaneous real-time status updates
+      let socket = null;
+      try {
+        socket = io(SOCKET_URL, {
+          transports: ["websocket", "polling"],
+        });
+
+        const handleRealtimeUpdate = (data) => {
+          if (!data || !data.order_id || String(data.order_id) === String(searchId)) {
+            fetchOrderDetails(searchId, false, searchPhone);
+          }
+        };
+
+        socket.on("order_status_updated", handleRealtimeUpdate);
+        socket.on("refresh_kitchen", handleRealtimeUpdate);
+        socket.on("order_delivered", handleRealtimeUpdate);
+      } catch (err) {
+        console.warn("Socket tracker notice:", err);
+      }
+
+      // Relaxed auto-poll safety net
       const interval = setInterval(() => {
         if (!authError) {
           fetchOrderDetails(searchId, false, searchPhone);
         }
-      }, 5000);
+      }, 10000);
 
-      return () => clearInterval(interval);
+      return () => {
+        if (socket) {
+          socket.disconnect();
+        }
+        clearInterval(interval);
+      };
     } else {
       setIsLoading(false);
     }

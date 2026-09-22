@@ -84,6 +84,11 @@ if (!empty($data->id) && !empty($data->name) && !empty($data->variants)) {
         }
 
         $conn->commit();
+
+        // Broadcast real-time menu change to all connected screens
+        include_once __DIR__ . '/../config/SocketBroadcaster.php';
+        SocketBroadcaster::broadcastOrderTrigger(['type' => 'menu_updated', 'action' => 'update', 'id' => $id]);
+
         echo json_encode(["success" => true, "message" => "Item updated successfully."]);
     } catch (PDOException $e) {
         $conn->rollBack();

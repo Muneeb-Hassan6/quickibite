@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaMotorcycle, FaCommentDots } from "react-icons/fa";
+import { FaMotorcycle, FaCommentDots, FaLayerGroup, FaRoute } from "react-icons/fa";
 import { useStaffAuth } from "../../Context/AuthContext";
 import { useRiderData } from "./hooks/useRiderData";
 
@@ -12,6 +12,8 @@ import ChatDrawer from "./Components/ChatDrawer";
 import MapView from "./Components/MapView";
 import DeliveryActions from "./Components/DeliveryActions";
 import ActiveOrderCard from "./Components/ActiveOrderCard";
+import BatchOrdersView from "./Components/BatchOrdersView";
+import RiderOrderDetailModal from "./Components/RiderOrderDetailModal";
 import ShiftSummary from "./Components/ShiftSummary";
 import DeliveryHistory from "./Components/DeliveryHistory";
 import BottomStats from "./Components/BottomStats";
@@ -53,6 +55,22 @@ export default function RiderPortal() {
     setViewState,
     MAPBOX_TOKEN,
   } = useRiderData();
+
+  const [activeTab, setActiveTab] = useState("batch"); // "batch" | "map"
+  const [detailOrder, setDetailOrder] = useState(null);
+  const [detailStopNumber, setDetailStopNumber] = useState(1);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  const handleOpenDetails = (order, stopNum) => {
+    setDetailOrder(order);
+    setDetailStopNumber(stopNum || 1);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleNavigateToOrder = (orderId) => {
+    setSelectedOrderId(orderId);
+    setActiveTab("map");
+  };
 
   const handleLogout = async () => {
     if (isOnline) {
@@ -128,96 +146,142 @@ export default function RiderPortal() {
           {/* ACTIVE MULTI-STOP DELIVERY VIEW */}
           {hasActiveDeliveries && targetOrder && (
             <div className="space-y-4 animate-in fade-in duration-200">
-              {/* Multi-Stop Batch Navigation Switcher Bar */}
-              {proximityOrders.length > 1 && (
-                <div className="bg-stone-50 dark:bg-neutral-950/90 border border-stone-200 dark:border-neutral-800 p-2.5 rounded-2xl shadow-xs">
-                  <div className="flex items-center justify-between mb-2 px-1">
-                    <span className="text-[11px] font-black uppercase tracking-wider font-['Oswald',sans-serif] text-stone-700 dark:text-neutral-300">
-                      Active Batch ({proximityOrders.length} Stops)
-                    </span>
-                    <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full uppercase">
-                      Proximity Route
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                    {proximityOrders.map((ord, idx) => {
-                      const isSelected = String(ord.id) === String(targetOrder.id);
-                      const isNearest = idx === 0;
-
-                      return (
-                        <button
-                          key={ord.id}
-                          type="button"
-                          onClick={() => setSelectedOrderId(ord.id)}
-                          className={`p-2 rounded-xl text-left transition-all cursor-pointer border ${
-                            isSelected
-                              ? "bg-amber-500 text-neutral-950 border-amber-600 shadow-sm ring-2 ring-amber-500/40"
-                              : "bg-white dark:bg-neutral-900 text-stone-800 dark:text-neutral-200 border-stone-200 dark:border-neutral-800 hover:border-amber-400"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between text-[10px] font-black font-['Oswald',sans-serif]">
-                            <span>
-                              STOP {idx + 1} {isNearest ? "• NEAREST" : ""}
-                            </span>
-                            <span className="font-mono text-[9px]">
-                              {ord.distanceKm || "..."}
-                            </span>
-                          </div>
-                          <div className="text-xs font-bold truncate mt-0.5">
-                            #{ord.id} - {ord.customer}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Map View & Chat Overlay Button */}
-              <div className="relative">
+              {/* Top View Toggle: Batch Orders vs Map Navigation */}
+              <div className="flex bg-stone-100 dark:bg-neutral-800/80 border border-stone-200 dark:border-neutral-700/60 p-1 rounded-xl gap-1">
                 <button
                   type="button"
-                  onClick={() => setIsChatOpen(true)}
-                  className="absolute top-3 right-3 z-30 bg-amber-500 hover:bg-amber-600 active:scale-95 text-neutral-950 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-transform border-none cursor-pointer text-sm"
-                  title="Chat with customer"
+                  onClick={() => setActiveTab("batch")}
+                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-black font-['Oswald',sans-serif] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer border-none ${
+                    activeTab === "batch"
+                      ? "bg-amber-500 text-neutral-950 shadow-xs"
+                      : "text-stone-600 dark:text-neutral-400 hover:text-stone-900 dark:hover:text-white"
+                  }`}
                 >
-                  <FaCommentDots />
+                  <FaLayerGroup className="text-xs" />
+                  <span>Batch Orders ({proximityOrders.length})</span>
                 </button>
-                <MapView
-                  viewState={viewState}
-                  setViewState={setViewState}
-                  routePath={routePath}
-                  riderLocation={riderLocation}
-                  currentOrder={targetOrder}
-                  activeOrders={proximityOrders}
-                  selectedOrder={targetOrder}
-                  onSelectOrder={setSelectedOrderId}
-                  MAPBOX_TOKEN={MAPBOX_TOKEN}
-                />
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("map")}
+                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-black font-['Oswald',sans-serif] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer border-none ${
+                    activeTab === "map"
+                      ? "bg-amber-500 text-neutral-950 shadow-xs"
+                      : "text-stone-600 dark:text-neutral-400 hover:text-stone-900 dark:hover:text-white"
+                  }`}
+                >
+                  <FaRoute className="text-xs" />
+                  <span>Map & Route</span>
+                </button>
               </div>
 
-              {/* Delivery Actions (AI ETA & Proof of Delivery) */}
-              <DeliveryActions
-                isArrived={isArrived}
-                aiData={aiData}
-                distance={distance}
-                orderStatus={orderStatus}
-                handlePhotoUpload={handlePhotoUpload}
-                deliveryPhoto={deliveryPhoto}
-                completeDelivery={() => completeDelivery(targetOrder.id)}
-              />
+              {/* TAB 1: BATCH ORDERS CARDS VIEW */}
+              {activeTab === "batch" && (
+                <BatchOrdersView
+                  orders={proximityOrders}
+                  selectedOrderId={selectedOrderId}
+                  onSelectOrder={handleNavigateToOrder}
+                  onOpenDetails={handleOpenDetails}
+                  onComplete={(id) => completeDelivery(id)}
+                  onCancel={(id) => declineOrder(id)}
+                  isCompleting={isCompletingDelivery}
+                />
+              )}
 
-              {/* Active Order Card for Focused Stop */}
-              <ActiveOrderCard
-                key={targetOrder.id}
-                order={targetOrder}
-                stopNumber={currentStopIndex !== -1 ? currentStopIndex + 1 : 1}
-                totalStops={proximityOrders.length || 1}
-                onComplete={(id) => completeDelivery(id)}
-                onCancel={(id) => declineOrder(id)}
-                isCompleting={isCompletingDelivery}
-              />
+              {/* TAB 2: MAP & NAVIGATION VIEW */}
+              {activeTab === "map" && (
+                <div className="space-y-4">
+                  {/* Multi-Stop Batch Navigation Switcher Bar */}
+                  {proximityOrders.length > 1 && (
+                    <div className="bg-stone-50 dark:bg-neutral-950/90 border border-stone-200 dark:border-neutral-800 p-2.5 rounded-2xl shadow-xs">
+                      <div className="flex items-center justify-between mb-2 px-1">
+                        <span className="text-[11px] font-black uppercase tracking-wider font-['Oswald',sans-serif] text-stone-700 dark:text-neutral-300">
+                          Active Stops ({proximityOrders.length})
+                        </span>
+                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full uppercase">
+                          Click stop to route
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                        {proximityOrders.map((ord, idx) => {
+                          const isSelected = String(ord.id) === String(targetOrder.id);
+                          const isNearest = idx === 0;
+
+                          return (
+                            <button
+                              key={ord.id}
+                              type="button"
+                              onClick={() => setSelectedOrderId(ord.id)}
+                              className={`p-2 rounded-xl text-left transition-all cursor-pointer border ${
+                                isSelected
+                                  ? "bg-amber-500 text-neutral-950 border-amber-600 shadow-sm ring-2 ring-amber-500/40"
+                                  : "bg-white dark:bg-neutral-900 text-stone-800 dark:text-neutral-200 border-stone-200 dark:border-neutral-800 hover:border-amber-400"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between text-[10px] font-black font-['Oswald',sans-serif]">
+                                <span>
+                                  STOP {idx + 1} {isNearest ? "• NEAREST" : ""}
+                                </span>
+                                <span className="font-mono text-[9px]">
+                                  {ord.distanceKm || "..."}
+                                </span>
+                              </div>
+                              <div className="text-xs font-bold truncate mt-0.5">
+                                #{ord.id} - {ord.customer}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Map View & Chat Overlay Button */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsChatOpen(true)}
+                      className="absolute top-3 right-3 z-30 bg-amber-500 hover:bg-amber-600 active:scale-95 text-neutral-950 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-transform border-none cursor-pointer text-sm"
+                      title="Chat with customer"
+                    >
+                      <FaCommentDots />
+                    </button>
+                    <MapView
+                      viewState={viewState}
+                      setViewState={setViewState}
+                      routePath={routePath}
+                      riderLocation={riderLocation}
+                      currentOrder={targetOrder}
+                      activeOrders={proximityOrders}
+                      selectedOrder={targetOrder}
+                      onSelectOrder={setSelectedOrderId}
+                      MAPBOX_TOKEN={MAPBOX_TOKEN}
+                    />
+                  </div>
+
+                  {/* Delivery Actions (AI ETA & Proof of Delivery) */}
+                  <DeliveryActions
+                    isArrived={isArrived}
+                    aiData={aiData}
+                    distance={distance}
+                    orderStatus={orderStatus}
+                    handlePhotoUpload={handlePhotoUpload}
+                    deliveryPhoto={deliveryPhoto}
+                    completeDelivery={() => completeDelivery(targetOrder.id)}
+                  />
+
+                  {/* Active Order Card for Focused Stop */}
+                  <ActiveOrderCard
+                    key={targetOrder.id}
+                    order={targetOrder}
+                    stopNumber={currentStopIndex !== -1 ? currentStopIndex + 1 : 1}
+                    totalStops={proximityOrders.length || 1}
+                    onComplete={(id) => completeDelivery(id)}
+                    onCancel={(id) => declineOrder(id)}
+                    isCompleting={isCompletingDelivery}
+                  />
+                </div>
+              )}
             </div>
           )}
         </main>
@@ -241,6 +305,19 @@ export default function RiderPortal() {
             customerName={targetOrder.customer}
           />
         )}
+
+        {/* 7. Order Details Modal */}
+        <RiderOrderDetailModal
+          order={detailOrder}
+          isOpen={isDetailModalOpen}
+          onClose={() => setIsDetailModalOpen(false)}
+          stopNumber={detailStopNumber}
+          totalStops={proximityOrders.length}
+          onNavigate={handleNavigateToOrder}
+          onComplete={(id) => completeDelivery(id)}
+          onCancel={(id) => declineOrder(id)}
+          isCompleting={isCompletingDelivery}
+        />
       </div>
 
       {/* 7. Developer GPS Simulator Widget (Easily Removable) */}

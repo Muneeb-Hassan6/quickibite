@@ -1,10 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import imageCompression from "browser-image-compression";
+import { apiFetch } from "../../../../../utils/apiHelper";
+import { staffSocket } from "../../../../../utils/socket";
 
 export function useMenuManager() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("items");
+
+  // Real-time socket sync: update menu across all tabs & devices immediately
+  useEffect(() => {
+    const handleSync = () => {
+      queryClient.invalidateQueries({ queryKey: ["menu"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    };
+
+    staffSocket.on("refresh_menu", handleSync);
+    staffSocket.on("refresh_kitchen", handleSync);
+
+    return () => {
+      staffSocket.off("refresh_menu", handleSync);
+      staffSocket.off("refresh_kitchen", handleSync);
+    };
+  }, [queryClient]);
 
   const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
   const [selectedMenuForRecipe, setSelectedMenuForRecipe] = useState(null);
@@ -28,6 +46,7 @@ export function useMenuManager() {
 
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [isSavingItem, setIsSavingItem] = useState(false);
   const defaultMenuForm = {
     name: "",
     description: "",
@@ -56,7 +75,7 @@ export function useMenuManager() {
   const { data: menuItems = [] } = useQuery({
     queryKey: ["menu"],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php?admin=1`);
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
@@ -154,6 +173,7 @@ export function useMenuManager() {
       );
     }
 
+    setIsSavingItem(true);
     try {
       const finalImgUrl = await uploadToCloudinary(menuForm.img);
       if (!finalImgUrl && menuForm.img instanceof File) {
@@ -176,15 +196,9 @@ export function useMenuManager() {
         banner_order: parseInt(menuForm.banner_order || 0),
         auth_token: sessionStorage.getItem("auth_token"),
       };
-      const url = editingItem
-        ? `${import.meta.env.VITE_API_BASE}/update_menu.php`
-        : `${import.meta.env.VITE_API_BASE}/add_menu.php`;
-
-      const response = await fetch(url, {
+      const endpoint = editingItem ? "update_menu.php" : "add_menu.php";
+      const response = await apiFetch(endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(
           editingItem ? { ...payload, id: editingItem.id } : payload
         ),
@@ -192,6 +206,8 @@ export function useMenuManager() {
 
       const result = await response.json();
       if (result.success) {
+        staffSocket.emit("refresh_kitchen");
+        staffSocket.emit("refresh_menu");
         showToast(
           editingItem
             ? "Item updated successfully!"
@@ -203,6 +219,8 @@ export function useMenuManager() {
       } else showToast("Error: " + result.message, "error");
     } catch (error) {
       showToast("Server connection failed.", "error");
+    } finally {
+      setIsSavingItem(false);
     }
   };
 
@@ -219,26 +237,25 @@ export function useMenuManager() {
 
   const executeDeleteMenu = async (id) => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/delete_menu.php`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            id: id,
-            auth_token: sessionStorage.getItem("auth_token"),
-          }),
-        }
-      );
+      const response = await apiFetch("delete_menu.php", {
+        method: "POST",
+        body: JSON.stringify({
+          id: id,
+          auth_token: sessionStorage.getItem("auth_token"),
+        }),
+      });
       const result = await response.json();
       if (result.success) {
+        staffSocket.emit("refresh_kitchen");
+        staffSocket.emit("refresh_menu");
         queryClient.setQueryData(["menu"], (old) =>
-          old.filter((item) => item.id !== id)
+          old ? old.filter((item) => item.id !== id) : []
         );
+        queryClient.invalidateQueries({ queryKey: ["menu"] });
         showToast("Item deleted successfully!", "success");
-      } else showToast("Failed to delete item.", "error");
+      } else {
+        showToast("Failed to delete item: " + (result.message || ""), "error");
+      }
     } catch (error) {
       showToast("Server connection failed.", "error");
     }
@@ -263,15 +280,9 @@ export function useMenuManager() {
         show_on_hero: categoryForm.show_on_hero ? 1 : 0,
         auth_token: sessionStorage.getItem("auth_token"),
       };
-      const url = editingCategory
-        ? `${import.meta.env.VITE_API_BASE}/update_category.php`
-        : `${import.meta.env.VITE_API_BASE}/add_category.php`;
-
-      const response = await fetch(url, {
+      const endpoint = editingCategory ? "update_category.php" : "add_category.php";
+      const response = await apiFetch(endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(
           editingCategory ? { ...payload, id: editingCategory.id } : payload
         ),
@@ -279,6 +290,8 @@ export function useMenuManager() {
 
       const result = await response.json();
       if (result.success) {
+        staffSocket.emit("refresh_kitchen");
+        staffSocket.emit("refresh_menu");
         showToast(
           editingCategory
             ? "Category updated successfully!"
@@ -306,26 +319,25 @@ export function useMenuManager() {
 
   const executeDeleteCategory = async (id) => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/delete_category.php`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            id: id,
-            auth_token: sessionStorage.getItem("auth_token"),
-          }),
-        }
-      );
+      const response = await apiFetch("delete_category.php", {
+        method: "POST",
+        body: JSON.stringify({
+          id: id,
+          auth_token: sessionStorage.getItem("auth_token"),
+        }),
+      });
       const result = await response.json();
       if (result.success) {
+        staffSocket.emit("refresh_kitchen");
+        staffSocket.emit("refresh_menu");
         queryClient.setQueryData(["categories"], (old) =>
-          old.filter((cat) => cat.id !== id)
+          old ? old.filter((item) => item.id !== id) : []
         );
+        queryClient.invalidateQueries({ queryKey: ["categories"] });
         showToast("Category deleted successfully!", "success");
-      } else showToast("Failed to delete category.", "error");
+      } else {
+        showToast("Failed to delete category: " + (result.message || ""), "error");
+      }
     } catch (error) {
       showToast("Server connection failed.", "error");
     }
@@ -406,5 +418,6 @@ export function useMenuManager() {
     triggerDeleteCategory,
     handleConfirmAction,
     handleEditItem,
+    isSavingItem,
   };
 }

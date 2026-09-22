@@ -22,7 +22,7 @@ export default function AutoPilotControlBar({
       {/* Left Group (Radius Slider & Manual Batch) */}
       <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
         {/* Slider Inset Capsule */}
-        <div className="flex items-center gap-3 px-3.5 py-2 rounded-xl bg-stone-100 dark:bg-neutral-800/60 border border-stone-200 dark:border-neutral-700/60 shadow-xs">
+        {/* <div className="flex items-center gap-3 px-3.5 py-2 rounded-xl bg-stone-100 dark:bg-neutral-800/60 border border-stone-200 dark:border-neutral-700/60 shadow-xs">
           <FaSlidersH className="text-amber-500 text-xs shrink-0" />
           <span className="font-mono text-xs font-semibold text-stone-700 dark:text-neutral-300 whitespace-nowrap">
             Radius: {(batchRadius / 1000).toFixed(1)} KM
@@ -37,7 +37,7 @@ export default function AutoPilotControlBar({
             disabled={isAutoPilotOn}
             className="w-24 sm:w-28 accent-amber-500 cursor-pointer h-1.5 bg-stone-300 dark:bg-neutral-700 rounded-lg"
           />
-        </div>
+        </div> */}
 
         {/* Manual Batch Button */}
         <button

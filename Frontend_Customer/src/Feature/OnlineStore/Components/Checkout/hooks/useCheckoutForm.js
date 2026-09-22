@@ -311,7 +311,7 @@ export function useCheckoutForm() {
       (err) => {
         setIsDetectingGps(false);
         console.warn("GPS Geolocation notice:", err?.message || err);
-        // Graceful fallback to QuickBite Lahore HQ
+        // Graceful fallback to BigBite Lahore HQ
         setMapCoords({ lat: 31.5204, lng: 74.3587 });
         toast("Could not detect exact GPS, please pick your location on the map.", {
           icon: "📍",

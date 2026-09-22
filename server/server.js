@@ -57,9 +57,16 @@ app.post("/trigger-order", (req, res) => {
     });
   }
 
-  console.log("📦 Authorized HTTP trigger received from PHP backend → broadcasting refresh_kitchen");
-  io.emit("refresh_kitchen");
-  res.json({ success: true, message: "Kitchen refreshed via HTTP trigger" });
+  const payload = req.body || {};
+  console.log("📦 Authorized HTTP trigger received from PHP backend → broadcasting events:", payload);
+  io.emit("refresh_kitchen", payload);
+  io.emit("refresh_orders", payload);
+  io.emit("refresh_rider", payload);
+  io.emit("order_status_updated", payload);
+  if (payload.type === "menu_updated") {
+    io.emit("refresh_menu", payload);
+  }
+  res.json({ success: true, message: "Events broadcast via HTTP trigger" });
 });
 
 // ── Socket.io Connection Guard ────────────────────────────────────────────────

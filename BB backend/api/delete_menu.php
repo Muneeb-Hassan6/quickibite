@@ -23,12 +23,12 @@ if(!empty($data->id)) {
 
     // --- STEP 2: Clean up child relations inside transaction before deleting ---
     $db->beginTransaction();
-    $isDeleted = false;
+    $errorMsg = null;
     try {
         $db->prepare("DELETE FROM product_custom_addons WHERE menu_item_id = ?")->execute([$menuItem->id]);
         $db->prepare("DELETE FROM menu_addons WHERE menu_item_id = ?")->execute([$menuItem->id]);
         $db->prepare("DELETE FROM menu_variants WHERE menu_id = ?")->execute([$menuItem->id]);
-        $db->prepare("DELETE FROM menu_recipes WHERE menu_id = ?")->execute([$menuItem->id]);
+        $db->prepare("DELETE FROM recipes WHERE menu_item_id = ?")->execute([$menuItem->id]);
         $db->prepare("DELETE FROM deal_items WHERE menu_item_id = ?")->execute([$menuItem->id]);
 
         $isDeleted = $menuItem->delete();
@@ -37,6 +37,8 @@ if(!empty($data->id)) {
         if ($db->inTransaction()) {
             $db->rollBack();
         }
+        error_log("Delete Menu Error: " . $e->getMessage());
+        $errorMsg = $e->getMessage();
         $isDeleted = false;
     }
 
@@ -76,11 +78,15 @@ if(!empty($data->id)) {
             // Aap chahein toh $response ko log bhi karwa sakte hain debugging ke liye
         }
 
+        // Broadcast real-time menu change to all connected screens
+        include_once __DIR__ . '/../config/SocketBroadcaster.php';
+        SocketBroadcaster::broadcastOrderTrigger(['type' => 'menu_updated', 'action' => 'delete', 'id' => $menuItem->id]);
+
         http_response_code(200);
         echo json_encode(array("success" => true, "message" => "Item and image deleted successfully."));
     } else {
-        http_response_code(503);
-        echo json_encode(array("success" => false, "message" => "Unable to delete item from database."));
+        http_response_code(500);
+        echo json_encode(array("success" => false, "message" => "Unable to delete item from database: " . ($errorMsg ?? "Unknown error")));
     }
 } else {
     http_response_code(400);

@@ -1,7 +1,7 @@
 {
-  "name": "quickbite-socket-server",
+  "name": "bigbite-socket-server",
   "version": "1.0.0",
-  "description": "Real-time socket server for QuickBite",
+  "description": "Real-time socket server for BigBite",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

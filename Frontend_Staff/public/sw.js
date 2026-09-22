@@ -1,5 +1,5 @@
-// QuickiBite Staff POS PWA Service Worker
-const CACHE_NAME = 'quickibite-staff-v1';
+// BigBite Staff POS PWA Service Worker
+const CACHE_NAME = 'bigbite-staff-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

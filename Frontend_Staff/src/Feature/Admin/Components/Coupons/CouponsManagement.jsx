@@ -47,6 +47,8 @@ const CouponsManagement = () => {
     is_active: 1,
   });
   const [saving, setSaving] = useState(false);
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   const fetchCoupons = useCallback(async (offset = 0, isAppend = false) => {
     if (isAppend) {
@@ -88,6 +90,50 @@ const CouponsManagement = () => {
       setIsLoadingMore(false);
     }
   }, []);
+
+  const refreshSearch = useCallback(async () => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
+    try {
+      const res = await apiFetch(`get_admin_coupons.php?search=${encodeURIComponent(trimmed)}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setSearchResults(data.data);
+      }
+    } catch (err) {
+      console.error("Coupons search error:", err);
+    }
+  }, [searchQuery]);
+
+  // Server-side debounced search across all database records
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      setSearchResults(null);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await apiFetch(`get_admin_coupons.php?search=${encodeURIComponent(trimmed)}`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          setSearchResults(data.data);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (err) {
+        console.error("Coupons search error:", err);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchCoupons(0, false);
@@ -147,6 +193,7 @@ const CouponsManagement = () => {
           }`
         );
         fetchCoupons();
+        if (searchQuery.trim()) refreshSearch();
       } else {
         toast.error(data.message || "Could not toggle status");
       }
@@ -183,6 +230,7 @@ const CouponsManagement = () => {
           if (data.success) {
             toast.success("Promo code deleted");
             fetchCoupons();
+            if (searchQuery.trim()) refreshSearch();
           } else {
             toast.error(data.message || "Failed to delete coupon");
           }
@@ -237,6 +285,7 @@ const CouponsManagement = () => {
         toast.success(data.message || "Promo code saved!");
         setIsModalOpen(false);
         fetchCoupons();
+        if (searchQuery.trim()) refreshSearch();
       } else {
         toast.error(data.message || "Failed to save promo code");
       }
@@ -247,7 +296,9 @@ const CouponsManagement = () => {
     }
   };
 
-  const filteredCoupons = coupons.filter(
+  const activeCoupons = searchResults !== null ? searchResults : coupons;
+
+  const filteredCoupons = activeCoupons.filter(
     (c) =>
       c.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.discount_type.toLowerCase().includes(searchQuery.toLowerCase())
@@ -461,6 +512,7 @@ const CouponsManagement = () => {
         isLoadingMore={isLoadingMore}
         onLoadMore={handleLoadMore}
         itemLabel="coupons"
+        isSearching={searchQuery.trim().length > 0}
       />
 
       {/* ── Add / Edit Modal ── */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import toast from "react-hot-toast";
 import {
   FaUsers,
@@ -35,6 +35,8 @@ const CustomersCRM = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all"); // 'all' | 'active' | 'blocked'
   const [updatingId, setUpdatingId] = useState(null);
 
@@ -109,6 +111,50 @@ const CustomersCRM = () => {
     fetchCustomers();
   }, []);
 
+  const refreshSearch = useCallback(async () => {
+    const trimmed = searchTerm.trim();
+    if (!trimmed) return;
+    try {
+      const response = await apiFetch(`get_admin_customers.php?search=${encodeURIComponent(trimmed)}`);
+      const result = await response.json();
+      if (result && result.success && Array.isArray(result.customers)) {
+        setSearchResults(result.customers);
+      }
+    } catch (err) {
+      console.error("Customers refresh search error:", err);
+    }
+  }, [searchTerm]);
+
+  // Server-side debounced search across all database records
+  useEffect(() => {
+    const trimmed = searchTerm.trim();
+    if (!trimmed) {
+      setSearchResults(null);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const response = await apiFetch(`get_admin_customers.php?search=${encodeURIComponent(trimmed)}`);
+        const result = await response.json();
+        if (result && result.success && Array.isArray(result.customers)) {
+          setSearchResults(result.customers);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (err) {
+        console.error("Customers search error:", err);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const handleToggleStatus = async (customer) => {
     const newStatus = customer.is_active == 1 ? 0 : 1;
     setUpdatingId(customer.id);
@@ -138,6 +184,13 @@ const CustomersCRM = () => {
             c.id === customer.id ? { ...c, is_active: newStatus } : c
           )
         );
+        if (searchResults) {
+          setSearchResults((prev) =>
+            prev.map((c) =>
+              c.id === customer.id ? { ...c, is_active: newStatus } : c
+            )
+          );
+        }
         setStats((prev) => ({
           ...prev,
           active_customers:
@@ -160,8 +213,10 @@ const CustomersCRM = () => {
     }
   };
 
+  const activeCustomers = searchResults !== null ? searchResults : customers;
+
   // Filter Logic
-  const filteredCustomers = customers.filter((c) => {
+  const filteredCustomers = activeCustomers.filter((c) => {
     const matchSearch =
       (c.full_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (c.phone || "").includes(searchTerm) ||
@@ -517,6 +572,7 @@ const CustomersCRM = () => {
             isLoadingMore={isLoadingMore}
             onLoadMore={handleLoadMore}
             itemLabel="customers"
+            isSearching={searchTerm.trim().length > 0}
           />
         )}
       </div>

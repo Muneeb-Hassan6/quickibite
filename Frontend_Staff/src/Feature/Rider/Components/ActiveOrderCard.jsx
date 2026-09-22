@@ -31,6 +31,22 @@ export default function ActiveOrderCard({
     ? "92" + rawPhone
     : rawPhone;
 
+  let staffUser = null;
+  try {
+    staffUser = JSON.parse(
+      sessionStorage.getItem("staff_user") ||
+      sessionStorage.getItem("staff_session") ||
+      sessionStorage.getItem("user") ||
+      "{}"
+    );
+  } catch {}
+  const riderName = staffUser?.name || "Rider";
+  const riderPhone = staffUser?.phone || "";
+  const waMessage = `Hi! Your BigBite order #${order.id} is accepted by our rider *${riderName}* (${riderPhone}). On the way to deliver!`;
+  const waHref = formattedWhatsAppPhone
+    ? `https://api.whatsapp.com/send?phone=${formattedWhatsAppPhone}&text=${encodeURIComponent(waMessage)}`
+    : "#";
+
   const navUrl =
     order.targetLat && order.targetLng
       ? `https://www.google.com/maps/dir/?api=1&destination=${order.targetLat},${order.targetLng}`
@@ -177,7 +193,7 @@ export default function ActiveOrderCard({
               <span>Call</span>
             </a>
             <a
-              href={formattedWhatsAppPhone ? `https://wa.me/${formattedWhatsAppPhone}` : "#"}
+              href={waHref}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 sm:flex-initial min-h-[44px] px-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all no-underline shadow-xs active:scale-95"
@@ -237,16 +253,32 @@ export default function ActiveOrderCard({
           </div>
         </div>
 
-        {/* Actions: Delivery Failed & Mark as Delivered */}
+        {/* Actions: Cancel (Return to Dispatcher) & Mark as Delivered */}
         <div className="flex gap-2.5 pt-1">
           <button
             type="button"
             disabled={isFailing || isCompleting}
-            onClick={handleDeliveryFailed}
+            onClick={async () => {
+              const res = await Swal.fire({
+                title: `Cancel Order #${order.id}?`,
+                text: "This order will be removed from your batch and returned to the Dispatcher queue for reassignment.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, Return to Dispatcher",
+                cancelButtonText: "Keep Order",
+                confirmButtonColor: "#ef4444",
+                cancelButtonColor: "#71717a",
+                background: "#18181b",
+                color: "#ffffff",
+              });
+              if (res.isConfirmed && onCancel) {
+                onCancel(order.id);
+              }
+            }}
             className="flex-1 min-h-[44px] px-3.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-bold text-xs uppercase font-['Oswald',sans-serif] tracking-wider cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-50"
           >
             <FaBan className="text-xs" />
-            <span>{isFailing ? "Logging..." : "Delivery Failed"}</span>
+            <span>Cancel Order</span>
           </button>
           <button
             type="button"

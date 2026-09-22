@@ -54,8 +54,16 @@ try {
     $blockedCustomers = intval($stats['blocked_customers'] ?? 0);
     $totalRevenue = floatval($stats['total_revenue'] ?? 0);
 
+    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+    $whereClause = "";
+    $params = [];
+    if ($search !== '') {
+        $whereClause = " WHERE (u.full_name LIKE :search OR u.phone LIKE :search OR u.email LIKE :search) ";
+        $params[':search'] = "%" . $search . "%";
+    }
+
     $limitSql = "";
-    if ($limit > 0) {
+    if ($search === '' && $limit > 0) {
         $limitSql = " LIMIT " . intval($limit) . " OFFSET " . intval($offset);
     }
 
@@ -65,13 +73,15 @@ try {
               MAX(o.created_at) AS last_order_at
               FROM customer_users u
               LEFT JOIN orders o ON u.id = o.customer_id
+              " . $whereClause . "
               GROUP BY u.id
               ORDER BY u.id DESC" . $limitSql;
 
-    $stmt = $db->query($query);
+    $stmt = $db->prepare($query);
+    $stmt->execute($params);
     $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $has_more = ($limit > 0) ? (($offset + count($customers)) < $totalCustomers) : false;
+    $has_more = ($search !== '') ? false : (($limit > 0) ? (($offset + count($customers)) < $totalCustomers) : false);
 
     echo json_encode([
         'success' => true,

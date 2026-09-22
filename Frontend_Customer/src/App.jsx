@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense, lazy } from "react";
 import { Toaster } from "react-hot-toast";
 
 // 🛒 COMPONENTS & POPUPS
@@ -6,18 +6,26 @@ import CartPopup from "./Feature/OnlineStore/Components/CartPopup";
 
 // 🌍 ONLINE STORE IMPORTS
 import OnlineLayout from "./Feature/OnlineStore/OnlineLayout";
-import CheckoutPage from "./Feature/OnlineStore/CheckoutPage";
 
-// 🏠 HOME, MENU & LEGAL IMPORTS
+// 🏠 LAZY LOADED ROUTE IMPORTS (Code-split for maximum load speed)
 import Home from "./Feature/Home/Home";
-import MenuPage from "./Feature/Menu/MenuPage";
-import CategoryItemPage from "./Feature/Menu/Components/CategoryItemPage";
-import OrderTracker from "./Feature/Order/OrderTracker";
-import DealsPage from "./Feature/Deals/DealsPage";
-import AboutUs from "./Feature/Legal/AboutUs";
-import PrivacyPolicy from "./Feature/Legal/PrivacyPolicy";
-import TermsAndConditions from "./Feature/Legal/TermsAndConditions";
-import NotFoundPage from "./Components/Common/NotFoundPage";
+const CheckoutPage = lazy(() => import("./Feature/OnlineStore/CheckoutPage"));
+const MenuPage = lazy(() => import("./Feature/Menu/MenuPage"));
+const CategoryItemPage = lazy(() => import("./Feature/Menu/Components/CategoryItemPage"));
+const OrderTracker = lazy(() => import("./Feature/Order/OrderTracker"));
+const DealsPage = lazy(() => import("./Feature/Deals/DealsPage"));
+const AboutUs = lazy(() => import("./Feature/Legal/AboutUs"));
+const PrivacyPolicy = lazy(() => import("./Feature/Legal/PrivacyPolicy"));
+const TermsAndConditions = lazy(() => import("./Feature/Legal/TermsAndConditions"));
+const NotFoundPage = lazy(() => import("./Components/Common/NotFoundPage"));
+
+// Route Loading Spinner Fallback
+const PageFallback = () => (
+  <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
+    <div className="w-10 h-10 border-3 border-amber-500/20 border-t-amber-500 rounded-full animate-spin"></div>
+    <span className="text-xs text-neutral-400 font-medium tracking-wide">Loading...</span>
+  </div>
+);
 
 // LIBRARIES
 import {
@@ -93,29 +101,31 @@ const MainContent = () => {
     >
       <Toaster position="top-center" reverseOrder={false} />
 
-      <Routes>
-        {/* ==========================================
-            🛍️ CUSTOMER ROUTES
-            ========================================== */}
-        <Route element={<OnlineLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/menu" element={<MenuPage />} />
-          <Route
-            path="/category/:categoryName"
-            element={<CategoryItemPage />}
-          />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/track-order" element={<OrderTracker />} />
-          <Route path="/deals" element={<DealsPage />} />
-          <Route path="/about" element={<AboutUs />} />
-          <Route path="/about-us" element={<AboutUs />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsAndConditions />} />
-          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
+      <Suspense fallback={<PageFallback />}>
+        <Routes>
+          {/* ==========================================
+              🛍️ CUSTOMER ROUTES
+              ========================================== */}
+          <Route element={<OnlineLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/menu" element={<MenuPage />} />
+            <Route
+              path="/category/:categoryName"
+              element={<CategoryItemPage />}
+            />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/track-order" element={<OrderTracker />} />
+            <Route path="/deals" element={<DealsPage />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/about-us" element={<AboutUs />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsAndConditions />} />
+            <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </Routes>
+      </Suspense>
 
       {/* 🛒 SLIDE-OUT CART POPUP (Available across store except checkout) */}
       {!isCheckoutPage && <CartPopup />}

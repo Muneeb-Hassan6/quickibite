@@ -20,6 +20,8 @@ const EmployeeList = () => {
   const [editingEmp, setEditingEmp] = useState(null);
   const [phoneError, setPhoneError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   const employeesRef = useRef(employees);
   useEffect(() => {
@@ -62,6 +64,50 @@ const EmployeeList = () => {
       setIsLoadingMore(false);
     }
   }, []);
+
+  const refreshSearch = useCallback(async () => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
+    try {
+      const response = await apiFetch(`get_staff.php?search=${encodeURIComponent(trimmed)}`);
+      const result = await response.json();
+      if (result && result.success && Array.isArray(result.data)) {
+        setSearchResults(result.data);
+      }
+    } catch (err) {
+      console.error("Staff refresh search error:", err);
+    }
+  }, [searchQuery]);
+
+  // Server-side debounced search across all database records
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      setSearchResults(null);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const response = await apiFetch(`get_staff.php?search=${encodeURIComponent(trimmed)}`);
+        const result = await response.json();
+        if (result && result.success && Array.isArray(result.data)) {
+          setSearchResults(result.data);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (err) {
+        console.error("Staff search error:", err);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const staffQueryState = queryClient.getQueryState(["staff"]);
   const staffDataUpdatedAt = staffQueryState?.dataUpdatedAt;
@@ -106,6 +152,7 @@ const EmployeeList = () => {
               color: "#fff",
             });
             fetchStaffBatch(0, false);
+            if (searchQuery.trim()) refreshSearch();
             queryClient.invalidateQueries({ queryKey: ["staff"] });
           } else {
             Swal.fire("Error!", resData.message, "error");
@@ -228,6 +275,7 @@ const EmployeeList = () => {
         });
         setIsEditModalOpen(false);
         fetchStaffBatch(0, false);
+        if (searchQuery.trim()) refreshSearch();
         queryClient.invalidateQueries({ queryKey: ["staff"] });
         queryClient.invalidateQueries({ queryKey: ["staff_roles"] });
       } else {
@@ -250,7 +298,9 @@ const EmployeeList = () => {
     }
   };
 
-  const filteredEmployees = employees.filter(
+  const activeEmployees = searchResults !== null ? searchResults : employees;
+
+  const filteredEmployees = activeEmployees.filter(
     (emp) =>
       (emp.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (emp.role || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -333,6 +383,7 @@ const EmployeeList = () => {
         isLoadingMore={isLoadingMore}
         onLoadMore={handleLoadMore}
         itemLabel="employees"
+        isSearching={searchQuery.trim().length > 0}
       />
 
       {/* Edit Employee Modal */}
