@@ -75,6 +75,10 @@ if ($data && is_array($data)) {
 
         $db->commit();
 
+        // Broadcast real-time settings change to all connected staff and customer portals
+        include_once __DIR__ . '/../config/SocketBroadcaster.php';
+        SocketBroadcaster::broadcastOrderTrigger(['type' => 'settings_updated']);
+
         echo json_encode([
             "success" => true, 
             "message" => "Settings updated successfully"

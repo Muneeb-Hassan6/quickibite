@@ -1,7 +1,8 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { LuShoppingBag, LuLock, LuQrCode, LuUtensils } from "react-icons/lu";
 import { useCheckoutForm } from "./Components/Checkout/hooks/useCheckoutForm";
+import { useStoreStatus } from "../../Context/StoreStatusContext";
 
 // Atomic Subcomponents
 import DeliveryAddressForm from "./Components/Checkout/DeliveryAddressForm";
@@ -14,7 +15,21 @@ import RiderTipSelector from "../../Components/Checkout/RiderTipSelector";
 import CartFreeDeliveryMeter from "../../Components/Cart/CartFreeDeliveryMeter";
 
 const CheckoutPage = () => {
+  const navigate = useNavigate();
   const form = useCheckoutForm();
+  const { isOpen, isLoadingSettings, openClosedModal } = useStoreStatus();
+
+  // 🛡️ STORE CLOSED GUARD: Block checkout and redirect to homepage if closed
+  useEffect(() => {
+    if (!isLoadingSettings && !isOpen) {
+      openClosedModal();
+      navigate("/", { replace: true });
+    }
+  }, [isOpen, isLoadingSettings, navigate, openClosedModal]);
+
+  if (!isLoadingSettings && !isOpen) {
+    return null;
+  }
 
   // Empty Cart Guard
   if (!form.cartItems || form.cartItems.length === 0) {

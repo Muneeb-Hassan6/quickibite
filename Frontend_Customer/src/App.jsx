@@ -40,6 +40,7 @@ import { CartProvider, useCart } from "./Context/CartContext";
 import { OrderProvider } from "./Context/OrderContext";
 import { MenuUIProvider } from "./Context/MenuUIContext";
 import { AuthProvider, useAuth } from "./Context/AuthContext";
+import { StoreStatusProvider } from "./Context/StoreStatusContext";
 import AuthModal from "./Components/Auth/AuthModal";
 import GooglePhoneModal from "./Components/Customer/GooglePhoneModal";
 import CustomerProfileDrawer from "./Components/Customer/CustomerProfileDrawer";
@@ -161,7 +162,9 @@ function App() {
         <OrderProvider>
           <MenuUIProvider>
             <Router>
-              <MainContent />
+              <StoreStatusProvider>
+                <MainContent />
+              </StoreStatusProvider>
             </Router>
           </MenuUIProvider>
         </OrderProvider>

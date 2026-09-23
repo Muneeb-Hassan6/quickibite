@@ -25,7 +25,11 @@ const OperationalSettings = () => {
   useEffect(() => {
     if (settingsData && Object.keys(settingsData).length > 0) {
       setSettings({
-        accept_orders: settingsData.accept_orders === "true",
+        accept_orders:
+          settingsData.accept_orders !== "false" &&
+          settingsData.accept_orders !== "0" &&
+          settingsData.accept_orders !== false &&
+          settingsData.accept_orders !== 0,
         min_order: settingsData.min_order || "0",
         delivery_radius: settingsData.delivery_radius || "10",
       });

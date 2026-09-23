@@ -1,5 +1,6 @@
 import React from "react";
 import { FaArrowRight, FaShieldAlt, FaCheckCircle } from "react-icons/fa";
+import { useStoreStatus } from "../../../Context/StoreStatusContext";
 
 export default function CartDrawerCheckoutFooter({
   totalQty,
@@ -12,6 +13,7 @@ export default function CartDrawerCheckoutFooter({
   toggleCart,
   navigate,
 }) {
+  const { isOpen, openClosedModal } = useStoreStatus();
   const finalTotal = isDineIn
     ? totalAmount
     : grandTotal !== undefined
@@ -69,12 +71,17 @@ export default function CartDrawerCheckoutFooter({
       <button
         type="button"
         onClick={() => {
+          if (!isOpen) {
+            toggleCart();
+            openClosedModal();
+            return;
+          }
           toggleCart();
           navigate("/checkout");
         }}
         className="w-full py-3 sm:py-3.5 rounded-xl sm:rounded-2xl bg-amber-400 hover:bg-amber-500 active:scale-[0.98] text-neutral-950 font-['Oswald',sans-serif] font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-amber-400/20 transition-all flex items-center justify-center gap-2 cursor-pointer border-none"
       >
-        <span>Proceed to Checkout</span>
+        <span>{isOpen ? "Proceed to Checkout" : "Restaurant Currently Closed"}</span>
         <FaArrowRight className="text-xs" />
       </button>
 

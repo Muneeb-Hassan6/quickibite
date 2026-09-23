@@ -33,6 +33,9 @@ try {
         "delivery_time" => "30",
         "min_order" => "500",
         "tax_rate" => "5",
+        "restaurant_open_time" => "10:00",
+        "restaurant_close_time" => "04:00",
+        "accept_orders" => "true",
 
         // ═══ ABOUT US ═══
         "about_hero_badge" => "OUR STORY & PASSION",

@@ -100,8 +100,8 @@ $data = json_decode(file_get_contents("php://input"));
 // ─── DEBUG LOGGING ───
 error_log("Order Payload: " . json_encode($data));
 
-// 🔥 Time Validation Logic
-$settingsQuery = "SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('restaurant_open_time', 'restaurant_close_time')";
+// 🔥 Time & Operational Validation Logic
+$settingsQuery = "SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('restaurant_open_time', 'restaurant_close_time', 'accept_orders')";
 $settingsStmt = $db->prepare($settingsQuery);
 $settingsStmt->execute();
 $timings = [];
@@ -109,8 +109,21 @@ while ($row = $settingsStmt->fetch(PDO::FETCH_ASSOC)) {
     $timings[$row['setting_key']] = $row['setting_value'];
 }
 
-$open_time_str = $timings['restaurant_open_time'] ?? '00:00';
-$close_time_str = $timings['restaurant_close_time'] ?? '23:59';
+// 1. Check Accept Online Orders Toggle
+$accept_orders_val = $timings['accept_orders'] ?? 'true';
+if ($accept_orders_val === 'false' || $accept_orders_val === '0' || $accept_orders_val === false || $accept_orders_val === 0) {
+    if (ob_get_level()) ob_clean();
+    echo json_encode([
+        "success" => false, 
+        "message" => "Restaurant is currently not accepting online orders at this time.",
+        "code" => "STORE_CLOSED_TOGGLE"
+    ]);
+    exit();
+}
+
+// 2. Check Opening and Closing Hours
+$open_time_str = $timings['restaurant_open_time'] ?? '10:00';
+$close_time_str = $timings['restaurant_close_time'] ?? '04:00';
 
 date_default_timezone_set('Asia/Karachi'); // Assuming PKT timezone
 $current_time_str = date('H:i');
@@ -122,11 +135,12 @@ $curr_ts = strtotime($current_time_str);
 $is_open = false;
 
 if ($close_ts > $open_ts) {
-    if ($curr_ts >= $open_ts && $curr_ts <= $close_ts) {
+    if ($curr_ts >= $open_ts && $curr_ts < $close_ts) {
         $is_open = true;
     }
 } else {
-    if ($curr_ts >= $open_ts || $curr_ts <= $close_ts) {
+    // Overnight hours (e.g. 10:00 AM to 04:00 AM next day)
+    if ($curr_ts >= $open_ts || $curr_ts < $close_ts) {
         $is_open = true;
     }
 }
