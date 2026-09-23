@@ -187,20 +187,36 @@ export default function EmployeeWorkDetailsForm({
 
         {enablePortalAccess ? (
           <div className="space-y-3.5 pt-1 animate-slide-up">
-            {/* Username */}
-            <div>
-              <label className="text-[11px] font-extrabold text-slate-600 dark:text-neutral-400 block mb-1 uppercase tracking-wider">
-                Username *
-              </label>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                required={enablePortalAccess}
-                className="w-full px-3.5 py-2.5 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-medium focus:outline-none focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-neutral-600"
-                placeholder="e.g. ali_staff"
-              />
+            {/* Username & Email Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-extrabold text-slate-600 dark:text-neutral-400 block mb-1 uppercase tracking-wider">
+                  Username *
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  required={enablePortalAccess}
+                  className="w-full px-3.5 py-2.5 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-medium focus:outline-none focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-neutral-600"
+                  placeholder="e.g. ali_staff"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-extrabold text-slate-600 dark:text-neutral-400 block mb-1 uppercase tracking-wider">
+                  Email (For OTP Login)
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email || ""}
+                  onChange={handleChange}
+                  className="w-full px-3.5 py-2.5 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-medium focus:outline-none focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-neutral-600"
+                  placeholder="e.g. staff@quickibite.com"
+                />
+              </div>
             </div>
 
             {/* Password & Confirm Password Grid */}

@@ -116,7 +116,7 @@ const FinancialSettings = () => {
 
       <div className="space-y-4">
         {/* Accept Online Credit/Debit Cards */}
-        <div className="p-4 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5 flex items-center justify-between gap-4">
+        {/* <div className="p-4 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5 flex items-center justify-between gap-4">
           <div>
             <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider block">
               Accept Online Card Payments
@@ -136,7 +136,7 @@ const FinancialSettings = () => {
             />
             <div className="w-11 h-6 bg-slate-300 dark:bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
           </label>
-        </div>
+        </div> */}
 
         {/* Tax Rate, Delivery Fee & Free Delivery Threshold */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
