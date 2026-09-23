@@ -4,6 +4,8 @@ if (!ob_get_level()) {
 }
 
 include_once __DIR__ . '/../config/cors_headers.php';
+include_once __DIR__ . '/../config/auth_middleware.php';
+require_role(['Admin', 'Manager', 'Chef', 'Kitchen', 'Cashier']);
 include_once __DIR__ . '/../config/Database.php';
 
 try {
@@ -187,19 +189,68 @@ try {
                 throw new Exception("Valid item ID is required for deletion.");
             }
 
-            $query = "DELETE FROM inventory WHERE id=:id";
-            $stmt = $db->prepare($query);
-            $stmt->bindParam(":id", $id);
+            // 1. Identify all menu items associated with this inventory item:
+            // a) Directly via menu_items.inventory_id = :id
+            // b) Indirectly via recipes.inventory_id = :id
+            $findMenuStmt = $db->prepare("
+                SELECT DISTINCT m.id, m.img 
+                FROM menu_items m 
+                LEFT JOIN recipes r ON m.id = r.menu_item_id 
+                WHERE m.inventory_id = ? OR r.inventory_id = ?
+            ");
+            $findMenuStmt->execute([$id, $id]);
+            $associatedMenuItems = $findMenuStmt->fetchAll(PDO::FETCH_ASSOC);
+            $menuItemIds = array_column($associatedMenuItems, 'id');
 
-            if ($stmt->execute()) {
+            $db->beginTransaction();
+            try {
+                if (!empty($menuItemIds)) {
+                    $inPlaceholders = implode(',', array_fill(0, count($menuItemIds), '?'));
+
+                    // Cascade delete child relations for all related menu items
+                    $db->prepare("DELETE FROM product_custom_addons WHERE menu_item_id IN ($inPlaceholders)")->execute($menuItemIds);
+                    $db->prepare("DELETE FROM menu_addons WHERE menu_item_id IN ($inPlaceholders)")->execute($menuItemIds);
+                    $db->prepare("DELETE FROM menu_variants WHERE menu_id IN ($inPlaceholders)")->execute($menuItemIds);
+                    $db->prepare("DELETE FROM recipes WHERE menu_item_id IN ($inPlaceholders)")->execute($menuItemIds);
+                    $db->prepare("DELETE FROM deal_items WHERE menu_item_id IN ($inPlaceholders)")->execute($menuItemIds);
+
+                    // Delete the menu items themselves
+                    $db->prepare("DELETE FROM menu_items WHERE id IN ($inPlaceholders)")->execute($menuItemIds);
+                }
+
+                // Clean up any remaining recipe and addon links for this inventory item
+                $db->prepare("DELETE FROM recipes WHERE inventory_id = ?")->execute([$id]);
+                $db->prepare("DELETE FROM menu_addons WHERE inventory_id = ?")->execute([$id]);
+
+                // Delete the inventory item
+                $delInvStmt = $db->prepare("DELETE FROM inventory WHERE id = ?");
+                $delInvStmt->execute([$id]);
+
+                $db->commit();
+
+                // Broadcast socket trigger to update connected clients
+                include_once __DIR__ . '/../config/SocketBroadcaster.php';
+                SocketBroadcaster::broadcastOrderTrigger([
+                    'type' => 'menu_updated',
+                    'action' => 'inventory_deleted',
+                    'inventory_id' => $id,
+                    'deleted_menu_items_count' => count($menuItemIds)
+                ]);
+
                 if (ob_get_level()) ob_clean();
                 echo json_encode([
                     "status" => "success",
-                    "message" => "Item deleted successfully."
+                    "success" => true,
+                    "message" => "Inventory item and " . count($menuItemIds) . " associated menu items deleted successfully.",
+                    "deleted_menu_items_count" => count($menuItemIds)
                 ]);
                 exit();
-            } else {
-                throw new Exception("Failed to delete inventory item.");
+
+            } catch (Exception $delEx) {
+                if ($db->inTransaction()) {
+                    $db->rollBack();
+                }
+                throw new Exception("Failed to delete inventory item: " . $delEx->getMessage());
             }
 
         default:

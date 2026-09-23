@@ -41,7 +41,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }, [isInvalidSession, logout]);
 
   if (isInvalidSession) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // 2. Case-Insensitive Role Matching

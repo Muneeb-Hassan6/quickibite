@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { FaPlus, FaEdit, FaTrash, FaLayerGroup, FaUtensils, FaSearch } from "react-icons/fa";
 import Swal from "sweetalert2";
+import { apiFetch } from "../../../../../utils/apiHelper";
 
 export default function ProductAddonsDirectory({
   productAddonsList = [],
@@ -20,11 +21,13 @@ export default function ProductAddonsDirectory({
           a.title?.toLowerCase().includes(searchQuery.toLowerCase())
         );
 
-      const matchesCat =
+      const matchesCategory =
         selectedCategory === "all" ||
+        item.category_name?.toLowerCase() === selectedCategory.toLowerCase() ||
+        item.category?.toLowerCase() === selectedCategory.toLowerCase() ||
         (item.product_category || "").toLowerCase() === selectedCategory.toLowerCase();
 
-      return matchesSearch && matchesCat;
+      return matchesSearch && matchesCategory;
     });
   }, [productAddonsList, searchQuery, selectedCategory]);
 
@@ -40,18 +43,14 @@ export default function ProductAddonsDirectory({
       }).then((res) => res.isConfirmed)
     ) {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_BASE}/admin_manage_addons.php`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "save_product_addons",
-              menu_item_id: productId,
-              addons: [],
-            }),
-          }
-        );
+        const res = await apiFetch("admin_manage_addons.php", {
+          method: "POST",
+          body: JSON.stringify({
+            action: "save_product_addons",
+            menu_item_id: productId,
+            addons: [],
+          }),
+        });
         const data = await res.json();
         if (data.success) {
           Swal.fire("Cleared", "Product add-ons removed.", "success");

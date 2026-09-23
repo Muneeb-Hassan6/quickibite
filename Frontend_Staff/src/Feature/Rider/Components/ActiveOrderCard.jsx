@@ -9,8 +9,11 @@ import {
   FaTimes,
   FaBan,
   FaRoute,
+  FaShareAlt,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
+import { apiFetch } from "../../../utils/apiHelper";
+import { formatWhatsAppPhone, getTrackingUrl } from "../../../utils/urlHelper";
 
 export default function ActiveOrderCard({
   order,
@@ -24,12 +27,7 @@ export default function ActiveOrderCard({
   if (!order) return null;
   const isCod = order.paymentType === "Cash on Delivery" || order.paymentType === "COD";
 
-  const rawPhone = (order.phone || "").replace(/[^0-9]/g, "");
-  const formattedWhatsAppPhone = rawPhone.startsWith("0")
-    ? "92" + rawPhone.slice(1)
-    : rawPhone.length === 10 && rawPhone.startsWith("3")
-    ? "92" + rawPhone
-    : rawPhone;
+  const formattedWhatsAppPhone = formatWhatsAppPhone(order.phone);
 
   let staffUser = null;
   try {
@@ -45,6 +43,13 @@ export default function ActiveOrderCard({
   const waMessage = `Hi! Your BigBite order #${order.id} is accepted by our rider *${riderName}* (${riderPhone}). On the way to deliver!`;
   const waHref = formattedWhatsAppPhone
     ? `https://api.whatsapp.com/send?phone=${formattedWhatsAppPhone}&text=${encodeURIComponent(waMessage)}`
+    : "#";
+
+  // Tracking link WhatsApp share
+  const trackingUrl = getTrackingUrl(order.id, order.phone);
+  const shareTrackingMsg = `📍 Track your BigBite order #${order.id} live here:\n${trackingUrl}`;
+  const shareTrackingHref = formattedWhatsAppPhone
+    ? `https://api.whatsapp.com/send?phone=${formattedWhatsAppPhone}&text=${encodeURIComponent(shareTrackingMsg)}`
     : "#";
 
   const navUrl =
@@ -97,20 +102,16 @@ export default function ActiveOrderCard({
         );
         const riderName = user.name || user.username || "Delivery Rider";
 
-        const res = await fetch(
-          `${import.meta.env.VITE_API_BASE}/log_wastage.php`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "report_delivery_failure",
-              order_id: order.id,
-              reason: formValues.reason,
-              notes: formValues.notes,
-              reported_by: riderName,
-            }),
-          }
-        );
+        const res = await apiFetch("log_wastage.php", {
+          method: "POST",
+          body: JSON.stringify({
+            action: "report_delivery_failure",
+            order_id: order.id,
+            reason: formValues.reason,
+            notes: formValues.notes,
+            reported_by: riderName,
+          }),
+        });
         const data = await res.json();
 
         if (data.success) {
@@ -200,6 +201,16 @@ export default function ActiveOrderCard({
             >
               <FaWhatsapp className="text-sm" />
               <span>WhatsApp</span>
+            </a>
+            <a
+              href={shareTrackingHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 sm:flex-initial min-h-[44px] px-3.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all no-underline active:scale-95"
+              title="Share live tracking link via WhatsApp"
+            >
+              <FaShareAlt className="text-xs" />
+              <span>Track Link</span>
             </a>
           </div>
         </div>

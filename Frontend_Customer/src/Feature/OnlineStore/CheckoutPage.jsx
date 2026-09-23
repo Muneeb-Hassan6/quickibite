@@ -1,7 +1,8 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { LuShoppingBag, LuLock, LuQrCode, LuUtensils } from "react-icons/lu";
 import { useCheckoutForm } from "./Components/Checkout/hooks/useCheckoutForm";
+import { useStoreStatus } from "../../Context/StoreStatusContext";
 
 // Atomic Subcomponents
 import DeliveryAddressForm from "./Components/Checkout/DeliveryAddressForm";
@@ -11,9 +12,24 @@ import OrderSummaryCard from "./Components/Checkout/OrderSummaryCard";
 import PaymentSandboxModal from "./Components/Checkout/PaymentSandboxModal";
 import PromoCodeBox from "../../Components/Checkout/PromoCodeBox";
 import RiderTipSelector from "../../Components/Checkout/RiderTipSelector";
+import CartFreeDeliveryMeter from "../../Components/Cart/CartFreeDeliveryMeter";
 
 const CheckoutPage = () => {
+  const navigate = useNavigate();
   const form = useCheckoutForm();
+  const { isOpen, isLoadingSettings, openClosedModal } = useStoreStatus();
+
+  // 🛡️ STORE CLOSED GUARD: Block checkout and redirect to homepage if closed
+  useEffect(() => {
+    if (!isLoadingSettings && !isOpen) {
+      openClosedModal();
+      navigate("/", { replace: true });
+    }
+  }, [isOpen, isLoadingSettings, navigate, openClosedModal]);
+
+  if (!isLoadingSettings && !isOpen) {
+    return null;
+  }
 
   // Empty Cart Guard
   if (!form.cartItems || form.cartItems.length === 0) {
@@ -108,6 +124,7 @@ const CheckoutPage = () => {
             />
 
             <PaymentMethodPicker
+              orderType={form.orderType}
               paymentMethod={form.paymentMethod}
               setPaymentMethod={form.setPaymentMethod}
             />
@@ -115,6 +132,16 @@ const CheckoutPage = () => {
 
           {/* ════ RIGHT COLUMN: ORDER SUMMARY & PROMOS (5 Cols) ════ */}
           <div className="lg:col-span-5 sticky top-24 space-y-4 sm:space-y-6">
+            {/* Free Delivery Meter (Strictly Delivery Mode Only) */}
+            {form.orderType === "delivery" && (
+              <CartFreeDeliveryMeter
+                subtotal={form.subTotal}
+                threshold={form.freeThreshold}
+                defaultFee={form.baseDeliveryFee}
+                isDineIn={false}
+              />
+            )}
+
             {/* Promo Code & Coupon Engine Box */}
             <PromoCodeBox
               subtotal={form.subTotal}

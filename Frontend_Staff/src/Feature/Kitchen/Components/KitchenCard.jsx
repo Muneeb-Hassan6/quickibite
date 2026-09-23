@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FaUtensils, FaArrowRight, FaCheck, FaPrint, FaFire, FaExclamationTriangle, FaClock } from "react-icons/fa";
 import Swal from "sweetalert2";
+import { apiFetch } from "../../../utils/apiHelper";
 
 export default function KitchenCard({
   order,
@@ -78,20 +79,16 @@ export default function KitchenCard({
         );
         const chefName = user.name || user.username || "Kitchen Chef";
 
-        const res = await fetch(
-          `${import.meta.env.VITE_API_BASE}/log_wastage.php`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "report_kitchen_burn",
-              order_id: order.id,
-              reason: formValues.reason,
-              notes: formValues.notes,
-              reported_by: chefName,
-            }),
-          }
-        );
+        const res = await apiFetch("log_wastage.php", {
+          method: "POST",
+          body: JSON.stringify({
+            action: "report_kitchen_burn",
+            order_id: order.id,
+            reason: formValues.reason,
+            notes: formValues.notes,
+            reported_by: chefName,
+          }),
+        });
         const data = await res.json();
 
         if (data.success) {

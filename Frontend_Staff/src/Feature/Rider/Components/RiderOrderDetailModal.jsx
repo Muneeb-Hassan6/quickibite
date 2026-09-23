@@ -10,8 +10,10 @@ import {
   FaCheckCircle,
   FaBan,
   FaExclamationCircle,
+  FaShareAlt,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
+import { formatWhatsAppPhone, getTrackingUrl } from "../../../utils/urlHelper";
 
 export default function RiderOrderDetailModal({
   order,
@@ -32,12 +34,7 @@ export default function RiderOrderDetailModal({
     order.payment_method === "Cash on Delivery" ||
     order.payment_method === "COD";
 
-  const rawPhone = (order.phone || "").replace(/[^0-9]/g, "");
-  const formattedWhatsAppPhone = rawPhone.startsWith("0")
-    ? "92" + rawPhone.slice(1)
-    : rawPhone.length === 10 && rawPhone.startsWith("3")
-    ? "92" + rawPhone
-    : rawPhone;
+  const formattedWhatsAppPhone = formatWhatsAppPhone(order.phone);
 
   let riderUser = null;
   try {
@@ -53,6 +50,13 @@ export default function RiderOrderDetailModal({
   const waMessage = `Hi! Your BigBite order #${order.id} is with our rider *${riderName}* (${riderPhone}). On the way to deliver!`;
   const waHref = formattedWhatsAppPhone
     ? `https://api.whatsapp.com/send?phone=${formattedWhatsAppPhone}&text=${encodeURIComponent(waMessage)}`
+    : "#";
+
+  // Tracking link WhatsApp share
+  const trackingUrl = getTrackingUrl(order.id, order.phone);
+  const shareTrackingMsg = `📍 Track your BigBite order #${order.id} live here:\n${trackingUrl}`;
+  const shareTrackingHref = formattedWhatsAppPhone
+    ? `https://api.whatsapp.com/send?phone=${formattedWhatsAppPhone}&text=${encodeURIComponent(shareTrackingMsg)}`
     : "#";
 
   const navUrl =
@@ -182,6 +186,15 @@ export default function RiderOrderDetailModal({
                   title="WhatsApp Customer"
                 >
                   <FaWhatsapp />
+                </a>
+                <a
+                  href={shareTrackingHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 flex items-center justify-center transition-all no-underline text-sm active:scale-95"
+                  title="Share Tracking Link via WhatsApp"
+                >
+                  <FaShareAlt />
                 </a>
               </div>
             </div>

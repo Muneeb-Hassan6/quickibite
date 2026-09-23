@@ -54,6 +54,20 @@ export default function EmployeePersonalInfoForm({
           </span>
         )}
       </div>
+
+      <div>
+        <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+          Email Address (For Password Reset & Notifications)
+        </label>
+        <input
+          type="email"
+          name="email"
+          value={formData.email || ""}
+          onChange={handleChange}
+          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
+          placeholder="e.g. staff@gmail.com"
+        />
+      </div>
     </>
   );
 }

@@ -18,6 +18,53 @@ export default function OrderTrackerTimeline({
   const isPending = status === "pending";
   const isCancelled = status === "cancelled" || status === "cancelled_with_wastage" || status === "declined";
 
+  // Fulfillment mode detection (Dine-In, Takeaway, Delivery)
+  const rawMode = (
+    order?.order_mode ||
+    order?.order_type ||
+    order?.type ||
+    ""
+  ).toLowerCase().trim();
+  const isDineIn = rawMode.includes("dine") || Boolean(order?.table_number);
+
+  // Payment method and status evaluation
+  const rawMethod = (order?.payment_method || "").toLowerCase().trim();
+  const rawPaymentStatus = (order?.payment_status || "").toLowerCase().trim();
+
+  // Explicit digital online gateways
+  const isOnlineMethod =
+    rawMethod.includes("card") ||
+    rawMethod.includes("jazz") ||
+    rawMethod.includes("easy") ||
+    rawMethod.includes("wallet") ||
+    rawMethod.includes("online") ||
+    rawMethod.includes("stripe");
+
+  // Strict check on payment status so 'unpaid' NEVER matches 'paid'!
+  const isStrictlyPaidOnline =
+    (rawPaymentStatus === "paid" ||
+      rawPaymentStatus === "completed" ||
+      rawPaymentStatus.startsWith("paid online")) &&
+    !rawMethod.includes("cash") &&
+    !rawMethod.includes("cod");
+
+  const isOnlinePayment = isOnlineMethod || isStrictlyPaidOnline;
+
+  // Cash payment: Cash on Delivery or Cash on Pickup / Cash
+  const isCashPayment =
+    !isOnlinePayment &&
+    (rawMethod.includes("cash") ||
+      rawMethod.includes("cod") ||
+      rawMethod.includes("cop") ||
+      rawMethod === "");
+
+  // Cancel order bar ONLY shows for cash payment on Delivery or Takeaway
+  // Strictly hidden for:
+  // 1. Online Payment (JazzCash, EasyPaisa, Card, Stripe, etc.)
+  // 2. Dine-In (Table service orders)
+  // 3. Already cancelled or declined orders
+  const canShowCancelBar = !isCancelled && !isDineIn && isCashPayment;
+
   // Calculate 120s cancellation countdown from order.created_at
   useEffect(() => {
     if (!order?.created_at || !isPending) {
@@ -45,11 +92,11 @@ export default function OrderTrackerTimeline({
   };
 
   const handleCancelOrder = async () => {
-    if (!isPending || timeLeft <= 0) return;
+    if (!isPending || timeLeft <= 0 || !canShowCancelBar) return;
 
     const result = await Swal.fire({
       title: "Cancel Your Order?",
-      text: "Are you sure you want to cancel this order? Any reserved ingredients will be immediately restored to inventory.",
+      text: "Are you sure you want to cancel this order?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, Cancel Order",
@@ -77,7 +124,7 @@ export default function OrderTrackerTimeline({
         if (data.success) {
           Swal.fire(
             "Cancelled",
-            "Your order has been cancelled and stock has been restored.",
+            "Your order has been cancelled.",
             "success"
           );
           fetchOrderDetails(searchId, true);
@@ -138,8 +185,8 @@ export default function OrderTrackerTimeline({
         </div>
       </div>
 
-      {/* Cancel Window & Status Alert Banner */}
-      {!isCancelled && (
+      {/* Cancel Window & Status Alert Banner: ONLY shown for cash payment orders */}
+      {canShowCancelBar && (
         <div className="mt-4 p-3 sm:p-4 rounded-2xl bg-zinc-50 dark:bg-neutral-800/60 border border-zinc-200 dark:border-neutral-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             {isPending && timeLeft > 0 ? (

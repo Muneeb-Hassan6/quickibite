@@ -1,5 +1,5 @@
 import React from "react";
-import { FaEdit, FaTrash, FaPhone } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPhone, FaEnvelope } from "react-icons/fa";
 
 const getRoleBadge = (roleName) => {
   const role = (roleName || "").toLowerCase();
@@ -60,9 +60,17 @@ export default function EmployeeTableRow({
         </div>
       </td>
       <td className="p-3.5 sm:p-4 align-middle font-medium text-slate-600 dark:text-neutral-400">
-        <div className="flex items-center gap-1.5">
-          <FaPhone className="text-[10px] text-slate-400 dark:text-neutral-500" />
-          <span>{emp.phone || "--"}</span>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1.5">
+            <FaPhone className="text-[10px] text-slate-400 dark:text-neutral-500" />
+            <span className="text-xs">{emp.phone || "--"}</span>
+          </div>
+          {emp.email && (
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-neutral-400 truncate max-w-[200px]" title={emp.email}>
+              <FaEnvelope className="text-[9px] shrink-0 text-amber-500" />
+              <span className="truncate">{emp.email}</span>
+            </div>
+          )}
         </div>
       </td>
       <td className="p-3.5 sm:p-4 align-middle font-black text-amber-600 dark:text-amber-400 font-mono">

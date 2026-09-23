@@ -9,6 +9,7 @@ import {
   FaChevronDown,
   FaSpinner,
   FaCheck,
+  FaSyncAlt,
 } from "react-icons/fa";
 
 // Atomic Subcomponents
@@ -241,6 +242,25 @@ export default function OrderHistory({
       console.error("Order history refresh search error:", err);
     }
   }, [searchTerm]);
+
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+
+  const handleManualRefresh = useCallback(async () => {
+    setIsManualRefreshing(true);
+    try {
+      await Promise.all([
+        refreshCurrentOrders(),
+        fetchOrdersBatch(0, false),
+      ]);
+      if (searchTerm.trim()) {
+        await refreshSearch();
+      }
+    } catch (err) {
+      console.warn("Manual refresh failed:", err);
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  }, [refreshCurrentOrders, fetchOrdersBatch, searchTerm, refreshSearch]);
 
   // Server-side debounced search across all database records
   useEffect(() => {
@@ -553,24 +573,38 @@ export default function OrderHistory({
           </h1>
         </div>
 
-        {/* Rider COD Reconciliation Trigger Button */}
-        <button
-          type="button"
-          onClick={() => setIsReconciliationModalOpen(true)}
-          className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 cursor-pointer border shadow-sm active:scale-95 ${
-            codStats.pendingAmount > 0
-              ? "bg-amber-500 hover:bg-amber-400 text-neutral-950 border-amber-400 shadow-amber-500/20"
-              : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:border-amber-500/40"
-          }`}
-        >
-          <FaMotorcycle className="w-4 h-4" />
-          <span>Rider COD Reconciliation</span>
-          {codStats.pendingCount > 0 && (
-            <span className="min-w-[20px] h-5 px-1 rounded-full bg-zinc-950 text-amber-400 text-[10px] font-black inline-flex items-center justify-center font-mono ml-0.5">
-              {codStats.pendingCount}
-            </span>
-          )}
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Instant On-Demand Sync Button */}
+          <button
+            type="button"
+            onClick={handleManualRefresh}
+            disabled={isManualRefreshing || isInitialLoading}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 cursor-pointer border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 shadow-xs active:scale-95 disabled:opacity-60"
+            title="Sync Live Orders & Transactions"
+          >
+            <FaSyncAlt className={`w-3.5 h-3.5 text-amber-500 ${isManualRefreshing ? "animate-spin" : ""}`} />
+            <span>{isManualRefreshing ? "Syncing..." : "Sync Live"}</span>
+          </button>
+
+          {/* Rider COD Reconciliation Trigger Button */}
+          <button
+            type="button"
+            onClick={() => setIsReconciliationModalOpen(true)}
+            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 cursor-pointer border shadow-sm active:scale-95 ${
+              codStats.pendingAmount > 0
+                ? "bg-amber-500 hover:bg-amber-400 text-neutral-950 border-amber-400 shadow-amber-500/20"
+                : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:border-amber-500/40"
+            }`}
+          >
+            <FaMotorcycle className="w-4 h-4" />
+            <span>Rider COD Reconciliation</span>
+            {codStats.pendingCount > 0 && (
+              <span className="min-w-[20px] h-5 px-1 rounded-full bg-zinc-950 text-amber-400 text-[10px] font-black inline-flex items-center justify-center font-mono ml-0.5">
+                {codStats.pendingCount}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* 2. Rider Pending COD Alert Banner (if pending cash exists) */}

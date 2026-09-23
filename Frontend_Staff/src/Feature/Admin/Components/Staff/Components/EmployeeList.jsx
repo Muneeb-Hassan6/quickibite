@@ -109,12 +109,30 @@ const EmployeeList = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const staffQueryState = queryClient.getQueryState(["staff"]);
-  const staffDataUpdatedAt = staffQueryState?.dataUpdatedAt;
-
   useEffect(() => {
     fetchStaffBatch(0, false);
-  }, [fetchStaffBatch, staffDataUpdatedAt]);
+
+    const handleStaffUpdated = () => {
+      fetchStaffBatch(0, false);
+      if (searchQuery.trim()) refreshSearch();
+    };
+
+    window.addEventListener("staff-updated", handleStaffUpdated);
+
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      if (
+        event?.query?.queryKey?.[0] === "staff" &&
+        (event.type === "updated" || event.type === "invalidated")
+      ) {
+        fetchStaffBatch(0, false);
+      }
+    });
+
+    return () => {
+      window.removeEventListener("staff-updated", handleStaffUpdated);
+      unsubscribe();
+    };
+  }, [fetchStaffBatch, queryClient, refreshSearch, searchQuery]);
 
   const handleLoadMore = () => {
     if (!isLoadingMore && hasMore) {
@@ -142,6 +160,11 @@ const EmployeeList = () => {
           });
           const resData = await response.json();
           if (resData.success) {
+            // Immediate local state update
+            setEmployees((prev) => prev.filter((e) => e.id !== id));
+            setTotalCount((prev) => Math.max(0, prev - 1));
+            setSearchResults((prev) => (prev ? prev.filter((e) => e.id !== id) : null));
+
             Swal.fire({
               icon: "success",
               title: "Deleted!",
@@ -154,8 +177,9 @@ const EmployeeList = () => {
             fetchStaffBatch(0, false);
             if (searchQuery.trim()) refreshSearch();
             queryClient.invalidateQueries({ queryKey: ["staff"] });
+            window.dispatchEvent(new CustomEvent("staff-updated"));
           } else {
-            Swal.fire("Error!", resData.message, "error");
+            Swal.fire("Error!", resData.message || "Failed to delete staff member.", "error");
           }
         } catch (error) {
           Swal.fire("Error!", "Failed to connect to server.", "error");
@@ -337,7 +361,7 @@ const EmployeeList = () => {
                   Designation
                 </th>
                 <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
-                  Phone Contact
+                  Phone & Email
                 </th>
                 <th className="p-3.5 sm:p-4 text-[11px] uppercase text-slate-700 dark:text-neutral-300 font-bold tracking-wider">
                   Monthly Salary

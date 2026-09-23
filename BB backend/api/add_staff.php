@@ -77,21 +77,39 @@ if(isset($data->name) && isset($data->role) && isset($data->phone) && isset($dat
         $password = password_hash($rawPassword, PASSWORD_DEFAULT);
     }
 
+    // Email handling & uniqueness check
+    $email = isset($data->email) && trim((string)$data->email) !== '' ? trim((string)$data->email) : null;
+    if ($email !== null) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            if (ob_get_level()) ob_clean();
+            echo json_encode(["success" => false, "message" => "Please enter a valid staff email address."]);
+            exit();
+        }
+        $emailCheckStmt = $db->prepare("SELECT id FROM staff WHERE email = :email LIMIT 1");
+        $emailCheckStmt->execute([':email' => $email]);
+        if ($emailCheckStmt->fetch()) {
+            if (ob_get_level()) ob_clean();
+            echo json_encode(["success" => false, "message" => "This email address is already in use by another staff member!"]);
+            exit();
+        }
+    }
+
     try {
         if (!$db->inTransaction()) {
             $db->beginTransaction(); 
         }
 
         // 1. Insert into staff table
-        $query1 = "INSERT INTO staff (name, role, phone, salary, status, shift_status, username, password, shift) 
-                   VALUES (:name, :role, :phone, :salary, 'Active', 'Offline', :username, :password, 'Morning')";
+        $query1 = "INSERT INTO staff (name, role, phone, email, salary, status, shift_status, username, password, shift) 
+                   VALUES (:name, :role, :phone, :email, :salary, 'Active', 'Offline', :username, :password, 'Morning')";
         
         $stmt1 = $db->prepare($query1);
         $stmt1->execute([
-            ':name' => trim($data->name),
-            ':role' => trim($data->role),
-            ':phone' => trim($data->phone),
-            ':salary' => $data->salary,
+            ':name'     => trim($data->name),
+            ':role'     => trim($data->role),
+            ':phone'    => trim($data->phone),
+            ':email'    => $email,
+            ':salary'   => $data->salary,
             ':username' => $username,
             ':password' => $password
         ]);
@@ -128,13 +146,6 @@ if(isset($data->name) && isset($data->role) && isset($data->phone) && isset($dat
             $db->commit(); 
         }
 
-        // Optional non-blocking external ping/trigger
-        try {
-            // Non-blocking trigger if needed
-        } catch (Throwable $t) {
-            // Never break API response
-        }
-
         if (ob_get_level()) ob_clean();
         echo json_encode([
             "success" => true, 
@@ -151,7 +162,7 @@ if(isset($data->name) && isset($data->role) && isset($data->phone) && isset($dat
         if (ob_get_level()) ob_clean();
         $code = ($e instanceof PDOException) ? $e->getCode() : 0;
         if($code == 23000) { 
-            echo json_encode(["success" => false, "message" => "This username is already taken!"]);
+            echo json_encode(["success" => false, "message" => "This username or email is already taken!"]);
         } else {
             echo json_encode(["success" => false, "message" => "Failed to add staff: " . $e->getMessage()]);
         }

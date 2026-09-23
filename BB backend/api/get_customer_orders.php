@@ -5,9 +5,23 @@ include_once __DIR__ . '/../config/Database.php';
 $database = new Database();
 $db = $database->getConnection();
 
-$customerId = (int)($_GET['customer_id'] ?? 0);
-$phone = trim($_GET['phone'] ?? ($_GET['customer_mobile'] ?? ''));
-$email = trim($_GET['email'] ?? ($_GET['customer_email'] ?? ''));
+$data = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $rawInput = file_get_contents('php://input');
+    if (!empty($rawInput)) {
+        $json = json_decode($rawInput, true);
+        if (is_array($json)) {
+            $data = $json;
+        }
+    }
+    if (empty($data) && !empty($_POST)) {
+        $data = $_POST;
+    }
+}
+
+$customerId = (int)($data['customer_id'] ?? ($_GET['customer_id'] ?? 0));
+$phone = trim($data['phone'] ?? ($data['customer_mobile'] ?? ($_GET['phone'] ?? ($_GET['customer_mobile'] ?? ''))));
+$email = trim($data['email'] ?? ($data['customer_email'] ?? ($_GET['email'] ?? ($_GET['customer_email'] ?? ''))));
 
 if (!$customerId && empty($phone) && empty($email)) {
     echo json_encode(['success' => false, 'message' => 'Customer identification required.', 'orders' => []]);

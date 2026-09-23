@@ -26,17 +26,6 @@ export const API_BASE = (() => {
 
 export const API_BASE_URL = API_BASE;
 
-export const SOCKET_URL = (() => {
-  const envSocket = import.meta.env.VITE_SOCKET_URL;
-  if (envSocket) {
-    if (
-      envSocket.includes("localhost") &&
-      currentHost !== "localhost" &&
-      currentHost !== "127.0.0.1"
-    ) {
-      return envSocket.replace("localhost", currentHost);
-    }
-    return envSocket;
-  }
-  return `http://${currentHost}:3001`;
-})();
+import { getSocketUrl } from "../utils/urlHelper";
+
+export const SOCKET_URL = getSocketUrl();

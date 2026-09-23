@@ -11,6 +11,11 @@ export const AUTH_STORAGE_KEYS = [
   "staff_token",
   "adminActiveTab",
   "isAuth",
+  "cashier_active_tab",
+  "rider_duty_status",
+  "rider_session",
+  "myOrders",
+  "cartItems",
 ];
 
 // Route access matrix for staff portals
@@ -50,7 +55,9 @@ export const AuthProvider = ({ children }) => {
       const raw =
         sessionStorage.getItem("staff_user") ||
         sessionStorage.getItem("staff_session") ||
-        sessionStorage.getItem("user");
+        sessionStorage.getItem("user") ||
+        localStorage.getItem("staff_user") ||
+        localStorage.getItem("user");
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
@@ -62,6 +69,9 @@ export const AuthProvider = ({ children }) => {
       sessionStorage.getItem("token") ||
       sessionStorage.getItem("auth_token") ||
       sessionStorage.getItem("staff_token") ||
+      localStorage.getItem("token") ||
+      localStorage.getItem("auth_token") ||
+      localStorage.getItem("staff_token") ||
       null
     );
   });
@@ -85,15 +95,32 @@ export const AuthProvider = ({ children }) => {
     setToken(authToken);
   }, []);
 
-  // Tab-isolated logout: purges strictly this tab's sessionStorage without affecting other tabs
+  // Comprehensive logout: completely purges session & local storage across all staff storage keys
   const logout = useCallback(() => {
     AUTH_STORAGE_KEYS.forEach((key) => {
       try {
         sessionStorage.removeItem(key);
+        localStorage.removeItem(key);
       } catch (err) {
         console.error("Storage purge error:", err);
       }
     });
+
+    // Wipe any role-specific dynamic keys in localStorage
+    try {
+      Object.keys(localStorage).forEach((k) => {
+        if (
+          k.startsWith("active_orders_") ||
+          k.startsWith("history_") ||
+          k.startsWith("rider_") ||
+          k.startsWith("cashier_")
+        ) {
+          localStorage.removeItem(k);
+        }
+      });
+    } catch (err) {
+      console.error("Storage wildcard purge error:", err);
+    }
 
     setUser(null);
     setToken(null);

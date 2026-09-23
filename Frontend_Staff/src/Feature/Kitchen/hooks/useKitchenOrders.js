@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { staffSocket as socket } from "../../../utils/socket";
+import { apiFetch } from "../../../utils/apiHelper";
 
 // Singleton AudioContext reference for persistent, unlocked Web Audio playback
 let globalAudioCtx = null;
@@ -61,11 +62,16 @@ export function useKitchenOrders() {
   }, []);
 
   // 1. FETCH LIVE ORDERS via React Query (FCFS: First-Come, First-Served)
-  const { data: orders = [], isLoading } = useQuery({
+  const {
+    data: orders = [],
+    isLoading,
+    isRefetching,
+    refetch,
+  } = useQuery({
     queryKey: ["kitchen_orders"],
     queryFn: async () => {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_orders.php?type=kitchen&sort=asc&order_by=fcfs`
+      const response = await apiFetch(
+        "get_orders.php?type=kitchen&sort=asc&order_by=fcfs"
       );
       const data = await response.json();
 
@@ -207,14 +213,10 @@ export function useKitchenOrders() {
   // 3. MUTATION FOR UPDATING ORDER STATUS WITH STATE PROGRESSION GUARD
   const statusMutation = useMutation({
     mutationFn: async ({ orderId, newStatus }) => {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/update_order_status.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ order_id: orderId, status: newStatus }),
-        }
-      );
+      const response = await apiFetch("update_order_status.php", {
+        method: "POST",
+        body: JSON.stringify({ order_id: orderId, status: newStatus }),
+      });
       const result = await response.json();
       if (!result.success) {
         throw new Error(result.message || "Failed to update order status");
@@ -350,5 +352,7 @@ export function useKitchenOrders() {
     printOrder,
     setPrintOrder,
     isLoading,
+    isRefetching,
+    refetch,
   };
 }

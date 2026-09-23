@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   FaCheckCircle,
@@ -19,13 +19,18 @@ import OrderTrackerHeader from "./Components/OrderTrackerHeader";
 import OrderTrackerTimeline from "./Components/OrderTrackerTimeline";
 import OrderTrackerReceiptSummary from "./Components/OrderTrackerReceiptSummary";
 import OrderTrackerRiderCard from "./Components/OrderTrackerRiderCard";
-import { API_BASE, SOCKET_URL } from "../../config/api";
+import { API_BASE } from "../../config/api";
+import { getSocketUrl, getSocketOptions } from "../../utils/urlHelper";
 import { io } from "socket.io-client";
 
 const OrderTracker = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { customer } = useAuth();
+
+  const stateOrderId = location.state?.orderId || location.state?.id || "";
+  const statePhone = location.state?.phone || location.state?.mobile || "";
 
   const queryOrderId = searchParams.get("orderId") || searchParams.get("id") || "";
   const queryPhone = searchParams.get("phone") || searchParams.get("mobile") || "";
@@ -33,8 +38,8 @@ const OrderTracker = () => {
   const storedActivePhone = localStorage.getItem("activeOrderPhone") || "";
   const userPhone = customer?.phone || customer?.mobile || "";
 
-  const initialOrderId = queryOrderId || storedActiveId;
-  const initialPhone = queryPhone || storedActivePhone || userPhone;
+  const initialOrderId = stateOrderId || queryOrderId || storedActiveId;
+  const initialPhone = statePhone || queryPhone || storedActivePhone || userPhone;
 
   const [searchId, setSearchId] = useState(initialOrderId);
   const [searchPhone, setSearchPhone] = useState(initialPhone);
@@ -75,16 +80,19 @@ const OrderTracker = () => {
     if (isManual) setIsRefreshing(true);
 
     const activePhone = phoneToVerify !== null ? phoneToVerify : searchPhone;
-    let url = `${API_BASE}/get_order_details.php?id=${encodeURIComponent(id)}`;
-    if (activePhone && activePhone.trim()) {
-      url += `&phone=${encodeURIComponent(activePhone.trim())}`;
-    }
-    if (customer?.id) {
-      url += `&customer_id=${encodeURIComponent(customer.id)}`;
-    }
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(`${API_BASE}/get_order_details.php`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: id,
+          phone: activePhone ? activePhone.trim() : "",
+          customer_id: customer?.id || 0,
+        }),
+      });
       const data = await response.json();
 
       if (response.ok && data.success && data.order) {
@@ -95,7 +103,7 @@ const OrderTracker = () => {
         setOrder(null);
         setAuthError(
           data.message ||
-            `Verification required: Please enter the phone number associated with Order #${id}.`
+          `Verification required: Please enter the phone number associated with Order #${id}.`
         );
       } else {
         // Order not found or error
@@ -114,17 +122,26 @@ const OrderTracker = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Sync if URL query parameters change
+  // If URL has query parameters, extract and clean the address bar URL immediately
   useEffect(() => {
-    if (queryOrderId) {
-      setSearchId(queryOrderId);
-      setInputSearchId(queryOrderId);
+    if (queryOrderId || queryPhone) {
+      if (queryOrderId) {
+        setSearchId(queryOrderId);
+        setInputSearchId(queryOrderId);
+        localStorage.setItem("activeOrderId", queryOrderId);
+      }
+      if (queryPhone) {
+        setSearchPhone(queryPhone);
+        setInputSearchPhone(queryPhone);
+        localStorage.setItem("activeOrderPhone", queryPhone);
+      }
+      // Remove query parameters from address bar to protect sensitive data
+      navigate("/track-order", {
+        replace: true,
+        state: { orderId: queryOrderId || initialOrderId, phone: queryPhone || initialPhone },
+      });
     }
-    if (queryPhone) {
-      setSearchPhone(queryPhone);
-      setInputSearchPhone(queryPhone);
-    }
-  }, [queryOrderId, queryPhone]);
+  }, [queryOrderId, queryPhone, navigate]);
 
   // Autofill logged-in user phone if phone field is currently blank
   useEffect(() => {
@@ -140,21 +157,22 @@ const OrderTracker = () => {
       fetchOrderDetails(searchId, false, searchPhone);
 
       // Connect to Socket.io for instantaneous real-time status updates
-      let socket = null;
+      let cancelled = false;
+      let activeSocket = null;
       try {
-        socket = io(SOCKET_URL, {
-          transports: ["websocket", "polling"],
-        });
+        const opts = { ...getSocketOptions(), autoConnect: true };
+        activeSocket = io(getSocketUrl(), opts);
 
         const handleRealtimeUpdate = (data) => {
+          if (cancelled) return;
           if (!data || !data.order_id || String(data.order_id) === String(searchId)) {
             fetchOrderDetails(searchId, false, searchPhone);
           }
         };
 
-        socket.on("order_status_updated", handleRealtimeUpdate);
-        socket.on("refresh_kitchen", handleRealtimeUpdate);
-        socket.on("order_delivered", handleRealtimeUpdate);
+        activeSocket.on("order_status_updated", handleRealtimeUpdate);
+        activeSocket.on("refresh_kitchen", handleRealtimeUpdate);
+        activeSocket.on("order_delivered", handleRealtimeUpdate);
       } catch (err) {
         console.warn("Socket tracker notice:", err);
       }
@@ -167,8 +185,26 @@ const OrderTracker = () => {
       }, 10000);
 
       return () => {
-        if (socket) {
-          socket.disconnect();
+        cancelled = true;
+        if (activeSocket) {
+          activeSocket.off("order_status_updated");
+          activeSocket.off("refresh_kitchen");
+          activeSocket.off("order_delivered");
+
+          // StrictMode safe disconnect:
+          // If already connected, disconnect immediately.
+          // If still in handshake, wait until connection establishes or errors
+          // before disconnecting to avoid 'WebSocket is closed before connection is established'
+          if (activeSocket.connected) {
+            activeSocket.disconnect();
+          } else {
+            activeSocket.once("connect", () => {
+              activeSocket.disconnect();
+            });
+            activeSocket.once("connect_error", () => {
+              activeSocket.disconnect();
+            });
+          }
         }
         clearInterval(interval);
       };
@@ -190,10 +226,14 @@ const OrderTracker = () => {
 
       if (trimmedPhone) {
         localStorage.setItem("activeOrderPhone", trimmedPhone);
-        navigate(`/track-order?orderId=${trimmedId}&phone=${encodeURIComponent(trimmedPhone)}`);
-      } else {
-        navigate(`/track-order?orderId=${trimmedId}`);
       }
+      localStorage.setItem("activeOrderId", trimmedId);
+
+      // Keep address bar clean without leaking order ID or phone
+      navigate("/track-order", {
+        replace: true,
+        state: { orderId: trimmedId, phone: trimmedPhone },
+      });
 
       fetchOrderDetails(trimmedId, true, trimmedPhone);
     }
@@ -250,10 +290,21 @@ const OrderTracker = () => {
 
   // 3. Delivery Steps (4 Steps: Confirmed -> Preparing in Kitchen -> Out for Delivery -> Delivered)
   const getDeliveryStepIndex = (status = "") => {
-    const s = status.toLowerCase();
+    const s = (status || "").toLowerCase().trim();
     if (s.includes("decline") || s.includes("cancel")) return -1;
     if (s.includes("delivered") || s.includes("completed")) return 4;
-    if (s.includes("dispatch") || s.includes("way") || s.includes("rider") || s.includes("ready")) return 3;
+    if (
+      s.includes("out") ||
+      s.includes("delivery") ||
+      s.includes("transit") ||
+      s.includes("en route") ||
+      s.includes("enroute") ||
+      s.includes("dispatch") ||
+      s.includes("way") ||
+      s.includes("rider") ||
+      s.includes("assign") ||
+      s.includes("ready")
+    ) return 3;
     if (s.includes("prepar") || s.includes("cook") || s.includes("kitchen")) return 2;
     return 1;
   };
@@ -268,8 +319,8 @@ const OrderTracker = () => {
   const steps = isDineIn ? dineInSteps : isTakeaway ? takeawaySteps : deliverySteps;
   const currentStep = order
     ? (isDineIn
-        ? getDineInStepIndex(order.status)
-        : isTakeaway
+      ? getDineInStepIndex(order.status)
+      : isTakeaway
         ? getTakeawayStepIndex(order.status)
         : getDeliveryStepIndex(order.status))
     : 1;

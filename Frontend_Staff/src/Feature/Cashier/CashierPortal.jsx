@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { FaBars, FaSun, FaMoon, FaShoppingCart } from "react-icons/fa";
@@ -15,6 +15,7 @@ import ShiftReport from "./Components/ShiftReport";
 import CashierReceiptModal from "./Components/CashierReceiptModal";
 
 const CashierPortal = () => {
+  const navigate = useNavigate();
   const { logout } = useStaffAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -132,6 +133,7 @@ const CashierPortal = () => {
     }).then((result) => {
       if (result.isConfirmed) {
         logout();
+        navigate("/login", { replace: true, state: {} });
       }
     });
   };

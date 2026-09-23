@@ -14,6 +14,8 @@ export default function KitchenDashboard() {
     updateStatus,
     printOrder,
     setPrintOrder,
+    isRefetching,
+    refetch,
   } = useKitchenOrders();
 
   // Mobile Active Stage Tab ("pending" | "preparing" | "ready")
@@ -25,6 +27,8 @@ export default function KitchenDashboard() {
       <KitchenHeader
         activeFilter={activeFilter}
         setActiveFilter={setActiveFilter}
+        isRefetching={isRefetching}
+        onRefresh={refetch}
       />
 
       {/* 2. Sleek iOS-Style Mobile Stage Segmented Rail (< 768px) */}

@@ -26,7 +26,8 @@ try {
     $orderStmt = $db->prepare("
         SELECT id, status, created_at, 
                TIMESTAMPDIFF(SECOND, created_at, NOW()) as elapsed_seconds,
-               total, customer_name, customer_mobile 
+               total, customer_name, customer_mobile, payment_method, payment_status,
+               order_type, order_mode, table_number
         FROM orders 
         WHERE id = ?
     ");
@@ -43,8 +44,43 @@ try {
     $elapsedSeconds = intval($order['elapsed_seconds'] ?? (time() - strtotime($order['created_at'])));
 
     // Strict validation:
-    // If not staff override, customer can only cancel if status is strictly 'pending' AND elapsed <= 120s
+    // If not staff override, customer can only cancel if status is strictly 'pending' AND elapsed <= 120s AND not online paid AND not dine-in
     if (!$is_staff_override) {
+        $orderMode = strtolower(trim(($order['order_type'] ?? '') . ' ' . ($order['order_mode'] ?? '')));
+        $isDineIn = str_contains($orderMode, 'dine') || !empty($order['table_number']);
+
+        if ($isDineIn) {
+            http_response_code(400);
+            echo json_encode([
+                "success" => false,
+                "message" => "Dine-in orders cannot be cancelled directly. Please speak with floor staff."
+            ]);
+            exit();
+        }
+
+        $payMethod = strtolower(trim($order['payment_method'] ?? ''));
+        $payStatus = strtolower(trim($order['payment_status'] ?? ''));
+
+        $isDigitalMethod = str_contains($payMethod, 'card') ||
+                           str_contains($payMethod, 'jazz') ||
+                           str_contains($payMethod, 'easy') ||
+                           str_contains($payMethod, 'online') ||
+                           str_contains($payMethod, 'stripe') ||
+                           str_contains($payMethod, 'wallet');
+
+        // Note: Strict comparison so 'unpaid' does NOT match 'paid'
+        $isStrictlyPaid = ($payStatus === 'paid' || $payStatus === 'completed' || str_starts_with($payStatus, 'paid online'));
+        $isOnlinePaid = $isDigitalMethod || ($isStrictlyPaid && !str_contains($payMethod, 'cash'));
+
+        if ($isOnlinePaid) {
+            http_response_code(400);
+            echo json_encode([
+                "success" => false,
+                "message" => "Online paid orders cannot be cancelled directly. Please contact the restaurant helpline."
+            ]);
+            exit();
+        }
+
         if ($currentStatus !== 'pending') {
             http_response_code(400);
             echo json_encode([

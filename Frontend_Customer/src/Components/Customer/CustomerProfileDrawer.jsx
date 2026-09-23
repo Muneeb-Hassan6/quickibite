@@ -77,12 +77,15 @@ export default function CustomerProfileDrawer() {
 
     setLoadingOrders(true);
     try {
-      const params = new URLSearchParams();
-      if (customer.id) params.append("customer_id", customer.id);
-      if (customer.phone) params.append("phone", customer.phone);
-      if (customer.email) params.append("email", customer.email);
-
-      const res = await fetch(`${API_BASE}/get_customer_orders.php?${params.toString()}`);
+      const res = await fetch(`${API_BASE}/get_customer_orders.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_id: customer.id || 0,
+          phone: customer.phone || "",
+          email: customer.email || "",
+        }),
+      });
       const data = await res.json();
       if (data.success && Array.isArray(data.orders)) {
         setOrders(data.orders);
@@ -263,7 +266,15 @@ export default function CustomerProfileDrawer() {
         </span>
       );
     }
-    if (s.includes("dispatch") || s.includes("way") || s.includes("ready") || s.includes("pickup")) {
+    if (
+      s.includes("dispatch") ||
+      s.includes("way") ||
+      s.includes("ready") ||
+      s.includes("pickup") ||
+      s.includes("out") ||
+      s.includes("delivery") ||
+      s.includes("rider")
+    ) {
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-wider">
           <FaMotorcycle className="text-[9px]" /> {s.includes("pickup") ? "Ready for Pickup" : "Out for Delivery"}

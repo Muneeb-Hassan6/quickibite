@@ -224,35 +224,35 @@ const InventoryManager = () => {
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this!",
+      title: "Delete Inventory Item?",
+      text: "Deleting this ingredient will also remove all associated menu items and recipes. Are you sure you want to proceed?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, delete it!",
+      confirmButtonText: "Yes, delete item & linked recipes!",
       background: "#171717",
       color: "#fff",
     });
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/inventory_api.php?id=${id}`,
-          { method: "DELETE" }
-        );
+        const response = await apiFetch(`inventory_api.php?id=${id}`, {
+          method: "DELETE",
+        });
         const res = await response.json();
-        if (res.status === "success") {
+        if (res.status === "success" || res.success) {
           fetchInventoryBatch(0, false);
           if (searchQuery.trim()) refreshSearch();
           queryClient.invalidateQueries({ queryKey: ['inventory'] });
           queryClient.invalidateQueries({ queryKey: ['menu'] });
+          queryClient.invalidateQueries({ queryKey: ['menu_items'] });
           staffSocket.emit("refresh_menu");
           Swal.fire({
             icon: "success",
             title: "Deleted!",
-            text: "Item has been deleted.",
-            timer: 1500,
+            text: res.message || "Inventory item and associated menu items deleted.",
+            timer: 2000,
             showConfirmButton: false,
             background: "#171717",
             color: "#fff",
@@ -272,13 +272,11 @@ const InventoryManager = () => {
     try {
       const isEvent = e && typeof e.preventDefault === "function";
       const dataToSave = customData || (!isEvent && e && typeof e === "object" ? e : form);
-      const url = `${import.meta.env.VITE_API_BASE}/inventory_api.php`;
       const method = editingProduct ? "PUT" : "POST";
       const payload = editingProduct ? { ...dataToSave, id: editingProduct.id } : dataToSave;
 
-      const response = await fetch(url, {
+      const response = await apiFetch("inventory_api.php", {
         method,
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const result = await response.json();

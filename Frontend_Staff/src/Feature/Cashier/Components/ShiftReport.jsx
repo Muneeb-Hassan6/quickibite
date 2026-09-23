@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import Swal from "sweetalert2";
-import { FaPrint, FaCalendarAlt, FaStore } from "react-icons/fa";
+import { FaPrint, FaCalendarAlt, FaStore, FaSyncAlt } from "react-icons/fa";
 import { staffSocket } from "../../../utils/socket";
 import { apiFetch } from "../../../utils/apiHelper";
 
@@ -49,7 +48,11 @@ export default function ShiftReport({ ordersData = [] }) {
     };
   }, [queryClient]);
 
-  const { data: dbOrders = [] } = useQuery({
+  const {
+    data: dbOrders = [],
+    isFetching,
+    refetch,
+  } = useQuery({
     queryKey: ["shift_orders"],
     queryFn: async () => {
       const res = await apiFetch("get_orders.php?type=all");
@@ -71,6 +74,7 @@ export default function ShiftReport({ ordersData = [] }) {
       return [];
     },
     refetchInterval: 10000,
+    staleTime: 0,
   });
 
   useEffect(() => {
@@ -157,6 +161,17 @@ export default function ShiftReport({ ordersData = [] }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95 disabled:opacity-60"
+            title="Refresh Live Shift Sales"
+          >
+            <FaSyncAlt className={`text-xs text-amber-500 ${isFetching ? "animate-spin" : ""}`} />
+            <span>{isFetching ? "Syncing..." : "Sync Live Data"}</span>
+          </button>
+
           <button
             onClick={handlePrintZReport}
             className="flex-1 sm:flex-none py-2.5 px-5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"

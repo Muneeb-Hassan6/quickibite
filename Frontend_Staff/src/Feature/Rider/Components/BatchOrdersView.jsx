@@ -12,6 +12,7 @@ import {
   FaLayerGroup,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
+import { formatWhatsAppPhone } from "../../../utils/urlHelper";
 
 export default function BatchOrdersView({
   orders = [],
@@ -125,12 +126,7 @@ export default function BatchOrdersView({
             ord.payment_method === "Cash on Delivery" ||
             ord.payment_method === "COD";
 
-          const rawPhone = (ord.phone || "").replace(/[^0-9]/g, "");
-          const formattedWhatsApp = rawPhone.startsWith("0")
-            ? "92" + rawPhone.slice(1)
-            : rawPhone.length === 10 && rawPhone.startsWith("3")
-            ? "92" + rawPhone
-            : rawPhone;
+          const formattedWhatsApp = formatWhatsAppPhone(ord.phone);
 
           let riderUser = null;
           try {

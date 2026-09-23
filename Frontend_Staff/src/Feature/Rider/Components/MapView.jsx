@@ -50,28 +50,38 @@ export default function MapView({
             <Layer
               id="route-layer"
               type="line"
+              layout={{
+                "line-join": "round",
+                "line-cap": "round",
+              }}
               paint={{
-                "line-color": "#3b82f6",
+                "line-color": "#F59E0B",
                 "line-width": 5,
-                "line-opacity": 0.85,
+                "line-opacity": 0.9,
               }}
             />
           </Source>
         )}
 
-        {/* Rider GPS Pin */}
+        {/* Rider GPS Pin with Dynamic Bearing Rotation */}
         {riderLocation &&
           typeof riderLocation.lng === "number" &&
           typeof riderLocation.lat === "number" && (
             <Marker
               longitude={riderLocation.lng}
               latitude={riderLocation.lat}
-              anchor="bottom"
+              anchor="center"
             >
-              <div className="w-9 h-9 rounded-full bg-white border-2 border-amber-500 shadow-md flex items-center justify-center p-1.5 transition-transform hover:scale-110">
+              <div
+                className="w-10 h-10 rounded-full bg-white dark:bg-neutral-900 border-2 border-amber-500 shadow-xl flex items-center justify-center p-1.5 transition-transform duration-300 ease-out hover:scale-110 relative"
+                style={{
+                  transform: `rotate(${riderLocation.heading || 0}deg)`,
+                }}
+                title={`Rider Heading: ${Math.round(riderLocation.heading || 0)}°`}
+              >
                 <img
                   src="https://cdn-icons-png.flaticon.com/512/3198/3198336.png"
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain pointer-events-none drop-shadow-xs"
                   alt="Rider Marker"
                 />
               </div>

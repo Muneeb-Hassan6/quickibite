@@ -43,9 +43,6 @@ export default function TableFloorFilterBar({
             <span className="text-xs font-bold text-[var(--text-primary)] block">
               Dine-In QR Base Domain
             </span>
-            <span className="text-[11px] text-[var(--text-secondary)] font-sans">
-              Domain prefixed to customer QR code scan targets.
-            </span>
           </div>
         </div>
 

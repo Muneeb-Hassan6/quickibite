@@ -136,6 +136,9 @@ const MainContent = () => {
       <Toaster
         position="top-right"
         reverseOrder={false}
+        containerStyle={{
+          zIndex: 99999999,
+        }}
         toastOptions={{
           className:
             "!bg-white dark:!bg-[#18181b] !text-slate-900 dark:!text-white !border !border-slate-200 dark:!border-white/10 !rounded-2xl !shadow-xl !font-bold !text-xs sm:!text-sm !py-3 !px-4",

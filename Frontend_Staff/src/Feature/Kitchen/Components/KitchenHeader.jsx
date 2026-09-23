@@ -14,11 +14,13 @@ import {
   FaMoon,
   FaChevronDown,
   FaBell,
+  FaSync,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { useTheme } from "../../../Context/ThemeContext";
 import { useStaffAuth } from "../../../Context/AuthContext";
 import { playKitchenChime } from "../hooks/useKitchenOrders";
+import { apiFetch } from "../../../utils/apiHelper";
 
 const FILTER_TABS = [
   { label: "ALL", value: "ALL", icon: FaList },
@@ -27,7 +29,12 @@ const FILTER_TABS = [
   { label: "DELIVERY", value: "DELIVERY", icon: FaMotorcycle },
 ];
 
-export default function KitchenHeader({ activeFilter, setActiveFilter }) {
+export default function KitchenHeader({
+  activeFilter,
+  setActiveFilter,
+  isRefetching = false,
+  onRefresh,
+}) {
   const [time, setTime] = useState(new Date());
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
@@ -37,9 +44,7 @@ export default function KitchenHeader({ activeFilter, setActiveFilter }) {
   const { data: settingsData } = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/get_settings.php`
-      );
+      const response = await apiFetch("get_settings.php");
       const result = await response.json();
       return result.success ? result.data : {};
     },
@@ -66,6 +71,7 @@ export default function KitchenHeader({ activeFilter, setActiveFilter }) {
     }).then((result) => {
       if (result.isConfirmed) {
         logout();
+        navigate("/login", { replace: true, state: {} });
       }
     });
   };
@@ -103,15 +109,6 @@ export default function KitchenHeader({ activeFilter, setActiveFilter }) {
           <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span className="hidden lg:inline">KITCHEN DISPLAY</span>
           <span className="lg:hidden">LIVE</span>
-        </div>
-
-        {/* FCFS Priority Queue Active Badge */}
-        <div
-          className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-400 text-[10px] sm:text-[11px] font-black tracking-wider uppercase select-none"
-          title="First-Come, First-Served: Earliest placed orders are prioritized first"
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-          <span>⚡ FCFS Mode</span>
         </div>
       </div>
 
@@ -162,6 +159,28 @@ export default function KitchenHeader({ activeFilter, setActiveFilter }) {
           </select>
           <FaChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-[8px] text-stone-500 dark:text-neutral-400 pointer-events-none" />
         </div>
+
+        {/* On-Demand Refresh / Sync Button */}
+        <button
+          type="button"
+          onClick={() => {
+            if (onRefresh) {
+              onRefresh();
+              toast.success("Kitchen board refreshed!");
+            }
+          }}
+          disabled={isRefetching}
+          className="h-7.5 sm:h-8 px-2 sm:px-2.5 rounded-lg sm:rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 border border-stone-200 dark:border-neutral-700 text-stone-700 dark:text-neutral-300 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs disabled:opacity-60"
+          title="Manual Live Sync"
+          aria-label="Refresh Kitchen Orders"
+        >
+          <FaSync
+            className={`text-xs ${
+              isRefetching ? "animate-spin text-amber-500" : ""
+            }`}
+          />
+          <span className="hidden xl:inline text-[11px]">Sync</span>
+        </button>
 
         {/* Test Audio Chime & Unlock Button */}
         <button

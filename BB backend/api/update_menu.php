@@ -31,13 +31,24 @@ if (!empty($data->id) && !empty($data->name) && !empty($data->variants)) {
     
     $slider_placements = isset($data->slider_placements) && is_array($data->slider_placements) ? $data->slider_placements : [];
 
+    $category_id = !empty($data->category_id) ? intval($data->category_id) : null;
+    if (!$category_id && !empty($category)) {
+        $findCat = $conn->prepare("SELECT id FROM categories WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) LIMIT 1");
+        $findCat->execute([$category]);
+        $cRow = $findCat->fetch(PDO::FETCH_ASSOC);
+        if ($cRow) {
+            $category_id = intval($cRow['id']);
+        }
+    }
+    $inventory_id = !empty($data->inventory_id) ? intval($data->inventory_id) : null;
+
     try {
         $conn->beginTransaction();
 
-        // 1. Update Main Item
-        $query1 = "UPDATE menu_items SET name=?, description=?, category=?, img=?, isAvailable=?, isTopDeal=?, isBestSeller=?, promo_banner_image=?, is_featured_banner=?, banner_order=?, has_spice_option=? WHERE id=?";
+        // 1. Update Main Item with relational links
+        $query1 = "UPDATE menu_items SET name=?, description=?, category=?, category_id=?, inventory_id=?, img=?, isAvailable=?, isTopDeal=?, isBestSeller=?, promo_banner_image=?, is_featured_banner=?, banner_order=?, has_spice_option=? WHERE id=?";
         $stmt1 = $conn->prepare($query1);
-        $stmt1->execute([$name, $description, $category, $img, $isAvailable, $isTopDeal, $isBestSeller, $promo_banner_image, $is_featured_banner, $banner_order, $has_spice_option, $id]);
+        $stmt1->execute([$name, $description, $category, $category_id, $inventory_id, $img, $isAvailable, $isTopDeal, $isBestSeller, $promo_banner_image, $is_featured_banner, $banner_order, $has_spice_option, $id]);
 
         // 2. Delete Old Variants
         $delQuery = "DELETE FROM menu_variants WHERE menu_id=?";

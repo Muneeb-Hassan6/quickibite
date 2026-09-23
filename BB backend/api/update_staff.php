@@ -21,18 +21,36 @@ if(!empty($data->id) && !empty($data->name) && !empty($data->role)) {
             $check_user = $db->prepare("SELECT id FROM staff WHERE username = :username AND id != :id");
             $check_user->execute([':username' => $username, ':id' => $data->id]);
             if ($check_user->fetch()) {
+                if (ob_get_level()) ob_clean();
                 echo json_encode(["success" => false, "message" => "This username is already taken by another staff member!"]);
                 exit();
             }
         }
 
-        $query = "UPDATE staff SET name = :name, role = :role, status = :status, phone = :phone, salary = :salary, username = :username WHERE id = :id";
+        $email = isset($data->email) && trim((string)$data->email) !== '' ? trim((string)$data->email) : null;
+        if ($email !== null) {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                if (ob_get_level()) ob_clean();
+                echo json_encode(["success" => false, "message" => "Please enter a valid staff email address."]);
+                exit();
+            }
+            $check_email = $db->prepare("SELECT id FROM staff WHERE email = :email AND id != :id");
+            $check_email->execute([':email' => $email, ':id' => $data->id]);
+            if ($check_email->fetch()) {
+                if (ob_get_level()) ob_clean();
+                echo json_encode(["success" => false, "message" => "This email address is already in use by another staff member!"]);
+                exit();
+            }
+        }
+
+        $query = "UPDATE staff SET name = :name, role = :role, status = :status, phone = :phone, email = :email, salary = :salary, username = :username WHERE id = :id";
         $stmt = $db->prepare($query);
         $stmt->bindParam(":name", $data->name);
         $stmt->bindParam(":role", $data->role);
         $status = $data->status ?? 'Active';
         $stmt->bindParam(":status", $status);
         $stmt->bindParam(":phone", $data->phone);
+        $stmt->bindParam(":email", $email);
         $stmt->bindParam(":salary", $data->salary);
         $stmt->bindParam(":username", $username);
         $stmt->bindParam(":id", $data->id);
@@ -54,18 +72,22 @@ if(!empty($data->id) && !empty($data->name) && !empty($data->role)) {
             $rawPassword = trim((string)$data->password);
 
             if (strlen($rawPassword) < 8) {
+                if (ob_get_level()) ob_clean();
                 echo json_encode(["success" => false, "message" => "New password must be at least 8 characters long."]);
                 exit();
             }
             if (!preg_match('/[A-Z]/', $rawPassword)) {
+                if (ob_get_level()) ob_clean();
                 echo json_encode(["success" => false, "message" => "New password must contain at least one capital letter (A-Z)."]);
                 exit();
             }
             if (!preg_match('/[!@#$%^&*(),.?":{}|<>]/', $rawPassword)) {
+                if (ob_get_level()) ob_clean();
                 echo json_encode(["success" => false, "message" => "New password must contain at least one special character."]);
                 exit();
             }
             if (isset($data->confirm_password) && $rawPassword !== trim((string)$data->confirm_password)) {
+                if (ob_get_level()) ob_clean();
                 echo json_encode(["success" => false, "message" => "New password and confirm password do not match."]);
                 exit();
             }
@@ -78,15 +100,18 @@ if(!empty($data->id) && !empty($data->name) && !empty($data->role)) {
             $pass_stmt->execute();
         }
 
+        if (ob_get_level()) ob_clean();
         echo json_encode(["success" => true, "message" => "Staff member updated successfully."]);
     } catch(PDOException $e) {
+        if (ob_get_level()) ob_clean();
         if ($e->getCode() == 23000) {
-            echo json_encode(["success" => false, "message" => "This username is already taken!"]);
+            echo json_encode(["success" => false, "message" => "This username or email is already taken!"]);
         } else {
             echo json_encode(["success" => false, "message" => "Database error: " . $e->getMessage()]);
         }
     }
 } else {
+    if (ob_get_level()) ob_clean();
     echo json_encode(["success" => false, "message" => "Incomplete data provided."]);
 }
 ?>

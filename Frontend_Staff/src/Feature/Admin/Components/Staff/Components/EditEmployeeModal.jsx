@@ -150,6 +150,20 @@ export default function EditEmployeeModal({
 
           <div>
             <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
+              Email Address (For Password Reset)
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={editingEmp.email || ""}
+              onChange={handleChange}
+              placeholder="e.g. staff@gmail.com"
+              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider block mb-1.5">
               Monthly Base Salary (PKR)
             </label>
             <input
@@ -189,18 +203,34 @@ export default function EditEmployeeModal({
               </span>
             </div>
 
-            <div>
-              <label className="text-[11px] font-extrabold text-slate-600 dark:text-neutral-400 block mb-1 uppercase tracking-wider">
-                Username
-              </label>
-              <input
-                type="text"
-                name="username"
-                value={editingEmp.username || ""}
-                onChange={handleChange}
-                placeholder="e.g. ali_staff (leave blank for No Portal Access)"
-                className="w-full px-3.5 py-2.5 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-medium focus:outline-none focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-neutral-600"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-extrabold text-slate-600 dark:text-neutral-400 block mb-1 uppercase tracking-wider">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  value={editingEmp.username || ""}
+                  onChange={handleChange}
+                  placeholder="e.g. ali_staff (leave blank for No Portal Access)"
+                  className="w-full px-3.5 py-2.5 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-medium focus:outline-none focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-neutral-600"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-extrabold text-slate-600 dark:text-neutral-400 block mb-1 uppercase tracking-wider">
+                  Email (For OTP Login)
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={editingEmp.email || ""}
+                  onChange={handleChange}
+                  placeholder="e.g. staff@quickibite.com"
+                  className="w-full px-3.5 py-2.5 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs font-medium focus:outline-none focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-neutral-600"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

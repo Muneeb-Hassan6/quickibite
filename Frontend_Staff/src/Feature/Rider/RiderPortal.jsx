@@ -77,6 +77,7 @@ export default function RiderPortal() {
       handleToggleStatus();
     }
     logout();
+    navigate("/login", { replace: true, state: {} });
   };
 
   if (!riderSession) return null;
@@ -337,6 +338,9 @@ export default function RiderPortal() {
               }
             : { lat: 31.4826, lng: 74.3256 }
         }
+        activeOrderId={targetOrder?.id}
+        riderId={riderSession?.id}
+        mapboxToken={MAPBOX_TOKEN}
         onLocationUpdate={setManualRiderLocation}
       />
     </div>

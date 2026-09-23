@@ -20,6 +20,7 @@ const initialFormData = {
   name: "",
   role: "Waiter",
   phone: "",
+  email: "",
   salary: "",
   username: "",
   password: "",
@@ -132,6 +133,18 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
     }
 
     const finalRole = isCustomRole ? customRoleName.trim() : formData.role;
+    const cleanEmail = (formData.email || "").trim();
+
+    if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid Email Address",
+        text: "Please provide a valid email address (e.g. staff@example.com).",
+        background: "#171717",
+        color: "#fff",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -140,6 +153,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
         name: formData.name.trim(),
         role: finalRole,
         phone: formData.phone.trim(),
+        email: cleanEmail || null,
         salary: formData.salary,
         enable_portal: enablePortalAccess,
         username: enablePortalAccess ? uname : null,
@@ -179,6 +193,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave }) => {
         });
 
         if (onSave) onSave();
+        window.dispatchEvent(new CustomEvent("staff-updated"));
 
         setFormData(initialFormData);
         setCustomRoleName("");

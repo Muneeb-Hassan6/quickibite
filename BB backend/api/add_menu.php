@@ -30,14 +30,25 @@ if (!empty($data->name) && !empty($data->variants)) {
     
     $slider_placements = isset($data->slider_placements) && is_array($data->slider_placements) ? $data->slider_placements : [];
 
+    $category_id = !empty($data->category_id) ? intval($data->category_id) : null;
+    if (!$category_id && !empty($category)) {
+        $findCat = $conn->prepare("SELECT id FROM categories WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) LIMIT 1");
+        $findCat->execute([$category]);
+        $cRow = $findCat->fetch(PDO::FETCH_ASSOC);
+        if ($cRow) {
+            $category_id = intval($cRow['id']);
+        }
+    }
+    $inventory_id = !empty($data->inventory_id) ? intval($data->inventory_id) : null;
+
     try {
         $conn->beginTransaction();
 
-        // 1. Insert Main Item with price fallback
+        // 1. Insert Main Item with price fallback and relational links
         $basePrice = isset($data->variants[0]->price) ? strval($data->variants[0]->price) : '0';
-        $query1 = "INSERT INTO menu_items (name, description, price, category, img, isAvailable, isTopDeal, isBestSeller, promo_banner_image, is_featured_banner, banner_order, has_spice_option) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $query1 = "INSERT INTO menu_items (name, description, price, category, category_id, inventory_id, img, isAvailable, isTopDeal, isBestSeller, promo_banner_image, is_featured_banner, banner_order, has_spice_option) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt1 = $conn->prepare($query1);
-        $stmt1->execute([$name, $description, $basePrice, $category, $img, $isAvailable, $isTopDeal, $isBestSeller, $promo_banner_image, $is_featured_banner, $banner_order, $has_spice_option]);
+        $stmt1->execute([$name, $description, $basePrice, $category, $category_id, $inventory_id, $img, $isAvailable, $isTopDeal, $isBestSeller, $promo_banner_image, $is_featured_banner, $banner_order, $has_spice_option]);
         
         $menu_id = $conn->lastInsertId();
 

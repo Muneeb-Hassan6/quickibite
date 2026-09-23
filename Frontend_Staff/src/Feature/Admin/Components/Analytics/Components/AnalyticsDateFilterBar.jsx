@@ -1,5 +1,5 @@
 import React from "react";
-import { FaCalendarAlt } from "react-icons/fa";
+import { FaCalendarAlt, FaSyncAlt } from "react-icons/fa";
 
 export default function AnalyticsDateFilterBar({
   statsFilter,
@@ -7,6 +7,8 @@ export default function AnalyticsDateFilterBar({
   setStartDate,
   endDate,
   setEndDate,
+  onRefresh,
+  isRefreshing = false,
 }) {
   return (
     <>
@@ -23,6 +25,21 @@ export default function AnalyticsDateFilterBar({
             Real-time business performance metrics, volume patterns, and product trends.
           </p>
         </div>
+
+        {/* Sync Live Button */}
+        {onRefresh && (
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="self-stretch sm:self-auto inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 cursor-pointer border border-slate-200 dark:border-white/10 bg-white dark:bg-[#161616] hover:bg-slate-50 dark:hover:bg-white/[0.04] text-slate-700 dark:text-neutral-200 shadow-xs active:scale-95 disabled:opacity-60"
+            title="Sync Live Analytics Data"
+            aria-label="Sync Live Analytics Data"
+          >
+            <FaSyncAlt className={`w-3.5 h-3.5 text-amber-500 ${isRefreshing ? "animate-spin" : ""}`} />
+            <span>{isRefreshing ? "Syncing..." : "Sync Live Data"}</span>
+          </button>
+        )}
       </div>
 
       {/* Custom Date Range Bar */}

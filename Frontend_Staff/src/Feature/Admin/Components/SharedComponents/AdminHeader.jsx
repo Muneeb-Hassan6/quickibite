@@ -25,7 +25,7 @@ const TAB_DESCRIPTIONS = {
   menu: "Product catalog, pricing, variants, and addon modifiers",
   deals: "Promotional combos, bundle deals, and dynamic banners",
   inventory: "Raw ingredient tracking, stock alerts, and wastage loss audits",
-  staff: "Employee roster, attendance logs, and payroll management",
+  staff: "Employee, attendance logs, and payroll management",
   analytics: "Sales trends, top performing items, and customer metrics",
   profit: "Item-level cost breakdown, gross profits, and profit margins",
   tables: "Dine-in floor plan, active occupancy, and printable QR codes",

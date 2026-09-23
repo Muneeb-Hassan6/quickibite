@@ -5,7 +5,6 @@ import { useOrderSession } from "../../../Hooks/useOrderSession";
 import { FaTimes } from "react-icons/fa";
 import CartDrawerItemList from "./CartDrawerItemList";
 import CartDrawerCheckoutFooter from "./CartDrawerCheckoutFooter";
-import CartFreeDeliveryMeter from "../../../Components/Cart/CartFreeDeliveryMeter";
 import CartCrossSellList from "../../../Components/Cart/CartCrossSellList";
 import { API_BASE } from "../../../config/api";
 
@@ -152,18 +151,8 @@ const CartPopup = () => {
           </span>
         </div>
 
-        {/* Scrollable Content: Free Delivery Progress + Items + Cross-sell list */}
+        {/* Scrollable Content: Items + Cross-sell list */}
         <div className="flex-1 overflow-y-auto px-3.5 sm:px-5 py-3 space-y-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-200 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-full">
-          {/* Phase 3.1: Free Delivery Meter (Hidden in Dine-In & Takeaway Mode) */}
-          {cartItems.length > 0 && !isPickupOrDineIn && (
-            <CartFreeDeliveryMeter
-              subtotal={totalAmount}
-              threshold={threshold}
-              defaultFee={defaultFee}
-              isDineIn={isPickupOrDineIn}
-            />
-          )}
-
           {/* Cart Item List */}
           <CartDrawerItemList
             cartItems={cartItems}
