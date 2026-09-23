@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import { io } from "socket.io-client";
 import { API_BASE } from "../config/api";
+import { getSocketUrl, getSocketOptions } from "../utils/urlHelper";
 
 const CartContext = createContext();
 
@@ -244,8 +245,7 @@ export const CartProvider = ({ children }) => {
 
       // 🔥 SOCKET EMIT: Node Server ko directly frontend se batao!
       try {
-        const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
-        const socket = io(socketUrl);
+        const socket = io(getSocketUrl(), getSocketOptions());
         socket.emit("new_order_placed");
         setTimeout(() => socket.disconnect(), 1000);
       } catch (sockErr) {

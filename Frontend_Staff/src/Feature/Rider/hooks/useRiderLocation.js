@@ -193,13 +193,14 @@ export function useRiderLocation({
 
   // 4. Manual Coordinate Setter (for Dev Simulator)
   const setManualRiderLocation = useCallback(
-    ({ lat, lng }) => {
+    ({ lat, lng, heading = 0 }) => {
       isDevSimulating.current = true;
       const latitude = typeof lat === "string" ? parseFloat(lat) : lat;
       const longitude = typeof lng === "string" ? parseFloat(lng) : lng;
+      const parsedHeading = typeof heading === "string" ? parseFloat(heading) : (heading || 0);
       if (isNaN(latitude) || isNaN(longitude)) return;
 
-      setRiderLocation({ lat: latitude, lng: longitude });
+      setRiderLocation({ lat: latitude, lng: longitude, heading: parsedHeading });
       setViewState((prev) => ({
         ...prev,
         latitude,
@@ -214,13 +215,19 @@ export function useRiderLocation({
             id: riderId,
             lat: latitude,
             lng: longitude,
+            heading: parsedHeading,
           }),
         }).catch(() => {});
 
         riderSocket.emit("rider_location_update", {
           riderId,
+          rider_id: riderId,
+          order_id: targetOrder?.id || null,
           lat: latitude,
           lng: longitude,
+          latitude,
+          longitude,
+          heading: parsedHeading,
         });
       }
 

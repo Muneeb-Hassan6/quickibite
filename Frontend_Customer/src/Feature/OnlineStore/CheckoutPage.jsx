@@ -90,11 +90,6 @@ const CheckoutPage = () => {
               onUseCurrentLocation={form.handleUseCurrentLocation}
               isDetectingGps={form.isDetectingGps}
               hasExactGps={form.hasExactGps}
-              mapCoords={form.mapCoords}
-              onCoordinatesChange={form.handleMapCoordinatesChange}
-              deliveryDistanceKm={form.deliveryDistanceKm}
-              maxDeliveryRadiusKm={form.maxDeliveryRadiusKm}
-              isOutOfDeliveryRadius={form.isOutOfDeliveryRadius}
             />
 
             <CustomerContactFields
@@ -146,9 +141,6 @@ const CheckoutPage = () => {
               total={form.total}
               isSubmitting={form.isSubmitting}
               handleProceedOrder={form.handleProceedOrder}
-              isOutOfDeliveryRadius={form.isOutOfDeliveryRadius}
-              deliveryDistanceKm={form.deliveryDistanceKm}
-              maxDeliveryRadiusKm={form.maxDeliveryRadiusKm}
             />
           </div>
         </div>

@@ -7,7 +7,6 @@ import {
   LuClock,
 } from "react-icons/lu";
 import AddressInputFields from "./AddressInputFields";
-import CheckoutMapPicker from "./CheckoutMapPicker";
 import SavedAddressSelector from "../../../../Components/Checkout/SavedAddressSelector";
 
 export default function DeliveryAddressForm({
@@ -30,11 +29,6 @@ export default function DeliveryAddressForm({
   onUseCurrentLocation,
   isDetectingGps = false,
   hasExactGps = false,
-  mapCoords = { lat: 31.5204, lng: 74.3587 },
-  onCoordinatesChange,
-  deliveryDistanceKm = 0,
-  maxDeliveryRadiusKm = 10,
-  isOutOfDeliveryRadius = false,
 }) {
   const isDineIn = isQrScanned || orderType === "dine_in";
 
@@ -110,7 +104,7 @@ export default function DeliveryAddressForm({
         </div>
       </div>
 
-      {/* 2. Address Details & Interactive Map (Delivery) */}
+      {/* 2. Address Details (Delivery) */}
       {orderType === "delivery" && (
         <div className="bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-neutral-800 rounded-3xl p-4 sm:p-6 shadow-sm space-y-4 animate-fade-in">
           <div className="flex items-center justify-between">
@@ -118,51 +112,10 @@ export default function DeliveryAddressForm({
               <span className="w-1.5 h-4 bg-amber-500 rounded-full" />
               2. Delivery Address 
             </h3>
-            <span className="text-[10px] sm:text-xs font-mono text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-1  rounded-full font-bold">
-              MAP PIN ENABLED
+            <span className="text-[10px] sm:text-xs font-mono text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-1 rounded-full font-bold">
+              DOORSTEP DELIVERY
             </span>
           </div>
-
-          {/* Interactive Mapbox Pin Picker */}
-          <CheckoutMapPicker
-            coordinates={mapCoords}
-            onCoordinatesChange={onCoordinatesChange}
-            isDetectingGps={isDetectingGps}
-            onLocateMe={onUseCurrentLocation}
-            hasExactGps={hasExactGps}
-          />
-
-          {/* 📏 Live Delivery Radius & Distance Status Indicator */}
-          {deliveryDistanceKm > 0 && (
-            <div
-              className={`p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-bold border transition-all animate-fade-in ${
-                isOutOfDeliveryRadius
-                  ? "bg-red-500/10 border-red-500/30 text-red-400"
-                  : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                
-                <span>
-                  Distance to restaurant:{" "}
-                  <strong className="font-mono text-zinc-900 dark:text-white underline decoration-amber-500/50">
-                    {deliveryDistanceKm.toFixed(1)} km
-                  </strong>
-                </span>
-              </div>
-              <span
-                className={`text-[10px] sm:text-[11px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full self-start sm:self-auto border ${
-                  isOutOfDeliveryRadius
-                    ? "bg-red-500/20 text-red-300 border-red-500/40"
-                    : "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                }`}
-              >
-                {isOutOfDeliveryRadius
-                  ? `Exceeds ${maxDeliveryRadiusKm} km limit`
-                  : `Within ${maxDeliveryRadiusKm} km coverage`}
-              </span>
-            </div>
-          )}
 
           {/* Saved Addresses 1-Click Picker */}
           <SavedAddressSelector
@@ -171,11 +124,6 @@ export default function DeliveryAddressForm({
               else if (addr.address_line) setHouseNo(addr.address_line);
               if (addr.street) setStreet(addr.street);
               if (addr.area) setArea(addr.area);
-              const targetLat = addr.latitude ?? addr.lat;
-              const targetLng = addr.longitude ?? addr.lng;
-              if (targetLat && targetLng && onCoordinatesChange) {
-                onCoordinatesChange({ lat: parseFloat(targetLat), lng: parseFloat(targetLng) });
-              }
             }}
           />
 

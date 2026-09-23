@@ -127,9 +127,26 @@ io.on("connection", (socket) => {
     io.emit("payment_status_updated", data);
   });
 
-  // 📍 Rider GPS stream → dispatchers only
+  // 📍 Rider GPS stream → dispatchers, customers, and order-specific rooms
   socket.on("rider_location_update", (data) => {
+    if (!data) return;
+    const targetOrderId = data.order_id || data.orderId || (data.order && data.order.id);
+    const lat = data.latitude ?? data.lat;
+    const lng = data.longitude ?? data.lng;
+
+    console.log(`📍 Rider location update received for Order #${targetOrderId || 'ALL'}: lat=${lat}, lng=${lng}, heading=${data.heading || data.bearing || 0}°`);
+
+    // Broadcast to dispatcher room and global listeners
     socket.to("dispatcher").emit("rider_location_broadcast", data);
+    io.emit("rider_location_broadcast", data);
+    io.emit("rider_location_update", data);
+
+    // If linked to an order, broadcast to order-specific room & event
+    if (targetOrderId) {
+      io.emit(`order_tracking_${targetOrderId}`, data);
+      io.emit(`order_tracking_${String(targetOrderId)}`, data);
+      io.to(`order_${targetOrderId}`).emit("rider_location_update", data);
+    }
   });
 
   // 🔄 Generic order status updated broadcast

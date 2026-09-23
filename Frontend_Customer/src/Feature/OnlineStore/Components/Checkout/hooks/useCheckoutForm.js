@@ -15,21 +15,6 @@ import {
 import { API_BASE } from "../../../../../config/api";
 
 export const RESTAURANT_COORDS = { lat: 31.5204, lng: 74.3587 };
-export const MAX_DELIVERY_RADIUS_KM = 10.0;
-
-export function calculateHaversineDistanceKm(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Earth's radius in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
 
 export const getCashMethodLabel = (type) => {
   if (type === "takeaway") return "Cash on Pickup";
@@ -51,10 +36,6 @@ export function useCheckoutForm() {
   const [area, setArea] = useState("");
   const [tableNumber, setTableNumber] = useState(session.tableNumber || "");
   const [paymentMethod, setPaymentMethod] = useState(() => getCashMethodLabel(session.mode || "delivery"));
-  const [mapCoords, setMapCoords] = useState({
-    lat: 31.5204,
-    lng: 74.3587,
-  });
 
   // Enterprise Promo & Rider Tip State
   const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -133,11 +114,6 @@ export function useCheckoutForm() {
         if (hNo) setHouseNo(hNo);
         if (defaultAddr.street) setStreet(defaultAddr.street);
         if (defaultAddr.area) setArea(defaultAddr.area);
-        const lat = defaultAddr.latitude ?? defaultAddr.lat;
-        const lng = defaultAddr.longitude ?? defaultAddr.lng;
-        if (lat && lng) {
-          setMapCoords({ lat: parseFloat(lat), lng: parseFloat(lng) });
-        }
       }
     }
   }, [savedAddresses]);
@@ -234,20 +210,6 @@ export function useCheckoutForm() {
   const effectiveTip = orderType === "delivery" ? (Number(riderTip) || 0) : 0;
   const total = Math.max(0, subTotal - discountAmount) + deliveryFee + effectiveTip;
 
-  // Delivery Radius Boundary Guard (Haversine Formula) with dynamic store location
-  const dynamicStoreLat = Number(storeSettings.store_lat || storeSettings.restaurant_lat) || RESTAURANT_COORDS.lat;
-  const dynamicStoreLng = Number(storeSettings.store_lng || storeSettings.restaurant_lng) || RESTAURANT_COORDS.lng;
-  const restaurantLat = dynamicStoreLat;
-  const restaurantLng = dynamicStoreLng;
-  const maxDeliveryRadiusKm = Number(storeSettings.delivery_radius) || MAX_DELIVERY_RADIUS_KM;
-
-  const deliveryDistanceKm =
-    orderType === "delivery" && mapCoords?.lat && mapCoords?.lng
-      ? calculateHaversineDistanceKm(restaurantLat, restaurantLng, mapCoords.lat, mapCoords.lng)
-      : 0;
-
-  const isOutOfDeliveryRadius =
-    orderType === "delivery" && deliveryDistanceKm > maxDeliveryRadiusKm;
 
   const estimatedPrepMinutes = 20;
   const estimatedDeliveryMinutes = 15;
@@ -268,42 +230,6 @@ export function useCheckoutForm() {
     mobileHandler(val, setCustomerMobile, setErrors);
   };
 
-  const handleMapCoordinatesChange = ({
-    lat,
-    lng,
-    street: detectedStreet,
-    area: detectedArea,
-    placeName,
-  }) => {
-    setMapCoords({ lat, lng });
-    setExactGpsCoords({ lat, lng });
-
-    if (detectedArea) {
-      setArea(detectedArea);
-      setErrors((prev) => ({ ...prev, area: "" }));
-    }
-    if (detectedStreet) {
-      setStreet(detectedStreet);
-      setErrors((prev) => ({ ...prev, street: "" }));
-    } else if (placeName) {
-      const parts = placeName.split(",").map((p) => p.trim());
-      const areaCandidate = parts[0] || "";
-      if (
-        areaCandidate &&
-        !["lahore", "pakistan", "punjab"].includes(areaCandidate.toLowerCase())
-      ) {
-        setArea(areaCandidate);
-        setErrors((prev) => ({ ...prev, area: "" }));
-      }
-      if (
-        parts[1] &&
-        !["lahore", "pakistan", "punjab"].includes(parts[1].toLowerCase())
-      ) {
-        setStreet((prev) => prev || parts[1]);
-        setErrors((prev) => ({ ...prev, street: "" }));
-      }
-    }
-  };
 
   // ─── 📍 ONE-CLICK GPS LOCATION DETECTOR ───
   const handleUseCurrentLocation = () => {
@@ -313,7 +239,6 @@ export function useCheckoutForm() {
         setIsDetectingGps(false);
         const { latitude, longitude } = pos.coords;
         setExactGpsCoords({ lat: latitude, lng: longitude });
-        setMapCoords({ lat: latitude, lng: longitude });
         toast.success("📍 Exact GPS Coordinates Locked!", { duration: 3500 });
 
         // Reverse-geocode to auto-populate area and street
@@ -335,10 +260,8 @@ export function useCheckoutForm() {
       },
       (err) => {
         setIsDetectingGps(false);
-        console.warn("GPS Geolocation notice:", err?.message || err);
-        // Graceful fallback to BigBite Lahore HQ
-        setMapCoords({ lat: 31.5204, lng: 74.3587 });
-        toast("Could not detect exact GPS, please pick your location on the map.", {
+        // Graceful fallback — GPS not available, coordinates will be resolved from address at submit
+        toast("Could not detect exact GPS. Your typed address will be geocoded at checkout.", {
           icon: "📍",
           duration: 4000,
         });
@@ -397,15 +320,6 @@ export function useCheckoutForm() {
       return;
     }
 
-    // Boundary check guard
-    if (orderType === "delivery" && isOutOfDeliveryRadius) {
-      toast.error(
-        `Selected address is ${deliveryDistanceKm.toFixed(1)} km away. We only deliver within ${maxDeliveryRadiusKm} km. Please select Takeaway or choose a nearby address.`,
-        { duration: 6000 }
-      );
-      return;
-    }
-
     if (
       paymentMethod === "JazzCash" ||
       paymentMethod === "EasyPaisa" ||
@@ -437,9 +351,11 @@ export function useCheckoutForm() {
       } else {
         fullAddress = "Takeaway - Store Counter Pickup";
       }
-
-      let customerLat = dynamicStoreLat;
-      let customerLng = dynamicStoreLng;
+      // Default to store coordinates — overridden by GPS or geocoding below
+      const storeLat = Number(storeSettings.store_lat || storeSettings.restaurant_lat) || RESTAURANT_COORDS.lat;
+      const storeLng = Number(storeSettings.store_lng || storeSettings.restaurant_lng) || RESTAURANT_COORDS.lng;
+      let customerLat = storeLat;
+      let customerLng = storeLng;
 
       if (orderType === "delivery") {
         if (exactGpsCoords?.lat && exactGpsCoords?.lng) {
@@ -661,9 +577,6 @@ export function useCheckoutForm() {
     handleUseCurrentLocation,
     isDetectingGps,
     hasExactGps: Boolean(exactGpsCoords),
-    mapCoords,
-    setMapCoords,
-    handleMapCoordinatesChange,
     sandboxModalOpen,
     setSandboxModalOpen,
     sandboxMethod,
@@ -677,9 +590,5 @@ export function useCheckoutForm() {
     handleApplyCoupon,
     phoneCollision,
     openAuthModal,
-    deliveryDistanceKm,
-    maxDeliveryRadiusKm,
-    isOutOfDeliveryRadius,
-    storeCoords: { lat: dynamicStoreLat, lng: dynamicStoreLng },
   };
 }
