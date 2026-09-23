@@ -19,7 +19,8 @@ import OrderTrackerHeader from "./Components/OrderTrackerHeader";
 import OrderTrackerTimeline from "./Components/OrderTrackerTimeline";
 import OrderTrackerReceiptSummary from "./Components/OrderTrackerReceiptSummary";
 import OrderTrackerRiderCard from "./Components/OrderTrackerRiderCard";
-import { API_BASE, SOCKET_URL } from "../../config/api";
+import { API_BASE } from "../../config/api";
+import { getSocketUrl, getSocketOptions } from "../../utils/urlHelper";
 import { io } from "socket.io-client";
 
 const OrderTracker = () => {
@@ -102,7 +103,7 @@ const OrderTracker = () => {
         setOrder(null);
         setAuthError(
           data.message ||
-            `Verification required: Please enter the phone number associated with Order #${id}.`
+          `Verification required: Please enter the phone number associated with Order #${id}.`
         );
       } else {
         // Order not found or error
@@ -156,21 +157,22 @@ const OrderTracker = () => {
       fetchOrderDetails(searchId, false, searchPhone);
 
       // Connect to Socket.io for instantaneous real-time status updates
-      let socket = null;
+      let cancelled = false;
+      let activeSocket = null;
       try {
-        socket = io(SOCKET_URL, {
-          transports: ["websocket", "polling"],
-        });
+        const opts = { ...getSocketOptions(), autoConnect: true };
+        activeSocket = io(getSocketUrl(), opts);
 
         const handleRealtimeUpdate = (data) => {
+          if (cancelled) return;
           if (!data || !data.order_id || String(data.order_id) === String(searchId)) {
             fetchOrderDetails(searchId, false, searchPhone);
           }
         };
 
-        socket.on("order_status_updated", handleRealtimeUpdate);
-        socket.on("refresh_kitchen", handleRealtimeUpdate);
-        socket.on("order_delivered", handleRealtimeUpdate);
+        activeSocket.on("order_status_updated", handleRealtimeUpdate);
+        activeSocket.on("refresh_kitchen", handleRealtimeUpdate);
+        activeSocket.on("order_delivered", handleRealtimeUpdate);
       } catch (err) {
         console.warn("Socket tracker notice:", err);
       }
@@ -183,8 +185,26 @@ const OrderTracker = () => {
       }, 10000);
 
       return () => {
-        if (socket) {
-          socket.disconnect();
+        cancelled = true;
+        if (activeSocket) {
+          activeSocket.off("order_status_updated");
+          activeSocket.off("refresh_kitchen");
+          activeSocket.off("order_delivered");
+
+          // StrictMode safe disconnect:
+          // If already connected, disconnect immediately.
+          // If still in handshake, wait until connection establishes or errors
+          // before disconnecting to avoid 'WebSocket is closed before connection is established'
+          if (activeSocket.connected) {
+            activeSocket.disconnect();
+          } else {
+            activeSocket.once("connect", () => {
+              activeSocket.disconnect();
+            });
+            activeSocket.once("connect_error", () => {
+              activeSocket.disconnect();
+            });
+          }
         }
         clearInterval(interval);
       };
@@ -299,8 +319,8 @@ const OrderTracker = () => {
   const steps = isDineIn ? dineInSteps : isTakeaway ? takeawaySteps : deliverySteps;
   const currentStep = order
     ? (isDineIn
-        ? getDineInStepIndex(order.status)
-        : isTakeaway
+      ? getDineInStepIndex(order.status)
+      : isTakeaway
         ? getTakeawayStepIndex(order.status)
         : getDeliveryStepIndex(order.status))
     : 1;

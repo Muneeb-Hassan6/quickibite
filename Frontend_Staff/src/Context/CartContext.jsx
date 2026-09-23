@@ -1,7 +1,8 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import toast from "react-hot-toast";
-import { io } from "socket.io-client"; // 🔥 SOCKET IMPORT ADDED
+import { io } from "socket.io-client";
 import Swal from "sweetalert2";
+import { getSocketUrl, getSocketOptions } from "../utils/urlHelper";
 
 const CartContext = createContext();
 
@@ -183,9 +184,13 @@ export const CartProvider = ({ children }) => {
         });
 
         // 🔥 SOCKET EMIT: Node Server ko directly frontend se batao!
-        const socket = io(import.meta.env.VITE_SOCKET_URL);
-        socket.emit("new_order_placed");
-        setTimeout(() => socket.disconnect(), 1000); // Disconnect after emitting
+        try {
+          const socket = io(getSocketUrl(), getSocketOptions());
+          socket.emit("new_order_placed");
+          setTimeout(() => socket.disconnect(), 1000); // Disconnect after emitting
+        } catch (sockErr) {
+          console.warn("Socket notification warning:", sockErr);
+        }
 
         // 🔥 BULLETPROOF: Newly placed order wapis bhejo taake Checkout page foran popup show kare
         return newLocalOrder;

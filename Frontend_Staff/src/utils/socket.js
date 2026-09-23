@@ -1,14 +1,9 @@
 import { io } from "socket.io-client";
+import { getSocketUrl, getSocketOptions } from "./urlHelper";
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
+export const SOCKET_URL = getSocketUrl();
 
 // Module-level persistent singleton socket client for Staff Portal
-export const staffSocket = io(SOCKET_URL, {
-  transports: ["websocket", "polling"],
-  reconnection: true,
-  reconnectionAttempts: 10,
-  reconnectionDelay: 1000,
-  autoConnect: true,
-});
+export const staffSocket = io(getSocketUrl(), getSocketOptions());
 
 export default staffSocket;
