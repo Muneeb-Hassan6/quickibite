@@ -195,10 +195,17 @@ body, .admin-shell, .admin-layout-root, .admin-scope {
 }
 
 /* =======================================================
-   SWEETALERT PREMIUM SAAS CUSTOMIZATION
+   SWEETALERT & TOAST NOTIFICATIONS HIGHEST Z-INDEX
+   Ensures alerts and feedback always appear on top of all modals
    ======================================================= */
 .swal2-container {
-  z-index: 999999 !important;
+  z-index: 99999999 !important;
+}
+
+div[aria-live="polite"],
+[data-toaster],
+.toaster-container {
+  z-index: 99999999 !important;
 }
 
 .swal2-popup {

@@ -99,7 +99,13 @@ const MainContent = () => {
         transition: "0.3s",
       }}
     >
-      <Toaster position="top-center" reverseOrder={false} />
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        containerStyle={{
+          zIndex: 99999999,
+        }}
+      />
 
       <Suspense fallback={<PageFallback />}>
         <Routes>

@@ -270,10 +270,21 @@ const OrderTracker = () => {
 
   // 3. Delivery Steps (4 Steps: Confirmed -> Preparing in Kitchen -> Out for Delivery -> Delivered)
   const getDeliveryStepIndex = (status = "") => {
-    const s = status.toLowerCase();
+    const s = (status || "").toLowerCase().trim();
     if (s.includes("decline") || s.includes("cancel")) return -1;
     if (s.includes("delivered") || s.includes("completed")) return 4;
-    if (s.includes("dispatch") || s.includes("way") || s.includes("rider") || s.includes("ready")) return 3;
+    if (
+      s.includes("out") ||
+      s.includes("delivery") ||
+      s.includes("transit") ||
+      s.includes("en route") ||
+      s.includes("enroute") ||
+      s.includes("dispatch") ||
+      s.includes("way") ||
+      s.includes("rider") ||
+      s.includes("assign") ||
+      s.includes("ready")
+    ) return 3;
     if (s.includes("prepar") || s.includes("cook") || s.includes("kitchen")) return 2;
     return 1;
   };

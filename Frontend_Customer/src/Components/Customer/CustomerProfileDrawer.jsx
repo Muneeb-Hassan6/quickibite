@@ -266,7 +266,15 @@ export default function CustomerProfileDrawer() {
         </span>
       );
     }
-    if (s.includes("dispatch") || s.includes("way") || s.includes("ready") || s.includes("pickup")) {
+    if (
+      s.includes("dispatch") ||
+      s.includes("way") ||
+      s.includes("ready") ||
+      s.includes("pickup") ||
+      s.includes("out") ||
+      s.includes("delivery") ||
+      s.includes("rider")
+    ) {
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-wider">
           <FaMotorcycle className="text-[9px]" /> {s.includes("pickup") ? "Ready for Pickup" : "Out for Delivery"}
