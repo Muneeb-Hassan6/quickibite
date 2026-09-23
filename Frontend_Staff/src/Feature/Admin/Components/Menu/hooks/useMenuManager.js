@@ -93,7 +93,7 @@ export function useMenuManager() {
   const { data: inventoryItems = [] } = useQuery({
     queryKey: ["inventory"],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/inventory_api.php`);
+      const response = await apiFetch("inventory_api.php");
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },

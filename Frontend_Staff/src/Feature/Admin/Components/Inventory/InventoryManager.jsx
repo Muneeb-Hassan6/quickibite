@@ -237,10 +237,9 @@ const InventoryManager = () => {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/inventory_api.php?id=${id}`,
-          { method: "DELETE" }
-        );
+        const response = await apiFetch(`inventory_api.php?id=${id}`, {
+          method: "DELETE",
+        });
         const res = await response.json();
         if (res.status === "success") {
           fetchInventoryBatch(0, false);
@@ -272,13 +271,11 @@ const InventoryManager = () => {
     try {
       const isEvent = e && typeof e.preventDefault === "function";
       const dataToSave = customData || (!isEvent && e && typeof e === "object" ? e : form);
-      const url = `${import.meta.env.VITE_API_BASE}/inventory_api.php`;
       const method = editingProduct ? "PUT" : "POST";
       const payload = editingProduct ? { ...dataToSave, id: editingProduct.id } : dataToSave;
 
-      const response = await fetch(url, {
+      const response = await apiFetch("inventory_api.php", {
         method,
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const result = await response.json();

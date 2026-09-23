@@ -523,7 +523,7 @@ $transaction_id = !empty($data->transaction_id) ? trim($data->transaction_id) :
 
 // Strict Backend Validation: Online digital payments marked as Paid must have a transaction reference (auto-generate if missing for POS)
 $isOnlinePayment = in_array(strtolower($payment_method), ['jazzcash', 'easypaisa', 'credit / debit card', 'card', 'online']);
-$isMarkedPaid = stripos($payment_status, 'paid') !== false;
+$isMarkedPaid = in_array(strtolower($payment_status), ['paid', 'completed']) || str_starts_with(strtolower($payment_status), 'paid online');
 
 if ($isOnlinePayment && $isMarkedPaid) {
     if (empty($transaction_id) || strlen($transaction_id) < 4) {

@@ -92,7 +92,7 @@ try {
                   " . $wherePendingCod . "
                   " . $orderByClause . $limitSql;
     } else {
-        $countQuery = "SELECT COUNT(*) FROM orders WHERE status NOT IN ('Delivered', 'Completed', 'Dispatched', 'Cancelled', 'Declined')";
+        $countQuery = "SELECT COUNT(*) FROM orders o WHERE o.status NOT IN ('Delivered', 'Completed', 'Dispatched', 'Cancelled', 'Declined')";
         $query = "SELECT o.*, 
                          COALESCE(p.status, o.payment_status, 'Pending') as payment_status, 
                          COALESCE(p.method, o.payment_method, 'Cash') as payment_method,
@@ -103,7 +103,7 @@ try {
                   FROM orders o 
                   LEFT JOIN payments p ON o.id = p.order_id 
                   LEFT JOIN staff s ON o.rider_id = s.id
-                  WHERE status NOT IN ('Delivered', 'Completed', 'Dispatched', 'Cancelled', 'Declined') 
+                  WHERE o.status NOT IN ('Delivered', 'Completed', 'Dispatched', 'Cancelled', 'Declined') 
                   " . $orderByClause . $limitSql;
     }
 

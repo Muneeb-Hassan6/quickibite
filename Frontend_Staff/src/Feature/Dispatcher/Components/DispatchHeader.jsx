@@ -5,13 +5,14 @@ import {
   FaSun,
   FaMoon,
   FaExclamationTriangle,
+  FaSyncAlt,
 } from "react-icons/fa";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../Context/ThemeContext";
 import { useStaffAuth } from "../../../Context/AuthContext";
 
-export default function DispatchHeader() {
+export default function DispatchHeader({ onRefresh, isRefreshing = false }) {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { logout } = useStaffAuth();
@@ -76,8 +77,23 @@ export default function DispatchHeader() {
           </div>
         </div>
 
-        {/* Right Controls: Theme Toggle & Logout */}
+        {/* Right Controls: Sync Live Data, Theme Toggle & Logout */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Sync Live Button (Refreshes Orders, Active Trips & Riders) */}
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="h-8 px-3 rounded-xl bg-stone-100 dark:bg-neutral-800 border border-stone-200 dark:border-neutral-700 hover:bg-stone-200 dark:hover:bg-neutral-700 text-stone-700 dark:text-neutral-300 font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-xs disabled:opacity-60"
+              title="Sync Live Orders & Riders"
+              aria-label="Sync Live Orders & Riders"
+            >
+              <FaSyncAlt className={`text-xs text-amber-500 ${isRefreshing ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline font-mono">{isRefreshing ? "Syncing..." : "Sync Live"}</span>
+            </button>
+          )}
+
           {/* Glassmorphic Theme Toggle */}
           <button
             type="button"

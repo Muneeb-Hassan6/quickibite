@@ -4,6 +4,8 @@ if (!ob_get_level()) {
 }
 
 include_once __DIR__ . '/../config/cors_headers.php';
+include_once __DIR__ . '/../config/auth_middleware.php';
+require_role(['Admin', 'Manager', 'Chef', 'Kitchen', 'Cashier']);
 include_once __DIR__ . '/../config/Database.php';
 
 try {

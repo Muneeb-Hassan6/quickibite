@@ -18,13 +18,21 @@ export default function OrderTrackerTimeline({
   const isPending = status === "pending";
   const isCancelled = status === "cancelled" || status === "cancelled_with_wastage" || status === "declined";
 
-  // Check if order was paid online or if it's a cash payment
-  const rawMethod = (order?.payment_method || "").toLowerCase();
-  const rawPaymentStatus = (order?.payment_status || "").toLowerCase();
+  // Fulfillment mode detection (Dine-In, Takeaway, Delivery)
+  const rawMode = (
+    order?.order_mode ||
+    order?.order_type ||
+    order?.type ||
+    ""
+  ).toLowerCase().trim();
+  const isDineIn = rawMode.includes("dine") || Boolean(order?.table_number);
 
-  const isOnlinePayment =
-    rawPaymentStatus.includes("paid") ||
-    rawPaymentStatus.includes("completed") ||
+  // Payment method and status evaluation
+  const rawMethod = (order?.payment_method || "").toLowerCase().trim();
+  const rawPaymentStatus = (order?.payment_status || "").toLowerCase().trim();
+
+  // Explicit digital online gateways
+  const isOnlineMethod =
     rawMethod.includes("card") ||
     rawMethod.includes("jazz") ||
     rawMethod.includes("easy") ||
@@ -32,9 +40,30 @@ export default function OrderTrackerTimeline({
     rawMethod.includes("online") ||
     rawMethod.includes("stripe");
 
-  // Only allow cancellation bar for cash payment methods that have NOT been paid online
-  const isCashPayment = !isOnlinePayment && (rawMethod.includes("cash") || rawMethod === "");
-  const canShowCancelBar = !isCancelled && isCashPayment;
+  // Strict check on payment status so 'unpaid' NEVER matches 'paid'!
+  const isStrictlyPaidOnline =
+    (rawPaymentStatus === "paid" ||
+      rawPaymentStatus === "completed" ||
+      rawPaymentStatus.startsWith("paid online")) &&
+    !rawMethod.includes("cash") &&
+    !rawMethod.includes("cod");
+
+  const isOnlinePayment = isOnlineMethod || isStrictlyPaidOnline;
+
+  // Cash payment: Cash on Delivery or Cash on Pickup / Cash
+  const isCashPayment =
+    !isOnlinePayment &&
+    (rawMethod.includes("cash") ||
+      rawMethod.includes("cod") ||
+      rawMethod.includes("cop") ||
+      rawMethod === "");
+
+  // Cancel order bar ONLY shows for cash payment on Delivery or Takeaway
+  // Strictly hidden for:
+  // 1. Online Payment (JazzCash, EasyPaisa, Card, Stripe, etc.)
+  // 2. Dine-In (Table service orders)
+  // 3. Already cancelled or declined orders
+  const canShowCancelBar = !isCancelled && !isDineIn && isCashPayment;
 
   // Calculate 120s cancellation countdown from order.created_at
   useEffect(() => {

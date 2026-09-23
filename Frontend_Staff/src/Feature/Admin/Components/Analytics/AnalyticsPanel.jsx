@@ -16,6 +16,8 @@ const AnalyticsPanel = () => {
     analyticsMetrics,
     chartData,
     topCategoriesData,
+    refetch,
+    isRefreshing,
   } = useAnalytics();
 
   return (
@@ -27,6 +29,8 @@ const AnalyticsPanel = () => {
         setStartDate={setStartDate}
         endDate={endDate}
         setEndDate={setEndDate}
+        onRefresh={refetch}
+        isRefreshing={isRefreshing}
       />
 
       {/* 1. Metric Summary Cards */}

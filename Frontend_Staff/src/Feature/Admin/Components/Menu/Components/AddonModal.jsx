@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Swal from "sweetalert2";
 import { FaTimes, FaSpinner, FaUtensils, FaSearch } from "react-icons/fa";
+import { apiFetch } from "../../../../../utils/apiHelper";
 import AddonSubItemsTable from "./AddonSubItemsTable";
 
 const AddonModal = ({
@@ -20,19 +21,12 @@ const AddonModal = ({
   // Sync initial product selection only when modal opens
   useEffect(() => {
     if (isOpen) {
-      if (menuItem) {
-        const found = menuItems.find((m) => m.id === (menuItem.menu_item_id || menuItem.id)) || menuItem;
-        setSelectedItem(found);
-      } else if (menuItems.length > 0) {
-        setSelectedItem(menuItems[0]);
-      } else {
-        setSelectedItem(null);
-      }
+      setSelectedItem(menuItem || null);
       setProductSearch("");
     }
   }, [isOpen, menuItem]);
 
-  // Filter products by search term
+  // Quick filter for product dropdown
   const filteredProducts = useMemo(() => {
     if (!productSearch.trim()) return menuItems;
     const q = productSearch.toLowerCase().trim();
@@ -46,8 +40,8 @@ const AddonModal = ({
   useEffect(() => {
     if (isOpen && selectedItem?.id) {
       setLoading(true);
-      fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_manage_addons.php?action=get_product_addons&menu_item_id=${selectedItem.id}`
+      apiFetch(
+        `admin_manage_addons.php?action=get_product_addons&menu_item_id=${selectedItem.id}`
       )
         .then((res) => res.json())
         .then((resData) => {
@@ -122,14 +116,10 @@ const AddonModal = ({
     };
 
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_manage_addons.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await apiFetch("admin_manage_addons.php", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
       const result = await res.json();
       if (res.ok && (result.success || result.status === "success")) {
         Swal.fire({

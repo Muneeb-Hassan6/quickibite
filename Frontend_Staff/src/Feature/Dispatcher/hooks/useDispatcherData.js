@@ -35,7 +35,12 @@ export function useDispatcherData() {
   });
 
   // 1. FETCH ORDERS via React Query
-  const { data: rawOrders = [], isLoading: isOrdersLoading } = useQuery({
+  const {
+    data: rawOrders = [],
+    isLoading: isOrdersLoading,
+    isFetching: isOrdersFetching,
+    refetch: refetchOrders,
+  } = useQuery({
     queryKey: ["dispatcher_orders"],
     queryFn: async () => {
       const orderRes = await apiFetch("get_orders.php?type=all&order_by=fcfs&sort=asc");
@@ -43,11 +48,16 @@ export function useDispatcherData() {
       return Array.isArray(orderData) ? orderData : orderData.data || [];
     },
     refetchInterval: 10000,
-    staleTime: 4000,
+    staleTime: 0,
   });
 
   // 2. FETCH STAFF via React Query
-  const { data: rawStaff = [], isLoading: isStaffLoading } = useQuery({
+  const {
+    data: rawStaff = [],
+    isLoading: isStaffLoading,
+    isFetching: isStaffFetching,
+    refetch: refetchStaff,
+  } = useQuery({
     queryKey: ["dispatcher_staff"],
     queryFn: async () => {
       const staffRes = await apiFetch("get_staff.php");
@@ -57,8 +67,31 @@ export function useDispatcherData() {
         : [];
     },
     refetchInterval: 15000,
-    staleTime: 5000,
+    staleTime: 0,
   });
+
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+
+  // Manual Instant Refresh for all 3: Ready Orders, Active Deliveries, and Riders
+  const refetchAll = useCallback(async () => {
+    setIsManualRefreshing(true);
+    try {
+      await Promise.all([
+        refetchOrders(),
+        refetchStaff(),
+        queryClient.invalidateQueries({ queryKey: ["dispatcher_orders"] }),
+        queryClient.invalidateQueries({ queryKey: ["dispatcher_staff"] }),
+        queryClient.invalidateQueries({ queryKey: ["orders"] }),
+        queryClient.invalidateQueries({ queryKey: ["staff"] }),
+      ]);
+      toast.success("Live data refreshed!", { id: "dispatch-sync" });
+    } catch (err) {
+      console.error("Failed to sync dispatcher data:", err);
+      toast.error("Failed to sync live data", { id: "dispatch-sync" });
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  }, [refetchOrders, refetchStaff, queryClient]);
 
   // 3. SINGLETON SOCKET LISTENERS (Zero Memory Leaks)
   useEffect(() => {
@@ -557,5 +590,7 @@ export function useDispatcherData() {
     isAssigning: assignMutation.isPending,
     isCompletingTrip: markDeliveredMutation.isPending,
     isLoading: isOrdersLoading || isStaffLoading,
+    refetchAll,
+    isRefreshing: isManualRefreshing || isOrdersFetching || isStaffFetching,
   };
 }

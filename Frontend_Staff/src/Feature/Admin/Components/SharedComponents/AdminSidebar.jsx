@@ -149,7 +149,7 @@ const AdminSidebar = ({
           {/* Admin User Info (Top next to Logo) */}
           <div className="flex items-center gap-2 min-w-0 flex-1 justify-start pl-2.5 border-l border-slate-200 dark:border-white/10">
             <div className="min-w-0 text-left">
-              <div className="text-xs font-black text-slate-900 dark:text-white truncate leading-tight">
+              <div className="text-md font-black text-slate-900 dark:text-white truncate leading-tight">
                 {userData.name}
               </div>
               <div className="text-[9px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider leading-tight">

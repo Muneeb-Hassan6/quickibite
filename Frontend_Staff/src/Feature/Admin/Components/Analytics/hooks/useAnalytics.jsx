@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import React from "react";
 import {
   FaDollarSign,
@@ -8,6 +8,9 @@ import {
   FaFire,
   FaClock,
 } from "react-icons/fa";
+import toast from "react-hot-toast";
+import { staffSocket } from "../../../../../utils/socket";
+import { apiFetch } from "../../../../../utils/apiHelper";
 
 export function useAnalytics() {
   const [statsFilter, setStatsFilter] = useState("weekly");
@@ -39,39 +42,71 @@ export function useAnalytics() {
     { day: "Sun", value: 0, amount: "Rs 0" },
   ]);
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   // Fetch orders and menu catalog
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = sessionStorage.getItem("auth_token");
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const fetchData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsRefreshing(true);
+    try {
+      const [ordersRes, menuRes] = await Promise.all([
+        apiFetch("get_orders.php?type=all"),
+        apiFetch("get_menu.php"),
+      ]);
+      const data = await ordersRes.json();
+      const menuData = await menuRes.json();
 
-        const [ordersRes, menuRes] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_BASE}/get_orders.php?type=all`, {
-            headers,
-          }),
-          fetch(`${import.meta.env.VITE_API_BASE}/get_menu.php`, { headers }),
-        ]);
-        const data = await ordersRes.json();
-        const menuData = await menuRes.json();
-
-        let itemToCategory = {};
-        if (Array.isArray(menuData)) {
-          menuData.forEach((m) => {
-            itemToCategory[m.name] = m.category || "Uncategorized";
-          });
-        }
-        setMenuMap(itemToCategory);
-
-        if (Array.isArray(data)) {
-          setAllOrders(data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch analytics:", error);
+      let itemToCategory = {};
+      if (Array.isArray(menuData)) {
+        menuData.forEach((m) => {
+          itemToCategory[m.name] = m.category || "Uncategorized";
+        });
       }
-    };
-    fetchData();
+      setMenuMap(itemToCategory);
+
+      if (Array.isArray(data)) {
+        setAllOrders(data);
+      } else if (data?.data && Array.isArray(data.data)) {
+        setAllOrders(data.data);
+      }
+
+      if (!isSilent) {
+        toast.success("Analytics live data synced!", { id: "analytics-sync" });
+      }
+    } catch (error) {
+      console.error("Failed to fetch analytics:", error);
+      if (!isSilent) {
+        toast.error("Failed to sync analytics", { id: "analytics-sync" });
+      }
+    } finally {
+      if (!isSilent) setIsRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData(true);
+  }, [fetchData]);
+
+  // Real-time socket listener to keep analytics metrics fresh
+  useEffect(() => {
+    const handleSocketUpdate = () => {
+      fetchData(true);
+    };
+
+    const events = [
+      "new_order_placed",
+      "order_status_updated",
+      "order_status_changed",
+      "order_delivered",
+      "payment_status_updated",
+      "refresh_orders",
+    ];
+
+    events.forEach((evt) => staffSocket.on(evt, handleSocketUpdate));
+
+    return () => {
+      events.forEach((evt) => staffSocket.off(evt, handleSocketUpdate));
+    };
+  }, [fetchData]);
 
   // Compute metrics
   useEffect(() => {
@@ -326,5 +361,7 @@ export function useAnalytics() {
     analyticsMetrics,
     chartData,
     topCategoriesData,
+    refetch: () => fetchData(false),
+    isRefreshing,
   };
 }

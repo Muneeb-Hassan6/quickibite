@@ -12,6 +12,7 @@ import {
   FaShieldAlt,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
+import { apiFetch } from "../../../../../utils/apiHelper";
 
 export default function WastageAnalytics() {
   const queryClient = useQueryClient();
@@ -21,9 +22,7 @@ export default function WastageAnalytics() {
   const { data: analytics = {}, isLoading: isAnalyticsLoading } = useQuery({
     queryKey: ["wastage_analytics"],
     queryFn: async () => {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_wastage_manager.php?action=get_wastage_analytics`
-      );
+      const res = await apiFetch("admin_wastage_manager.php?action=get_wastage_analytics");
       const data = await res.json();
       return data.success ? data : {};
     },
@@ -34,9 +33,7 @@ export default function WastageAnalytics() {
   const { data: logsData = {}, isLoading: isLogsLoading } = useQuery({
     queryKey: ["wastage_logs"],
     queryFn: async () => {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_wastage_manager.php?action=get_wastage_logs`
-      );
+      const res = await apiFetch("admin_wastage_manager.php?action=get_wastage_logs");
       const data = await res.json();
       return data.success ? data.logs : [];
     },
@@ -49,7 +46,7 @@ export default function WastageAnalytics() {
   const { data: inventoryItems = [] } = useQuery({
     queryKey: ["inventory"],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE}/inventory_api.php`);
+      const res = await apiFetch("inventory_api.php");
       const data = await res.json();
       return Array.isArray(data) ? data : [];
     },
@@ -123,20 +120,16 @@ export default function WastageAnalytics() {
         );
         const adminName = user.name || user.username || "Admin";
 
-        const res = await fetch(
-          `${import.meta.env.VITE_API_BASE}/admin_wastage_manager.php`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "log_raw_wastage",
-              inventory_id: formValues.inventory_id,
-              quantity: formValues.quantity,
-              reason: formValues.reason,
-              reported_by: adminName,
-            }),
-          }
-        );
+        const res = await apiFetch("admin_wastage_manager.php", {
+          method: "POST",
+          body: JSON.stringify({
+            action: "log_raw_wastage",
+            inventory_id: formValues.inventory_id,
+            quantity: formValues.quantity,
+            reason: formValues.reason,
+            reported_by: adminName,
+          }),
+        });
         const data = await res.json();
         if (data.success) {
           Swal.fire({

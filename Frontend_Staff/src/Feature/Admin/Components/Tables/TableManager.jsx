@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
+import { apiFetch } from "../../../../utils/apiHelper";
 import TableFloorFilterBar from "./Components/TableFloorFilterBar";
 import TableGrid from "./Components/TableGrid";
 import TableFormModal from "./Components/TableFormModal";
@@ -19,9 +20,7 @@ const TableManager = () => {
   const { data = {}, isLoading } = useQuery({
     queryKey: ["tables"],
     queryFn: async () => {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`
-      );
+      const response = await apiFetch("admin_manage_tables.php");
       const result = await response.json();
       return result.success
         ? { tables: result.data, qrBaseUrl: result.qr_base_url }
@@ -40,17 +39,13 @@ const TableManager = () => {
 
   const handleSaveBaseUrl = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "save_qr_base_url",
-            url: baseUrlInput,
-          }),
-        }
-      );
+      const response = await apiFetch("admin_manage_tables.php", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "save_qr_base_url",
+          url: baseUrlInput,
+        }),
+      });
       const result = await response.json();
       if (result.success) {
         Swal.fire({
@@ -79,18 +74,14 @@ const TableManager = () => {
     }
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "add",
-            table_name: newTableName.trim(),
-            capacity: newTableCapacity,
-          }),
-        }
-      );
+      const response = await apiFetch("admin_manage_tables.php", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "add",
+          table_name: newTableName.trim(),
+          capacity: newTableCapacity,
+        }),
+      });
       const result = await response.json();
       if (result.success) {
         Swal.fire({
@@ -116,14 +107,10 @@ const TableManager = () => {
 
   const handleToggleStatus = async (id) => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "toggle_status", id }),
-        }
-      );
+      const response = await apiFetch("admin_manage_tables.php", {
+        method: "POST",
+        body: JSON.stringify({ action: "toggle_status", id }),
+      });
       const result = await response.json();
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ["tables"] });
@@ -147,14 +134,10 @@ const TableManager = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/admin_manage_tables.php`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ action: "delete", id }),
-            }
-          );
+          const response = await apiFetch("admin_manage_tables.php", {
+            method: "POST",
+            body: JSON.stringify({ action: "delete", id }),
+          });
           const res = await response.json();
           if (res.success) {
             Swal.fire({

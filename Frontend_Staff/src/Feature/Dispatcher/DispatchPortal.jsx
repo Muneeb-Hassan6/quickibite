@@ -36,12 +36,14 @@ export default function DispatchPortal() {
     handleCompleteTrip,
     handleSmartBatching,
     isAssigning,
+    refetchAll,
+    isRefreshing,
   } = useDispatcherData();
 
   return (
     <div className="min-h-screen bg-stone-100 dark:bg-neutral-950 text-stone-900 dark:text-neutral-100 font-sans transition-colors flex flex-col">
       {/* 1. Dispatch Top Navigation Bar */}
-      <DispatchHeader />
+      <DispatchHeader onRefresh={refetchAll} isRefreshing={isRefreshing} />
 
       {/* 2. Key Metrics Stats Grid (2x2 Mobile, 4x1 Desktop) */}
       <DispatchStats

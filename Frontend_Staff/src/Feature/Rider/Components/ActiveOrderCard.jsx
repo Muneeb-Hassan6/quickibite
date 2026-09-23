@@ -11,6 +11,7 @@ import {
   FaRoute,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
+import { apiFetch } from "../../../utils/apiHelper";
 
 export default function ActiveOrderCard({
   order,
@@ -97,20 +98,16 @@ export default function ActiveOrderCard({
         );
         const riderName = user.name || user.username || "Delivery Rider";
 
-        const res = await fetch(
-          `${import.meta.env.VITE_API_BASE}/log_wastage.php`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "report_delivery_failure",
-              order_id: order.id,
-              reason: formValues.reason,
-              notes: formValues.notes,
-              reported_by: riderName,
-            }),
-          }
-        );
+        const res = await apiFetch("log_wastage.php", {
+          method: "POST",
+          body: JSON.stringify({
+            action: "report_delivery_failure",
+            order_id: order.id,
+            reason: formValues.reason,
+            notes: formValues.notes,
+            reported_by: riderName,
+          }),
+        });
         const data = await res.json();
 
         if (data.success) {
