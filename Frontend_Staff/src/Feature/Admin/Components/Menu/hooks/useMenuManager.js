@@ -311,9 +311,9 @@ export function useMenuManager() {
       show: true,
       id: id,
       type: "category",
-      title: "Delete Category?",
+      title: "Delete Category & All Items?",
       message:
-        "Removing this category might affect items linked to it. Continue?",
+        "Deleting this category will permanently delete all menu items belonging to it. Are you sure you want to proceed?",
     });
   };
 
@@ -334,7 +334,12 @@ export function useMenuManager() {
           old ? old.filter((item) => item.id !== id) : []
         );
         queryClient.invalidateQueries({ queryKey: ["categories"] });
-        showToast("Category deleted successfully!", "success");
+        queryClient.invalidateQueries({ queryKey: ["menu"] });
+        queryClient.invalidateQueries({ queryKey: ["menu_items"] });
+        showToast(
+          result.message || "Category and associated items deleted successfully!",
+          "success"
+        );
       } else {
         showToast("Failed to delete category: " + (result.message || ""), "error");
       }

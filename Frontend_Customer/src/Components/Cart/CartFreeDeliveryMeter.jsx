@@ -1,7 +1,13 @@
 import React from "react";
 import { FaTruck, FaCheckCircle, FaFire } from "react-icons/fa";
 
-const CartFreeDeliveryMeter = ({ subtotal = 0, threshold = 1500, defaultFee = 150, isDineIn = false }) => {
+const CartFreeDeliveryMeter = ({
+  subtotal = 0,
+  threshold = 1500,
+  defaultFee = 150,
+  isDineIn = false,
+  className = "",
+}) => {
   if (isDineIn || !threshold || threshold <= 0) return null;
 
   const remaining = Math.max(threshold - subtotal, 0);
@@ -9,7 +15,9 @@ const CartFreeDeliveryMeter = ({ subtotal = 0, threshold = 1500, defaultFee = 15
   const isUnlocked = percent >= 100;
 
   return (
-    <div className="w-full bg-zinc-50 dark:bg-neutral-900 border border-zinc-200 dark:border-neutral-800 rounded-2xl p-3.5 mb-3.5 shadow-xs transition-all duration-300">
+    <div
+      className={`w-full bg-white dark:bg-neutral-900/90 border border-gray-200/80 dark:border-neutral-800 rounded-2xl sm:rounded-3xl p-4 shadow-sm backdrop-blur-md transition-all duration-300 ${className}`}
+    >
       {/* Header Info */}
       <div className="flex items-center justify-between text-xs mb-2">
         <div className="flex items-center gap-2 font-medium">

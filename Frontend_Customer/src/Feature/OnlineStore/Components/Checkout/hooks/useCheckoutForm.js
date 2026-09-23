@@ -650,6 +650,8 @@ export function useCheckoutForm() {
     isSubmitting,
     availableTables,
     baseDeliveryFee,
+    freeThreshold,
+    isFreeDelivery,
     deliveryFee,
     subTotal,
     total,

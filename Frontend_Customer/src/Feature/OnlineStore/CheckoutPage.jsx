@@ -11,6 +11,7 @@ import OrderSummaryCard from "./Components/Checkout/OrderSummaryCard";
 import PaymentSandboxModal from "./Components/Checkout/PaymentSandboxModal";
 import PromoCodeBox from "../../Components/Checkout/PromoCodeBox";
 import RiderTipSelector from "../../Components/Checkout/RiderTipSelector";
+import CartFreeDeliveryMeter from "../../Components/Cart/CartFreeDeliveryMeter";
 
 const CheckoutPage = () => {
   const form = useCheckoutForm();
@@ -116,6 +117,16 @@ const CheckoutPage = () => {
 
           {/* ════ RIGHT COLUMN: ORDER SUMMARY & PROMOS (5 Cols) ════ */}
           <div className="lg:col-span-5 sticky top-24 space-y-4 sm:space-y-6">
+            {/* Free Delivery Meter (Strictly Delivery Mode Only) */}
+            {form.orderType === "delivery" && (
+              <CartFreeDeliveryMeter
+                subtotal={form.subTotal}
+                threshold={form.freeThreshold}
+                defaultFee={form.baseDeliveryFee}
+                isDineIn={false}
+              />
+            )}
+
             {/* Promo Code & Coupon Engine Box */}
             <PromoCodeBox
               subtotal={form.subTotal}
